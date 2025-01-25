@@ -1,6 +1,6 @@
 {
   "productName": "Outline",
-  "artifactName": "Outline-Client.${ext}",
+  "artifactName": "Outline-Client-${arch}.${ext}",
   "asarUnpack": [
     "output/client/linux-amd64/libbackend.so",
     "output/client/linux-amd64/tun2socks",

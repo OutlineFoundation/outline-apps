@@ -24,14 +24,12 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  const {platform: targetPlatform} = getBuildParameters(parameters);
-  await spawnStream(
-    'go',
-    'tool',
-    'task',
-    '-v',
-    `client:tun2socks:${targetPlatform}`
-  );
+  const {platform: targetPlatform, arch: targetArch} =
+    getBuildParameters(parameters);
+  const targetName = targetArch
+    ? `${targetPlatform}:${targetArch}`
+    : targetPlatform;
+  await spawnStream('go', 'tool', 'task', '-v', `client:tun2socks:${targetName}`);
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {

@@ -40,6 +40,7 @@ export function getBuildParameters(cliArguments) {
     verbose = false,
     versionName = '0.0.0',
     sentryDsn = process.env.SENTRY_DSN,
+    arch = '',
   } = minimist(cliArguments);
 
   if (platform && !VALID_PLATFORMS.includes(platform)) {
@@ -64,5 +65,6 @@ export function getBuildParameters(cliArguments) {
       buildMode === 'release' ? versionName : `${versionName}-${buildMode}`,
     sentryDsn,
     buildNumber: Math.floor(Date.now() / MS_PER_HOUR),
+    arch,
   };
 }
