@@ -108,6 +108,41 @@ jobs:
       - name: Build Linux Client
         run: npm run action client/electron/build linux
 
+  linux_arm64_debug_build:
+    name: Linux arm64 Debug Build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    needs: [web_test, backend_test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: |
+          sudo apt update && sudo apt install chromium-browser
+          npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Build Linux Client
+        # electron-builder has no arm64 version fpm, so install it from
+        # gem and force to use system one. Based on this workaround:
+        # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
+        run: |
+          sudo gem install fpm
+          export USE_SYSTEM_FPM=true
+          npm run action client/electron/build linux -- --arch arm64
+
   windows_debug_build:
     name: Windows Debug Build
     runs-on: windows-2025
