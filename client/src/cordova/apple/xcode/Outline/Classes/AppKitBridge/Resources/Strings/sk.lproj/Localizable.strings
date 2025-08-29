@@ -1,4 +1,4 @@
-"connected_server_state" = "Pripojené";
-"disconnected_server_state" = "Odpojené";
 "tray_open_window" = "Otvoriť";
 "quit" = "Ukončiť";
+"disconnect_button_label" = "Odpojiť";
+"connect_button_label" = "Pripojiť";

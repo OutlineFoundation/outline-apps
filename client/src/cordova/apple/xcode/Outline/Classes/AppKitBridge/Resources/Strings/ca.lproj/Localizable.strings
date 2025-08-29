@@ -1,4 +1,4 @@
-"connected_server_state" = "Connectat";
-"disconnected_server_state" = "Desconnectat";
 "tray_open_window" = "Obre";
 "quit" = "Surt";
+"disconnect_button_label" = "Desconnecta";
+"connect_button_label" = "Connecta";

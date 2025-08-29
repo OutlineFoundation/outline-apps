@@ -1,4 +1,4 @@
-"connected_server_state" = "Yhdistetty";
-"disconnected_server_state" = "Yhteys katkaistu";
 "tray_open_window" = "Avaa";
 "quit" = "Sulje";
+"disconnect_button_label" = "Katkaise yhteys";
+"connect_button_label" = "Yhdistä";

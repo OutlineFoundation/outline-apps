@@ -46,12 +46,12 @@ class StatusItemController: NSObject {
             comment: "Tray menu entry to quit the application."
         )
         static let connect = NSLocalizedString(
-            "connect",
+            "connect_button_label",
             bundle: Bundle(for: StatusItemController.self),
             comment: "Menu item to connect to VPN."
         )
         static let disconnect = NSLocalizedString(
-            "disconnect",
+            "disconnect_button_label",
             bundle: Bundle(for: StatusItemController.self),
             comment: "Menu item to disconnect from VPN."
         )

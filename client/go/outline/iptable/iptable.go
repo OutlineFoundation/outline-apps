@@ -20,7 +20,7 @@ import (
 
 type IPTable[V any] interface {
 	AddPrefix(prefix netip.Prefix, value V) error
-	Lookup(ip netip.Addr) (V, bool)
+	Lookup(ip netip.Addr) V
 }
 
 // Compile-time check
@@ -58,7 +58,7 @@ func (table *ipTable[V]) AddPrefix(prefix netip.Prefix, dialer V) error {
 	return nil
 }
 
-func lookupInBuckets[V any](lookupAddress netip.Addr, buckets []map[netip.Addr]V) (V, bool) {
+func lookupInBuckets[V any](lookupAddress netip.Addr, buckets []map[netip.Addr]V) V {
 	for bits := len(buckets) - 1; bits >= 0; bits-- {
 		bucket := buckets[bits]
 		if bucket == nil {
@@ -68,15 +68,15 @@ func lookupInBuckets[V any](lookupAddress netip.Addr, buckets []map[netip.Addr]V
 		value, exists := bucket[netip.PrefixFrom(lookupAddress, bits).Masked().Addr()]
 
 		if exists {
-			return value, true
+			return value
 		}
 	}
 
 	var zeroV V
-	return zeroV, false
+	return zeroV
 }
 
-func (table *ipTable[V]) Lookup(lookupAddress netip.Addr) (V, bool) {
+func (table *ipTable[V]) Lookup(lookupAddress netip.Addr) V {
 	if lookupAddress.Is4() {
 		return lookupInBuckets(lookupAddress, table.ipv4Buckets[:])
 	} else {

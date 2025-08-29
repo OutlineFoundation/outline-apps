@@ -1,4 +1,4 @@
-"connected_server_state" = "कनेक्ट गरिएको छ";
-"disconnected_server_state" = "डिस्कनेक्ट गरिएको छ";
 "tray_open_window" = "खोल्नुहोस्";
 "quit" = "बाहिरिनुहोस्";
+"disconnect_button_label" = "डिस्कनेक्ट गर्नुहोस्";
+"connect_button_label" = "कनेक्ट गर्नुहोस्";

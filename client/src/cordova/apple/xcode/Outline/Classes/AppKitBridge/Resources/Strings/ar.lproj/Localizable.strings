@@ -1,4 +1,4 @@
-"connected_server_state" = "متصل";
-"disconnected_server_state" = "غير متصل";
 "tray_open_window" = "فتح";
 "quit" = "إنهاء";
+"disconnect_button_label" = "قطع الاتصال";
+"connect_button_label" = "اتصال";

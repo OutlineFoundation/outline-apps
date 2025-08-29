@@ -1,4 +1,4 @@
-"connected_server_state" = "Terhubung";
-"disconnected_server_state" = "Tidak terhubung";
 "tray_open_window" = "Buka";
 "quit" = "Tutup";
+"disconnect_button_label" = "Berhenti hubungkan";
+"connect_button_label" = "Sambungkan";

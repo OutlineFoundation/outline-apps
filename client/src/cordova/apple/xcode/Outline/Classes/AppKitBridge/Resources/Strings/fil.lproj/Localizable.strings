@@ -1,4 +1,4 @@
-"connected_server_state" = "Nakakonekta na";
-"disconnected_server_state" = "Nadiskonekta";
 "tray_open_window" = "Buksan";
 "quit" = "Umalis";
+"disconnect_button_label" = "Idiskonekta";
+"connect_button_label" = "Ikonekta";

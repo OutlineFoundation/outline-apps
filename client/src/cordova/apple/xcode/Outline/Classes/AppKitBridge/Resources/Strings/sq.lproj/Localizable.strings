@@ -1,4 +1,4 @@
-"connected_server_state" = "Lidhur";
-"disconnected_server_state" = "Shkëputur";
 "tray_open_window" = "Hap";
 "quit" = "Dil";
+"disconnect_button_label" = "Shkëput";
+"connect_button_label" = "Lidh";

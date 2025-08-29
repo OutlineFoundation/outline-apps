@@ -1,4 +1,4 @@
-"connected_server_state" = "Повезано је";
-"disconnected_server_state" = "Веза је прекинута";
 "tray_open_window" = "Отвори";
 "quit" = "Затвори";
+"disconnect_button_label" = "Прекини везу";
+"connect_button_label" = "Повежи се";

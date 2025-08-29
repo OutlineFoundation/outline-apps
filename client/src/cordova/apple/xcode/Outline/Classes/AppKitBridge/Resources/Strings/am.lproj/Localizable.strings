@@ -1,4 +1,4 @@
-"connected_server_state" = "ተገናኝቷል";
-"disconnected_server_state" = "ተቋርጧል";
 "tray_open_window" = "ክፈት";
 "quit" = "ጨርስ";
+"disconnect_button_label" = "የእርስዎ ግብረመልስ";
+"connect_button_label" = "አገናኝ";

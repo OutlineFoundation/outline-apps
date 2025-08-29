@@ -24,7 +24,8 @@
     "*.mjs"
   ],
   "include": [
-    "src",
-    "electron"
+    "electron",
+    "go",
+    "src"
   ]
 }

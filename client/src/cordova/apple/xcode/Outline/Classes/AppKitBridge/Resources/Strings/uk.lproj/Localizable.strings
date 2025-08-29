@@ -1,4 +1,4 @@
-"connected_server_state" = "Підключено";
-"disconnected_server_state" = "Відключено";
 "tray_open_window" = "Відкрити";
 "quit" = "Вийти";
+"disconnect_button_label" = "Відключити";
+"connect_button_label" = "Підключити";

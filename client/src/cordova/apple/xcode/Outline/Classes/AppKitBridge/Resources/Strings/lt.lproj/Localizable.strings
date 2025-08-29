@@ -1,4 +1,4 @@
-"connected_server_state" = "Prisijungta";
-"disconnected_server_state" = "Atsijungta";
 "tray_open_window" = "Atidaryti";
 "quit" = "Išeiti";
+"disconnect_button_label" = "Atsijungti";
+"connect_button_label" = "Prisijungti";

@@ -1,4 +1,4 @@
 "tray_open_window" = "Open";
 "quit" = "Quit";
-"disconnect" = "Disconnect";
-"connect" = "Connect";
+"disconnect_button_label" = "Disconnect";
+"connect_button_label" = "Connect";

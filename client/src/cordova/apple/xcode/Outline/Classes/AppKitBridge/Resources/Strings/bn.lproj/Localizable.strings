@@ -1,4 +1,4 @@
-"connected_server_state" = "কানেক্ট করা আছে";
-"disconnected_server_state" = "ডিসকানেক্ট হয়ে গেছে";
 "tray_open_window" = "খুলুন";
 "quit" = "বেরিয়ে আসুন";
+"disconnect_button_label" = "ডিসকানেক্ট করুন";
+"connect_button_label" = "কানেক্ট করুন";

@@ -1,4 +1,4 @@
-"connected_server_state" = "Байланыс орнатылды.";
-"disconnected_server_state" = "Ажыратылған";
 "tray_open_window" = "Ашу";
 "quit" = "Шығу";
+"disconnect_button_label" = "Ажырату";
+"connect_button_label" = "Жалғау";

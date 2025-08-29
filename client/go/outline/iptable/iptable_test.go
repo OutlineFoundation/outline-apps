@@ -40,8 +40,8 @@ func TestIPRoutingTable_Empty(t *testing.T) {
 	table := NewIPTable[string]()
 	ip := mustParseAddr("192.0.2.1")
 
-	_, ok := table.Lookup(ip)
-	if ok {
+	val := table.Lookup(ip)
+	if val != "" {
 		t.Errorf("Lookup(%v) on empty table unexpectedly found a value", ip)
 	}
 }
@@ -70,11 +70,7 @@ func TestIPRoutingTable_BasicLookup(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			gotValue, gotOk := table.Lookup(tc.ip)
-
-			if gotOk != tc.expectFound {
-				t.Errorf("Lookup(%v) ok = %v; want %v", tc.ip, gotOk, tc.expectFound)
-			}
+			gotValue := table.Lookup(tc.ip)
 
 			// Only check the value if we expected to find something
 			if tc.expectFound && gotValue != tc.wantValue {
@@ -118,11 +114,8 @@ func TestIPRoutingTable_LongestPrefixLookup(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			gotValue, gotOk := table.Lookup(tc.ip)
+			gotValue := table.Lookup(tc.ip)
 
-			if gotOk != tc.expectFound {
-				t.Errorf("Lookup(%v) ok = %v; want %v", tc.ip, gotOk, tc.expectFound)
-			}
 			if tc.expectFound && gotValue != tc.wantValue {
 				t.Errorf("Lookup(%v) = %q, want %q", tc.ip, gotValue, tc.wantValue)
 			}
@@ -158,11 +151,8 @@ func TestIPRoutingTable_IPv6Lookup(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			gotValue, gotOk := table.Lookup(tc.ip)
+			gotValue := table.Lookup(tc.ip)
 
-			if gotOk != tc.expectFound {
-				t.Errorf("Lookup(%v) ok = %v; want %v", tc.ip, gotOk, tc.expectFound)
-			}
 			if tc.expectFound && gotValue != tc.wantValue {
 				t.Errorf("Lookup(%v) = %q, want %q", tc.ip, gotValue, tc.wantValue)
 			}
@@ -228,11 +218,8 @@ func TestIPRoutingTable_MixedIPv4IPv6(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			gotValue, gotOk := currentTable.Lookup(tc.ip)
+			gotValue := currentTable.Lookup(tc.ip)
 
-			if gotOk != tc.expectFound {
-				t.Errorf("Lookup(%v) ok = %v; want %v", tc.ip, gotOk, tc.expectFound)
-			}
 			if tc.expectFound && gotValue != tc.wantValue {
 				t.Errorf("Lookup(%v) = %q, want %q", tc.ip, gotValue, tc.wantValue)
 			}
@@ -269,11 +256,8 @@ func TestIPRoutingTable_SameLengthPrefixes(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			gotValue, gotOk := table.Lookup(tc.ip)
+			gotValue := table.Lookup(tc.ip)
 
-			if gotOk != tc.expectFound {
-				t.Errorf("Lookup(%v) ok = %v; want %v", tc.ip, gotOk, tc.expectFound)
-			}
 			if tc.expectFound && gotValue != tc.wantValue {
 				t.Errorf("Lookup(%v) = %q, want %q", tc.ip, gotValue, tc.wantValue)
 			}
@@ -296,11 +280,8 @@ func TestIPRoutingTable_OverwriteRule(t *testing.T) {
 	}
 
 	ip := mustParseAddr("10.1.2.3")
-	gotValue, gotOk := table.Lookup(ip)
+	gotValue := table.Lookup(ip)
 
-	if !gotOk {
-		t.Errorf("Lookup(%v) failed unexpectedly, want found", ip)
-	}
 	if gotValue != "second_value" {
 		t.Errorf("Lookup(%v) = %q, want %q (expected overwrite)", ip, gotValue, "second_value")
 	}

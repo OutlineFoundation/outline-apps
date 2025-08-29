@@ -1,4 +1,4 @@
-"connected_server_state" = "Ansluten";
-"disconnected_server_state" = "Frånkopplad";
 "tray_open_window" = "Öppna";
 "quit" = "Avsluta";
+"disconnect_button_label" = "Koppla från";
+"connect_button_label" = "Anslut";

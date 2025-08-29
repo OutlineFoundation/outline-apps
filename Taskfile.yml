@@ -31,4 +31,4 @@ tasks:
   addlicense:
     desc: Add missing license headers
     cmds:
-      - go run github.com/google/addlicense@latest {{.CLI_ARGS}} -c "The Outline Authors" -l apache -ignore 'output/**' -ignore 'node_modules/**' -ignore 'third_party/**' -v .
+      - go tool addlicense {{.CLI_ARGS}} -c "The Outline Authors" -l apache -ignore 'output/**' -ignore 'node_modules/**' -ignore 'third_party/**' -v .

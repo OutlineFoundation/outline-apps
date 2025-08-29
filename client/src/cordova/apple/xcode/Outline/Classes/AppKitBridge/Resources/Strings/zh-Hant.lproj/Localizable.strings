@@ -1,4 +1,4 @@
-"connected_server_state" = "已連線";
-"disconnected_server_state" = "已中斷連線";
 "tray_open_window" = "開啟";
 "quit" = "退出";
+"disconnect_button_label" = "中斷連線";
+"connect_button_label" = "連線";

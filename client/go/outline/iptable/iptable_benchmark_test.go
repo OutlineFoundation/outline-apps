@@ -153,9 +153,8 @@ func BenchmarkIPRoutingTable_Lookup(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ipToMatch := benchmarkMatchAddrs[i%len(benchmarkMatchAddrs)]
 
-		v, ok := table.Lookup(ipToMatch)
+		v := table.Lookup(ipToMatch)
 
 		benchVal = v
-		benchOk = ok
 	}
 }

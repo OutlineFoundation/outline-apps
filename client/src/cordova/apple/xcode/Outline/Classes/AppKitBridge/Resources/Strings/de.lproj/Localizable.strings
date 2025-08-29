@@ -1,4 +1,4 @@
-"connected_server_state" = "Verbunden";
-"disconnected_server_state" = "Nicht verbunden";
 "tray_open_window" = "Öffnen";
 "quit" = "Beenden";
+"disconnect_button_label" = "Verbindung trennen";
+"connect_button_label" = "Verbinden";

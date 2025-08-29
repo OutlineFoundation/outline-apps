@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	neturl "net/url"
 	"strconv"
 	"strings"
 
@@ -157,9 +156,9 @@ type shadowsocksParams struct {
 func parseShadowsocksConfig(node configyaml.ConfigNode) (*ShadowsocksConfig, error) {
 	switch typed := node.(type) {
 	case string:
-		urlConfig, err := neturl.Parse(typed)
+		urlConfig, err := url.Parse(typed)
 		if err != nil {
-			return nil, fmt.Errorf("string config is not a valid URL")
+			return nil, fmt.Errorf("string config is not a valid URL: %w", err)
 		}
 		return parseShadowsocksURL(*urlConfig)
 	case map[string]any:
@@ -281,7 +280,7 @@ func parseShadowsocksLegacyBase64URL(url url.URL) (*ShadowsocksConfig, error) {
 	} else {
 		fragment = ""
 	}
-	newURL, err := neturl.Parse(strings.ToLower(url.Scheme) + "://" + host + fragment)
+	newURL, err := url.Parse(strings.ToLower(url.Scheme) + "://" + host + fragment)
 	if err != nil {
 		// if parsing fails, return the original url with error
 		return nil, fmt.Errorf("failed to parse config part: %w", err)

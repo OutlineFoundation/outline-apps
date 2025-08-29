@@ -1,4 +1,4 @@
-"connected_server_state" = "Qoşuldu";
-"disconnected_server_state" = "Bağlantı kəsildi";
 "tray_open_window" = "Açın";
 "quit" = "Çıxın";
+"disconnect_button_label" = "Bağlantını kəsin";
+"connect_button_label" = "Qoşulun";

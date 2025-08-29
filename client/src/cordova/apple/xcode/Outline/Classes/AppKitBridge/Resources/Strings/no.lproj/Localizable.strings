@@ -1,4 +1,4 @@
-"connected_server_state" = "Tilkoblet";
-"disconnected_server_state" = "Koblet fra";
 "tray_open_window" = "Åpne";
 "quit" = "Avslutt";
+"disconnect_button_label" = "Koble fra";
+"connect_button_label" = "Koble til";
