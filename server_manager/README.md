@@ -54,6 +54,6 @@ The per-platform standalone apps will be at `output/build/server_manager/electro
 To enable error reporting through [Sentry](https://sentry.io/) for local builds, run:
 
 ```bash
-export SENTRY_DSN=[Sentry development API key]
+export SENTRY_DSN=[Sentry DSN URL]
 npm run action server_manager/electron/start ${PLATFORM}
 ```

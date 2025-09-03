@@ -46,4 +46,4 @@ PATH="${PATH}:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/cmdline-tools/tools
 # To find the latest version's label:
 #   sdkmanager --list|grep build-tools
 # NDK (side by side) version must be kept in sync with the default build tools NDK version.
-yes | sdkmanager "build-tools;35.0.0" "ndk;26.1.10909125"
+yes | sdkmanager "build-tools;35.0.0" "ndk;28.2.13676358"
