@@ -147,6 +147,6 @@
   },
   "scripts": {
     "clean": "rm -rf output node_modules www platforms plugins",
-    "lint:lit": "lit-analyzer src/www/views"
+    "lint:lit": "lit-analyzer web/views"
   }
 }

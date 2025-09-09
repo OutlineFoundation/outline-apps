@@ -16,7 +16,7 @@ import {invokeGoMethod, registerCallback} from './go_plugin';
 import {
   StartRequestJson,
   TunnelStatus,
-} from '../src/www/app/outline_server_repository/vpn';
+} from '../web/app/outline_server_repository/vpn';
 
 // TODO: Separate this config into LinuxVpnConfig and WindowsVpnConfig. Some fields may share.
 interface VpnConfig {

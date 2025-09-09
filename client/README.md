@@ -21,15 +21,15 @@ npm install
 
 ## Building the shared web app
 
-Outline clients share the same web app across all platforms. This code is located in the src/www directory. If you are making changes to the shared web app and do not need to test platform-specific functionality, you can test in a desktop browser by running:
+Outline clients share the same web app across all platforms. This code is located in the web directory. If you are making changes to the shared web app and do not need to test platform-specific functionality, you can test in a desktop browser by running:
 
 ```sh
-npm run action client/src/www/start
+npm run action client/web/start
 ```
 
 The latter command will open a browser instance running the app. Browser platform development will use fake servers to test successful and unsuccessful connections.
 
-The app logic is located in [src/www/app](src/www/app). UI components are located in [src/www/ui_components](src/www/ui_components). If you want to work specifically on an individual UI element, try the storybook!:
+The app logic is located in [web/app](web/app). UI components are located in [web/ui_components](web/ui_components). If you want to work specifically on an individual UI element, try the storybook!:
 
 ```sh
 npm run action storybook

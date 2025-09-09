@@ -20,7 +20,7 @@ import karma from 'karma';
 import minimist from 'minimist';
 import puppeteer from 'puppeteer';
 
-const KARMA_CONFIG_PATH = ['client', 'src', 'www', 'karma.conf.js'];
+const KARMA_CONFIG_PATH = ['client', 'web', 'karma.conf.js'];
 
 /**
  * @description Runs the Karma tests against the web UI.

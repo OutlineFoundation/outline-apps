@@ -26,6 +26,7 @@
   "include": [
     "electron",
     "go",
-    "src"
+    "src",
+    "web"
   ]
 }

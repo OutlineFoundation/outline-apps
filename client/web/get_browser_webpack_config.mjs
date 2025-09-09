@@ -14,7 +14,7 @@
 
 import cordovaConfig from './webpack_cordova.mjs';
 import electronConfig from './webpack_electron.mjs';
-import {getWebpackBuildMode} from '../../build/get_webpack_build_mode.mjs';
+import {getWebpackBuildMode} from '../build/get_webpack_build_mode.mjs';
 
 /*
   Inputs:

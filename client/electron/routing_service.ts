@@ -21,9 +21,9 @@ import * as fsextra from 'fs-extra';
 import * as sudo from 'sudo-prompt';
 
 import {pathToEmbeddedOutlineService} from './app_paths';
-import {TunnelStatus} from '../src/www/app/outline_server_repository/vpn';
-import {ErrorCode} from '../src/www/model/errors';
-import {PlatformError, GoErrorCode} from '../src/www/model/platform_error';
+import {TunnelStatus} from '../web/app/outline_server_repository/vpn';
+import {ErrorCode} from '../web/model/errors';
+import {PlatformError, GoErrorCode} from '../web/model/platform_error';
 
 const isLinux = platform() === 'linux';
 const isWindows = platform() === 'win32';
@@ -210,7 +210,7 @@ export class RoutingDaemon {
     let response: RoutingServiceResponse | undefined = undefined;
     try {
       response = JSON.parse(data.toString());
-    } catch (error) {
+    } catch {
       console.error(
         `failed to parse routing service response: ${data.toString()}`
       );

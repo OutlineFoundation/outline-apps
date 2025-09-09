@@ -56,5 +56,6 @@ jobs:
             **/*.mjs
 
       - name: Lint
-        if: ${{ steps.changed-files.outputs.all_changed_files_count > 0 }}
-        run: npx gts lint ${{ steps.changed-files.outputs.all_changed_files }}
+        if: ${{ steps.changed-files.outputs.modified_files_count > 0 || steps.changed-files.outputs.added_file_count > 0 }}
+        run: npx gts lint ${{ steps.changed-files.outputs.modified_files }} ${{ steps.changed-files.outputs.added_files }}
+      

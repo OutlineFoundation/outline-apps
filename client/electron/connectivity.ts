@@ -16,7 +16,7 @@ import * as dns from 'dns';
 
 import {timeoutPromise} from '@outline/infrastructure/timeout_promise';
 
-import * as errors from '../src/www/model/errors';
+import * as errors from '../web/model/errors';
 
 const DNS_LOOKUP_TIMEOUT_MS = 10000;
 
@@ -29,7 +29,11 @@ export function lookupIp(hostname: string): Promise<string> {
     new Promise<string>((fulfill, reject) => {
       dns.lookup(hostname, 4, (e, address) => {
         if (e) {
-          return reject(new errors.ServerUnreachable('could not resolve proxy server hostname'));
+          return reject(
+            new errors.ServerUnreachable(
+              'could not resolve proxy server hostname'
+            )
+          );
         }
         fulfill(address);
       });

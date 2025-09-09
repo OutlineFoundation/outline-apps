@@ -44,8 +44,8 @@ import {VpnTunnel} from './vpn_tunnel';
 import {
   StartRequestJson,
   TunnelStatus,
-} from '../src/www/app/outline_server_repository/vpn';
-import * as errors from '../src/www/model/errors';
+} from '../web/app/outline_server_repository/vpn';
+import * as errors from '../web/model/errors';
 
 // TODO: can we define these macros in other .d.ts files with default values?
 // Build-time macros injected by webpack's DefinePlugin:

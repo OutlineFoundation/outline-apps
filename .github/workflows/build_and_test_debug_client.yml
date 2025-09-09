@@ -49,10 +49,10 @@ jobs:
         run: npm set cache .npm && npm ci
 
       - name: Build Web App
-        run: npm run action client/src/www/build
+        run: npm run action client/web/build
 
       - name: Test Web App
-        run: npm run action client/src/www/test
+        run: npm run action client/web/test
 
       # - uses: codecov/codecov-action@v3
       #   with:

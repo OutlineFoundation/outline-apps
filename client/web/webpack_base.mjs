@@ -75,7 +75,7 @@ export const baseConfig = {
 export const browserConfig = {
   entry: [path.resolve(__dirname, 'style.css')],
   output: {
-    path: path.resolve(__dirname, '..', '..', 'www'),
+    path: path.resolve(__dirname, '..', 'www'),
     filename: 'main.js',
   },
   module: {

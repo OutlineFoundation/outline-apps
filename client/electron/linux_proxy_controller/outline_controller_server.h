@@ -35,17 +35,21 @@ namespace outline {
  * @brief A session that serves requests from a specific Outline client, and
  *        configures the system accordingly with root privileges.
  */
-class OutlineClientSession : public std::enable_shared_from_this<OutlineClientSession> {
+class OutlineClientSession
+    : public std::enable_shared_from_this<OutlineClientSession> {
 public:
   /**
-   * @brief Construct a new OutlineClientSession object with a specific channel as well
-   *        as the underlying worker `outline_proxy_controller`.
-   * 
-   * @param channel A socket that the session will be reading from and writing to.
-   * @param outline_proxy_controller A worker which can be used to configure the system.
+   * @brief Construct a new OutlineClientSession object with a specific channel
+   * as well as the underlying worker `outline_proxy_controller`.
+   *
+   * @param channel A socket that the session will be reading from and writing
+   * to.
+   * @param outline_proxy_controller A worker which can be used to configure the
+   * system.
    */
-  OutlineClientSession(boost::asio::local::stream_protocol::socket &&channel,
-                       std::shared_ptr<OutlineProxyController> outline_proxy_controller);
+  OutlineClientSession(
+      boost::asio::local::stream_protocol::socket &&channel,
+      std::shared_ptr<OutlineProxyController> outline_proxy_controller);
 
   ~OutlineClientSession();
 
@@ -59,17 +63,19 @@ public:
 
 private:
   /**
-   * @brief Start serving requests from a specific Outline client asynchronously.
+   * @brief Start serving requests from a specific Outline client
+   * asynchronously.
    */
   boost::asio::awaitable<void> ServeClientCommands();
 
   /**
-   * @brief Start monitoring network changes and update connection status asynchronously.
+   * @brief Start monitoring network changes and update connection status
+   * asynchronously.
    */
   boost::asio::awaitable<void> MonitorNetworkChanges();
 
 private:
-  /** @brief `TunnelStatus` in "src/www/app/tunnel.ts" */
+  /** @brief `TunnelStatus` in "web/app/tunnel.ts" */
   enum class ConnectionState : int {
     kConnected = 0,
     kDisconnected = 1,
@@ -88,9 +94,11 @@ private:
   static CommandResult SucceededResult(const std::string &action);
 
   /** @brief Factory method to create a failed result. */
-  static CommandResult ErrorResult(ErrorCode, const std::string &err_msg, const std::string &action);
+  static CommandResult ErrorResult(ErrorCode, const std::string &err_msg,
+                                   const std::string &action);
 
-  /** @brief Factory method to create a connection state changed notification. */
+  /** @brief Factory method to create a connection state changed notification.
+   */
   static CommandResult ConnectionStateChangedResult(ConnectionState state);
 
 private:
@@ -128,7 +136,7 @@ public:
    * @param owning_user The owner uid of the Unix socket (typically it is the
    *                    user who installs Outline).
    */
-  OutlineControllerServer(const std::string& unix_socket, uid_t owning_user);
+  OutlineControllerServer(const std::string &unix_socket, uid_t owning_user);
 
 public:
   /**
@@ -144,7 +152,7 @@ private:
   uid_t socket_owner_id_;
 };
 
-}  // namespace outline
-#else  // defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
+} // namespace outline
+#else // defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
 #error Local sockets not available on this platform.
-#endif  // defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
+#endif // defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)

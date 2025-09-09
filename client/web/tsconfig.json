@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../www",
+    "lib": [
+      "es2022",
+      "dom",
+      "dom.iterable"
+    ],
+    "paths": {
+      // without this, import 'electron' resolves to ./client/electron/index.ts
+      "electron": [
+        "./node_modules/electron/index.js"
+      ]
+    }
+  }
+}

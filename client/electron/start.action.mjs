@@ -30,13 +30,20 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 export async function main(...parameters) {
   const {platform, buildMode} = getBuildParameters(parameters);
 
-  await runAction('client/src/www/build', platform, `--buildMode=${buildMode}`);
+  await runAction('client/web/build', platform, `--buildMode=${buildMode}`);
   await runAction('client/electron/build_main', ...parameters);
-  await runAction('client/electron/build', platform, `--buildMode=${buildMode}`);
+  await runAction(
+    'client/electron/build',
+    platform,
+    `--buildMode=${buildMode}`
+  );
 
   process.env.OUTLINE_DEBUG = buildMode === 'debug';
 
-  await spawnStream(electron, path.join(getRootDir(), 'output', 'client', 'electron'));
+  await spawnStream(
+    electron,
+    path.join(getRootDir(), 'output', 'client', 'electron')
+  );
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {

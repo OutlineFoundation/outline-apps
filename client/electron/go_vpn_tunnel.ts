@@ -21,7 +21,7 @@ import {checkUDPConnectivity, checkUDPConnectivityWindows} from './go_helpers';
 import {ChildProcessHelper, ProcessTerminatedSignalError} from './process';
 import {RoutingDaemon} from './routing_service';
 import {VpnTunnel} from './vpn_tunnel';
-import {TunnelStatus} from '../src/www/app/outline_server_repository/vpn';
+import {TunnelStatus} from '../web/app/outline_server_repository/vpn';
 
 const IS_LINUX = platform() === 'linux';
 const IS_WINDOWS = platform() === 'win32';

@@ -10,7 +10,10 @@
       "./server_manager/tsconfig.json"
     ]
   },
-  "plugins": ["compat", "import"],
+  "plugins": [
+    "compat",
+    "import"
+  ],
   "rules": {
     "compat/compat": "error",
     "import/no-restricted-paths": [
@@ -23,39 +26,46 @@
           {
             "target": "./infrastructure",
             "from": ".",
-            "except": ["./infrastructure", "./node_modules"]
+            "except": [
+              "./infrastructure",
+              "./node_modules"
+            ]
           },
-          // Similar to above but for src/www/model, but you can use files from both the
-          // src/www/model and src/www/infrastructure paths.
+          // Similar to above but for web/model, but you can use files from both the
+          // web/model and web/infrastructure paths.
           {
-            "target": "./client/src/www/model",
+            "target": "./client/web/model",
             "from": ".",
-            "except": ["./client/src/www/model", "./infrastructure", "./node_modules"]
+            "except": [
+              "./client/web/model",
+              "./infrastructure",
+              "./node_modules"
+            ]
           },
           // Prevents the internals of the outline_server_repository from being used publicly in the app.
           {
-            "target": "./client/src/www/app/*.ts",
-            "from": "./client/src/www/app/outline_server_repository/server.ts"
+            "target": "./client/web/app/*.ts",
+            "from": "./client/web/app/outline_server_repository/server.ts"
           },
           {
-            "target": "./client/src/www/app/*.ts",
-            "from": "./client/src/www/app/outline_server_repository/access_key_serialization.ts"
+            "target": "./client/web/app/*.ts",
+            "from": "./client/web/app/outline_server_repository/access_key_serialization.ts"
           },
           {
-            "target": "./client/src/www/views",
-            "from": "./client/src/www/model"
+            "target": "./client/web/views",
+            "from": "./client/web/model"
           },
           {
-            "target": "./client/src/www/ui_components",
-            "from": "./client/src/www/model"
+            "target": "./client/web/ui_components",
+            "from": "./client/web/model"
           },
           {
-            "target": "./client/src/www/views",
-            "from": "./client/src/www/app"
+            "target": "./client/web/views",
+            "from": "./client/web/app"
           },
           {
-            "target": "./client/src/www/ui_components",
-            "from": "./client/src/www/app"
+            "target": "./client/web/ui_components",
+            "from": "./client/web/app"
           }
         ]
       }
@@ -75,7 +85,9 @@
             "position": "before"
           }
         ],
-        "pathGroupsExcludedImportTypes": ["@material/**"],
+        "pathGroupsExcludedImportTypes": [
+          "@material/**"
+        ],
         "newlines-between": "always",
         "alphabetize": {
           "order": "asc",
@@ -83,28 +95,43 @@
         }
       }
     ],
-    "n/no-unsupported-features/node-builtins": ["error", {
-      "version": ">=18.0.0"
-    }],
-    "n/no-unsupported-features/es-builtins": ["error", {
-      "version": ">=18.0.0"
-    }],
-    "n/no-unsupported-features/es-syntax": ["error", {
-      "version": ">=18.0.0"
-    }],
-    "@typescript-eslint/no-unused-vars": ["error", {
-      "varsIgnorePattern": "^_",
-      "argsIgnorePattern": "^_"
-    }],
+    "n/no-unsupported-features/node-builtins": [
+      "error",
+      {
+        "version": ">=18.0.0"
+      }
+    ],
+    "n/no-unsupported-features/es-builtins": [
+      "error",
+      {
+        "version": ">=18.0.0"
+      }
+    ],
+    "n/no-unsupported-features/es-syntax": [
+      "error",
+      {
+        "version": ">=18.0.0"
+      }
+    ],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-floating-promises": [
       "error",
       {
         "ignoreVoid": true
       }
     ],
-    "no-unused-vars": ["error", {
-      "varsIgnorePattern": "^_",
-      "argsIgnorePattern": "^_"
-    }]
+    "no-unused-vars": [
+      "error",
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_"
+      }
+    ]
   }
 }

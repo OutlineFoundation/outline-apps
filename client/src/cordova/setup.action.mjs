@@ -38,7 +38,7 @@ export async function main(...parameters) {
   const {platform, buildMode, verbose, buildNumber, versionName} =
     getBuildParameters(parameters);
 
-  await runAction('client/src/www/build', ...parameters);
+  await runAction('client/web/build', ...parameters);
   await runAction('client/go/build', ...parameters);
 
   const CORDOVA_PROJECT_DIR = path.resolve(getRootDir(), 'client');

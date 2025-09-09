@@ -23,7 +23,7 @@ namespace outline {
 
 /**
  * @brief The standard error code constants used by outline.
- * @remarks The codes are copied from "/src/www/model/errors.ts".
+ * @remarks The codes are copied from "/web/model/errors.ts".
  */
 enum class ErrorCode {
   kOk = 0,
@@ -43,10 +43,10 @@ enum class ErrorCode {
 
 /**
  * @brief Get a singleton instance representing outline error category.
- * 
+ *
  * @return const std::error_category& The outline error category.
  */
-const std::error_category& OutlineErrorCategory();
+const std::error_category &OutlineErrorCategory();
 
 /**
  * @brief Construct an error_code from outline_error.
@@ -54,11 +54,11 @@ const std::error_category& OutlineErrorCategory();
  */
 std::error_code make_error_code(ErrorCode);
 
-}
+} // namespace outline
 
 namespace std {
 /**
  * @brief Register to STL for implicit conversion to error_code.
  */
-template<> struct is_error_code_enum<outline::ErrorCode> : true_type {};
-}
+template <> struct is_error_code_enum<outline::ErrorCode> : true_type {};
+} // namespace std
