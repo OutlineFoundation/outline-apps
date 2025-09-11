@@ -34,6 +34,10 @@ export default merge(baseConfig, {
         use: ['file-loader'],
       },
       {
+        test: /\.svg$/,
+        use: ['file-loader'],
+      },
+      {
         test: /\.txt$/i,
         loader: 'raw-loader',
       },

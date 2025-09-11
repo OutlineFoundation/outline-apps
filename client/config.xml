@@ -27,6 +27,7 @@
     <preference name="android-targetSdkVersion" value="35" />
     <preference name="AndroidLaunchMode" value="singleInstance" />
     <preference name="ShowSplashScreenSpinner" value="false" />
+    <preference name="Orientation" value="portrait" />
 
     <!-- Android -->
     <platform name="android">

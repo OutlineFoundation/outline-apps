@@ -27,6 +27,10 @@
     "description": "The title of a page giving details about the app.",
     "message": "About"
   },
+  "add_access_key_dialog_error_text": {
+    "description": "An error message shown when the user tries to add a server with an invalid access key.",
+    "message": "Invalid access key."
+  },
   "add_access_key_dialog_header": {
     "description": "The title of a dialog box that prompts the user to add a new access key.",
     "message": "Add VPN access key"
@@ -46,10 +50,6 @@
   "add_access_key_dialog_label": {
     "description": "The label for a text box where the user can paste an access key to add a new server.",
     "message": "Paste access key here"
-  },
-  "add_access_key_dialog_error_text": {
-    "description": "An error message shown when the user tries to add a server with an invalid access key.",
-    "message": "Invalid access key."
   },
   "appearance_dark": {
     "description": "The text for a main menu item that takes the user to a page to set the application appearance to dark mode.",
@@ -157,6 +157,10 @@
     "description": "Introduction message to users who are looking to contact support.",
     "message": "Tell us how we can help. Please explain your issue in detail and do not enter personal information that is not requested below."
   },
+  "contact_view_issue": {
+    "description": "Label of a Contact Support form input field.",
+    "message": "Outline issue"
+  },
   "contact_view_issue_billing": {
     "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
     "message": "I need assistance with a billing or subscription issue"
@@ -184,10 +188,6 @@
   "contact_view_issue_performance": {
     "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
     "message": "My internet access is slow while connected to my Outline VPN server"
-  },
-  "contact_view_issue": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Outline issue"
   },
   "contact_view_open_ticket": {
     "description": "Label for a Contact Support form asking if the user already has a pending ticket open with support.",
@@ -228,6 +228,22 @@
   "error_details": {
     "description": "Button pointing to additional details of an error shown to the user",
     "message": "Details"
+  },
+  "error_details_dialog_copied": {
+    "description": "The text of a button after we have copied the error details to the user's clipboard.",
+    "message": "Copied"
+  },
+  "error_details_dialog_copy": {
+    "description": "The text of a button to copy the error details to the clipboard.",
+    "message": "Copy"
+  },
+  "error_details_dialog_dismiss": {
+    "description": "The text of a button to close the error details dialog.",
+    "message": "Dismiss"
+  },
+  "error_details_dialog_header": {
+    "description": "The title of the dialog box that shows the details of an error.",
+    "message": "Error Details"
   },
   "error_feedback_submission": {
     "description": "An error message shown when the user is trying to send feedback to the application developers but it is failing.",
@@ -312,6 +328,10 @@
   "non_system_vpn_warning_title": {
     "description": "Title of a dialog that advises the user to check their internet browser's VPN connection.",
     "message": "Verify your browser connection"
+  },
+  "okay": {
+    "desciption": "The text on a button to confirm the current operation.",
+    "message": "Okay"
   },
   "outline_plugin_error_admin_permissions": {
     "description": "An error message when the application is not granted administrator permissions.",
@@ -449,6 +469,14 @@
       }
     }
   },
+  "server_complete_protection_info_dialog_content": {
+    "description": "The body text of a dialog box explaining what 'Complete Protection' means for a server connection. This is currently placeholder text.",
+    "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras eu fermentum odio, sed laoreet sem. Integer in hendrerit ligula, eget pellentesque velit. Maecenas id orci eu sapien efficitur accumsan."
+  },
+  "server_complete_protection_info_dialog_title": {
+    "description": "The title of a dialog box explaining what 'Complete Protection' means for a server connection.",
+    "message": "Complete Protection"
+  },
   "server_connected": {
     "description": "The success message shown in a toast after requesting a connection to a particular server.",
     "message": "Connected to “$SERVER_NAME$”",
@@ -507,22 +535,6 @@
       }
     }
   },
-  "error_details_dialog_header": {
-    "description": "The title of the dialog box that shows the details of an error.",
-    "message": "Error Details"
-  },
-  "error_details_dialog_copied": {
-    "description": "The text of a button after we have copied the error details to the user's clipboard.",
-    "message": "Copied"
-  },
-  "error_details_dialog_copy": {
-    "description": "The text of a button to copy the error details to the clipboard.",
-    "message": "Copy"
-  },
-  "error_details_dialog_dismiss": {
-    "description": "The text of a button to close the error details dialog.",
-    "message": "Dismiss"
-  },
   "server_default_name": {
     "description": "This is the default name for an added server when the type or name is not specified by the access key.",
     "message": "Proxy Server"
@@ -569,6 +581,14 @@
       }
     }
   },
+  "server_proxyless_info_dialog_content": {
+    "description": "The body text of a dialog box explaining what 'Proxyless Access' means for a server connection.",
+    "message": "This access key offers access to the open internet with limited protection.<br><br>With this key—<ul><li>Outline will not send any of your traffic to the internet by way of a VPN (proxy) server.</li><li>Alternative (proxyless) methods will be applied to make the traffic less identifiable to outside observers.</li></ul><br>This key may help you connect to the open internet if your VPN access key is not successfully connecting."
+  },
+  "server_proxyless_info_dialog_title": {
+    "description": "The title of a dialog box explaining what 'Proxyless Access' means for a server connection.",
+    "message": "Limited Protection: Proxyless Access Information"
+  },
   "server_rename": {
     "description": "The text of an option displayed in a server card's options menu to tell the application to display a different name for the server.",
     "message": "Rename"
@@ -576,6 +596,14 @@
   "server_rename_complete": {
     "description": "The success message after renaming a server in the application.",
     "message": "Server renamed"
+  },
+  "server_split_tunneling_info_dialog_content": {
+    "description": "The body text of a dialog box explaining what 'Split Tunneling' means for a server connection.",
+    "message": "This key offers limited protection when connecting to the open internet. Outline will bypass the VPN (proxy) server in certain cases.<br><br><ul><li>For some connections, Outline will connect directly to the internet.</li><li>For some connections, Outline will use an alternative method to make it hard for others to see what you connect to.</li></ul><br>This key may help you connect to the open internet if your VPN access key is not successfully connecting."
+  },
+  "server_split_tunneling_info_dialog_title": {
+    "description": "The title of a dialog box explaining what 'Split Tunneling' means for a server connection.",
+    "message": "Limited Protection: Split Tunneling Information"
   },
   "servers_menu_item": {
     "description": "The menu item text to navigate to the list of servers.",
@@ -601,13 +629,13 @@
     "description": "Label of a Contact Support form input field.",
     "message": "Description of the issue"
   },
-  "support_form_email_invalid": {
-    "description": "Error message shown to a user supplying an invalid email address on the Contact Support form.",
-    "message": "You have entered an invalid format."
-  },
   "support_form_email": {
     "description": "Label of a Contact Support form input field.",
     "message": "Email"
+  },
+  "support_form_email_invalid": {
+    "description": "Error message shown to a user supplying an invalid email address on the Contact Support form.",
+    "message": "You have entered an invalid format."
   },
   "support_form_outreach_consent": {
     "description": "Label for a consent checkbox that opts users in to being contacted in the future.",

@@ -1,0 +1,147 @@
+/*
+  Copyright 2025 The Outline Authors
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+import {LitElement, html, css} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
+import '@material/web/all.js';
+import {unsafeHTML} from 'lit/directives/unsafe-html.js';
+
+import completeProtectionHeaderImage from '../../../../../assets/dialog_headers/complete_protection.svg';
+import proxylessHeaderImage from '../../../../../assets/dialog_headers/proxyless.svg';
+import splitTunnelingHeaderImage from '../../../../../assets/dialog_headers/split_tunneling.svg';
+
+@customElement('server-info-dialog')
+class ServerInfoDialog extends LitElement {
+  @property({type: Boolean}) open: boolean = false;
+  @property({type: Object}) localize!: (key: string) => string;
+
+  @property({type: String}) headerImage: string;
+  @property({type: String}) titleMessageId: string;
+  @property({type: String}) contentMessageId: string;
+
+  static styles = css`
+    :host {
+      --md-sys-color-primary: var(--outline-primary);
+      --md-sys-shape-corner-extra-large: 2px;
+      --md-sys-shape-corner-full: 2px;
+
+      --md-dialog-container-color: var(
+        --outline-app-dialog-primary-background-color
+      );
+      --md-filled-text-field-container-color: var(--outline-input-bg);
+      --md-filled-text-field-input-text-color: var(--outline-input-text);
+    }
+
+    header {
+      padding: 0;
+      padding-bottom: initial;
+      flex-direction: column;
+    }
+
+    h1 {
+      box-sizing: border-box;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0px;
+      line-height: 28px;
+      padding: 0 20px;
+      text-align: left;
+      vertical-align: middle;
+      width: 100%;
+    }
+
+    article {
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 1%;
+    }
+
+    ul {
+      margin: 0;
+    }
+
+    fieldset {
+      border: none;
+      text-transform: uppercase;
+    }
+  `;
+
+  render() {
+    return html`
+      <md-dialog .open=${this.open} @close=${this.handleClose} quick>
+        <header slot="headline">
+          <img src="${this.headerImage}" />
+          <h1>${this.localize(this.titleMessageId)}</h1>
+        </header>
+        <article slot="content">
+          ${unsafeHTML(this.localize(this.contentMessageId))}
+        </article>
+        <fieldset slot="actions">
+          <md-text-button @click=${this.handleClose}
+            >${this.localize('okay')}</md-text-button
+          >
+        </fieldset>
+      </md-dialog>
+    `;
+  }
+
+  private handleClose() {
+    this.dispatchEvent(new CustomEvent('cancel'));
+  }
+}
+
+@customElement('server-proxyless-info-dialog')
+export class ServerProxylessInfoDialog extends ServerInfoDialog {
+  render() {
+    return html`
+      <server-info-dialog
+        .open=${this.open}
+        .localize=${this.localize}
+        .headerImage=${proxylessHeaderImage}
+        .titleMessageId=${'server-proxyless-info-dialog-title'}
+        .contentMessageId=${'server-proxyless-info-dialog-content'}
+      ></server-info-dialog>
+    `;
+  }
+}
+
+@customElement('server-split-tunneling-info-dialog')
+export class ServerSplitTunnelingInfoDialog extends ServerInfoDialog {
+  render() {
+    return html`
+      <server-info-dialog
+        .open=${this.open}
+        .localize=${this.localize}
+        .headerImage=${splitTunnelingHeaderImage}
+        .titleMessageId=${'server-split-tunneling-info-dialog-title'}
+        .contentMessageId=${'server-split-tunneling-info-dialog-content'}
+      ></server-info-dialog>
+    `;
+  }
+}
+
+@customElement('server-complete-protection-info-dialog')
+export class ServerCompleteProtectionInfoDialog extends ServerInfoDialog {
+  render() {
+    return html`
+      <server-info-dialog
+        .open=${this.open}
+        .localize=${this.localize}
+        .headerImage=${completeProtectionHeaderImage}
+        .titleMessageId=${'server-complete-protection-info-dialog-title'}
+        .contentMessageId=${'server-complete-protection-info-dialog-content'}
+      ></server-info-dialog>
+    `;
+  }
+}
