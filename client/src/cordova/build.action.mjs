@@ -21,6 +21,8 @@ import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
 import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import cordovaLib from 'cordova-lib';
+import * as dotenv from 'dotenv';
+
 const {cordova} = cordovaLib;
 
 import {getBuildParameters} from '../../build/get_build_parameters.mjs';
@@ -43,8 +45,6 @@ export async function main(...parameters) {
     );
   }
 
-  await runAction('client/web/build', ...parameters);
-  await runAction('client/go/build', ...parameters);
   await runAction('client/src/cordova/setup', ...parameters);
 
   if (verbose) {
@@ -55,6 +55,13 @@ export async function main(...parameters) {
 
   // this is so cordova doesn't complain about not being in a cordova project
   process.env.PWD = path.resolve(getRootDir(), 'client');
+
+  if (platform === 'android') {
+    await spawnStream('go', 'tool', 'task', 'client:android:configure');
+    dotenv.config({
+      path: path.resolve(getRootDir(), 'output', 'client', 'android', '.env'),
+    });
+  }
 
   switch (platform + buildMode) {
     case 'android' + 'debug':

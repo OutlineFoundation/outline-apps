@@ -145,6 +145,10 @@ func EstablishVPN(
 		slog.Error("failed to connect to the remote device", "err", err)
 		return
 	}
+	if err = c.proxy.GetHealthStatus(); err != nil {
+		slog.Error("remote device is not healthy", "err", err)
+		return
+	}
 	slog.Info("connected to the remote device")
 
 	if err = c.platform.Establish(ctx); err != nil {
@@ -152,19 +156,8 @@ func EstablishVPN(
 		return
 	}
 
-	c.wgCopy.Add(2)
-	go func() {
-		defer c.wgCopy.Done()
-		slog.Debug("copying traffic from tun device -> remote device...")
-		n, err := io.Copy(c.proxy, c.platform.TUN())
-		slog.Debug("tun device -> remote device traffic done", "n", n, "err", err)
-	}()
-	go func() {
-		defer c.wgCopy.Done()
-		slog.Debug("copying traffic from remote device -> tun device...")
-		n, err := io.Copy(c.platform.TUN(), c.proxy)
-		slog.Debug("remote device -> tun device traffic done", "n", n, "err", err)
-	}()
+	c.wgCopy.Go(func() { RelayTraffic(c.proxy, c.platform.TUN()) })
+	c.wgCopy.Go(func() { RelayTraffic(c.platform.TUN(), c.proxy) })
 
 	slog.Info("vpn connection established", "id", c.ID)
 	return c, nil

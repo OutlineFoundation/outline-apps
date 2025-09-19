@@ -31,6 +31,10 @@ type TCPAndUDPConnectivityResult struct {
 // It parallelizes the execution of TCP and UDP checks, and returns a [TCPAndUDPConnectivityResult]
 // containing a TCP error and a UDP error.
 // If the connectivity check was successful, the corresponding error field will be nil.
+//
+// TODO: remove once we migrated Windows from this
+//
+// Deprecated: use connectivity.Check[*]Connectivity instead
 func CheckTCPAndUDPConnectivity(client *Client) *TCPAndUDPConnectivityResult {
 	tcpErr, udpErr := connectivity.CheckTCPAndUDPConnectivity(client, client)
 	return &TCPAndUDPConnectivityResult{

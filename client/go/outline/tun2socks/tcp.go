@@ -28,6 +28,10 @@ type tcpHandler struct {
 }
 
 // NewTCPHandler returns a TCP connection handler.
+//
+// TODO: remove once we migrated Windows from this
+//
+// Deprecated: use lwip2transport.ConfigureDevice instead
 func NewTCPHandler(client transport.StreamDialer) core.TCPConnHandler {
 	return &tcpHandler{client}
 }

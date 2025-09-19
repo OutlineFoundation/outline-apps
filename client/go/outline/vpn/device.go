@@ -19,6 +19,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"sync"
 
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/connectivity"
 	perrs "github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
@@ -37,6 +38,11 @@ type RemoteDevice struct {
 
 	pkt              network.DelegatePacketProxy
 	remote, fallback network.PacketProxy
+
+	// health check fields
+	tcpMu        sync.Mutex
+	tcpCheckDone sync.WaitGroup
+	tcpErr       error
 }
 
 func ConnectRemoteDevice(
@@ -64,10 +70,12 @@ func ConnectRemoteDevice(
 		return nil, errSetupHandler("failed to create UDP handler for DNS-fallback", err)
 	}
 	slog.Debug("remote device local DNS-fallback UDP handler created")
-
-	if err = dev.RefreshConnectivity(ctx); err != nil {
-		return
+	if dev.pkt, err = network.NewDelegatePacketProxy(dev.fallback); err != nil {
+		return nil, errSetupHandler("failed to create combined UDP handler", err)
 	}
+
+	dev.tcpCheckDone.Go(dev.checkTCPHealthAndUpdate)
+	go dev.checkUDPHealthAndUpdate()
 
 	dev.ReadWriteCloser, err = lwip2transport.ConfigureDevice(sd, dev.pkt)
 	if err != nil {
@@ -86,40 +94,40 @@ func (dev *RemoteDevice) Close() (err error) {
 	return
 }
 
-// RefreshConnectivity refreshes the connectivity to the Outline server.
-func (d *RemoteDevice) RefreshConnectivity(ctx context.Context) (err error) {
-	if ctx.Err() != nil {
-		return errCancelled(ctx.Err())
-	}
+func (d *RemoteDevice) GetHealthStatus() error {
+	d.tcpCheckDone.Wait()
+	d.tcpMu.Lock()
+	defer d.tcpMu.Unlock()
+	return d.tcpErr
+}
 
-	slog.Debug("remote device is testing connectivity of server...")
-	tcpErr, udpErr := connectivity.CheckTCPAndUDPConnectivity(d.sd, d.pl)
-	if tcpErr != nil {
-		slog.Warn("remote device server connectivity test failed", "err", tcpErr)
-		return tcpErr
-	}
+// NotifyNetworkChanged notifies the device that the underlying network has changed.
+// It will re-test the UDP connectivity and update its UDP handler accordingly.
+func (d *RemoteDevice) NotifyNetworkChanged() {
+	go d.checkUDPHealthAndUpdate()
+}
 
-	var proxy network.PacketProxy
-	if udpErr != nil {
-		slog.Warn("remote device server cannot handle UDP traffic", "err", udpErr)
-		proxy = d.fallback
+func (d *RemoteDevice) checkTCPHealthAndUpdate() {
+	slog.Debug("remote device is checking TCP health status...")
+	err := connectivity.CheckTCPConnectivity(d.sd)
+
+	d.tcpMu.Lock()
+	defer d.tcpMu.Unlock()
+	if d.tcpErr = err; d.tcpErr == nil {
+		slog.Info("remote device TCP is healthy")
 	} else {
-		slog.Debug("remote device server can handle UDP traffic")
-		proxy = d.remote
+		slog.Warn("remote device TCP is not healthy", "err", d.tcpErr)
 	}
+}
 
-	if d.pkt == nil {
-		if d.pkt, err = network.NewDelegatePacketProxy(proxy); err != nil {
-			return errSetupHandler("failed to create combined datagram handler", err)
-		}
+func (d *RemoteDevice) checkUDPHealthAndUpdate() error {
+	if err := connectivity.CheckUDPConnectivity(d.pl); err == nil {
+		slog.Info("remote device UDP is healthy")
+		return d.pkt.SetProxy(d.remote)
 	} else {
-		if err = d.pkt.SetProxy(proxy); err != nil {
-			return errSetupHandler("failed to update combined datagram handler", err)
-		}
+		slog.Warn("remote device UDP is not healthy", "err", err)
+		return d.pkt.SetProxy(d.fallback)
 	}
-
-	slog.Info("remote device server connectivity test done", "supportsUDP", proxy == d.remote)
-	return nil
 }
 
 func errSetupHandler(msg string, cause error) error {

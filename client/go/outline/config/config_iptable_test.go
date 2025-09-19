@@ -56,6 +56,9 @@ func TestParseIPTableStreamDialer(t *testing.T) {
 		case "direct":
 			dialer = &errorStreamDialer{name: "direct"}
 			connType = ConnTypeDirect
+		case "block":
+			dialer = &errorStreamDialer{name: "block"}
+			connType = ConnTypeBlocked
 		default:
 			return nil, fmt.Errorf("no mock dialer found with name: %s", name)
 		}
@@ -237,6 +240,29 @@ table:
 				_, err := dialer.Dial(ctx, "8.8.8.8:53")
 				require.ErrorContains(t, err, "no dialer available for address 8.8.8.8:53")
 			},
+		},
+		{
+			name: "Happy Path - all blocked",
+			configYAML: `
+table:
+  - ips:
+      - 0.0.0.0/0
+    dialer: {name: block}
+`,
+			expectedConnType: ConnTypeBlocked,
+		},
+		{
+			name: "Happy Path - partial blocked",
+			configYAML: `
+table:
+  - ips:
+      - 192.168.1.0/24
+    dialer: {name: block}
+  - ips:
+      - 0.0.0.0/0
+    dialer: {name: default}
+`,
+			expectedConnType: ConnTypeTunneled,
 		},
 	}
 

@@ -78,11 +78,13 @@ class VpnTunnelStore {
     editor.putString(TUNNEL_STATUS_KEY, status.toString()).commit();
   }
 
+  @Deprecated
   public void setIsUdpSupported(boolean isUdpSupported) {
     SharedPreferences.Editor editor = preferences.edit();
     editor.putBoolean(TUNNEL_SUPPORTS_UDP, isUdpSupported).commit();
   }
 
+  @Deprecated
   public boolean isUdpSupported() {
     return preferences.getBoolean(TUNNEL_SUPPORTS_UDP, false);
   }

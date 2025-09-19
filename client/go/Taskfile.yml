@@ -87,16 +87,13 @@ tasks:
     env:
       # Bug workaround as per https://github.com/golang/go/issues/71827#issuecomment-2669425491
       GODEBUG: gotypesalias=0
-    preconditions:
-      - sh: '[[ -d "$ANDROID_HOME" ]]'
-        msg: "Must set ANDROID_HOME"
-      - sh: '[[ -d "$ANDROID_NDK" ]]'
-        msg: "Must set ANDROID_NDK"
+    dotenv:
+      - '{{.OUT_DIR}}/android/.env'
     cmds:
       - rm -rf "{{.TARGET_DIR}}" && mkdir -p "{{.TARGET_DIR}}"
       - "{{.GOMOBILE_BIND_CMD}} -target=android -androidapi '{{.ANDROID_API}}' -o '{{.TARGET_DIR}}/tun2socks-0.0.1.aar' '{{.TASKFILE_DIR}}/outline/platerrors' '{{.TASKFILE_DIR}}/outline/tun2socks' '{{.TASKFILE_DIR}}/outline'"
       - echo $'<?xml version="1.0" encoding="UTF-8"?>\n<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <modelVersion>4.0.0</modelVersion>\n  <groupId>org.getoutline.client</groupId>\n  <artifactId>tun2socks</artifactId>\n  <version>0.0.1</version>\n  <packaging>aar</packaging>\n</project>' > "{{.TARGET_DIR}}/tun2socks-0.0.1.pom"
-    deps: ["gomobile"]
+    deps: ["gomobile", ":client:android:configure"]
 
   apple:
     desc: "Build combined Tun2socks.xcframework library for Apple platforms"

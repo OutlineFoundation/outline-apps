@@ -51,7 +51,7 @@ export async function main(...parameters) {
     );
   }
 
-  // this is so cordova doesn't complain about not being in a cordova project
+  // This is so Cordova doesn't complain about not being in a cordova project
   process.env.PWD = path.resolve(getRootDir(), 'client');
 
   switch (platform + buildMode) {

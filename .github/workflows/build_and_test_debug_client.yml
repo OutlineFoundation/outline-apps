@@ -242,21 +242,11 @@ jobs:
           cache: npm
           cache-dependency-path: ./package-lock.json
 
+      - name: Setup Java
+        run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
+
       - name: Install NPM Dependencies
         run: npm ci
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: '${{ github.workspace }}/go.mod'
-
-      - name: Install Java
-        uses: actions/setup-java@v1.4.3
-        with:
-          java-version: 17
-
-      - name: Setup Android
-        run: bash ./.github/scripts/android_setup_ci.sh
 
       - name: Build Android Client
         run: npm run action client/src/cordova/build android -- --verbose

@@ -32,6 +32,10 @@ body {
 
   --outline-primary: hsl(170, 60%, 46%);
   --outline-primary-rgb: 47, 186, 156;
+
+  --outline-primary-medium: hsl(172, 60%, 72%);
+  --outline-primary-light: hsl(174, 58%, 91%);
+
   /* RGB values for primary color */
   --outline-dark-primary: hsl(200, 19%, 18%);
   --outline-error: hsl(4, 90%, 58%);
@@ -55,7 +59,7 @@ body {
 
   --outline-font-family: Roboto, sans-serif;
 
-  --outline-corner: 2px;
+  --outline-corner: 0.5rem;
 
   --outline-large-gutter: 2rem;
   --outline-gutter: 1rem;
@@ -68,9 +72,12 @@ body {
   --outline-text-color: var(--outline-black);
   --outline-label-color: var(--outline-medium-gray);
   --outline-hairline: 1px solid hsl(0, 0%, 85%);
-  --outline-elevation-color: rgb(0 0 0 / 30%);
-  --outline-elevation: var(--outline-elevation-color) 0px 2px 3px 2px;
+  --outline-elevation-color: hsla(0, 0%, 0%, 0.10);
+  --outline-elevation: var(--outline-elevation-color) 2px 2px 4px 0px;
   --outline-icon-color:rgb(73, 69, 79);
+
+  --outline-partial-connection-color: var(--outline-primary-light);
+  --outline-complete-connection-color: var(--outline-primary-medium);
 
   --outline-comms-dialog-primary-background-color: var(--outline-dark-primary);
   --outline-comms-dialog-primary-text-color: hsl(0, 0%, 87%);

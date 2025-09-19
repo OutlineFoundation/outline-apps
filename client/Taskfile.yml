@@ -1,4 +1,4 @@
-# Copyright 2024 The Outline Authors
+# Copyright 2025 The Outline Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,25 +14,16 @@
 
 version: '3'
 
-set: [pipefail]
-
-run: when_changed
-
-includes:
-  client:tun2socks: ./client/go/Taskfile.yml
-  client:
-    taskfile: ./client/Taskfile.yml
-    vars:
-      OUTPUT_DIR: '{{joinPath .ROOT_DIR "output" "client"}}'
+requires:
+  vars: [OUTPUT_DIR]
 
 tasks:
-  clean:
-    deps:
-      - client:tun2socks:clean
+  android:configure:
+    desc: Auto-configures the environment for Android development
+    vars:
+      DOTENV: '{{joinPath .OUTPUT_DIR "android" ".env"}}'
+    generates:
+      - '{{.DOTENV}}'
     cmds:
-      - rm -rf .task
-
-  addlicense:
-    desc: Add missing license headers
-    cmds:
-      - go tool addlicense {{.CLI_ARGS}} -c "The Outline Authors" -l apache -ignore 'output/**' -ignore 'node_modules/**' -ignore 'third_party/**' -v .
+      - mkdir -p '{{dir .DOTENV}}'
+      - '{{joinPath .TASKFILE_DIR "build" "configure_android.sh"}} > "{{.DOTENV}}"'

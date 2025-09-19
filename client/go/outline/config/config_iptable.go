@@ -51,6 +51,7 @@ func parseIPTableStreamDialer(
 
 	allConnTunnelled := true
 	allConnDirect := true
+	allConnBlocked := true
 
 	dialerTable := iptable.NewIPTable[transport.StreamDialer]()
 	for i, entryCfg := range rootCfg.Table {
@@ -64,12 +65,14 @@ func parseIPTableStreamDialer(
 			return nil, fmt.Errorf("failed to parse nested stream dialer for table entry %d: %w", i, err)
 		}
 
-		if parsedSubDialer.ConnType != ConnTypeTunneled {
-			allConnTunnelled = false
-		}
-
-		if parsedSubDialer.ConnType != ConnTypeDirect {
-			allConnDirect = false
+		if parsedSubDialer.ConnType != ConnTypeBlocked {
+			allConnBlocked = false
+			if parsedSubDialer.ConnType != ConnTypeTunneled {
+				allConnTunnelled = false
+			}
+			if parsedSubDialer.ConnType != ConnTypeDirect {
+				allConnDirect = false
+			}
 		}
 
 		ipsDialer := transport.FuncStreamDialer(parsedSubDialer.Dial)
@@ -100,12 +103,14 @@ func parseIPTableStreamDialer(
 			return nil, fmt.Errorf("failed to parse nested stream dialer fallback: %w", err)
 		}
 
-		if parsedFallbackDialer.ConnType != ConnTypeTunneled {
-			allConnTunnelled = false
-		}
-
-		if parsedFallbackDialer.ConnType != ConnTypeDirect {
-			allConnDirect = false
+		if parsedFallbackDialer.ConnType != ConnTypeBlocked {
+			allConnBlocked = false
+			if parsedFallbackDialer.ConnType != ConnTypeTunneled {
+				allConnTunnelled = false
+			}
+			if parsedFallbackDialer.ConnType != ConnTypeDirect {
+				allConnDirect = false
+			}
 		}
 
 		fallbackDialer = transport.FuncStreamDialer(parsedFallbackDialer.Dial)
@@ -118,9 +123,11 @@ func parseIPTableStreamDialer(
 	}
 
 	var connType ConnType
-	if allConnDirect && allConnTunnelled {
-		// This should never happen because we require len(rootCfg.Table) != 0
-		return nil, fmt.Errorf("allConnDirect and allConnTunnelled cannot both be true")
+	if allConnBlocked {
+		connType = ConnTypeBlocked
+	} else if allConnDirect && allConnTunnelled {
+		// These should never happen because we require len(rootCfg.Table) != 0
+		return nil, fmt.Errorf("allConnDirect, allConnTunnelled cannot all be true")
 	} else if allConnTunnelled {
 		connType = ConnTypeTunneled
 	} else if allConnDirect {

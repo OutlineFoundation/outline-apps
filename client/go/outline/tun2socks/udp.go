@@ -44,6 +44,10 @@ type udpHandler struct {
 //
 // `listener` provides the packet proxying functionality.
 // `timeout` is the UDP read and write timeout.
+//
+// TODO: remove once we migrated Windows from this
+//
+// Deprecated: use lwip2transport.ConfigureDevice instead
 func NewUDPHandler(listener transport.PacketListener, timeout time.Duration) core.UDPConnHandler {
 	return &udpHandler{
 		listener: listener,

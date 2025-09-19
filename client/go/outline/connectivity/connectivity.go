@@ -54,19 +54,29 @@ var testTCPURLs = []string{
 //
 // It parallelizes the execution of TCP and UDP checks, and returns a TCP error and a UDP error.
 // A nil error indicates successful connectivity for the corresponding protocol.
+//
+// Deprecated: Use CheckTCPConnectivity and CheckUDPConnectivity instead.
 func CheckTCPAndUDPConnectivity(
 	tcp transport.StreamDialer, udp transport.PacketListener,
 ) (tcpErr error, udpErr error) {
 	// Start asynchronous UDP support check.
 	udpErrChan := make(chan error)
-	go func() {
-		resolverAddr := &net.UDPAddr{IP: net.ParseIP(testDNSServerIP), Port: testDNSServerPort}
-		udpErrChan <- CheckUDPConnectivityWithDNS(udp, resolverAddr)
-	}()
+	go func() { udpErrChan <- CheckUDPConnectivity(udp) }()
 
 	tcpErr = CheckTCPConnectivityWithHTTP(tcpTimeout, tcp, testTCPURLs)
 	udpErr = <-udpErrChan
 	return
+}
+
+// CheckTCPConnectivity checks whether the given StreamDialer can relay traffic.
+func CheckTCPConnectivity(sd transport.StreamDialer) error {
+	return CheckTCPConnectivityWithHTTP(tcpTimeout, sd, testTCPURLs)
+}
+
+// CheckUDPConnectivity checks whether the given PacketListener can relay traffic.
+func CheckUDPConnectivity(pl transport.PacketListener) error {
+	resolverAddr := &net.UDPAddr{IP: net.ParseIP(testDNSServerIP), Port: testDNSServerPort}
+	return CheckUDPConnectivityWithDNS(pl, resolverAddr)
 }
 
 // CheckUDPConnectivityWithDNS determines whether the Outline proxy represented by `client` and

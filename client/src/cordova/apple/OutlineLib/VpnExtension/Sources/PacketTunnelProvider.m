@@ -30,14 +30,13 @@ const DDLogLevel ddLogLevel = DDLogLevelInfo;
 NSString *const kDefaultPathKey = @"defaultPath";
 
 @interface PacketTunnelProvider ()<Tun2socksTunWriter>
-@property id<Tun2socksTunnel> tunnel;
+@property Tun2socksRemoteDevice *remoteDevice;
 @property (nonatomic, copy) void (^startCompletion)(NSNumber *);
 @property (nonatomic, copy) void (^stopCompletion)(NSNumber *);
 @property (nonatomic) DDFileLogger *fileLogger;
 @property (nonatomic, nullable) NSString *tunnelId;
 @property (nonatomic, nullable) NSString *transportConfig;
 @property (nonatomic) dispatch_queue_t packetQueue;
-@property (nonatomic) BOOL isUdpSupported;
 @end
 
 @implementation PacketTunnelProvider
@@ -98,24 +97,15 @@ NSString *const kDefaultPathKey = @"defaultPath";
   bool isOnDemand = isOnDemandNumber != nil && [isOnDemandNumber intValue] == 1;
   DDLogDebug(@"isOnDemand is %d", isOnDemand);
 
-  // Bypass connectivity checks for auto-connect. If the tunnel configuration is no longer
-  // valid, the connectivity checks will fail. The system will keep calling this method due to
-  // On Demand being enabled (the VPN process does not have permission to change it), rendering the
-  // network unusable with no indication to the user. By bypassing the checks, the network would
-  // still be unusable, but at least the user will have a visual indication that Outline is the
-  // culprit and can explicitly disconnect.
-  PlaterrorsPlatformError *udpConnectionError = nil;
-  if (!isOnDemand) {
-    OutlineNewClientResult* clientResult = [SwiftBridge newClientWithId:tunnelId transportConfig:transportConfig];
-    if (clientResult.error != nil) {
-      return startDone([SwiftBridge newOutlineErrorFromPlatformError:clientResult.error]);
-    }
-    OutlineTCPAndUDPConnectivityResult *connResult = OutlineCheckTCPAndUDPConnectivity(clientResult.client);
-    DDLogDebug(@"Check connectivity result: tcpErr=%@, udpErr=%@", connResult.tcpError, connResult.udpError);
-    if (connResult.tcpError != nil) {
-      return startDone([SwiftBridge newOutlineErrorFromPlatformError:connResult.tcpError]);
-    }
-    udpConnectionError = connResult.udpError;
+  BOOL isRestart = self.remoteDevice != nil;
+  if (isRestart) {
+    [self.remoteDevice close];
+  }
+  DDLogDebug(@"isRestart is %d", isRestart);
+
+  PlaterrorsPlatformError *deviceErr = [self connectRemoteDevice:isOnDemand];
+  if (deviceErr != nil) {
+    return startDone([SwiftBridge newOutlineErrorFromPlatformError:deviceErr]);
   }
 
   [self startRouting:[SwiftBridge getTunnelNetworkSettings]
@@ -123,11 +113,9 @@ NSString *const kDefaultPathKey = @"defaultPath";
             if (error != nil) {
               return startDone([SwiftBridge newOutlineErrorFromNsError:error]);
             }
-            BOOL isUdpSupported =
-                isOnDemand ? self.isUdpSupported : udpConnectionError == nil;
-            PlaterrorsPlatformError *tun2socksError = [self startTun2Socks:isUdpSupported];
-            if (tun2socksError != nil) {
-              return startDone([SwiftBridge newOutlineErrorFromPlatformError:tun2socksError]);
+            PlaterrorsPlatformError *relayErr = [self relayTraffic:isRestart];
+            if (relayErr != nil) {
+              return startDone([SwiftBridge newOutlineErrorFromPlatformError:relayErr]);
             }
             [self listenForNetworkChanges];
             startDone(nil);
@@ -139,7 +127,10 @@ NSString *const kDefaultPathKey = @"defaultPath";
   DDLogInfo(@"Stopping tunnel, reason: %ld", (long)reason);
   // Check for NEProviderStopReasonUserInitiated
   [self stopListeningForNetworkChanges];
-  [self.tunnel disconnect];
+  PlaterrorsPlatformError *err = [self.remoteDevice close];
+  if (err != nil) {
+    DDLogWarn(@"Failed to close remote device: %@", err.error);
+  }
   [self cancelTunnelWithError:nil];
   completionHandler();
 }
@@ -206,10 +197,7 @@ NSString *const kDefaultPathKey = @"defaultPath";
   DDLogInfo(@"Network connectivity changed");
   if (newDefaultPath.status == NWPathStatusSatisfied) {
     DDLogInfo(@"Reconnecting tunnel.");
-    // Check whether UDP support has changed with the network.
-    BOOL isUdpSupported = [self.tunnel updateUDPSupport];
-    DDLogDebug(@"UDP support: %d -> %d", self.isUdpSupported, isUdpSupported);
-    self.isUdpSupported = isUdpSupported;
+    [self.remoteDevice notifyNetworkChanged];
     [self reconnectTunnel];
   } else {
     DDLogInfo(@"Clearing tunnel settings.");
@@ -250,7 +238,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
 
 /** Restarts tun2socks if |configChanged| or the host's IP address has changed in the network. */
 - (void)reconnectTunnel {
-  if (!self.transportConfig || !self.tunnel) {
+  if (!self.transportConfig || !self.remoteDevice) {
     DDLogError(@"Failed to reconnect tunnel, missing tunnel configuration.");
     return;
   }
@@ -269,6 +257,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
 
 - (BOOL)write:(NSData *_Nullable)packet n:(long *)n error:(NSError *_Nullable *)error {
   [self.packetFlow writePackets:@[ packet ] withProtocols:@[ @(AF_INET) ]];
+  *n = packet.length;
   return YES;
 }
 
@@ -279,7 +268,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
   [weakSelf.packetFlow readPacketsWithCompletionHandler:^(NSArray<NSData *> *_Nonnull packets,
                                                           NSArray<NSNumber *> *_Nonnull protocols) {
     for (NSData *packet in packets) {
-      [weakSelf.tunnel write:packet ret0_:&bytesWritten error:nil];
+      [weakSelf.remoteDevice write:packet ret0_:&bytesWritten error:nil];
     }
     dispatch_async(weakSelf.packetQueue, ^{
       [weakSelf processPackets];
@@ -287,23 +276,47 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
   }];
 }
 
-- (PlaterrorsPlatformError*)startTun2Socks:(BOOL)isUdpSupported {
-  BOOL isRestart = self.tunnel != nil && self.tunnel.isConnected;
-  if (isRestart) {
-    [self.tunnel disconnect];
-  }
-  __weak PacketTunnelProvider *weakSelf = self;
+- (PlaterrorsPlatformError*)connectRemoteDevice:(BOOL)isOnDemand {
   OutlineNewClientResult* clientResult = [SwiftBridge newClientWithId: self.tunnelId transportConfig:self.transportConfig];
   if (clientResult.error != nil) {
     return clientResult.error;
   }
-  Tun2socksConnectOutlineTunnelResult *result =
-    Tun2socksConnectOutlineTunnel(weakSelf, clientResult.client, isUdpSupported);
+  Tun2socksConnectRemoteDeviceResult *result = Tun2socksConnectRemoteDevice(clientResult.client);
   if (result.error != nil) {
-    DDLogError(@"Failed to start tun2socks: %@", result.error);
+    DDLogError(@"Failed to connect remote device: %@", result.error);
     return result.error;
   }
-  self.tunnel = result.tunnel;
+  self.remoteDevice = result.device;
+
+  if (!isOnDemand) {
+    PlaterrorsPlatformError *healthErr = [self.remoteDevice getHealthStatus];
+    if (healthErr != nil) {
+      DDLogError(@"Remote device is not healthy: %@", healthErr.error);
+      [self.remoteDevice close];
+      return healthErr;
+    }
+    DDLogInfo(@"Remote device is healthy.");
+  } else {
+    // Bypass health checks for auto-connect. If the tunnel configuration is no longer
+    // valid, the connectivity checks will fail. The system will keep calling this method due to
+    // On Demand being enabled (the VPN process does not have permission to change it), rendering the
+    // network unusable with no indication to the user. By bypassing the checks, the network would
+    // still be unusable, but at least the user will have a visual indication that Outline is the
+    // culprit and can explicitly disconnect.
+    DDLogInfo(@"Auto-start VPN, skip health check");
+  }
+  return nil;
+}
+
+- (PlaterrorsPlatformError*)relayTraffic:(BOOL)isRestart {
+  __weak PacketTunnelProvider *weakSelf = self;
+  PlaterrorsPlatformError *relayErr = Tun2socksGoRelayTrafficOneWay(weakSelf, self.remoteDevice);
+  if (relayErr != nil) {
+    DDLogError(@"Failed to relay traffic from remote device to TUN: %@", relayErr.error);
+    return relayErr;
+  }
+  DDLogInfo(@"Relaying traffic from remote device to TUN");
+
   if (!isRestart) {
     dispatch_async(self.packetQueue, ^{
       [weakSelf processPackets];

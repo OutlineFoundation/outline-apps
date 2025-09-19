@@ -75,6 +75,10 @@
     "description": "The title of a message to the user that tells them Outline will keep connected unless explicitly told to disconnect. Outline is the product name and can be found in the translation glossary.",
     "message": "Stay protected, always"
   },
+  "basic_access_configure_dns": {
+    "description": "The option in the basic access menu to configure DNS settings for the feature.",
+    "message": "Configure"
+  },
   "cancel": {
     "description": "The text on a button to cancel the current operation.",
     "message": "Cancel"
@@ -534,6 +538,18 @@
         "content": "{openLink2}"
       }
     }
+  },
+  "server_card_no_connection_type": {
+    "description": "A line of text displayed in the server card before the type of connection is known to the system.",
+    "message": "Connect for details"
+  },
+  "server_card_limited_connection_type": {
+    "description": "The text in a chip indicating to the user that their current internet connection is only partially protected.",
+    "message": "Limited protection"
+  },
+  "server_card_complete_connection_type": {
+    "description": "The text in a chip indicating to the user that their current internet connection is completely protected.",
+    "message": "Complete protection"
   },
   "server_default_name": {
     "description": "This is the default name for an added server when the type or name is not specified by the access key.",

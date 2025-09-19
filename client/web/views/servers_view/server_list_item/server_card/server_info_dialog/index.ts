@@ -103,45 +103,30 @@ class ServerInfoDialog extends LitElement {
 
 @customElement('server-proxyless-info-dialog')
 export class ServerProxylessInfoDialog extends ServerInfoDialog {
-  render() {
-    return html`
-      <server-info-dialog
-        .open=${this.open}
-        .localize=${this.localize}
-        .headerImage=${proxylessHeaderImage}
-        .titleMessageId=${'server-proxyless-info-dialog-title'}
-        .contentMessageId=${'server-proxyless-info-dialog-content'}
-      ></server-info-dialog>
-    `;
+  constructor() {
+    super();
+    this.headerImage = proxylessHeaderImage;
+    this.titleMessageId = 'server-proxyless-info-dialog-title';
+    this.contentMessageId = 'server-proxyless-info-dialog-content';
   }
 }
 
 @customElement('server-split-tunneling-info-dialog')
 export class ServerSplitTunnelingInfoDialog extends ServerInfoDialog {
-  render() {
-    return html`
-      <server-info-dialog
-        .open=${this.open}
-        .localize=${this.localize}
-        .headerImage=${splitTunnelingHeaderImage}
-        .titleMessageId=${'server-split-tunneling-info-dialog-title'}
-        .contentMessageId=${'server-split-tunneling-info-dialog-content'}
-      ></server-info-dialog>
-    `;
+  constructor() {
+    super();
+    this.headerImage = splitTunnelingHeaderImage;
+    this.titleMessageId = 'server-split-tunneling-info-dialog-title';
+    this.contentMessageId = 'server-split-tunneling-info-dialog-content';
   }
 }
 
 @customElement('server-complete-protection-info-dialog')
 export class ServerCompleteProtectionInfoDialog extends ServerInfoDialog {
-  render() {
-    return html`
-      <server-info-dialog
-        .open=${this.open}
-        .localize=${this.localize}
-        .headerImage=${completeProtectionHeaderImage}
-        .titleMessageId=${'server-complete-protection-info-dialog-title'}
-        .contentMessageId=${'server-complete-protection-info-dialog-content'}
-      ></server-info-dialog>
-    `;
+  constructor() {
+    super();
+    this.headerImage = completeProtectionHeaderImage;
+    this.titleMessageId = 'server-complete-protection-info-dialog-title';
+    this.contentMessageId = 'server-complete-protection-info-dialog-content';
   }
 }

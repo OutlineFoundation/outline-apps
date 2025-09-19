@@ -17,9 +17,9 @@
 
 import {html} from 'lit';
 
-import '../../index';
-
-import {ServerListItemElement} from '..';
+import './index';
+import {ServerCard} from './index';
+import {ServerConnectionType} from '..';
 import {localize} from '../../../../testing/localize';
 import {ServerConnectionState} from '../../server_connection_indicator';
 
@@ -30,7 +30,9 @@ export default {
       name: 'My Server',
       address: '1.0.0.127',
       connectionState: ServerConnectionState.DISCONNECTED,
+      connectionType: ServerConnectionType.COMPLETE,
     },
+    basicAccess: false,
   },
   argTypes: {
     server: {
@@ -39,17 +41,12 @@ export default {
   },
 };
 
-export const ServerRowCard = ({server}: ServerListItemElement) => html`
+export const Example = ({server, basicAccess}: ServerCard) => html`
   <div style="width: 100%; height: clamp(100px, 100%, 150px);">
-    <server-row-card .localize=${localize} .server=${server}></server-row-card>
-  </div>
-`;
-
-export const ServerHeroCard = ({server}: ServerListItemElement) => html`
-  <div style="width: 100%; height: 100%;">
-    <server-hero-card
+    <server-card
       .localize=${localize}
       .server=${server}
-    ></server-hero-card>
+      ?basicAccess=${basicAccess}
+    ></server-card>
   </div>
 `;
