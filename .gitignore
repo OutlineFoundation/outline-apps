@@ -13,3 +13,14 @@ node_modules
 /build
 
 *storybook.log
+
+
+
+# Capacitor generated assets (icons, splash screens)
+client/capacitor/android/app/src/main/res/drawable-*/
+client/capacitor/android/app/src/main/res/mipmap-*/
+client/capacitor/android/app/src/main/res/values/ic_launcher_background.xml
+client/capacitor/ios/App/App/Assets.xcassets/AppIcon.appiconset/*
+client/capacitor/ios/App/App/Assets.xcassets/Splash.imageset/*
+client/capacitor/android/app/src/main/res/drawable/
+

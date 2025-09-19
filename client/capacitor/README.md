@@ -1,7 +1,7 @@
 # Capacitor Development Instructions
 
 This document describes how to develop and debug for iOS & Android for Capacitor.
-
+Please make sure you are using JDK 17.
 
 
 ## Set up your environment
@@ -18,9 +18,7 @@ Install these pre-requisites:
 Then run the following on the command-line:
 
 ```sh
-npx webpack    
-npx capacitor-assets generate
-npx cap sync
+npm run action client/capacitor/setup
 ```
 
 ## Run the Apps
@@ -28,16 +26,11 @@ npx cap sync
 For iOS:
 
 ```sh
-npx cap open ios
+npm run action client/capacitor/build ios
 ```
 
 For Android:
 
 ```sh
-npx cap open android
+npm run action client/capacitor/build android
 ```
-  
-
-  ## TODOs
-
-- [ ] Merge dependencies with parent package.json (Milestone 3)

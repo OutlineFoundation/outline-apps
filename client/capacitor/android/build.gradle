@@ -17,12 +17,34 @@ buildscript {
 
 apply from: "variables.gradle"
 
+// android/build.gradle (project-level)
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
+    // Ensure Java compile tasks use 17
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // For Android modules (app, capacitor, plugins…), set compileOptions + Kotlin jvmTarget
+    afterEvaluate { p ->
+        if (p.extensions.findByName("android") != null) {
+            p.extensions.getByName("android").compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+            // If the module has Kotlin
+            def kotlinExt = p.extensions.findByName("kotlinOptions")
+            if (kotlinExt != null) {
+                kotlinExt.jvmTarget = "17"
+            }
+        }
+    }
 }
+
 
 task clean(type: Delete) {
     delete rootProject.buildDir
