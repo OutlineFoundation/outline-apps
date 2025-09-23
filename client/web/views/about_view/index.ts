@@ -44,6 +44,14 @@ export class AboutView extends LitElement {
       background-color: var(--outline-background);
     }
 
+    /* Prevent images from being selectable on iOS, which can cause a crash when trying to save them. */
+    img {
+      pointer-events: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
     article {
       height: 100%;
       padding: 32px 24px 0 24px;

@@ -75,6 +75,14 @@ export class ServerConnectionIndicator extends LitElement {
         --circle-disconnected-color: grayscale(1) brightness(0.5);
       }
 
+      /* Prevent images from being selectable on iOS, which can cause a crash when trying to save them. */
+      img {
+        pointer-events: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+
       .circle {
         display: inline-block;
 

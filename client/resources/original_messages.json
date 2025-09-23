@@ -27,6 +27,10 @@
     "description": "The title of a page giving details about the app.",
     "message": "About"
   },
+  "accept": {
+    "description": "Text in a button for when the user wants to accept their changes.",
+    "message": "Accept"
+  },
   "add_access_key_dialog_error_text": {
     "description": "An error message shown when the user tries to add a server with an invalid access key.",
     "message": "Invalid access key."
@@ -212,6 +216,26 @@
   "disconnecting_server_state": {
     "description": "A status message on a particular server that indicates the application is in the process of disconnecting from the labeled server.",
     "message": "Disconnecting..."
+  },
+  "dns_built_in_server": {
+    "description": "The label for a radio button to select the built-in DNS server.",
+    "message": "Built-in server"
+  },
+  "dns_custom_placeholder": {
+    "description": "The placeholder text for the custom DNS server URL input field.",
+    "message": "https://..."
+  },
+  "dns_custom_server": {
+    "description": "The label for a radio button to select a custom DNS server.",
+    "message": "Custom server URL"
+  },
+  "dns_select_description": {
+    "description": "The description text for the DNS server selection dialog.",
+    "message": "Outline Basic Access protects you from DNS attacks. Choose which DNS over HTTPs server you’d like to use. <a src='TODO'>Learn more (TBD)</a>"
+  },
+  "dns_select_title": {
+    "description": "The title for the DNS server selection dialog.",
+    "message": "Select DNS Server"
   },
   "email_feedback_input": {
     "description": "The hint text for a textbox for the user's email address when sending feedback. The email address is not a required field in the form.",
@@ -473,6 +497,18 @@
       }
     }
   },
+  "server_card_complete_connection_type": {
+    "description": "The text in a chip indicating to the user that their current internet connection is completely protected.",
+    "message": "Complete protection"
+  },
+  "server_card_limited_connection_type": {
+    "description": "The text in a chip indicating to the user that their current internet connection is only partially protected.",
+    "message": "Limited protection"
+  },
+  "server_card_no_connection_type": {
+    "description": "A line of text displayed in the server card before the type of connection is known to the system.",
+    "message": "Connect for details"
+  },
   "server_complete_protection_info_dialog_content": {
     "description": "The body text of a dialog box explaining what 'Complete Protection' means for a server connection. This is currently placeholder text.",
     "message": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras eu fermentum odio, sed laoreet sem. Integer in hendrerit ligula, eget pellentesque velit. Maecenas id orci eu sapien efficitur accumsan."
@@ -538,18 +574,6 @@
         "content": "{openLink2}"
       }
     }
-  },
-  "server_card_no_connection_type": {
-    "description": "A line of text displayed in the server card before the type of connection is known to the system.",
-    "message": "Connect for details"
-  },
-  "server_card_limited_connection_type": {
-    "description": "The text in a chip indicating to the user that their current internet connection is only partially protected.",
-    "message": "Limited protection"
-  },
-  "server_card_complete_connection_type": {
-    "description": "The text in a chip indicating to the user that their current internet connection is completely protected.",
-    "message": "Complete protection"
   },
   "server_default_name": {
     "description": "This is the default name for an added server when the type or name is not specified by the access key.",

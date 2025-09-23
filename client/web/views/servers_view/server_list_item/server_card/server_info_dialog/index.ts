@@ -42,6 +42,14 @@ class ServerInfoDialog extends LitElement {
       --md-filled-text-field-input-text-color: var(--outline-input-text);
     }
 
+    /* Prevent images from being selectable on iOS, which can cause a crash when trying to save them. */
+    img {
+      pointer-events: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
     header {
       padding: 0;
       padding-bottom: initial;
