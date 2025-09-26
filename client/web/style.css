@@ -31,6 +31,7 @@ body {
   --min-supported-device-width: 320px;
 
   --outline-primary: hsl(170, 60%, 46%);
+  --outline-primary-dark: hsl(176, 97%, 26%);
   --outline-primary-rgb: 47, 186, 156;
 
   --outline-primary-medium: hsl(172, 60%, 72%);
@@ -39,6 +40,7 @@ body {
   /* RGB values for primary color */
   --outline-dark-primary: hsl(200, 19%, 18%);
   --outline-error: hsl(4, 90%, 58%);
+  --outline-warning: hsl(52, 100%, 49%);
 
   --outline-black: hsl(0, 0%, 0%);
   --outline-off-black: hsl(0, 0%, 15%);
@@ -113,6 +115,7 @@ body {
   --mdc-text-field-outlined-idle-border-color: var(--outline-input-border);
 
   /* default light theme */
+  --outline-splash-title-color: var(--outline-primary-dark);
   --outline-background: var(--outline-white);
   --outline-card-background: var(--outline-white);
   --outline-card-footer: var(--outline-light-gray);
