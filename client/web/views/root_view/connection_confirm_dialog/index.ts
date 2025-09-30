@@ -36,18 +36,6 @@ class ConnectionConfirmDialog extends LitElement {
   @state() private isChecked: boolean = false;
 
   static styles = css`
-    :host {
-      --md-sys-color-primary: var(--outline-primary);
-      --md-sys-shape-corner-extra-large: 2px;
-      --md-sys-shape-corner-full: 2px;
-
-      --md-dialog-container-color: var(
-        --outline-app-dialog-primary-background-color
-      );
-      --md-filled-text-field-container-color: var(--outline-input-bg);
-      --md-filled-text-field-input-text-color: var(--outline-input-text);
-    }
-
     header {
       padding: 0 1.5rem;
       padding-bottom: initial;
@@ -129,7 +117,7 @@ class ConnectionConfirmDialog extends LitElement {
 
       font-family: var(--outline-font-family);
       text-transform: initial;
-      background: var(--outline-light-gray);
+      background: var(--outline-card-footer);
       border-radius: var(--outline-corner);
       border: 1px solid var(--outline-warning);
       cursor: pointer;
@@ -139,6 +127,7 @@ class ConnectionConfirmDialog extends LitElement {
 
     .confirmation-checkbox-label {
       width: 100%;
+      color: var(--outline-text-color);
       padding-right: var(--outline-mini-gutter);
     }
   `;

@@ -47,6 +47,7 @@
     "lit": "^3.2.1",
     "node-fetch": "^2.6.7",
     "storybook": "^8.2.6",
+    "storybook-dark-mode": "^4.0.2",
     "typescript": "^5.7.3"
   }
 }

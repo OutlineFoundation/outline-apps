@@ -98,13 +98,27 @@ body {
   --md-ref-typeface-plain: var(--outline-font-family);
 
   /* Style Material inputs */
-  --md-sys-color-surface: var(--outline-card-background);
-  --md-sys-color-on-surface: var(--outline-text-color);
-  --md-sys-color-outline: var(--outline-input-border);
+  --md-dialog-container-color: var(--outline-app-dialog-primary-background-color);
+  --md-dialog-headline-color: var(--outline-text-color);
+  --md-dialog-supporting-text-color: var(--outline-text-color);
+  --md-filled-button-container-color: var(--outline-primary);
+  --md-filled-button-label-text-color: var(--outline-text-color);
   --md-filled-text-field-container-color: var(--outline-input-bg);
   --md-filled-text-field-input-text-color: var(--outline-input-text);
+  --md-menu-container-color: var(--outline-card-background);
   --md-outlined-text-field-input-text-color: var(--outline-input-text);
-  --md-outlined-text-field-outline-color: var(--outline-input-border);
+  --md-sys-color-background: var(--outline-background-color);
+  --md-sys-color-on-surface-variant: var(--outline-text-color);
+  --md-sys-color-on-surface: var(--outline-text-color);
+  --md-sys-color-outline: var(--outline-input-border);
+  --md-sys-color-primary: var(--outline-primary);
+  --md-sys-color-surface-container-highest: var(--outline-card-background);
+  --md-sys-color-surface-container: var(--outline-card-background);
+  --md-sys-color-surface: var(--outline-card-background);
+  --md-sys-shape-corner-extra-large: var(--outline-corner);
+  --md-sys-shape-corner-large: var(--outline-corner);
+  --md-sys-shape-corner-medium: var(--outline-corner);
+  --md-text-button-label-text-color: var(--outline-primary);
 
   /* Style older Material Web Components */
   --mdc-theme-surface: var(--outline-card-background);

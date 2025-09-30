@@ -50,18 +50,6 @@ export class DnsConfigDialog extends LitElement {
   @state() private editedConfiguration: DnsConfigurationUI;
 
   static styles = css`
-    :host {
-      --md-sys-color-primary: var(--outline-primary);
-      --md-sys-shape-corner-extra-large: 2px;
-      --md-sys-shape-corner-full: 2px;
-
-      --md-dialog-container-color: var(
-        --outline-app-dialog-primary-background-color
-      );
-      --md-filled-text-field-container-color: var(--outline-input-bg);
-      --md-filled-text-field-input-text-color: var(--outline-input-text);
-    }
-
     header {
       font-size: 1.5rem;
       padding: 1.5rem;
