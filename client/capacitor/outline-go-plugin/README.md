@@ -2,13 +2,6 @@
 
 Migration of Go code
 
-## Install
-
-```bash
-npm install outline-go-plugin
-npx cap sync
-```
-
 ## API
 
 <docgen-index>
