@@ -16,13 +16,29 @@ package config
 
 import (
 	"context"
+	"net"
 	"testing"
 
+	"github.com/Jigsaw-Code/outline-sdk/transport"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewBlockStreamDialerSubParser(t *testing.T) {
-	subParser := NewBlockStreamDialerSubParser()
+	subParser := NewBlockDialerSubParser[transport.StreamConn]()
+
+	dialer, err := subParser(context.Background(), nil)
+	require.NoError(t, err)
+	require.NotNil(t, dialer)
+
+	require.Equal(t, ConnTypeBlocked, dialer.ConnType)
+
+	_, err = dialer.Dial(context.Background(), "example.com:1234")
+	require.Error(t, err)
+	require.ErrorContains(t, err, "blocked by config")
+}
+
+func TestNewBlockPacketDialerSubParser(t *testing.T) {
+	subParser := NewBlockDialerSubParser[net.Conn]()
 
 	dialer, err := subParser(context.Background(), nil)
 	require.NoError(t, err)

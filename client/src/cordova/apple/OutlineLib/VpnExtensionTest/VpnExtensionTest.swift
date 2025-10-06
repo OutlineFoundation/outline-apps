@@ -38,7 +38,7 @@ final class VpnExtensionTest: XCTestCase {
     XCTAssertEqual([NEIPv4Route.default()], settings.ipv4Settings?.includedRoutes)
     XCTAssertEqual(15, settings.ipv4Settings?.excludedRoutes?.count ?? 0)
 
-    XCTAssertEqual(["1.1.1.1", "9.9.9.9", "208.67.222.222", "208.67.220.220"], settings.dnsSettings?.servers)
+    XCTAssertEqual(["169.254.113.53"], settings.dnsSettings?.servers)
   }
 
 

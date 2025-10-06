@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
 	"github.com/goccy/go-yaml"
 )
@@ -45,13 +46,32 @@ type ProviderTunnelConfig struct {
 
 // firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in config.ts.
 type firstHopAndTunnelConfigJSON struct {
-	Client   string `json:"client"`
-	FirstHop string `json:"firstHop"`
+	Client         string          `json:"client"`
+	FirstHop       string          `json:"firstHop"`
+	ConnectionType config.ConnType `json:"connectionType"`
 }
 
 func hasKey[K comparable, V any](m map[K]V, key K) bool {
 	_, ok := m[key]
 	return ok
+}
+
+func combinedConnectionType(streamConnType, packetConnType config.ConnType) config.ConnType {
+	// When one connection is blocked is always the other connection type
+	if streamConnType == config.ConnTypeBlocked {
+		return packetConnType
+	}
+	if packetConnType == config.ConnTypeBlocked {
+		return streamConnType
+	}
+
+	// Matching connection type
+	if streamConnType == packetConnType {
+		return streamConnType
+	}
+
+	// Connections are non-matching and not blocked
+	return config.ConnTypePartial
 }
 
 func doParseTunnelConfig(input string) *InvokeMethodResult {
@@ -136,10 +156,15 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	}
 
 	streamFirstHop := result.Client.sd.ConnectionProviderInfo.FirstHop
-	packetFirstHop := result.Client.pl.ConnectionProviderInfo.FirstHop
+	packetFirstHop := result.Client.pp.ConnectionProviderInfo.FirstHop
 	if streamFirstHop == packetFirstHop {
 		response.FirstHop = streamFirstHop
 	}
+
+	streamConnType := result.Client.sd.ConnectionProviderInfo.ConnType
+	packetConnType := result.Client.pp.ConnectionProviderInfo.ConnType
+	response.ConnectionType = combinedConnectionType(streamConnType, packetConnType)
+
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		return &InvokeMethodResult{

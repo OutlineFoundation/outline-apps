@@ -48,11 +48,11 @@ udp: *shared`)
 	require.NoError(t, err)
 
 	require.NotNil(t, d.StreamDialer)
-	require.NotNil(t, d.PacketListener)
+	require.NotNil(t, d.PacketProxy)
 	require.Equal(t, "example.com:1234", d.StreamDialer.FirstHop)
 	require.Equal(t, ConnTypeTunneled, d.StreamDialer.ConnType)
-	require.Equal(t, "example.com:1234", d.PacketListener.FirstHop)
-	require.Equal(t, ConnTypeTunneled, d.PacketListener.ConnType)
+	require.Equal(t, "example.com:1234", d.PacketProxy.FirstHop)
+	require.Equal(t, ConnTypeTunneled, d.PacketProxy.ConnType)
 }
 
 func TestRegisterParseURL(t *testing.T) {
@@ -65,11 +65,11 @@ func TestRegisterParseURL(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, d.StreamDialer)
-	require.NotNil(t, d.PacketListener)
+	require.NotNil(t, d.PacketProxy)
 	require.Equal(t, "example.com:4321", d.StreamDialer.FirstHop)
 	require.Equal(t, ConnTypeTunneled, d.StreamDialer.ConnType)
-	require.Equal(t, "example.com:4321", d.PacketListener.FirstHop)
-	require.Equal(t, ConnTypeTunneled, d.PacketListener.ConnType)
+	require.Equal(t, "example.com:4321", d.PacketProxy.FirstHop)
+	require.Equal(t, ConnTypeTunneled, d.PacketProxy.ConnType)
 }
 
 func TestRegisterParseURLInQuotes(t *testing.T) {
@@ -82,11 +82,11 @@ func TestRegisterParseURLInQuotes(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, d.StreamDialer)
-	require.NotNil(t, d.PacketListener)
+	require.NotNil(t, d.PacketProxy)
 	require.Equal(t, "example.com:4321", d.StreamDialer.FirstHop)
 	require.Equal(t, ConnTypeTunneled, d.StreamDialer.ConnType)
-	require.Equal(t, "example.com:4321", d.PacketListener.FirstHop)
-	require.Equal(t, ConnTypeTunneled, d.PacketListener.ConnType)
+	require.Equal(t, "example.com:4321", d.PacketProxy.FirstHop)
+	require.Equal(t, ConnTypeTunneled, d.PacketProxy.ConnType)
 }
 
 type errorStreamDialer struct {

@@ -34,10 +34,9 @@ public class SwiftBridge: NSObject {
     ipv4Settings.excludedRoutes = getExcludedIpv4Routes()
     settings.ipv4Settings = ipv4Settings
 
-    // Configure with Cloudflare, Quad9, and OpenDNS resolver addresses.
-    settings.dnsSettings = NEDNSSettings(servers: [
-      "1.1.1.1", "9.9.9.9", "208.67.222.222", "208.67.220.220",
-    ])
+    // A "fake" local DNS resolver. Outline will intercept the real resolver at this address.
+    // Must align with: client/go/outline/config/outline_dns_intercept.go
+    settings.dnsSettings = NEDNSSettings(servers: ["169.254.113.53"])
 
     return settings
   }

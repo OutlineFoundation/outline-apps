@@ -24,7 +24,7 @@ interface VpnConfig {
   interfaceName: string;
   connectionName: string;
   ipAddress: string;
-  dnsServers: string[];
+  dnsLinkLocalAddress: string;
   routingTableId: number;
   routingPriority: number;
   protectionMark: number;
@@ -53,9 +53,9 @@ export async function establishVpn(tsRequest: StartRequestJson) {
       // https://github.com/Jigsaw-Code/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L204
       ipAddress: '10.0.85.5',
 
-      // DNS server list, being compatible with old code:
-      // https://github.com/Jigsaw-Code/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L207
-      dnsServers: ['9.9.9.9'],
+      // A "fake" local DNS resolver. Outline will intercept the real resolver at this address.
+      // Must align with: client/go/outline/config/outline_dns_intercept.go
+      dnsLinkLocalAddress: '169.254.113.53',
 
       // Outline magic numbers, 7113 and 0x711E visually resembles "T L I E" in "ouTLInE"
       routingTableId: 7113,

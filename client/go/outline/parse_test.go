@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
@@ -66,12 +67,52 @@ func matchTransportConfig(t *testing.T, transportConfigString string, firstHopAn
 	require.Equal(t, expected, actual["transport"])
 }
 
+func TestCombinedConnectionType(t *testing.T) {
+	testCases := []struct {
+		name           string
+		streamConnType config.ConnType
+		packetConnType config.ConnType
+		expected       config.ConnType
+	}{
+		// Matching types
+		{"Direct-Direct", config.ConnTypeDirect, config.ConnTypeDirect, config.ConnTypeDirect},
+		{"Tunneled-Tunneled", config.ConnTypeTunneled, config.ConnTypeTunneled, config.ConnTypeTunneled},
+		{"Partial-Partial", config.ConnTypePartial, config.ConnTypePartial, config.ConnTypePartial},
+		{"Blocked-Blocked", config.ConnTypeBlocked, config.ConnTypeBlocked, config.ConnTypeBlocked},
+
+		// One is Partial
+		{"Direct-Partial", config.ConnTypeDirect, config.ConnTypePartial, config.ConnTypePartial},
+		{"Partial-Direct", config.ConnTypePartial, config.ConnTypeDirect, config.ConnTypePartial},
+		{"Tunneled-Partial", config.ConnTypeTunneled, config.ConnTypePartial, config.ConnTypePartial},
+		{"Partial-Tunneled", config.ConnTypePartial, config.ConnTypeTunneled, config.ConnTypePartial},
+		{"Blocked-Partial", config.ConnTypeBlocked, config.ConnTypePartial, config.ConnTypePartial},
+		{"Partial-Blocked", config.ConnTypePartial, config.ConnTypeBlocked, config.ConnTypePartial},
+
+		// One is Blocked
+		{"Direct-Blocked", config.ConnTypeDirect, config.ConnTypeBlocked, config.ConnTypeDirect},
+		{"Blocked-Direct", config.ConnTypeBlocked, config.ConnTypeDirect, config.ConnTypeDirect},
+		{"Tunneled-Blocked", config.ConnTypeTunneled, config.ConnTypeBlocked, config.ConnTypeTunneled},
+		{"Blocked-Tunneled", config.ConnTypeBlocked, config.ConnTypeTunneled, config.ConnTypeTunneled},
+
+		// Split between transports
+		{"Direct-Tunneled", config.ConnTypeDirect, config.ConnTypeTunneled, config.ConnTypePartial},
+		{"Tunneled-Direct", config.ConnTypeTunneled, config.ConnTypeDirect, config.ConnTypePartial},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := combinedConnectionType(tc.streamConnType, tc.packetConnType)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
 func Test_doParseTunnel_SSURL(t *testing.T) {
 	transportConfig := "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/"
 	result := doParseTunnelConfig(transportConfig)
 	require.Nil(t, result.Error)
 	require.Equal(t,
-		`{"client":"{\"transport\":\"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/\"}","firstHop":"example.com:4321"}`,
+		`{"client":"{\"transport\":\"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/\"}","firstHop":"example.com:4321","connectionType":"tunneled"}`,
 		result.Value)
 
 	matchTransportConfig(t, transportConfig, result.Value)
@@ -82,7 +123,7 @@ func Test_doParseTunnel_SSURL_With_Comment(t *testing.T) {
 	result := doParseTunnelConfig(transportConfig)
 	require.Nil(t, result.Error)
 	require.Equal(t,
-		`{"client":"{\"transport\":\"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/\"}","firstHop":"example.com:4321"}`,
+		`{"client":"{\"transport\":\"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/\"}","firstHop":"example.com:4321","connectionType":"tunneled"}`,
 		result.Value)
 
 	matchTransportConfig(t, transportConfig, result.Value)
@@ -99,7 +140,7 @@ func Test_doParseTunnel_LegacyJSON(t *testing.T) {
 	result := doParseTunnelConfig(transportConfig)
 	require.Nil(t, result.Error)
 	require.Equal(t,
-		`{"client":"{\"transport\":{\"method\":\"chacha20-ietf-poly1305\",\"password\":\"SECRET\",\"prefix\":\"SSH-2.0\\r\\n\",\"server\":\"example.com\",\"server_port\":4321}}","firstHop":"example.com:4321"}`,
+		`{"client":"{\"transport\":{\"method\":\"chacha20-ietf-poly1305\",\"password\":\"SECRET\",\"prefix\":\"SSH-2.0\\r\\n\",\"server\":\"example.com\",\"server_port\":4321}}","firstHop":"example.com:4321","connectionType":"tunneled"}`,
 		result.Value)
 
 	matchTransportConfig(t, transportConfig, result.Value)
@@ -120,7 +161,7 @@ transport:
 
 	require.Nil(t, result.Error)
 	require.Equal(t,
-		`{"client":"{\"transport\":{\"$type\":\"tcpudp\",\"tcp\":{\"$type\":\"shadowsocks\",\"cipher\":\"chacha20-ietf-poly1305\",\"endpoint\":\"example.com:80\",\"secret\":\"SECRET\"},\"udp\":{\"$type\":\"shadowsocks\",\"cipher\":\"chacha20-ietf-poly1305\",\"endpoint\":\"example.com:80\",\"secret\":\"SECRET\"}}}","firstHop":"example.com:80"}`,
+		`{"client":"{\"transport\":{\"$type\":\"tcpudp\",\"tcp\":{\"$type\":\"shadowsocks\",\"cipher\":\"chacha20-ietf-poly1305\",\"endpoint\":\"example.com:80\",\"secret\":\"SECRET\"},\"udp\":{\"$type\":\"shadowsocks\",\"cipher\":\"chacha20-ietf-poly1305\",\"endpoint\":\"example.com:80\",\"secret\":\"SECRET\"}}}","firstHop":"example.com:80","connectionType":"tunneled"}`,
 		result.Value)
 
 	matchClientConfig(t, clientConfig, result.Value)
@@ -174,7 +215,7 @@ func TestParseConfig_SS_URL(t *testing.T) {
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -198,7 +239,7 @@ func TestParseConfig_Legacy_JSON(t *testing.T) {
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -223,7 +264,7 @@ func TestParseConfig_Legacy_JSON_WithPrefix(t *testing.T) {
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -243,7 +284,7 @@ func TestParseConfig_Legacy_JSONFlow_WithPrefix(t *testing.T) {
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -268,7 +309,7 @@ func TestParseConfig_Transport_JSON_WithPrefix(t *testing.T) {
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchClientConfig(t, userInputConfig, result.Value)
 }
@@ -317,7 +358,7 @@ func TestParseConfig_Flexible_JSON(t *testing.T) {
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -343,7 +384,7 @@ prefix: "SSH-2.0\r\n"`
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -368,7 +409,7 @@ prefix: "SSH-2.0\r\n"`
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -394,7 +435,7 @@ prefix: "SSH-2.0\r\n"`
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -424,7 +465,7 @@ prefix: "SSH-2.0\r\n"`
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }
@@ -458,7 +499,7 @@ udp:
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
 	require.Equal(t, expectedSdFirstHop, clientResult.Client.sd.FirstHop)
-	require.Equal(t, expectedPlFirstHop, clientResult.Client.pl.FirstHop)
+	require.Equal(t, expectedPlFirstHop, clientResult.Client.pp.FirstHop)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }

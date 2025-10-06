@@ -24,7 +24,9 @@ describe('parseAccessKey', () => {
       if (params.indexOf('invalid') > -1) {
         throw Error('fake invalid config');
       }
-      return `{"client": ${JSON.stringify(params)}, "firstHop": "first-hop:4321"}`;
+      return `{"client": ${JSON.stringify(
+        params
+      )}, "firstHop": "first-hop:4321", "connectionType": "tunneled"}`;
     },
   });
 
@@ -37,7 +39,8 @@ describe('parseAccessKey', () => {
       new config.StaticServiceConfig(
         'My Server',
         'first-hop:4321',
-        clientConfig
+        clientConfig,
+        config.ConnectionType.TUNNELED
       )
     );
   });
@@ -60,7 +63,8 @@ describe('parseAccessKey', () => {
       new config.StaticServiceConfig(
         'My Server',
         'first-hop:4321',
-        clientConfig
+        clientConfig,
+        config.ConnectionType.TUNNELED
       )
     );
   });

@@ -79,7 +79,7 @@ func (d *RemoteDevice) Write(p []byte) (int, error) {
 }
 
 func (d *RemoteDevice) NotifyNetworkChanged() {
-	d.rd.NotifyNetworkChanged()
+	d.client.NotifyNetworkChanged()
 }
 
 func (d *RemoteDevice) Close() *perrs.PlatformError {

@@ -53,8 +53,5 @@ func parseTCPUDPTransportPair(ctx context.Context, configMap map[string]any, par
 		return nil, fmt.Errorf("failed to parse PacketListener: %w", err)
 	}
 
-	return &TransportPair{
-		StreamDialer:   sd,
-		PacketListener: pl,
-	}, nil
+	return wrapTransportPairWithOutlineDNS(sd, pl)
 }

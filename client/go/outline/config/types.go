@@ -16,8 +16,9 @@ package config
 
 import (
 	"context"
-	"net"
+	"encoding/json"
 
+	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 )
 
@@ -26,11 +27,36 @@ import (
 type ConnType int
 
 const (
+	// Proxyless
 	ConnTypeDirect ConnType = iota
+	// Proxy
 	ConnTypeTunneled
+	// Mixed
 	ConnTypePartial
 	ConnTypeBlocked
 )
+
+// This is the format used for sending ConnType between go and typescript
+// Keep this in sync with
+// client/web/app/outline_server_repository/config.ts#ConnectionType
+func (c ConnType) MarshalJSON() ([]byte, error) {
+	var s string
+	switch c {
+	case ConnTypeDirect:
+		s = "direct"
+	case ConnTypeTunneled:
+		s = "tunneled"
+	case ConnTypePartial:
+		s = "partial"
+	case ConnTypeBlocked:
+		s = "blocked"
+	default:
+		return nil, &json.UnsupportedValueError{
+			Str: "invalid ConnType",
+		}
+	}
+	return json.Marshal(s)
+}
 
 // ConnProviderConfig represents a dialer or endpoint that can create connections.
 type ConnectionProviderInfo struct {
@@ -44,6 +70,13 @@ type ConnectionProviderInfo struct {
 type PacketListener struct {
 	ConnectionProviderInfo
 	transport.PacketListener
+}
+
+// PacketProxy is a [network.PacketProxy] with embedded ConnectionProviderInfo.
+type PacketProxy struct {
+	ConnectionProviderInfo
+	network.PacketProxy
+	NotifyNetworkChanged func()
 }
 
 // DialFunc is a generic dialing function that can return any type of connction given a context and address.
@@ -68,17 +101,12 @@ type Endpoint[ConnType any] struct {
 
 // TransportPair provides a StreamDialer and PacketListener, to use as the transport in a Tun2Socks VPN.
 type TransportPair struct {
-	StreamDialer   *Dialer[transport.StreamConn]
-	PacketListener *PacketListener
+	StreamDialer *Dialer[transport.StreamConn]
+	PacketProxy  *PacketProxy
 }
 
 var _ transport.StreamDialer = (*TransportPair)(nil)
-var _ transport.PacketListener = (*TransportPair)(nil)
 
 func (t *TransportPair) DialStream(ctx context.Context, address string) (transport.StreamConn, error) {
 	return t.StreamDialer.Dial(ctx, address)
-}
-
-func (t *TransportPair) ListenPacket(ctx context.Context) (net.PacketConn, error) {
-	return t.PacketListener.ListenPacket(ctx)
 }

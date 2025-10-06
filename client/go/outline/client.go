@@ -27,6 +27,7 @@ import (
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/reporting"
+	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 	"github.com/goccy/go-yaml"
 )
@@ -41,23 +42,32 @@ import (
 //   - Refactor so that StartSession returns a Client
 type Client struct {
 	sd            *config.Dialer[transport.StreamConn]
-	pl            *config.PacketListener
+	pp            *config.PacketProxy
 	reporter      reporting.Reporter
 	sessionCancel context.CancelFunc
 }
 
+// DialStream implements StreamDialer.DialStream.
 func (c *Client) DialStream(ctx context.Context, address string) (transport.StreamConn, error) {
 	return c.sd.Dial(ctx, address)
 }
 
-func (c *Client) ListenPacket(ctx context.Context) (net.PacketConn, error) {
-	return c.pl.ListenPacket(ctx)
+// NewSession implements PacketProxy.NewSession.
+func (c *Client) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
+	return c.pp.NewSession(resp)
+}
+
+func (c *Client) NotifyNetworkChanged() {
+	if c.pp.NotifyNetworkChanged != nil {
+		c.pp.NotifyNetworkChanged()
+	}
 }
 
 func (c *Client) StartSession() error {
 	slog.Debug("Starting session")
 	var sessionCtx context.Context
 	sessionCtx, c.sessionCancel = context.WithCancel(context.Background())
+	c.NotifyNetworkChanged()
 	if c.reporter != nil {
 		go c.reporter.Run(sessionCtx)
 	}
@@ -152,14 +162,15 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 			Message: "transport must tunnel TCP traffic",
 		}
 	}
-	if transportPair.PacketListener.ConnType == config.ConnTypeDirect {
+	if transportPair.PacketProxy.ConnType == config.ConnTypeDirect {
 		return nil, &platerrors.PlatformError{
 			Code:    platerrors.InvalidConfig,
 			Message: "transport must tunnel UDP traffic",
 		}
 	}
 
-	client := &Client{sd: transportPair.StreamDialer, pl: transportPair.PacketListener}
+	client := &Client{sd: transportPair.StreamDialer, pp: transportPair.PacketProxy}
+
 	// TODO: figure out a better way to handle parse calls.
 	if providerClientConfig.Reporter != nil {
 		// TODO(fortuna): encapsulate service storage.

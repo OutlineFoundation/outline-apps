@@ -39,7 +39,6 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,8 +51,6 @@ import org.outline.log.SentryErrorReporter;
 
 import outline.ClientConfig;
 import outline.NewClientResult;
-import outline.Outline;
-import outline.TCPAndUDPConnectivityResult;
 import platerrors.Platerrors;
 import platerrors.PlatformError;
 import tun2socks.ConnectRemoteDeviceResult;
@@ -72,14 +69,6 @@ public class VpnTunnelService extends VpnService {
   private static final String TUNNEL_ID_KEY = "id";
   private static final String TUNNEL_CONFIG_KEY = "config";
   private static final String TUNNEL_SERVER_NAME = "serverName";
-  private static final String[] DNS_RESOLVER_IP_ADDRESSES = {
-    // OpenDNS
-    "208.67.222.222", "208.67.220.220",
-    // Cloudflare
-    "1.1.1.1",
-    // Quad9
-    "9.9.9.9"
-  };
 
   public static final String STATUS_BROADCAST_KEY = "onStatusChange";
 
@@ -246,7 +235,9 @@ public class VpnTunnelService extends VpnService {
     if (!alreadyRunning) {
       // Only establish the VPN if this is not a tunnel restart.
       try {
-        String dnsResolver = DNS_RESOLVER_IP_ADDRESSES[new Random().nextInt(DNS_RESOLVER_IP_ADDRESSES.length)];
+        // A "fake" local DNS resolver. Outline will intercept the real resolver at this address.
+        // Must align with: client/go/outline/config/outline_dns_intercept.go
+        String dnsResolver = "169.254.113.53";
         VpnService.Builder builder =
                 new VpnService.Builder()
                         .setSession(this.getApplicationName())
@@ -269,6 +260,7 @@ public class VpnTunnelService extends VpnService {
         for (Subnet subnet : reservedBypassSubnets) {
           builder.addRoute(subnet.address, subnet.prefix);
         }
+        builder.addRoute(dnsResolver, 32);
         this.tunFd = builder.establish();
       } catch (Exception e) {
         LOG.log(Level.SEVERE, "Failed to establish the VPN", e);

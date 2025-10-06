@@ -114,15 +114,11 @@ if %errorlevel% neq 0 (
 :: as it means we do not have to modify the DNS settings of any other network
 :: device in the system. Configure with Cloudflare and Quad9 resolvers
 echo Configuring primary DNS...
-%SystemRoot%\System32\netsh interface ip set dnsservers %DEVICE_NAME% static address=1.1.1.1
+:: A "fake" local DNS resolver. Outline will intercept the real resolver at this address.
+:: Must align with: client/go/outline/config/outline_dns_intercept.go
+%SystemRoot%\System32\netsh interface ip set dnsservers %DEVICE_NAME% static address=169.254.113.53
 if %errorlevel% neq 0 (
   echo Could not configure TAP device primary DNS. >&2
-  exit /b %ERROR_TAP_CONFIGURE_DNS%
-)
-echo Configuring secondary DNS...
-%SystemRoot%\System32\netsh interface ip add dnsservers %DEVICE_NAME% 9.9.9.9 index=2
-if %errorlevel% neq 0 (
-  echo Could not configure TAP device secondary DNS. >&2
   exit /b %ERROR_TAP_CONFIGURE_DNS%
 )
 echo TAP network device added and configured successfully

@@ -30,7 +30,8 @@ export class StaticServiceConfig {
   constructor(
     readonly name: string,
     readonly firstHop: string,
-    readonly client: string
+    readonly client: string,
+    readonly connectionType: ConnectionType
   ) {}
 }
 
@@ -56,10 +57,23 @@ export interface TunnelConfigJson {
 }
 
 /**
+ * ConnectionType specifies how the config connects to the internet
+ * keep this type in sync with
+ * go/outline/config/types.go#ConnType
+ */
+export enum ConnectionType {
+  TUNNELED = 'tunneled',
+  DIRECT = 'direct',
+  PARTIAL = 'partial',
+  BLOCKED = 'blocked',
+}
+
+/**
  * FirstHopAndTunnelConfigJson holds the first hop information and the tunnel config for convenience.
  */
 export interface FirstHopAndTunnelConfigJson extends TunnelConfigJson {
   firstHop: string;
+  connectionType: ConnectionType;
 }
 
 /**
@@ -92,7 +106,12 @@ export async function parseAccessKey(
     // Static ss:// keys. It encodes the full service config.
     if (noHashAccessKey.protocol === 'ss:') {
       const parsed = await parseTunnelConfig(noHashAccessKey.toString());
-      return new StaticServiceConfig(name, parsed.firstHop, parsed.client);
+      return new StaticServiceConfig(
+        name,
+        parsed.firstHop,
+        parsed.client,
+        parsed.connectionType
+      );
     }
 
     // Dynamic ssconf:// keys. It encodes the location of the service config.
