@@ -198,10 +198,7 @@ Polymer({
     </style>
     <outline-step-view>
       <span slot="step-title">[[localize('manual-server-title')]]</span>
-      <span slot="step-description"
-        >[[localize('manual-server-description', 'cloudProvider',
-        cloudProviderName)]]</span
-      >
+      <span slot="step-description">[[serverDescription]]</span>
 
       <div class="card">
         <!-- GCP -->
@@ -313,8 +310,8 @@ Polymer({
             <div class="section-content-instructions">
               <outline-cloud-instructions-view
                 title="[[localize('manual-server-create-group')]]"
-                thumbnail-path="images/aws-lightsail-thumbnail-1.png"
-                image-path="images/aws-lightsail-screenshot-1.png"
+                thumbnail-path="images/aws-lightsail-thumbnail.png"
+                image-path="images/aws-lightsail-setup.png"
                 localize="[[localize]]"
               >
                 <ol>
@@ -326,6 +323,8 @@ Polymer({
                   <li>[[localize('aws-lightsail-firewall-3')]]</li>
                   <li>[[localize('aws-lightsail-firewall-4')]]</li>
                   <li>[[localize('aws-lightsail-firewall-5')]]</li>
+                  <li>[[localize('aws-lightsail-firewall-6')]]</li>
+                  <li>[[localize('aws-lightsail-firewall-7')]]</li>
                 </ol>
               </outline-cloud-instructions-view>
             </div>
@@ -408,6 +407,11 @@ Polymer({
       type: String,
       computed: '_computeCloudProviderName(cloudProvider)',
     },
+    serverDescription: {
+      type: String,
+      computed:
+        '_computeServerDescription(cloudProvider, cloudProviderName, language)',
+    },
     isCloudProviderAws: {
       type: Boolean,
       computed: '_computeIsCloudProviderAws(cloudProvider)',
@@ -476,6 +480,20 @@ Polymer({
       default:
         return '';
     }
+  },
+
+  _computeServerDescription(
+    cloudProvider: string,
+    cloudProviderName: string,
+    _language: string
+  ) {
+    return cloudProvider === 'generic'
+      ? this.localize('manual-server-description-generic')
+      : this.localize(
+          'manual-server-description',
+          'cloudProvider',
+          cloudProviderName
+        );
   },
 
   _computeIsCloudProviderAws(cloudProvider: string) {

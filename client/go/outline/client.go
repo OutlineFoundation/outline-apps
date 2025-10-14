@@ -155,20 +155,6 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 		}
 	}
 
-	// Make sure the transport is not proxyless for now.
-	if transportPair.StreamDialer.ConnType == config.ConnTypeDirect {
-		return nil, &platerrors.PlatformError{
-			Code:    platerrors.InvalidConfig,
-			Message: "transport must tunnel TCP traffic",
-		}
-	}
-	if transportPair.PacketProxy.ConnType == config.ConnTypeDirect {
-		return nil, &platerrors.PlatformError{
-			Code:    platerrors.InvalidConfig,
-			Message: "transport must tunnel UDP traffic",
-		}
-	}
-
 	client := &Client{sd: transportPair.StreamDialer, pp: transportPair.PacketProxy}
 
 	// TODO: figure out a better way to handle parse calls.

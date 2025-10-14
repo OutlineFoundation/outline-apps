@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
 	"github.com/Jigsaw-Code/outline-apps/client/go/outline/reporting"
 	"github.com/stretchr/testify/require"
 )
@@ -236,18 +236,17 @@ transport:
 	require.Equal(t, firstHop, result.Client.pp.FirstHop)
 }
 
-func Test_NewTransport_DisallowProxyless(t *testing.T) {
-	config := `
+func Test_NewTransport_AllowProxyless(t *testing.T) {
+	configText := `
 transport:
   $type: tcpudp
   tcp:
   udp:`
-	result := (&ClientConfig{}).New("", config)
-	require.Error(t, result.Error, "Got %v", result.Error)
-	perr := &platerrors.PlatformError{}
-	require.ErrorAs(t, result.Error, &perr)
-	require.Equal(t, platerrors.InvalidConfig, perr.Code)
-	require.Equal(t, "transport must tunnel TCP traffic", result.Error.Message)
+	result := (&ClientConfig{}).New("", configText)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	require.NotNil(t, result.Client)
+	require.Equal(t, config.ConnTypeDirect, result.Client.sd.ConnType)
+	require.Equal(t, config.ConnTypeDirect, result.Client.pp.ConnType)
 }
 
 func Test_NewClientFromJSON_Errors(t *testing.T) {

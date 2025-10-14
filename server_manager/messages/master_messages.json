@@ -54,15 +54,23 @@
     "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail.. 'Networking' should be translated and included untranslated in parentheses."
   },
   "aws_lightsail_firewall_3": {
-    "message": "In the 'Firewall' section, click 'Add another'.",
+    "message": "In the 'IPv4 Firewall' section, click 'Add rule'.",
     "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
   },
   "aws_lightsail_firewall_4": {
-    "message": "Set 'Application' value to 'All TCP+UDP'.",
+    "message": "Set 'Application' value to 'All protocols'.",
     "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
   },
   "aws_lightsail_firewall_5": {
-    "message": "Click 'Save'.",
+    "message": "Click 'Create'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "aws-lightsail-firewall-6": {
+    "message": "In the 'IPv4 Networking' section, click 'Attach static IP'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "aws-lightsail-firewall-7": {
+    "message": "Enter a name and click 'Create and attach'.",
     "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
   },
   "cancel": {
@@ -805,7 +813,7 @@
   },
   "manual_server_description": {
     "message": "These steps will help you install Outline on a $CLOUD_PROVIDER$ Linux server.",
-    "description": "This string appears in the server setup view as a header. Lets the user know that the following sections provide instructions on how to install Outline on their server.",
+    "description": "This string appears in the server setup view as a header when a specific cloud provider (AWS or GCP) is selected. The placeholder will be replaced with the cloud provider name (e.g., 'Amazon Web Services' or 'Google Cloud Platform'). Lets the user know that the following sections provide instructions on how to install Outline on their server.",
     "placeholders": {
       "CLOUD_PROVIDER": {
         "content": "{cloudProvider}",
@@ -813,6 +821,11 @@
       }
     }
   },
+  "manual_server_description_generic": {
+    "message": "These steps will help you install Outline on a Linux server.",
+    "description": "This string appears in the server setup view as a header when no specific cloud provider is selected. Lets the user know that the following sections provide instructions on how to install Outline on their server."
+  },
+
   "manual_server_firewall": {
     "message": "Configure your firewall",
     "description": "This string appears in the server setup view as the header of a section that provides instructions to configure the server's firewall."

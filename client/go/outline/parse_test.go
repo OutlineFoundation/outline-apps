@@ -513,7 +513,7 @@ func TestParseConfig_Transport_Unsupported(t *testing.T) {
 	require.Contains(t, result.Error.Message, "unsupported config")
 }
 
-func TestParseConfig_Transport_DisallowProxylessTCP(t *testing.T) {
+func TestParseConfig_Transport_AllowProxylessTCP(t *testing.T) {
 	userInputConfig := `
 $type: tcpudp
 tcp: # results in direct dialer
@@ -524,9 +524,19 @@ udp:
     secret: SECRET
     prefix: "SSH-2.0\r\n"`
 	result := doParseTunnelConfig(userInputConfig)
-	require.NotNil(t, result.Error, "Expected an error for proxyless TCP")
-	require.Equal(t, platerrors.InvalidConfig, result.Error.Code)
-	require.Equal(t, "transport must tunnel TCP traffic", result.Error.Message)
+	require.Nil(t, result.Error, "doParseTunnelConfig failed: %v", result.Error)
+
+	parsedOutput := parseFirstHopAndTunnelConfigJSON(t, result.Value)
+	// FirstHop in JSON output will be empty because sd and pl hops are different
+	require.Empty(t, parsedOutput.FirstHop)
+
+	clientResult := (&ClientConfig{}).New("", parsedOutput.Client)
+	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
+	require.NotNil(t, clientResult.Client)
+	require.Equal(t, config.ConnTypeDirect, clientResult.Client.sd.ConnType)
+	require.Equal(t, config.ConnTypeTunneled, clientResult.Client.pp.ConnType)
+
+	matchTransportConfig(t, userInputConfig, result.Value)
 }
 
 func TestParseConfig_ClientFromJSON_Errors(t *testing.T) {
@@ -572,6 +582,17 @@ error:
 			"details": "⚠ Details / Key ကိုပြန်လည်စစ်ဆေးပေးပါ။",
 		},
 	}, result.Error)
+}
+
+func TestParseConfig_BasicAccess(t *testing.T) {
+	userInputConfig := `
+transport:
+  $type: basic-access
+`
+	result := doParseTunnelConfig(userInputConfig)
+	require.Nil(t, result.Error, "doParseTunnelConfig failed: %v", result.Error)
+
+	matchClientConfig(t, userInputConfig, result.Value)
 }
 
 // The tests below are to record broken usage of github.com/goccy/go-yaml.

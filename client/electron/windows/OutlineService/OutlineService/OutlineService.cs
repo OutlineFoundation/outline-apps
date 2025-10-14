@@ -75,7 +75,9 @@ namespace OutlineService
         private const string PARAM_PROXY_IP = "proxyIp";
         private const string PARAM_AUTO_CONNECT = "isAutoConnect";
 
-        private static string[] IPV4_SUBNETS = { "0.0.0.0/1", "128.0.0.0/1" };
+        // Explicitly route "fake" DNS traffic to 169.254.113.53/32 through the TUN device.
+        // This is necessary because the 169.254.0.0/16 is in IPV4_RESERVED_SUBNETS.
+        private static string[] IPV4_SUBNETS = { "0.0.0.0/1", "128.0.0.0/1", "169.254.113.53/32" };
         private static string[] IPV6_SUBNETS = { "fc00::/7", "2000::/4", "3000::/4" };
         private static string[] IPV4_RESERVED_SUBNETS = {
             "0.0.0.0/8",
