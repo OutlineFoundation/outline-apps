@@ -64,11 +64,28 @@ export class ContactView extends LitElement {
   static styles = [
     css`
       :host {
+        --contact-safe-area-top: 0px;
         background: var(--outline-background);
         color: var(--outline-text-color);
         font-family: var(--outline-font-family);
         padding: var(--contact-view-gutter, var(--outline-gutter));
+        padding-top: calc(
+          var(--contact-view-gutter, var(--outline-gutter)) +
+            var(--contact-safe-area-top)
+        );
         width: 100%;
+      }
+
+      @supports (padding-top: constant(safe-area-inset-top)) {
+        :host {
+          --contact-safe-area-top: constant(safe-area-inset-top);
+        }
+      }
+
+      @supports (padding-top: env(safe-area-inset-top)) {
+        :host {
+          --contact-safe-area-top: env(safe-area-inset-top);
+        }
       }
 
       main {

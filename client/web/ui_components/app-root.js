@@ -608,6 +608,30 @@ export class AppRoot extends mixinBehaviors(
   ready() {
     super.ready();
     this.setLanguage(this.language);
+    this.addEventListener('ShowNavigation', () => {
+      this.openDrawer();
+    });
+    this.addEventListener('HideNavigation', () => {
+      this.closeDrawer();
+    });
+    this.addEventListener('ShowAddServerDialog', () => {
+      if (this.$.addServerView) {
+        this.$.addServerView.open = true;
+      }
+    });
+    this.addEventListener('AddServerRequested', () => {
+      if (this.$.addServerView) this.$.addServerView.open = false;
+    });
+    this.addEventListener('IgnoreServerRequested', () => {
+      if (this.$.addServerView) this.$.addServerView.open = false;
+    });
+    this.addEventListener('ChangePage', event => {
+      const detail = /** @type {CustomEvent} */ (event).detail || {};
+      if (detail.page) {
+        this.changePage(detail.page);
+      }
+      this.closeDrawer();
+    });
 
     // Workaround for paper-behaviors' craptastic keyboard focus detection:
     // https://github.com/PolymerElements/paper-behaviors/issues/80
