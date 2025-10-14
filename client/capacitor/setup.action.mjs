@@ -26,7 +26,8 @@ export async function main(..._argv) {
 
   // 1) Always build web assets
   await spawnStream('npm', 'run', 'action', 'client/web/build');
-  await spawnStream('npm', 'run', 'action', 'client/go/build');
+  await spawnStream('npm', 'run', 'action', 'client/go/build', 'ios');
+  await spawnStream('npm', 'run', 'action', 'client/go/build', 'android');
 
  // 2) Always copy index_cordova.html → index.html
   await fs.copyFile(
