@@ -12,217 +12,119 @@
 */
 
 import {LitElement, html, css} from 'lit';
-import {customElement, property, state} from 'lit/decorators.js';
+import {customElement, property} from 'lit/decorators.js';
 
-@customElement('add-access-key-dialog')
-export class AddAccessKeyDialog extends LitElement {
-  @property({type: String, attribute: true, reflect: true}) accessKey:
-    | string
-    | null = null;
-  @property({type: Object}) accessKeyValidator!: (
-    accessKey: string
-  ) => Promise<boolean>;
-  @property({type: Object}) localize!: (
-    key: string,
-    ...args: string[]
-  ) => string;
-  @property({type: Boolean}) open: boolean;
+import privacyLock from '../../../assets/privacy-lock.png';
 
-  @state() hasEmptyAccessKey: boolean;
-  @state() hasInvalidAccessKey: boolean;
+@customElement('privacy-acknowledgement-dialog')
+export class PrivacyAcknowledgementDialog extends LitElement {
+  @property({type: Object}) localize!: (key: string) => string;
+  @property({type: String}) privacyPageUrl: string = '';
+  @property({type: Boolean}) open: boolean = false;
 
   static styles = css`
     :host {
       --md-sys-color-primary: var(--outline-primary);
-      --md-sys-color-error: var(--outline-error);
-      --md-sys-color-on-error: var(--outline-white);
-      --md-sys-color-on-surface: var(--outline-text-color);
-      --md-sys-color-on-surface-variant: var(--outline-text-color);
       --md-sys-shape-corner-extra-large: 2px;
       --md-sys-shape-corner-full: 2px;
-
-      width: 100%;
-      height: 100%;
     }
 
     md-dialog {
       --md-dialog-container-color: var(
-        --outline-app-dialog-primary-background-color
+        --outline-comms-dialog-primary-background-color
       );
-      --md-dialog-headline-color: var(--outline-text-color);
-      --md-dialog-supporting-text-color: var(--outline-text-color);
+      --md-dialog-supporting-text-color: var(
+        --outline-comms-dialog-primary-text-color
+      );
 
+      text-align: center;
+      min-width: 100svw;
+      min-width: 100vw;
+      min-height: 100svh;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    article {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 250px);
+      margin: 24px auto;
+      max-width: 600px;
       min-width: 300px;
-      --md-dialog-container-color: var(--outline-card-background);
-      --md-dialog-headline-color: var(--outline-text-color);
-      --md-dialog-supporting-text-color: var(--outline-text-color);
+      padding: 24px 12px;
+      width: 70vw;
     }
 
-    section {
-      margin-bottom: 12px;
-      color: var(--outline-text-color);
+    article > figure {
+      align-items: center;
+      justify-content: center;
+      display: flex;
+      flex-grow: 1;
     }
 
-    section.help-text {
-      color: var(--outline-label-color);
+    img {
+      width: 112px;
+      height: 158px;
+      pointer-events: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    h2 {
+      line-height: 28px;
+    }
+
+    p {
+      color: var(--outline-comms-dialog-secondary-text-color);
     }
 
     a {
+      text-decoration: none;
       color: var(--outline-primary);
-    }
-
-    md-filled-text-field {
-      --md-filled-text-field-input-text-font: 'Menlo', monospace;
-      --md-filled-text-field-container-color: rgba(0, 0, 0, 0.08);
-      --md-filled-text-field-input-text-color: var(--outline-input-text);
-      --md-filled-text-field-label-text-color: var(--outline-label-color);
-      --md-filled-text-field-focus-label-text-color: var(--outline-primary);
-      --md-filled-text-field-error-color: var(--outline-error);
-      --md-filled-text-field-error-focus-label-text-color: var(--outline-error);
-      --md-filled-text-field-error-hover-label-text-color: var(--outline-error);
-      --md-filled-text-field-error-input-text-color: var(--outline-input-text);
-      --md-filled-text-field-hover-container-color: rgba(0, 0, 0, 0.12);
-      --md-filled-text-field-focus-container-color: rgba(0, 0, 0, 0.15);
-      width: 100%;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-weight: bold;
     }
 
     fieldset {
+      align-items: center;
       border: none;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
       text-transform: uppercase;
-    }
-
-    md-text-button {
-      --md-text-button-label-text-color: var(--outline-primary);
-    }
-
-    md-filled-button {
-      --md-filled-button-container-color: var(--outline-primary);
-      --md-filled-button-label-text-color: var(--outline-white);
-    }
-
-    /* Explicit fixing for error text */
-    md-filled-text-field::part(error) {
-      color: var(--outline-error);
     }
   `;
 
-  async connectedCallback() {
-    super.connectedCallback();
-
-    await this.runAccessKeyChecks(this.accessKey);
-  }
-
-  async attributeChangedCallback(
-    attributeName: string,
-    oldValue: string,
-    newValue: string
-  ) {
-    super.attributeChangedCallback(attributeName, oldValue, newValue);
-
-    await this.runAccessKeyChecks(newValue);
-  }
-
   render() {
-    return html`<md-dialog .open="${this.open}" @cancel=${this.cancel} quick>
-      <header slot="headline" style="color: var(--outline-text-color);">
-        ${this.localize('add-access-key-dialog-header')}
-      </header>
-      <article slot="content" style="color: var(--outline-text-color);">
-        <section
-          class="help-text"
-          style="color: var(--outline-label-color);"
-          .innerHTML=${this.localize(
-            'add-access-key-dialog-help-text',
-            'openLink',
-            '<a href=https://s3.amazonaws.com/outline-vpn/index.html>',
-            'closeLink',
-            '</a>'
-          )}
-        ></section>
-        <section>
-          <md-filled-text-field
-            .error=${!this.hasEmptyAccessKey && this.hasInvalidAccessKey}
-            @input=${this.edit}
-            error-text="${this.localize('add-access-key-dialog-error-text')}"
-            label="${this.localize('add-access-key-dialog-label')}"
-            rows="5"
-            type="textarea"
-            .value=${this.accessKey ?? ''}
-          ></md-filled-text-field>
-        </section>
-      </article>
-      <fieldset slot="actions">
-        <md-text-button @click=${this.cancel}>
-          ${this.localize('cancel')}
-        </md-text-button>
-        <md-filled-button
-          @click=${this.confirm}
-          ?disabled=${this.hasEmptyAccessKey || this.hasInvalidAccessKey}
-          >${this.localize('confirm')}</md-filled-button
-        >
-      </fieldset>
-    </md-dialog>`;
+    return html`
+      <md-dialog
+        .open=${this.open}
+        @cancel=${(event: Event) => event.preventDefault()}
+        quick
+      >
+        <article slot="content">
+          <figure>
+            <img alt="Privacy lock" src="${privacyLock}" />
+          </figure>
+          <h2>${this.localize('privacy-title')}</h2>
+          <p>${this.localize('privacy-text')}</p>
+        </article>
+        <fieldset slot="actions">
+          <a href="${this.privacyPageUrl}">${this.localize('learn-more')}</a>
+          <md-filled-button @click="${this.handleAcknowledgement}" autofocus>
+            ${this.localize('got-it')}
+          </md-filled-button>
+        </fieldset>
+      </md-dialog>
+    `;
   }
 
-  private async runAccessKeyChecks(accessKey: string | null) {
-    this.accessKey = accessKey;
-
-    const normalizedKey = accessKey?.trim() ?? '';
-    this.hasEmptyAccessKey = normalizedKey.length === 0;
-
-    if (this.hasEmptyAccessKey) {
-      this.hasInvalidAccessKey = true;
-      return;
-    }
-
-    try {
-      const validator = this.accessKeyValidator;
-      if (typeof validator === 'function') {
-        this.hasInvalidAccessKey = !(await validator(normalizedKey));
-      } else {
-        // If the validator has not yet been wired, stay conservative.
-        this.hasInvalidAccessKey = true;
-        console.warn('accessKeyValidator not available; keeping dialog disabled');
-      }
-    } catch (e) {
-      console.error('Access key validation failed', e);
-      this.hasInvalidAccessKey = true;
-    }
-  }
-
-  private async edit(event: InputEvent) {
-    event.preventDefault();
-
-    const value = (event.target as HTMLInputElement).value;
-    this.accessKey = value;
-    await this.runAccessKeyChecks(value);
-  }
-
-  private confirm(event: Event) {
-    event.preventDefault();
-
+  private handleAcknowledgement() {
     this.dispatchEvent(
-      new CustomEvent('AddServerRequested', {
-        detail: {accessKey: this.accessKey?.trim() ?? ''},
-        composed: true,
-        bubbles: true,
-      })
+      new CustomEvent('PrivacyTermsAcked', {bubbles: true, composed: true})
     );
-
-    this.accessKey = null;
-  }
-
-  private cancel(event: Event) {
-    event.preventDefault();
-
-    this.dispatchEvent(
-      new CustomEvent('IgnoreServerRequested', {
-        detail: {accessKey: this.accessKey},
-        composed: true,
-        bubbles: true,
-      })
-    );
-
-    this.accessKey = null;
   }
 }
