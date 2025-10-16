@@ -17,6 +17,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
+import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 
 export async function main(..._argv) {
   const root = getRootDir();
@@ -25,9 +26,9 @@ export async function main(..._argv) {
   const www = path.join(clientRoot, 'www');
 
   // 1) Always build web assets
-  await spawnStream('npm', 'run', 'action', 'client/web/build');
-  await spawnStream('npm', 'run', 'action', 'client/go/build', 'ios');
-  await spawnStream('npm', 'run', 'action', 'client/go/build', 'android');
+  await runAction('client/web/build');
+  await runAction('client/go/build', 'ios');
+  await runAction('client/go/build', 'android');
 
  // 2) Always copy index_cordova.html → index.html
   await fs.copyFile(
