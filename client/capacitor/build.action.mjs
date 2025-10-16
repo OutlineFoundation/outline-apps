@@ -16,13 +16,15 @@ import url from 'url';
 import path from 'path';
 import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
+import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 
 export async function main(...argv) {
   const root = getRootDir();
   const capRoot = path.resolve(root, 'client', 'capacitor');
-
+    
   const prevCwd = process.cwd();
   try {
+    await runAction('client/go/build', ...argv);
     process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'cap', 'open', ...argv);
   } finally {

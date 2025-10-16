@@ -27,8 +27,6 @@ export async function main(..._argv) {
 
   // 1) Always build web assets
   await runAction('client/web/build');
-  await runAction('client/go/build', 'ios');
-  await runAction('client/go/build', 'android');
 
  // 2) Always copy index_cordova.html → index.html
   await fs.copyFile(
