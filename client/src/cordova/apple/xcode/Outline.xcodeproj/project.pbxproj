@@ -33,6 +33,7 @@
 		A2AC1A4F2B082197004E13CB /* AppKitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2AC1A4E2B082197004E13CB /* AppKitController.swift */; };
 		A2AC1A9C2B082526004E13CB /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = A2AC1A582B082526004E13CB /* Localizable.strings */; };
 		A2AC1A9D2B082526004E13CB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2AC1A9B2B082526004E13CB /* Assets.xcassets */; };
+		AC66E9912E99C7820029B1EB /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = AC66E9902E99C7820029B1EB /* AppIcon.icon */; };
 		FC8C310C1FAA88FB004262BE /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FC8C310A1FAA814A004262BE /* NetworkExtension.framework */; };
 /* End PBXBuildFile section */
 
@@ -224,6 +225,7 @@
 		A2AC1A9A2B082526004E13CB /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A2AC1A9B2B082526004E13CB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AAFAFA54943F490EAF4CD5BC /* OutlinePlugin.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = OutlinePlugin.swift; path = "cordova-plugin-outline/OutlinePlugin.swift"; sourceTree = "<group>"; };
+		AC66E9902E99C7820029B1EB /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		EB87FDF31871DA8E0020F90C /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; name = www; path = ../../www; sourceTree = "<group>"; };
 		EB87FDF41871DAF40020F90C /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = config.xml; path = ../../config.xml; sourceTree = "<group>"; };
 		ED33DF2A687741AEAF9F8254 /* Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
@@ -292,6 +294,7 @@
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
+				AC66E9902E99C7820029B1EB /* AppIcon.icon */,
 			);
 			name = CustomTemplate;
 			sourceTree = "<group>";
@@ -637,6 +640,7 @@
 				0207DA581B56EA530066E2B4 /* Assets.xcassets in Resources */,
 				65A9AC9C2BEC091700C5899F /* PrivacyInfo.xcprivacy in Resources */,
 				6AFF5BF91D6E424B00AB3073 /* CDVLaunchScreen.storyboard in Resources */,
+				AC66E9912E99C7820029B1EB /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

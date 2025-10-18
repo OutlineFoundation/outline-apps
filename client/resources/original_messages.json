@@ -459,6 +459,7 @@
   },
   "proxyless_confirm_dialog_title": {
     "description": "The title of a dialog box asking the user to confirm connecting with limited protection (proxyless).",
+    "meaning": "MsgID-20251015-UpdateWhenDescriptionChanged",
     "message": "Connect with Limited Protection?"
   },
   "quit": {
