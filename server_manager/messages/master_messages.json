@@ -63,6 +63,7 @@
   },
   "aws_lightsail_firewall_5": {
     "message": "Click 'Create'.",
+    "meaning": "MsgID-20251015-UpdateWhenDescriptionChanged",
     "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
   },
   "aws-lightsail-firewall-6": {

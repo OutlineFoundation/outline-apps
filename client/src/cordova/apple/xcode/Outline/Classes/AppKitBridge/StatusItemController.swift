@@ -96,7 +96,9 @@ class StatusItemController: NSObject {
         guard let uiWindow = getUiWindow() else {
             return
         }
+        NSApp.setActivationPolicy(.regular)
         uiWindow.makeKeyAndOrderFront(self)
+        NSRunningApplication.current.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     }
 
     @objc func closeApplication(_: AnyObject?) {
