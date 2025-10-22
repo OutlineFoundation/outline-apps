@@ -24,6 +24,7 @@ export async function main(...argv) {
   const capRoot = path.resolve(root, 'client', 'capacitor');
   const www = path.resolve(root, 'client', 'www');
     
+  await runAction('client/go/build', ...argv);
   await runAction('client/web/build');
   
   await fs.copyFile(
@@ -37,16 +38,9 @@ export async function main(...argv) {
     process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'capacitor-assets', 'generate');
     await spawnStream('npx', 'cap', 'sync');
-  } finally {
-    process.chdir(prevCwd);               // restore original working dir
-  }
-    
-  try {
-    await runAction('client/go/build', ...argv);
-    process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'cap', 'open', ...argv);
   } finally {
-      process.chdir(prevCwd);               // restore original working dir
+    process.chdir(prevCwd);               // restore original working dir
   }
 }
 

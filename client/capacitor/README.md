@@ -13,15 +13,7 @@ Install these pre-requisites:
  npm install -D webpack-cli 
 ```
 
-## Set up the Apps
-
-Then run the following on the command-line:
-
-```sh
-npm run action client/capacitor/setup
-```
-
-## Run the Apps
+## Set up and Run the Apps
 
 For iOS:
 
