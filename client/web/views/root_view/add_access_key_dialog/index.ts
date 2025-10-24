@@ -174,7 +174,7 @@ export class AddAccessKeyDialog extends LitElement {
     }
   }
 
-  private edit(event: InputEvent) {
+  private async edit(event: InputEvent) {
     event.preventDefault();
 
     this.accessKey = (event.target as HTMLInputElement).value;
