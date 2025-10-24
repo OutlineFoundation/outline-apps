@@ -14,7 +14,7 @@
 
 import {StartRequestJson, VpnApi, TunnelStatus} from './vpn';
 import * as errors from '../../model/errors';
-import {OUTLINE_PLUGIN_NAME, pluginExec} from '../plugin.cordova';
+import {pluginExec, registerVpnStatusListener} from '../plugin.cordova';
 
 export class CordovaVpnApi implements VpnApi {
   constructor() {}
@@ -48,6 +48,6 @@ export class CordovaVpnApi implements VpnApi {
       listener(data.id, data.status);
     };
     console.debug('CordovaVpnApi: registering onStatusChange callback');
-    cordova.exec(callback, onError, OUTLINE_PLUGIN_NAME, 'onStatusChange', []);
+    registerVpnStatusListener(callback, onError);
   }
 }

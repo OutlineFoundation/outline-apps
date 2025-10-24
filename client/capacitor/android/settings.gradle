@@ -1,5 +1,3 @@
 include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
-
+includeBuild '../../src/cordova/android/OutlineAndroidLib'
 apply from: 'capacitor.settings.gradle'
