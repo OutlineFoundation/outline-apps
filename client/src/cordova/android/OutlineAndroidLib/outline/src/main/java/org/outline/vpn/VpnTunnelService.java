@@ -513,7 +513,7 @@ public class VpnTunnelService extends VpnService {
 
       // We must specify the service type for security reasons: https://developer.android.com/about/versions/14/changes/fgs-types-required
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        startForeground(NOTIFICATION_SERVICE_ID, notificationBuilder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        startForeground(NOTIFICATION_SERVICE_ID, notificationBuilder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
       }
     } catch (Exception e) {
       LOG.warning("Unable to display persistent notification");
