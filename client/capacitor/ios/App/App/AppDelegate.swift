@@ -5,6 +5,7 @@ import Capacitor
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    private var hasAdjustedWorkingDirectory = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
@@ -27,6 +28,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        adjustWorkingDirectoryIfNeeded(context: "didBecomeActive")
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -46,4 +48,33 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
+}
+
+extension AppDelegate {
+    private func adjustWorkingDirectoryIfNeeded(context: String) {
+        guard !hasAdjustedWorkingDirectory else { return }
+        guard let bridgeController = window?.rootViewController as? CAPBridgeViewController else {
+            NSLog("[OutlineApp] Working directory update skipped (%@): root view controller unavailable", context)
+            retryWorkingDirectoryAdjustment()
+            return
+        }
+        guard let appPath = bridgeController.bridge?.config.appLocation.path else {
+            NSLog("[OutlineApp] Working directory update skipped (%@): bridge not ready", context)
+            retryWorkingDirectoryAdjustment()
+            return
+        }
+
+        if FileManager.default.changeCurrentDirectoryPath(appPath) {
+            hasAdjustedWorkingDirectory = true
+            NSLog("[OutlineApp] Working directory set to %@", appPath)
+        } else {
+            NSLog("[OutlineApp] Failed to set working directory to %@", appPath)
+        }
+    }
+
+    private func retryWorkingDirectoryAdjustment() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.adjustWorkingDirectoryIfNeeded(context: "retry")
+        }
+    }
 }
