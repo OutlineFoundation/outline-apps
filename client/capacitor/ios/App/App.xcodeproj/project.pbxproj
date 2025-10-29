@@ -15,18 +15,42 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		6318D1DB2EB1232D006D5B40 /* Tun2socks.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */; };
+		6318D1DC2EB1232D006D5B40 /* Tun2socks.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		6318D1E02EB1235E006D5B40 /* OutlineAppleLib in Frameworks */ = {isa = PBXBuildFile; productRef = 6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */; };
+		6318D1E22EB1235E006D5B40 /* OutlineVPNExtensionLib in Frameworks */ = {isa = PBXBuildFile; productRef = 6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */; };
+		6318D1E62EB1238E006D5B40 /* OutlinePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 6318D1E32EB1238E006D5B40 /* OutlinePlugin.m */; };
+		6318D1E72EB1238E006D5B40 /* OutlinePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6318D1E42EB1238E006D5B40 /* OutlinePlugin.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6318D1DD2EB1232D006D5B40 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				6318D1DC2EB1232D006D5B40 /* Tun2socks.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		63A1E4312EB2451A00EB7643 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
+		6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Tun2socks.xcframework; path = ../../../../output/client/apple/Tun2socks.xcframework; sourceTree = "<group>"; };
+		6318D1E32EB1238E006D5B40 /* OutlinePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OutlinePlugin.m; sourceTree = "<group>"; };
+		6318D1E42EB1238E006D5B40 /* OutlinePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlinePlugin.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -35,7 +59,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6318D1DB2EB1232D006D5B40 /* Tun2socks.xcframework in Frameworks */,
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+				6318D1E22EB1235E006D5B40 /* OutlineVPNExtensionLib in Frameworks */,
+				6318D1E02EB1235E006D5B40 /* OutlineAppleLib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +74,7 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				6318D1D92EB1232C006D5B40 /* Frameworks */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,14 +92,33 @@
 			children = (
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				63A1E4312EB2451A00EB7643 /* App.entitlements */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
+				6318D1E52EB1238E006D5B40 /* Plugins */,
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		6318D1D92EB1232C006D5B40 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6318D1E52EB1238E006D5B40 /* Plugins */ = {
+			isa = PBXGroup;
+			children = (
+				6318D1E32EB1238E006D5B40 /* OutlinePlugin.m */,
+				6318D1E42EB1238E006D5B40 /* OutlinePlugin.swift */,
+			);
+			path = Plugins;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -84,6 +131,7 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				6318D1DD2EB1232D006D5B40 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -92,6 +140,8 @@
 			name = App;
 			packageProductDependencies = (
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
+				6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */,
+				6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -124,6 +174,7 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
+				6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/cordova/apple/OutlineAppleLib" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -155,6 +206,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6318D1E62EB1238E006D5B40 /* OutlinePlugin.m in Sources */,
+				6318D1E72EB1238E006D5B40 /* OutlinePlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -295,10 +348,11 @@
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -317,10 +371,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -358,6 +413,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/cordova/apple/OutlineAppleLib" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../src/cordova/apple/OutlineAppleLib;
+		};
 		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "CapApp-SPM";
@@ -369,6 +428,14 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;
 			productName = "CapApp-SPM";
+		};
+		6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OutlineAppleLib;
+		};
+		6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OutlineVPNExtensionLib;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
