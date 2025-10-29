@@ -38,13 +38,13 @@
       <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
       <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
       <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-      <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+      <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
       <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     </config-file>
 
     <config-file target="app/src/main/AndroidManifest.xml" parent="/manifest/application">
       <service
-        android:foregroundServiceType="connectedDevice"
+        android:foregroundServiceType="systemExempted"
         android:name="org.outline.vpn.VpnTunnelService"
         android:exported="false"
         android:label="@string/app_name"
