@@ -62,6 +62,15 @@ public final class OutlinePlugin: CAPPlugin {
     beginObservingVpnStatus()
     installCordovaDebugHooks()
 
+    #if os(macOS) || targetEnvironment(macCatalyst)
+      NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(stopVpnOnAppQuit),
+        name: .kAppQuit,
+        object: nil
+      )
+    #endif
+
     #if os(iOS)
       migrateLocalStorage()
     #endif
@@ -225,6 +234,14 @@ public final class OutlinePlugin: CAPPlugin {
     )
   }
 
+  #if os(macOS) || targetEnvironment(macCatalyst)
+  @objc private func stopVpnOnAppQuit() {
+    Task {
+      await OutlineVpn.shared.stopActiveVpn()
+    }
+  }
+  #endif
+
   private func configureGoBackendDataDirectory() {
     guard let goConfig = OutlineGetBackendConfig() else { return }
     do {
@@ -363,5 +380,11 @@ public final class OutlinePlugin: CAPPlugin {
     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
       logCordovaState(label: "t+3s")
     }
+  }
+
+  deinit {
+    #if os(macOS) || targetEnvironment(macCatalyst)
+      NotificationCenter.default.removeObserver(self, name: .kAppQuit, object: nil)
+    #endif
   }
 }
