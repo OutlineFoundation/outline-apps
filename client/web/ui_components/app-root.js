@@ -14,18 +14,15 @@
   limitations under the License.
 */
 
-import 'element-internals-polyfill';
 import '@material/web/all.js';
-import '@polymer/polymer/polymer-legacy.js';
-import '@polymer/polymer/lib/legacy/polymer.dom.js';
 import '@polymer/app-layout/app-drawer/app-drawer.js';
-import '@polymer/app-layout/app-header/app-header.js';
 import '@polymer/app-layout/app-header-layout/app-header-layout.js';
+import '@polymer/app-layout/app-header/app-header.js';
 import '@polymer/app-layout/app-toolbar/app-toolbar.js';
 import '@polymer/app-route/app-location.js';
 import '@polymer/app-route/app-route.js';
-import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-icons/communication-icons.js';
+import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/paper-button/paper-button.js';
 import '@polymer/paper-card/paper-card.js';
@@ -34,10 +31,13 @@ import '@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
 import '@polymer/paper-input/paper-input.js';
 import '@polymer/paper-input/paper-textarea.js';
-import '@polymer/paper-item/paper-item.js';
 import '@polymer/paper-item/paper-icon-item.js';
+import '@polymer/paper-item/paper-item.js';
 import '@polymer/paper-listbox/paper-listbox.js';
 import '@polymer/paper-toast/paper-toast.js';
+import '@polymer/polymer/lib/legacy/polymer.dom.js';
+import '@polymer/polymer/polymer-legacy.js';
+import 'element-internals-polyfill';
 
 // TODO(daniellacosse): figure out how to import this without disabling the rule
 // eslint-disable-next-line n/no-missing-import
@@ -66,11 +66,11 @@ import '../views/root_view/root_navigation';
 import '../views/appearance_view';
 // eslint-disable-next-line n/no-missing-import
 import * as i18n from '@outline/infrastructure/i18n';
-import {AppLocalizeBehavior} from '@polymer/app-localize-behavior/app-localize-behavior.js';
-import {PaperMenuButton} from '@polymer/paper-menu-button/paper-menu-button.js';
-import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
-import {html} from '@polymer/polymer/lib/utils/html-tag.js';
-import {PolymerElement} from '@polymer/polymer/polymer-element.js';
+import { AppLocalizeBehavior } from '@polymer/app-localize-behavior/app-localize-behavior.js';
+import { PaperMenuButton } from '@polymer/paper-menu-button/paper-menu-button.js';
+import { mixinBehaviors } from '@polymer/polymer/lib/legacy/class.js';
+import { html } from '@polymer/polymer/lib/utils/html-tag.js';
+import { PolymerElement } from '@polymer/polymer/polymer-element.js';
 
 // Workaround:
 // https://github.com/PolymerElements/paper-menu-button/issues/101#issuecomment-297856912
@@ -426,57 +426,57 @@ export class AppRoot extends mixinBehaviors(
         type: Object,
         readonly: true,
         value: {
-          af: {id: 'af', name: 'Afrikaans', dir: 'ltr'},
-          am: {id: 'am', name: 'አማርኛ', dir: 'ltr'},
-          ar: {id: 'ar', name: 'العربية', dir: 'rtl', supportId: 'ar'},
-          az: {id: 'az', name: 'azərbaycan', dir: 'ltr'},
-          bg: {id: 'bg', name: 'български', dir: 'ltr', supportId: 'bg'},
-          bn: {id: 'bn', name: 'বাংলা', dir: 'ltr'},
-          bs: {id: 'bs', name: 'bosanski', dir: 'ltr', supportId: 'bs'},
-          ca: {id: 'ca', name: 'català', dir: 'ltr', supportId: 'ca'},
-          cs: {id: 'cs', name: 'Čeština', dir: 'ltr', supportId: 'cs'},
-          da: {id: 'da', name: 'Dansk', dir: 'ltr', supportId: 'da'},
-          de: {id: 'de', name: 'Deutsch', dir: 'ltr', supportId: 'de'},
-          el: {id: 'el', name: 'Ελληνικά', dir: 'ltr', supportId: 'el'},
-          en: {id: 'en', name: 'English', dir: 'ltr', supportId: 'en_US'},
-          'en-GB': {id: 'en-GB', name: 'English (United Kingdom)', dir: 'ltr'},
-          es: {id: 'es', name: 'Español', dir: 'ltr', supportId: 'es'},
+          af: { id: 'af', name: 'Afrikaans', dir: 'ltr' },
+          am: { id: 'am', name: 'አማርኛ', dir: 'ltr' },
+          ar: { id: 'ar', name: 'العربية', dir: 'rtl', supportId: 'ar' },
+          az: { id: 'az', name: 'azərbaycan', dir: 'ltr' },
+          bg: { id: 'bg', name: 'български', dir: 'ltr', supportId: 'bg' },
+          bn: { id: 'bn', name: 'বাংলা', dir: 'ltr' },
+          bs: { id: 'bs', name: 'bosanski', dir: 'ltr', supportId: 'bs' },
+          ca: { id: 'ca', name: 'català', dir: 'ltr', supportId: 'ca' },
+          cs: { id: 'cs', name: 'Čeština', dir: 'ltr', supportId: 'cs' },
+          da: { id: 'da', name: 'Dansk', dir: 'ltr', supportId: 'da' },
+          de: { id: 'de', name: 'Deutsch', dir: 'ltr', supportId: 'de' },
+          el: { id: 'el', name: 'Ελληνικά', dir: 'ltr', supportId: 'el' },
+          en: { id: 'en', name: 'English', dir: 'ltr', supportId: 'en_US' },
+          'en-GB': { id: 'en-GB', name: 'English (United Kingdom)', dir: 'ltr' },
+          es: { id: 'es', name: 'Español', dir: 'ltr', supportId: 'es' },
           'es-419': {
             id: 'es-419',
             name: 'Español (Latinoamérica)',
             dir: 'ltr',
             supportId: 'es',
           },
-          et: {id: 'et', name: 'eesti', dir: 'ltr', supportId: 'et'},
-          fa: {id: 'fa', name: 'فارسی', dir: 'rtl', supportId: 'fa'},
-          fi: {id: 'fi', name: 'Suomi', dir: 'ltr', supportId: 'fi'},
-          fil: {id: 'fil', name: 'Filipino', dir: 'ltr', supportId: 'tl'},
-          fr: {id: 'fr', name: 'Français', dir: 'ltr', supportId: 'fr'},
-          he: {id: 'he', name: 'עברית', dir: 'rtl', supportId: 'iw'},
-          hi: {id: 'hi', name: 'हिन्दी', dir: 'ltr', supportId: 'hi'},
-          hr: {id: 'hr', name: 'Hrvatski', dir: 'ltr', supportId: 'hr'},
-          hu: {id: 'hu', name: 'magyar', dir: 'ltr', supportId: 'hu'},
-          hy: {id: 'hy', name: 'հայերեն', dir: 'ltr', supportId: 'hy'},
-          id: {id: 'id', name: 'Indonesia', dir: 'ltr', supportId: 'in'},
-          is: {id: 'is', name: 'íslenska', dir: 'ltr'},
-          it: {id: 'it', name: 'Italiano', dir: 'ltr', supportId: 'it'},
-          ja: {id: 'ja', name: '日本語', dir: 'ltr', supportId: 'ja'},
-          ka: {id: 'ka', name: 'ქართული', dir: 'ltr', supportId: 'ka'},
-          kk: {id: 'kk', name: 'қазақ тілі', dir: 'ltr'},
-          km: {id: 'km', name: 'ខ្មែរ', dir: 'ltr'},
-          ko: {id: 'ko', name: '한국어', dir: 'ltr', supportId: 'ko'},
-          lo: {id: 'lo', name: 'ລາວ', dir: 'ltr'},
-          lt: {id: 'lt', name: 'lietuvių', dir: 'ltr', supportId: 'lt'},
-          lv: {id: 'lv', name: 'latviešu', dir: 'ltr', supportId: 'lv'},
-          mk: {id: 'mk', name: 'македонски', dir: 'ltr', supportId: 'mk'},
-          mn: {id: 'mn', name: 'монгол', dir: 'ltr'},
-          ms: {id: 'ms', name: 'Melayu', dir: 'ltr'},
-          mr: {id: 'mr', name: 'मराठी', dir: 'ltr'},
-          my: {id: 'my', name: 'မြန်မာ', dir: 'ltr'},
-          ne: {id: 'ne', name: 'नेपाली', dir: 'ltr'},
-          nl: {id: 'nl', name: 'Nederlands', dir: 'ltr', supportId: 'nl_NL'},
-          no: {id: 'no', name: 'norsk', dir: 'ltr', supportId: 'no'},
-          pl: {id: 'pl', name: 'polski', dir: 'ltr', supportId: 'pl'},
+          et: { id: 'et', name: 'eesti', dir: 'ltr', supportId: 'et' },
+          fa: { id: 'fa', name: 'فارسی', dir: 'rtl', supportId: 'fa' },
+          fi: { id: 'fi', name: 'Suomi', dir: 'ltr', supportId: 'fi' },
+          fil: { id: 'fil', name: 'Filipino', dir: 'ltr', supportId: 'tl' },
+          fr: { id: 'fr', name: 'Français', dir: 'ltr', supportId: 'fr' },
+          he: { id: 'he', name: 'עברית', dir: 'rtl', supportId: 'iw' },
+          hi: { id: 'hi', name: 'हिन्दी', dir: 'ltr', supportId: 'hi' },
+          hr: { id: 'hr', name: 'Hrvatski', dir: 'ltr', supportId: 'hr' },
+          hu: { id: 'hu', name: 'magyar', dir: 'ltr', supportId: 'hu' },
+          hy: { id: 'hy', name: 'հայերեն', dir: 'ltr', supportId: 'hy' },
+          id: { id: 'id', name: 'Indonesia', dir: 'ltr', supportId: 'in' },
+          is: { id: 'is', name: 'íslenska', dir: 'ltr' },
+          it: { id: 'it', name: 'Italiano', dir: 'ltr', supportId: 'it' },
+          ja: { id: 'ja', name: '日本語', dir: 'ltr', supportId: 'ja' },
+          ka: { id: 'ka', name: 'ქართული', dir: 'ltr', supportId: 'ka' },
+          kk: { id: 'kk', name: 'қазақ тілі', dir: 'ltr' },
+          km: { id: 'km', name: 'ខ្មែរ', dir: 'ltr' },
+          ko: { id: 'ko', name: '한국어', dir: 'ltr', supportId: 'ko' },
+          lo: { id: 'lo', name: 'ລາວ', dir: 'ltr' },
+          lt: { id: 'lt', name: 'lietuvių', dir: 'ltr', supportId: 'lt' },
+          lv: { id: 'lv', name: 'latviešu', dir: 'ltr', supportId: 'lv' },
+          mk: { id: 'mk', name: 'македонски', dir: 'ltr', supportId: 'mk' },
+          mn: { id: 'mn', name: 'монгол', dir: 'ltr' },
+          ms: { id: 'ms', name: 'Melayu', dir: 'ltr' },
+          mr: { id: 'mr', name: 'मराठी', dir: 'ltr' },
+          my: { id: 'my', name: 'မြန်မာ', dir: 'ltr' },
+          ne: { id: 'ne', name: 'नेपाली', dir: 'ltr' },
+          nl: { id: 'nl', name: 'Nederlands', dir: 'ltr', supportId: 'nl_NL' },
+          no: { id: 'no', name: 'norsk', dir: 'ltr', supportId: 'no' },
+          pl: { id: 'pl', name: 'polski', dir: 'ltr', supportId: 'pl' },
           'pt-BR': {
             id: 'pt-BR',
             name: 'Português (Brasil)',
@@ -489,22 +489,22 @@ export class AppRoot extends mixinBehaviors(
             dir: 'ltr',
             supportId: 'pt_BR',
           },
-          ro: {id: 'ro', name: 'română', dir: 'ltr', supportId: 'ro'},
-          ru: {id: 'ru', name: 'Русский', dir: 'ltr', supportId: 'ru'},
-          si: {id: 'si', name: 'සිංහල', dir: 'ltr'},
-          sk: {id: 'sk', name: 'Slovenčina', dir: 'ltr', supportId: 'sk'},
-          sl: {id: 'sl', name: 'slovenščina', dir: 'ltr', supportId: 'sl'},
-          sq: {id: 'sq', name: 'shqip', dir: 'ltr', supportId: 'sq'},
-          sr: {id: 'sr', name: 'српски', dir: 'ltr', supportId: 'sr'},
-          'sr-Latn': {id: 'sr-Latn', name: 'srpski (latinica)', dir: 'ltr'},
-          sv: {id: 'sv', name: 'Svenska', dir: 'ltr', supportId: 'sv'},
-          sw: {id: 'sw', name: 'Kiswahili', dir: 'ltr'},
-          ta: {id: 'ta', name: 'தமிழ்', dir: 'ltr'},
-          th: {id: 'th', name: 'ไทย', dir: 'ltr', supportId: 'th'},
-          tr: {id: 'tr', name: 'Türkçe', dir: 'ltr', supportId: 'tr'},
-          uk: {id: 'uk', name: 'Українська', dir: 'ltr', supportId: 'uk'},
-          ur: {id: 'ur', name: 'اردو', dir: 'rtl', supportId: 'ur'},
-          vi: {id: 'vi', name: 'Tiếng Việt', dir: 'ltr', supportId: 'vi'},
+          ro: { id: 'ro', name: 'română', dir: 'ltr', supportId: 'ro' },
+          ru: { id: 'ru', name: 'Русский', dir: 'ltr', supportId: 'ru' },
+          si: { id: 'si', name: 'සිංහල', dir: 'ltr' },
+          sk: { id: 'sk', name: 'Slovenčina', dir: 'ltr', supportId: 'sk' },
+          sl: { id: 'sl', name: 'slovenščina', dir: 'ltr', supportId: 'sl' },
+          sq: { id: 'sq', name: 'shqip', dir: 'ltr', supportId: 'sq' },
+          sr: { id: 'sr', name: 'српски', dir: 'ltr', supportId: 'sr' },
+          'sr-Latn': { id: 'sr-Latn', name: 'srpski (latinica)', dir: 'ltr' },
+          sv: { id: 'sv', name: 'Svenska', dir: 'ltr', supportId: 'sv' },
+          sw: { id: 'sw', name: 'Kiswahili', dir: 'ltr' },
+          ta: { id: 'ta', name: 'தமிழ்', dir: 'ltr' },
+          th: { id: 'th', name: 'ไทย', dir: 'ltr', supportId: 'th' },
+          tr: { id: 'tr', name: 'Türkçe', dir: 'ltr', supportId: 'tr' },
+          uk: { id: 'uk', name: 'Українська', dir: 'ltr', supportId: 'uk' },
+          ur: { id: 'ur', name: 'اردو', dir: 'rtl', supportId: 'ur' },
+          vi: { id: 'vi', name: 'Tiếng Việt', dir: 'ltr', supportId: 'vi' },
           'zh-CN': {
             id: 'zh-CN',
             name: '简体中文',
@@ -607,6 +607,8 @@ export class AppRoot extends mixinBehaviors(
 
   ready() {
     super.ready();
+    this.rootPath = './';
+
     this.setLanguage(this.language);
     this.addEventListener('ShowNavigation', () => {
       this.openDrawer();

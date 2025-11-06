@@ -8,7 +8,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private var hasAdjustedWorkingDirectory = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        NSLog("[OutlineApp] App launching...")
+        
+        window = UIWindow(frame: UIScreen.main.bounds)
+        let rootViewController = OutlineViewController()
+        window?.rootViewController = rootViewController
+        window?.makeKeyAndVisible()
+        
+        NSLog("[OutlineApp] ✅ OutlineViewController set as root")
         return true
     }
 
@@ -53,7 +60,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 extension AppDelegate {
     private func adjustWorkingDirectoryIfNeeded(context: String) {
         guard !hasAdjustedWorkingDirectory else { return }
-        guard let bridgeController = window?.rootViewController as? CAPBridgeViewController else {
+        guard let bridgeController = window?.rootViewController as? OutlineViewController else {
             NSLog("[OutlineApp] Working directory update skipped (%@): root view controller unavailable", context)
             retryWorkingDirectoryAdjustment()
             return

@@ -21,6 +21,9 @@ const VALID_PLATFORMS = [
   'macos',
   'android',
   'browser',
+  'capacitor',
+  'capacitor-ios',
+  'capacitor-android',
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
 

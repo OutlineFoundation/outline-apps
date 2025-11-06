@@ -20,6 +20,8 @@
 		6318D1DC2EB1232D006D5B40 /* Tun2socks.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6318D1E02EB1235E006D5B40 /* OutlineAppleLib in Frameworks */ = {isa = PBXBuildFile; productRef = 6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */; };
 		6318D1E22EB1235E006D5B40 /* OutlineVPNExtensionLib in Frameworks */ = {isa = PBXBuildFile; productRef = 6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */; };
+		6318D1E62EB1238E006D5B40 /* OutlinePlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 6318D1E32EB1238E006D5B40 /* OutlinePlugin.m */; };
+		6318D1E72EB1238E006D5B40 /* OutlinePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6318D1E42EB1238E006D5B40 /* OutlinePlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,6 +50,8 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Tun2socks.xcframework; path = ../../../../output/client/apple/Tun2socks.xcframework; sourceTree = "<group>"; };
+		6318D1E32EB1238E006D5B40 /* OutlinePlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OutlinePlugin.m; sourceTree = "<group>"; };
+		6318D1E42EB1238E006D5B40 /* OutlinePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlinePlugin.swift; sourceTree = "<group>"; };
 		63A1E4312EB2451A00EB7643 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -114,6 +118,8 @@
 		6318D1E52EB1238E006D5B40 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
+				6318D1E32EB1238E006D5B40 /* OutlinePlugin.m */,
+				6318D1E42EB1238E006D5B40 /* OutlinePlugin.swift */,
 			);
 			path = Plugins;
 			sourceTree = "<group>";
@@ -203,7 +209,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6318D1E62EB1238E006D5B40 /* OutlinePlugin.m in Sources */,
 				182DA39E2EBBEDA40059C856 /* OutlineViewController.swift in Sources */,
+				6318D1E72EB1238E006D5B40 /* OutlinePlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -347,7 +355,6 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2U42C9R32G;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -371,7 +378,6 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2U42C9R32G;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
 				LD_RUNPATH_SEARCH_PATHS = (

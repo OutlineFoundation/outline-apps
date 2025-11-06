@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Localizer} from '@outline/infrastructure/i18n';
-import {OperationTimedOut} from '@outline/infrastructure/timeout_promise';
+import { Localizer } from '@outline/infrastructure/i18n';
+import { OperationTimedOut } from '@outline/infrastructure/timeout_promise';
 
-import {Clipboard} from './clipboard';
-import {EnvironmentVariables} from './environment';
-import * as config from './outline_server_repository/config';
-import {Settings, SettingsKey, Appearance} from './settings';
-import {Updater} from './updater';
-import {UrlInterceptor} from './url_interceptor';
-import {VpnInstaller} from './vpn_installer';
 import * as errors from '../model/errors';
 import * as events from '../model/events';
-import {Server, ServerRepository} from '../model/server';
-import {OutlineErrorReporter} from '../shared/error_reporter';
-import {ServerConnectionState, ServerListItem} from '../views/servers_view';
-import {SERVER_CONNECTION_INDICATOR_DURATION_MS} from '../views/servers_view/server_connection_indicator';
+import { Server, ServerRepository } from '../model/server';
+import { OutlineErrorReporter } from '../shared/error_reporter';
+import { ServerConnectionState, ServerListItem } from '../views/servers_view';
+import { SERVER_CONNECTION_INDICATOR_DURATION_MS } from '../views/servers_view/server_connection_indicator';
+import { Clipboard } from './clipboard';
+import { EnvironmentVariables } from './environment';
+import * as config from './outline_server_repository/config';
+import { Appearance, Settings, SettingsKey } from './settings';
+import { Updater } from './updater';
+import { UrlInterceptor } from './url_interceptor';
+import { VpnInstaller } from './vpn_installer';
 
 enum OUTLINE_ACCESS_KEY_SCHEME {
   STATIC = 'ss',
@@ -83,8 +83,8 @@ const DEFAULT_SERVER_CONNECTION_STATUS_CHANGE_TIMEOUT = 600;
 
 export class App {
   private localize: Localizer;
-  private ignoredAccessKeys: {[accessKey: string]: boolean} = {};
-  private serverConnectionChangeTimeouts: {[serverId: string]: boolean} = {};
+  private ignoredAccessKeys: { [accessKey: string]: boolean } = {};
+  private serverConnectionChangeTimeouts: { [serverId: string]: boolean } = {};
 
   // Feature flag to control whether dark mode is enabled
   // When set to true, the theme option will appear in the navigation menu
@@ -169,6 +169,10 @@ export class App {
     this.rootEl.addEventListener(
       'SetLanguageRequested',
       this.setAppLanguage.bind(this)
+    );
+    this.rootEl.addEventListener(
+      'AddServerRequested',
+      this.requestAddServer.bind(this)
     );
 
     if (this.appearanceFeatureEnabled) {
@@ -488,7 +492,7 @@ export class App {
   private async forgetServer(event: CustomEvent) {
     event.stopImmediatePropagation();
 
-    const {serverId} = event.detail;
+    const { serverId } = event.detail;
     const server = this.serverRepo.getById(serverId);
     if (!server) {
       console.error(`No server with id ${serverId}`);
@@ -505,14 +509,14 @@ export class App {
   }
 
   private renameServer(event: CustomEvent) {
-    const {serverId, newName} = event.detail;
+    const { serverId, newName } = event.detail;
     this.serverRepo.rename(serverId, newName);
   }
 
   private async connectServer(event: CustomEvent) {
     event.stopImmediatePropagation();
 
-    const {serverId} = event.detail;
+    const { serverId } = event.detail;
     if (!serverId) {
       throw new Error('connectServer event had no server ID');
     }
@@ -608,7 +612,7 @@ export class App {
   private async disconnectServer(event: CustomEvent) {
     event.stopImmediatePropagation();
 
-    const {serverId} = event.detail;
+    const { serverId } = event.detail;
     if (!serverId) {
       throw new Error('disconnectServer event had no server ID');
     }
@@ -730,7 +734,7 @@ export class App {
   private onServerRenamed(event: events.ServerRenamed) {
     const server = event.server;
     console.debug('Server renamed');
-    this.updateServerListItem(server.id, {name: server.name});
+    this.updateServerListItem(server.id, { name: server.name });
     this.rootEl.showToast(this.localize('server-rename-complete'));
   }
 
@@ -801,7 +805,7 @@ export class App {
       const connectionState = isRunning
         ? ServerConnectionState.CONNECTED
         : ServerConnectionState.DISCONNECTED;
-      this.updateServerListItem(server.id, {connectionState});
+      this.updateServerListItem(server.id, { connectionState });
     } catch (e) {
       console.error('Failed to sync server connectivity state', e);
     }
@@ -843,7 +847,7 @@ export class App {
       (cardModel: ServerListItem) => {
         if (cardModel.id === id) {
           // Create a new object so the change is reflected in the server_card view.
-          return {...cardModel, ...properties} as ServerListItem;
+          return { ...cardModel, ...properties } as ServerListItem;
         } else {
           return cardModel;
         }

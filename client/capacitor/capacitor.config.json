@@ -3,9 +3,32 @@
     "appName": "Outline",
     "webDir": "../www",
     "bundledWebRuntime": false,
+    "cordova": {},
+    "server": {
+        "cleartext": true,
+        "allowNavigation": [
+            "*"
+        ]
+    },
+    "ios": {
+        "contentInset": "automatic",
+        "limitsNavigationsToAppBoundDomains": false,
+        "cordovaLinkerFlags": [
+            "-ObjC"
+        ]
+    },
     "plugins": {
         "SplashScreen": {
-            "launchAutoHide": true
+            "launchAutoHide": false,
+            "androidSplashResourceName": "splash",
+            "androidScaleType": "CENTER_CROP",
+            "showSpinner": false,
+            "splashFullScreen": true,
+            "splashImmersive": true
+        },
+        "StatusBar": {
+            "style": "DARK",
+            "backgroundColor": "#0F1621"
         }
     }
 }
