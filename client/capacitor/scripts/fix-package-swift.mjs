@@ -1,63 +1,48 @@
 #!/usr/bin/env node
 
 /**
- * Post-sync hook to restore custom dependencies in Package.swift
- * that Capacitor CLI removes during sync.
- * 
- * This script is automatically run after `npx cap sync ios`.
+ * This script fixes the Package.swift file after `npx cap sync ios` overwrites it.
+ * It adds the custom dependencies and sets the correct iOS platform version.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const PACKAGE_SWIFT_PATH = join(
-    __dirname,
-    '../ios/App/CapApp-SPM/Package.swift'
-);
-
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageSwiftPath = resolve(__dirname, '../ios/App/CapApp-SPM/Package.swift');
 
 try {
-    let content = readFileSync(PACKAGE_SWIFT_PATH, 'utf8');
+    let content = readFileSync(packageSwiftPath, 'utf8');
 
-    if (
-        content.includes('capacitor-plugin-outline') &&
-        content.includes('OutlineAppleLib') &&
-        content.includes('platforms: [.iOS("15.5")]')
-    ) {
-        process.exit(0);
-    }
-
-    // 1. Update iOS platform version
     content = content.replace(
-        /platforms: \[\.iOS\([^)]+\)\]/,
+        /platforms: \[\.iOS\(\.v15\)\]/,
         'platforms: [.iOS("15.5")]'
     );
 
-    // 2. Add custom dependencies
-    const capacitorDep = '.package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "6.2.1")';
-    const customDeps = `${capacitorDep},
-        .package(path: "../../../../plugins/capacitor-plugin-outline/ios"),
-        .package(path: "../../../../src/apple/OutlineAppleLib")`;
+    if (!content.includes('capacitor-plugin-outline')) {
+        content = content.replace(
+            /dependencies: \[\s*\.package\(url: "https:\/\/github\.com\/ionic-team\/capacitor-swift-pm\.git", exact: "[^"]+"\)/,
+            `dependencies: [
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "6.2.1"),
+        .package(path: "../../../../capacitor/plugins/capacitor-plugin-outline/ios"),
+        .package(path: "../../../../src/apple/OutlineAppleLib")`
+        );
+    }
 
-    content = content.replace(capacitorDep, customDeps);
-
-    // 3. Add custom dependency products
-    const cordovaDep = '.product(name: "Cordova", package: "capacitor-swift-pm")';
-    const customProducts = `${cordovaDep},
+    if (!content.includes('CapacitorPluginOutline')) {
+        content = content.replace(
+            /dependencies: \[\s*\.product\(name: "Capacitor", package: "capacitor-swift-pm"\),\s*\.product\(name: "Cordova", package: "capacitor-swift-pm"\)/,
+            `dependencies: [
+                .product(name: "Capacitor", package: "capacitor-swift-pm"),
+                .product(name: "Cordova", package: "capacitor-swift-pm"),
                 .product(name: "CapacitorPluginOutline", package: "ios"),
-                .product(name: "OutlineAppleLib", package: "OutlineAppleLib"),
-                .product(name: "OutlineVPNExtensionLib", package: "OutlineAppleLib")`;
+                .product(name: "OutlineAppleLib", package: "OutlineAppleLib")`
+        );
+    }
 
-    content = content.replace(cordovaDep, customProducts);
-
-    writeFileSync(PACKAGE_SWIFT_PATH, content, 'utf8');
-
+    writeFileSync(packageSwiftPath, content, 'utf8');
 } catch (error) {
-    console.error('Failed to update Package.swift:', error.message);
+    console.error('Failed to fix Package.swift:', error.message);
     process.exit(1);
 }
-

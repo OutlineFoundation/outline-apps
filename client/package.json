@@ -79,7 +79,7 @@
     "@types/polymer": "^1.2.9",
     "@types/uuidv4": "^2.0.0",
     "babel-loader": "^8.2.2",
-    "capacitor-plugin-outline": "file:plugins/capacitor-plugin-outline",
+    "capacitor-plugin-outline": "file:capacitor/plugins/capacitor-plugin-outline",
     "chalk": "^5.0.1",
     "copy-dir": "^1.3.0",
     "copy-webpack-plugin": "^5.1.1",

@@ -15,6 +15,11 @@
         "scrollEnabled": true
     },
     "plugins": {
+        "capacitor-plugin-outline": {
+            "ios": {
+                "path": "./plugins/capacitor-plugin-outline"
+            }
+        },
         "SplashScreen": {
             "launchAutoHide": false,
             "androidSplashResourceName": "splash",

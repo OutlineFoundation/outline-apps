@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { Capacitor } from '@capacitor/core';
-import { CapacitorPluginOutline } from 'capacitor-plugin-outline';
 
+import { CapacitorPluginOutline } from '../../capacitor/plugins/capacitor-plugin-outline/src/index';
 import { deserializeError } from '../model/platform_error';
 
 export type VpnStatusPayload = { id: string; status: number };
@@ -23,18 +23,11 @@ function throwDeserialized(error: unknown): never {
     throw deserializeError(error);
 }
 
-function getCapacitorPlugin() {
-    // Return the new Capacitor plugin
-    return CapacitorPluginOutline;
-}
-
 export async function pluginExec<T>(
     cmd: string,
     ...args: unknown[]
 ): Promise<T> {
-    const capacitorPlugin = getCapacitorPlugin();
-
-    if (!capacitorPlugin) {
+    if (!CapacitorPluginOutline) {
         if (!Capacitor.isNativePlatform()) {
             throwDeserialized(
                 new Error('Outline native plugin is not available on web platform')
@@ -47,7 +40,7 @@ export async function pluginExec<T>(
         switch (cmd) {
             case 'invokeMethod': {
                 const [method, input] = args as [string, string];
-                const result = await capacitorPlugin.invokeMethod({
+                const result = await CapacitorPluginOutline.invokeMethod({
                     method,
                     input: input ?? '',
                 });
@@ -59,7 +52,7 @@ export async function pluginExec<T>(
                     string,
                     string,
                 ];
-                await capacitorPlugin.start({
+                await CapacitorPluginOutline.start({
                     tunnelId,
                     serverName,
                     transportConfig,
@@ -68,26 +61,26 @@ export async function pluginExec<T>(
             }
             case 'stop': {
                 const [tunnelId] = args as [string];
-                await capacitorPlugin.stop({ tunnelId });
+                await CapacitorPluginOutline.stop({ tunnelId });
                 return undefined as T;
             }
             case 'isRunning': {
                 const [tunnelId] = args as [string];
-                const result = await capacitorPlugin.isRunning({ tunnelId });
+                const result = await CapacitorPluginOutline.isRunning({ tunnelId });
                 return Boolean(result?.isRunning) as T;
             }
             case 'initializeErrorReporting': {
                 const [apiKey] = args as [string];
-                await capacitorPlugin.initializeErrorReporting({ apiKey });
+                await CapacitorPluginOutline.initializeErrorReporting({ apiKey });
                 return undefined as T;
             }
             case 'reportEvents': {
                 const [uuid] = args as [string];
-                await capacitorPlugin.reportEvents({ uuid });
+                await CapacitorPluginOutline.reportEvents({ uuid });
                 return undefined as T;
             }
             case 'quitApplication': {
-                await capacitorPlugin.quitApplication();
+                await CapacitorPluginOutline.quitApplication();
                 return undefined as T;
             }
             default:
@@ -102,9 +95,7 @@ export function registerVpnStatusListener(
     listener: (payload: VpnStatusPayload) => void,
     onError?: (err: unknown) => void
 ): void {
-    const capacitorPlugin = getCapacitorPlugin();
-
-    if (!capacitorPlugin) {
+    if (!CapacitorPluginOutline) {
         const errorMsg = 'Outline native plugin is not available on this platform';
         if (onError) {
             onError(deserializeError(new Error(errorMsg)));
@@ -114,11 +105,13 @@ export function registerVpnStatusListener(
         return;
     }
 
-    capacitorPlugin.addListener('vpnStatus', listener).catch((err: unknown) => {
-        if (onError) {
-            onError(deserializeError(err));
-        } else {
-            console.warn('Failed to register Capacitor vpnStatus listener', err);
+    CapacitorPluginOutline.addListener('vpnStatus', listener).catch(
+        (err: unknown) => {
+            if (onError) {
+                onError(deserializeError(err));
+            } else {
+                console.warn('Failed to register Capacitor vpnStatus listener', err);
+            }
         }
-    });
+    );
 }

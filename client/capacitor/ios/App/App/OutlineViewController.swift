@@ -21,6 +21,7 @@ class OutlineViewController: CAPBridgeViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         registerOutlinePlugin()
         
         #if DEBUG
@@ -40,7 +41,7 @@ class OutlineViewController: CAPBridgeViewController {
             plugin.load()
             
             bridge.registerPluginInstance(plugin)
-            NSLog("[OutlineViewController] CapacitorPluginOutline registered")
+            NSLog("[OutlineViewController] CapacitorPluginOutline manually registered")
         }
     }
     

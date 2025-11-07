@@ -1,29 +1,28 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
-// DO NOT MODIFY THIS FILE - managed by Capacitor CLI commands
 let package = Package(
-    name: "CapApp-SPM",
+    name: "CapacitorPluginOutline",
     platforms: [.iOS("15.5")],
     products: [
         .library(
-            name: "CapApp-SPM",
-            targets: ["CapApp-SPM"])
+            name: "CapacitorPluginOutline",
+            targets: ["CapacitorPluginOutline"]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "6.2.1"),
-        .package(path: "../../../../capacitor/plugins/capacitor-plugin-outline/ios"),
         .package(path: "../../../../src/apple/OutlineAppleLib")
     ],
     targets: [
         .target(
-            name: "CapApp-SPM",
+            name: "CapacitorPluginOutline",
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
-                .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "CapacitorPluginOutline", package: "ios"),
                 .product(name: "OutlineAppleLib", package: "OutlineAppleLib")
-            ]
+            ],
+            path: "Sources/CapacitorPluginOutline"
         )
     ]
 )
+
