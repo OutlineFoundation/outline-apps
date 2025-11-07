@@ -12,32 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import url from 'url';
+import { getRootDir } from '@outline/infrastructure/build/get_root_dir.mjs';
+import { runAction } from '@outline/infrastructure/build/run_action.mjs';
+import { spawnStream } from '@outline/infrastructure/build/spawn_stream.mjs';
 import fs from 'fs/promises';
 import path from 'path';
-import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
-import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
-import {runAction} from '@outline/infrastructure/build/run_action.mjs';
+import url from 'url';
 
 export async function main(...argv) {
   const root = getRootDir();
   const capRoot = path.resolve(root, 'client', 'capacitor');
   const www = path.resolve(root, 'client', 'www');
-    
+
   await runAction('client/go/build', ...argv);
   await runAction('client/web/build');
-  
+
   await fs.copyFile(
     path.join(www, 'index_cordova.html'),
     path.join(www, 'index.html')
   );
-    
+
   const prevCwd = process.cwd();
-    
+
   try {
     process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'capacitor-assets', 'generate');
-    await spawnStream('npx', 'cap', 'sync');
+
+    const platform = argv[0];
+    if (platform === 'capacitor-ios') {
+      await spawnStream('node', 'scripts/cap-sync-ios.mjs');
+    } else {
+      await spawnStream('npx', 'cap', 'sync');
+    }
+
     await spawnStream('npx', 'cap', 'open', ...argv);
   } finally {
     process.chdir(prevCwd);               // restore original working dir

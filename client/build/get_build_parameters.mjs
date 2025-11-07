@@ -21,7 +21,7 @@ const VALID_PLATFORMS = [
   'macos',
   'android',
   'browser',
-  'capacitor',
+  'capacitor-browser',
   'capacitor-ios',
   'capacitor-android',
 ];

@@ -21,8 +21,8 @@ import WebpackServer from 'webpack-dev-server';
 import { getBrowserWebpackConfig } from '../web/get_browser_webpack_config.mjs';
 
 export async function main() {
-    await runAction('client/web/build', 'capacitor');
-    const webpackConfig = getBrowserWebpackConfig('capacitor', 'debug');
+    await runAction('client/web/build', 'capacitor-browser');
+    const webpackConfig = getBrowserWebpackConfig('capacitor-browser', 'debug');
     await new WebpackServer(
         webpackConfig.devServer,
         webpack(webpackConfig)

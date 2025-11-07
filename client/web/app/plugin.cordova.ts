@@ -14,145 +14,50 @@
 
 /// <reference types='cordova'/>
 
-import {Capacitor} from '@capacitor/core';
-import type {PluginListenerHandle} from '@capacitor/core';
-
-import {deserializeError} from '../model/platform_error';
+import { deserializeError } from '../model/platform_error';
 
 export const OUTLINE_PLUGIN_NAME = 'OutlinePlugin';
 
-type VpnStatusPayload = {id: string; status: number};
-
-type CapacitorOutlinePlugin = {
-  invokeMethod(options: {method: string; input: string}): Promise<{value?: string}>;
-  start(options: {
-    tunnelId: string;
-    serverName: string;
-    transportConfig: string;
-  }): Promise<void>;
-  stop(options: {tunnelId: string}): Promise<void>;
-  isRunning(options: {tunnelId: string}): Promise<{isRunning?: boolean}>;
-  initializeErrorReporting(options: {apiKey: string}): Promise<void>;
-  reportEvents(options: {uuid: string}): Promise<void>;
-  quitApplication(): Promise<void>;
-  addListener(
-    eventName: 'vpnStatus',
-    listener: (event: VpnStatusPayload) => void
-  ): Promise<PluginListenerHandle>;
-};
-
-function getCapacitorPlugin(): CapacitorOutlinePlugin | undefined {
-  const plugin =
-    (Capacitor?.Plugins?.[OUTLINE_PLUGIN_NAME] as CapacitorOutlinePlugin | undefined) ??
-    ((globalThis as Record<string, unknown>).Capacitor as typeof Capacitor | undefined)?.Plugins?.[
-      OUTLINE_PLUGIN_NAME
-    ];
-  return plugin as CapacitorOutlinePlugin | undefined;
-}
-
-function hasCordova(): boolean {
-  return typeof cordova !== 'undefined' && typeof cordova.exec === 'function';
-}
+type VpnStatusPayload = { id: string; status: number };
 
 function throwDeserialized(error: unknown): never {
   throw deserializeError(error);
 }
 
-// Helper function to call the Outline native plugin, preferring Capacitor and falling back to Cordova.
+// Helper function to call the Outline Cordova plugin.
 export async function pluginExec<T>(
   cmd: string,
   ...args: unknown[]
 ): Promise<T> {
-  const capacitorPlugin = getCapacitorPlugin();
-  if (capacitorPlugin) {
-    try {
-      switch (cmd) {
-        case 'invokeMethod': {
-          const [method, input] = args as [string, string];
-          const result = await capacitorPlugin.invokeMethod({method, input: input ?? ''});
-          return (result?.value ?? '') as T;
-        }
-        case 'start': {
-          const [tunnelId, serverName, transportConfig] = args as [string, string, string];
-          await capacitorPlugin.start({
-            tunnelId,
-            serverName,
-            transportConfig,
-          });
-          return undefined as T;
-        }
-        case 'stop': {
-          const [tunnelId] = args as [string];
-          await capacitorPlugin.stop({tunnelId});
-          return undefined as T;
-        }
-        case 'isRunning': {
-          const [tunnelId] = args as [string];
-          const result = await capacitorPlugin.isRunning({tunnelId});
-          return Boolean(result?.isRunning) as T;
-        }
-        case 'initializeErrorReporting': {
-          const [apiKey] = args as [string];
-          await capacitorPlugin.initializeErrorReporting({apiKey});
-          return undefined as T;
-        }
-        case 'reportEvents': {
-          const [uuid] = args as [string];
-          await capacitorPlugin.reportEvents({uuid});
-          return undefined as T;
-        }
-        case 'quitApplication': {
-          await capacitorPlugin.quitApplication();
-          return undefined as T;
-        }
-        default:
-          throw new Error(`Unsupported Outline Capacitor command: ${cmd}`);
-      }
-    } catch (e) {
-      throwDeserialized(e);
-    }
+  if (typeof cordova === 'undefined' || typeof cordova.exec !== 'function') {
+    throwDeserialized(new Error('Cordova is not available on this platform'));
   }
 
-  if (hasCordova()) {
-    return new Promise<T>((resolve, reject) => {
-      const wrappedReject = (e: unknown) => reject(deserializeError(e));
-      cordova.exec(resolve, wrappedReject, OUTLINE_PLUGIN_NAME, cmd, args);
-    });
-  }
-
-  throwDeserialized(new Error('Outline native plugin is not available on this platform'));
+  return new Promise<T>((resolve, reject) => {
+    const wrappedReject = (e: unknown) => reject(deserializeError(e));
+    cordova.exec(resolve, wrappedReject, OUTLINE_PLUGIN_NAME, cmd, args);
+  });
 }
 
 export function registerVpnStatusListener(
   listener: (payload: VpnStatusPayload) => void,
   onError?: (err: unknown) => void
 ): void {
-  const capacitorPlugin = getCapacitorPlugin();
-  if (capacitorPlugin) {
-    capacitorPlugin.addListener('vpnStatus', listener).catch((err: unknown) => {
-      if (onError) {
-        onError(deserializeError(err));
-      } else {
-        console.warn('Failed to register Capacitor vpnStatus listener', err);
-      }
-    });
+  if (typeof cordova === 'undefined' || typeof cordova.exec !== 'function') {
+    const error = new Error('Cordova is not available on this platform');
+    if (onError) {
+      onError(deserializeError(error));
+    } else {
+      console.warn(error.message);
+    }
     return;
   }
 
-  if (hasCordova()) {
-    cordova.exec(
-      listener,
-      onError ? (err: unknown) => onError(deserializeError(err)) : console.warn,
-      OUTLINE_PLUGIN_NAME,
-      'onStatusChange',
-      []
-    );
-    return;
-  }
-
-  if (onError) {
-    onError(deserializeError(new Error('Outline native plugin is not available on this platform')));
-  } else {
-    console.warn('Outline native plugin is not available on this platform');
-  }
+  cordova.exec(
+    listener,
+    onError ? (err: unknown) => onError(deserializeError(err)) : console.warn,
+    OUTLINE_PLUGIN_NAME,
+    'onStatusChange',
+    []
+  );
 }

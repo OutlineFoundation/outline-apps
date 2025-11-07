@@ -13,7 +13,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "6.2.1"),
         .package(path: "../../../../capacitor/plugins/capacitor-plugin-outline/ios"),
-        .package(path: "../../../../src/apple/OutlineAppleLib")
+        .package(path: "../../../../capacitor/plugins/apple/OutlineAppleLib")
     ],
     targets: [
         .target(

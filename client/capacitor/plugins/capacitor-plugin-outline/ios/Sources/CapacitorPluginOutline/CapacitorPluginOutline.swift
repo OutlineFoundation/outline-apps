@@ -28,7 +28,6 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
     
     public override func load() {
         implementation = CapacitorPluginOutlineImplementation(plugin: self)
-        NSLog("[CapacitorPluginOutline] Plugin loaded with implementation")
     }
     
     @objc public func invokeMethod(_ call: CAPPluginCall) {

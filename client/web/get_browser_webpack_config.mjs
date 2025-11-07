@@ -32,7 +32,7 @@ export const getBrowserWebpackConfig = (platform, buildMode) => {
     case 'windows':
       webpackConfig = electronConfig;
       break;
-    case 'capacitor':
+    case 'capacitor-browser':
     case 'capacitor-ios':
     case 'capacitor-android':
       webpackConfig = capacitorConfig;
