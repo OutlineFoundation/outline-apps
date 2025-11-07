@@ -3,7 +3,6 @@
     "appName": "Outline",
     "webDir": "../www",
     "bundledWebRuntime": false,
-    "cordova": {},
     "server": {
         "cleartext": true,
         "allowNavigation": [
@@ -11,11 +10,9 @@
         ]
     },
     "ios": {
-        "contentInset": "automatic",
+        "contentInset": "never",
         "limitsNavigationsToAppBoundDomains": false,
-        "cordovaLinkerFlags": [
-            "-ObjC"
-        ]
+        "scrollEnabled": true
     },
     "plugins": {
         "SplashScreen": {

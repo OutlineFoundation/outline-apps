@@ -11,22 +11,22 @@
   limitations under the License.
 */
 
-import {Localizer} from '@outline/infrastructure/i18n';
-import {LitElement, html, css, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {classMap} from 'lit/directives/class-map.js';
+import { Localizer } from '@outline/infrastructure/i18n';
+import { LitElement, css, html, nothing } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
 
 import navigationLogo from '../../../assets/logo-nav.png';
 
 @customElement('root-navigation')
 export class RootNavigation extends LitElement {
-  @property({type: Object}) localize: Localizer = msg => msg;
+  @property({ type: Object }) localize: Localizer = msg => msg;
 
-  @property({type: Boolean}) open: boolean;
-  @property({type: Boolean}) showQuit: boolean;
-  @property({type: String}) align: 'left' | 'right';
-  @property({type: String}) dataCollectionPageUrl: string;
-  @property({type: Boolean}) showAppearanceView: boolean = false;
+  @property({ type: Boolean }) open: boolean;
+  @property({ type: Boolean }) showQuit: boolean;
+  @property({ type: String }) align: 'left' | 'right';
+  @property({ type: String }) dataCollectionPageUrl: string;
+  @property({ type: Boolean }) showAppearanceView: boolean = false;
 
   static styles = css`
     :host {
@@ -42,11 +42,11 @@ export class RootNavigation extends LitElement {
     }
 
     .container {
-      height: 100vh;
+      height: calc(100vh - env(safe-area-inset-top));
       left: 0;
       pointer-events: none;
       position: fixed;
-      top: 0;
+      top: env(safe-area-inset-top);
       width: 100vw;
     }
 
@@ -58,7 +58,7 @@ export class RootNavigation extends LitElement {
       background-color: var(--outline-background);
       color: var(--outline-text-color);
       display: block;
-      height: 100vh;
+      height: 100%;
       position: absolute;
       transition:
         transform 0.3s ease,
@@ -190,16 +190,16 @@ export class RootNavigation extends LitElement {
   render() {
     return html`<div
       class="${classMap({
-        container: true,
-        open: this.open,
-      })}"
+      container: true,
+      open: this.open,
+    })}"
     >
       <div class="backdrop" @click=${this.close}></div>
       <nav
         class=${classMap({
-          left: this.align === 'left',
-          right: this.align === 'right',
-        })}
+      left: this.align === 'left',
+      right: this.align === 'right',
+    })}
       >
         <header>
           <img src="${navigationLogo}" alt="Outline navigation logo" />
@@ -241,21 +241,21 @@ export class RootNavigation extends LitElement {
             ${this.localize('change-language-page-title')}
           </md-list-item>
           ${this.showAppearanceView
-            ? html`
+        ? html`
                 <md-list-item @click=${() => this.changePage('appearance')}>
                   <md-ripple></md-ripple>
                   <md-icon slot="start">brightness_medium</md-icon>
                   ${this.localize('appearance-page-title')}
                 </md-list-item>
               `
-            : nothing}
+        : nothing}
           ${this.showQuit
-            ? html`<md-list-item @click=${this.quit}>
+        ? html`<md-list-item @click=${this.quit}>
                 <md-ripple></md-ripple>
                 <md-icon slot="start">exit_to_app</md-icon>
                 ${this.localize('quit')}
               </md-list-item>`
-            : nothing}
+        : nothing}
         </md-list>
         <ul>
           <li>
@@ -298,7 +298,7 @@ export class RootNavigation extends LitElement {
   private changePage(page: string) {
     this.dispatchEvent(
       new CustomEvent('ChangePage', {
-        detail: {page},
+        detail: { page },
         bubbles: true,
         composed: true,
       })

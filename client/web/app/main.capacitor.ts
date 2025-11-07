@@ -27,6 +27,7 @@ import { main } from './main';
 import { installDefaultMethodChannel, MethodChannel } from './method_channel';
 import { VpnApi } from './outline_server_repository/vpn';
 import { CapacitorVpnApi } from './outline_server_repository/vpn.capacitor';
+import { FakeVpnApi } from './outline_server_repository/vpn.fake';
 import { OutlinePlatform } from './platform';
 import { pluginExec } from './plugin.capacitor';
 import { AbstractUpdater } from './updater';
@@ -149,7 +150,7 @@ class CapacitorPlatform implements OutlinePlatform {
         if (hasDeviceSupport) {
             return new CapacitorVpnApi();
         }
-        return undefined;
+        return new FakeVpnApi();
     }
 
     getUrlInterceptor() {
@@ -203,34 +204,35 @@ window.handleOpenURL = (url: string) => {
 };
 
 async function initializeCapacitorPlugins(): Promise<void> {
-
     if (!Capacitor.isNativePlatform()) {
         return;
     }
 
-    try {
-        const platform = Capacitor.getPlatform();
-        if (platform === 'ios' || platform === 'android') {
+    const platform = Capacitor.getPlatform();
+    if (platform === 'ios' || platform === 'android') {
+        try {
             await StatusBar.setStyle({ style: Style.Dark });
 
             if (platform === 'android') {
                 await StatusBar.setBackgroundColor({ color: '#0F1621' });
             }
+        } catch (error) {
+            console.warn('[Capacitor] StatusBar not available:', error);
         }
-    } catch (error) {
-        console.error('[Capacitor] Plugin initialization error:', error);
     }
 }
 
 (async () => {
     await initializeCapacitorPlugins();
-
     installDefaultMethodChannel(new CapacitorMethodChannel());
     try {
         await main(new CapacitorPlatform());
-
         if (Capacitor.isNativePlatform()) {
-            await SplashScreen.hide();
+            try {
+                await SplashScreen.hide();
+            } catch {
+                console.debug('[Capacitor] SplashScreen not available in simulator');
+            }
         }
     } catch (e) {
         console.error('[Capacitor] main() failed:', e);

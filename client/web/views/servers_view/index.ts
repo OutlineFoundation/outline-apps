@@ -16,16 +16,16 @@
 
 import '@material/mwc-button';
 
-import {Localizer} from '@outline/infrastructure/i18n';
-import {css, html, LitElement} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
-import {DirectiveResult} from 'lit/directive';
-import {unsafeHTML, UnsafeHTMLDirective} from 'lit/directives/unsafe-html.js';
+import { Localizer } from '@outline/infrastructure/i18n';
+import { css, html, LitElement } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { DirectiveResult } from 'lit/directive';
+import { unsafeHTML, UnsafeHTMLDirective } from 'lit/directives/unsafe-html.js';
 
-import {ServerConnectionState as _ServerConnectionState} from './server_connection_indicator';
 import './server_connection_indicator';
+import { ServerConnectionState as _ServerConnectionState } from './server_connection_indicator';
 import './server_list';
-import {ServerListItem as _ServerListItem} from './server_list_item';
+import { ServerListItem as _ServerListItem } from './server_list_item';
 
 export type ServerListItem = _ServerListItem;
 
@@ -35,7 +35,7 @@ export import ServerConnectionState = _ServerConnectionState;
 
 @customElement('servers-view')
 export class ServerList extends LitElement {
-  @property({type: Boolean}) darkMode = false;
+  @property({ type: Boolean }) darkMode = false;
 
   static styles = [
     css`
@@ -44,10 +44,10 @@ export class ServerList extends LitElement {
         flex-direction: column;
         font-size: 0.9rem;
         height: 100%;
-        /* Use vh, as % does not work in iOS. |header-height|+|server-margin| = 64px.
-         * Subtract |header-height| to fix iOS padding, and |server-margin| to fix scrolling in Android.
-         */
-        height: -webkit-calc(100vh - 64px);
+        /* Dynamic height: subtract header (93px) + safe area insets (notch/home indicator) */
+        height: calc(
+          100vh - 93px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+        );
         justify-content: center;
         line-height: 1.25rem;
         margin: auto;
@@ -123,9 +123,9 @@ export class ServerList extends LitElement {
     `,
   ];
 
-  @property({type: Object}) localize: Localizer = msg => msg;
-  @property({type: Boolean}) shouldShowAccessKeyWikiLink = false;
-  @property({type: Array}) servers: ServerListItem[] = [];
+  @property({ type: Object }) localize: Localizer = msg => msg;
+  @property({ type: Boolean }) shouldShowAccessKeyWikiLink = false;
+  @property({ type: Array }) servers: ServerListItem[] = [];
 
   get shouldShowZeroState() {
     return this.servers ? this.servers.length === 0 : false;
@@ -133,7 +133,7 @@ export class ServerList extends LitElement {
 
   private requestPromptAddServer() {
     this.dispatchEvent(
-      new CustomEvent('add-server', {bubbles: true, composed: true})
+      new CustomEvent('add-server', { bubbles: true, composed: true })
     );
   }
 
