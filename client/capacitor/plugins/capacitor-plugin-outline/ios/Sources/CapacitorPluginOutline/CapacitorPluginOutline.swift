@@ -10,6 +10,13 @@ import OutlineTunnel
 import Sentry
 import Tun2socks
 
+public enum TunnelStatus: Int {
+    case connected = 0
+    case disconnected = 1
+    case reconnecting = 2
+    case disconnecting = 3
+}
+
 @objc(CapacitorPluginOutline)
 public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "CapacitorPluginOutline"

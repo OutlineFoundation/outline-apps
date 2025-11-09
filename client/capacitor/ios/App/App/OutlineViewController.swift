@@ -22,27 +22,25 @@ class OutlineViewController: CAPBridgeViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        registerOutlinePlugin()
-        
         #if DEBUG
         enableSafariDebugging()
         #endif
     }
     
+    override open func capacitorDidLoad() {
+        super.capacitorDidLoad()
+        registerOutlinePlugin()
+    }
+    
     private func registerOutlinePlugin() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self = self, let bridge = self.bridge as? CapacitorBridge else {
-                NSLog("[OutlineViewController] Bridge not ready for plugin registration")
-                return
-            }
-            
-            let plugin = CapacitorPluginOutline()
-            plugin.bridge = bridge
-            plugin.load()
-            
-            bridge.registerPluginInstance(plugin)
-            NSLog("[OutlineViewController] CapacitorPluginOutline manually registered")
+        guard let bridge = self.bridge as? CapacitorBridge else {
+            NSLog("[OutlineViewController] Bridge not ready for plugin registration")
+            return
         }
+        
+        let plugin = CapacitorPluginOutline()
+        bridge.registerPluginInstance(plugin)
+        NSLog("[OutlineViewController] CapacitorPluginOutline registered")
     }
     
     private func enableSafariDebugging() {

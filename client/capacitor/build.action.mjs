@@ -47,13 +47,7 @@ export async function main(...argv) {
   try {
     process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'capacitor-assets', 'generate');
-
-    if (platform === 'capacitor-ios') {
-      await spawnStream('node', 'scripts/cap-sync-ios.mjs');
-    } else {
-      await spawnStream('npx', 'cap', 'sync');
-    }
-
+    await spawnStream('node', 'scripts/cap-sync-ios.mjs');
     await spawnStream('npx', 'cap', 'open', ...nativeBuildArgs);
   } finally {
     process.chdir(prevCwd);               // restore original working dir
