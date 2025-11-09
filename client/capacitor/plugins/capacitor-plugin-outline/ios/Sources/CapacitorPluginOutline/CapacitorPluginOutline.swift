@@ -26,6 +26,10 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
     
     private var implementation: CapacitorPluginOutlineImplementation?
     
+    public override init() {
+        super.init()
+    }
+    
     public override func load() {
         implementation = CapacitorPluginOutlineImplementation(plugin: self)
     }

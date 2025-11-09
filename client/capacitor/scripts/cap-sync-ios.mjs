@@ -9,6 +9,7 @@
 
 import { spawn } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
+import { rm } from 'fs/promises';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -55,19 +56,34 @@ function fixPackageSwift() {
     }
 }
 
+async function removePluginsFolder() {
+    const pluginsPath = resolve(__dirname, '../ios/App/App/Plugins');
+
+    try {
+        await rm(pluginsPath, { recursive: true, force: true });
+        console.log('Plugins folder removed successfully!');
+    } catch (error) {
+        // Ignore error if folder doesn't exist
+        if (error.code !== 'ENOENT') {
+            console.error('❌ Failed to remove Plugins folder:', error.message);
+        }
+    }
+}
+
 const syncProcess = spawn('npx', ['cap', 'sync', 'ios'], {
     cwd: join(__dirname, '..'),
     stdio: 'inherit',
     shell: true
 });
 
-syncProcess.on('close', (code) => {
+syncProcess.on('close', async (code) => {
     if (code !== 0) {
         console.error(`\n❌ Capacitor sync failed with code ${code}`);
         process.exit(code);
     }
 
     fixPackageSwift();
+    await removePluginsFolder();
 });
 
 syncProcess.on('error', (error) => {

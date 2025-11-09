@@ -11,3 +11,6 @@ capacitor-cordova-ios-plugins
 # Generated Config files
 App/App/capacitor.config.json
 App/App/config.xml
+
+# Plugins folder (created by Capacitor sync, not needed)
+App/App/Plugins

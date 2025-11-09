@@ -15,7 +15,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
         
-        NSLog("[OutlineApp] ✅ OutlineViewController set as root")
+        NSLog("[OutlineApp] OutlineViewController set as root")
         return true
     }
 

@@ -24,8 +24,18 @@ export async function main(...argv) {
   const capRoot = path.resolve(root, 'client', 'capacitor');
   const www = path.resolve(root, 'client', 'www');
 
-  await runAction('client/go/build', ...argv);
-  await runAction('client/web/build');
+  // Map Capacitor platforms to their native equivalents for Go build and Capacitor CLI
+  const platformMap = {
+    'capacitor-ios': 'ios',
+    'capacitor-android': 'android',
+  };
+
+  const platform = argv[0];
+  const nativePlatform = platformMap[platform] || platform;
+  const nativeBuildArgs = nativePlatform ? [nativePlatform, ...argv.slice(1)] : argv.slice(1);
+
+  await runAction('client/go/build', ...nativeBuildArgs);
+  await runAction('client/web/build', ...argv);
 
   await fs.copyFile(
     path.join(www, 'index_cordova.html'),
@@ -38,14 +48,13 @@ export async function main(...argv) {
     process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'capacitor-assets', 'generate');
 
-    const platform = argv[0];
     if (platform === 'capacitor-ios') {
       await spawnStream('node', 'scripts/cap-sync-ios.mjs');
     } else {
       await spawnStream('npx', 'cap', 'sync');
     }
 
-    await spawnStream('npx', 'cap', 'open', ...argv);
+    await spawnStream('npx', 'cap', 'open', ...nativeBuildArgs);
   } finally {
     process.chdir(prevCwd);               // restore original working dir
   }

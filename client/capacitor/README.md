@@ -31,8 +31,12 @@ npm run action client/capacitor/build capacitor-ios
 
 **Release mode:**
 ```sh
-npm run action client/capacitor/build capacitor-ios -- --buildMode=release
+SENTRY_DSN=<your sentry dsn> npm run action client/capacitor/build capacitor-ios -- --buildMode=release --versionName=<your version name>
 ```
+
+**Note**: Release builds require:
+- `versionName`: A valid version string (e.g., "1.0.0")
+- `SENTRY_DSN`: Sentry DSN for error reporting (can be set as environment variable)
 
 For Android:
 

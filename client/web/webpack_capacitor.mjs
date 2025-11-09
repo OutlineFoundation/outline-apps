@@ -36,7 +36,7 @@ const BABEL_LOADER = {
 
 export default merge(baseConfig, browserConfig, {
     devServer: {
-        open: '/index_capacitor.html',
+        open: '/',
         static: path.resolve(getRootDir(), 'client', 'www'),
         port: 8080,
         hot: true,

@@ -97,7 +97,6 @@
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
-				6318D1E52EB1238E006D5B40 /* Plugins */,
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
 			path = App;
@@ -109,13 +108,6 @@
 				6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		6318D1E52EB1238E006D5B40 /* Plugins */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Plugins;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -171,7 +163,7 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
-				6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/apple/OutlineAppleLib" */,
+				6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../plugins/apple/OutlineAppleLib" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -413,9 +405,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/apple/OutlineAppleLib" */ = {
+		6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../plugins/apple/OutlineAppleLib" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../../src/apple/OutlineAppleLib;
+			relativePath = ../../plugins/apple/OutlineAppleLib;
 		};
 		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
 			isa = XCLocalSwiftPackageReference;
