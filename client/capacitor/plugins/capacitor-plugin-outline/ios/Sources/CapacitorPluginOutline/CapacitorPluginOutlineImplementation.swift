@@ -260,7 +260,7 @@ import AppKit
                 object: nil
             )
             #endif
-            mappedStatus = TunnelStatus.connected.rawValue
+            mappedStatus = Int32(TunnelStatus.connected.rawValue)
         case .disconnected:
             #if os(macOS) || targetEnvironment(macCatalyst)
             NotificationCenter.default.post(
@@ -268,13 +268,13 @@ import AppKit
                 object: nil
             )
             #endif
-            mappedStatus = TunnelStatus.disconnected.rawValue
+            mappedStatus = Int32(TunnelStatus.disconnected.rawValue)
         case .disconnecting:
-            mappedStatus = TunnelStatus.disconnecting.rawValue
+            mappedStatus = Int32(TunnelStatus.disconnecting.rawValue)
         case .reasserting:
-            mappedStatus = TunnelStatus.reconnecting.rawValue
+            mappedStatus = Int32(TunnelStatus.reconnecting.rawValue)
         case .connecting:
-            mappedStatus = TunnelStatus.reconnecting.rawValue
+            mappedStatus = Int32(TunnelStatus.reconnecting.rawValue)
         default:
             return  // Do not report transient or invalid states.
         }
