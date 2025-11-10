@@ -36,18 +36,19 @@ export async function main(...argv) {
 
   await runAction('client/go/build', ...nativeBuildArgs);
   await runAction('client/web/build', ...argv);
-
-  await fs.copyFile(
-    path.join(www, 'index_cordova.html'),
-    path.join(www, 'index.html')
-  );
-
+  
   const prevCwd = process.cwd();
 
   try {
     process.chdir(capRoot);                // ensure Capacitor resolves config/project
     await spawnStream('npx', 'capacitor-assets', 'generate');
-    await spawnStream('node', 'scripts/cap-sync-ios.mjs');
+    if (nativePlatform === 'ios') {
+      await spawnStream('node', 'scripts/cap-sync-ios.mjs');
+    } else if (nativePlatform === 'android') {
+      await spawnStream('node', 'scripts/cap-sync-android.mjs');
+    } else if (nativePlatform) {
+      await spawnStream('npx', 'cap', 'sync', ...nativeBuildArgs);
+    }
     await spawnStream('npx', 'cap', 'open', ...nativeBuildArgs);
   } finally {
     process.chdir(prevCwd);               // restore original working dir
