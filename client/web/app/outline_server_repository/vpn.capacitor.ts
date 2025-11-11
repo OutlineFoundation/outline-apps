@@ -13,41 +13,36 @@
 // limitations under the License.
 
 import * as errors from '../../model/errors';
-import { pluginExec, registerVpnStatusListener } from '../plugin.capacitor';
-import { StartRequestJson, TunnelStatus, VpnApi } from './vpn';
+import {pluginExec, registerVpnStatusListener} from '../plugin.capacitor';
+import {StartRequestJson, TunnelStatus, VpnApi} from './vpn';
 
 export class CapacitorVpnApi implements VpnApi {
-    constructor() { }
+  constructor() {}
 
-    start(request: StartRequestJson) {
-        if (!request.client) {
-            throw new errors.IllegalServerConfiguration();
-        }
-        return pluginExec<void>(
-            'start',
-            request.id,
-            request.name,
-            request.client
-        );
+  start(request: StartRequestJson) {
+    if (!request.client) {
+      throw new errors.IllegalServerConfiguration();
     }
+    return pluginExec<void>('start', request.id, request.name, request.client);
+  }
 
-    stop(id: string) {
-        return pluginExec<void>('stop', id);
-    }
+  stop(id: string) {
+    return pluginExec<void>('stop', id);
+  }
 
-    isRunning(id: string) {
-        return pluginExec<boolean>('isRunning', id);
-    }
+  isRunning(id: string) {
+    return pluginExec<boolean>('isRunning', id);
+  }
 
-    onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
-        const onError = (err: unknown) => {
-            console.warn('failed to execute status change listener', err);
-        };
-        const callback = (data: { id: string; status: TunnelStatus }) => {
-            listener(data.id, data.status);
-        };
-        registerVpnStatusListener(callback, onError).catch((err: unknown) => {
-            console.error('CapacitorVpnApi: failed to register status listener', err);
-        });
-    }
+  onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
+    const onError = (err: unknown) => {
+      console.warn('failed to execute status change listener', err);
+    };
+    const callback = (data: {id: string; status: TunnelStatus}) => {
+      listener(data.id, data.status);
+    };
+    registerVpnStatusListener(callback, onError).catch((err: unknown) => {
+      console.error('CapacitorVpnApi: failed to register status listener', err);
+    });
+  }
 }

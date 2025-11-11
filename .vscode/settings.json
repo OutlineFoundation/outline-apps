@@ -1,19 +1,63 @@
 {
-  "eslint.run": "onSave",
-  "eslint.validate": ["javascript", "typescript"],
-  "files.insertFinalNewline": true,
-  "[go]": {
-    "editor.formatOnSave": true
+  // Disable format on save - use ESLint auto-fix instead
+  "editor.formatOnSave": false,
+  
+  // Disable Prettier extension to avoid conflicts with ESLint/gts
+  "prettier.enable": false,
+  
+  // Global code actions on save (applies to all files)
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+  
+  // Use ESLint for auto-fixing on save (gts uses ESLint for formatting)
+  "[typescript]": {
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "always"
+    }
   },
   "[javascript]": {
+    "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "always"
-    },
+    }
   },
-  "[typescript]": {
+  "[javascriptreact]": {
+    "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "always"
-    },
+    }
   },
-  "java.configuration.updateBuildConfiguration": "interactive",
+  "[typescriptreact]": {
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "always"
+    }
+  },
+  
+  // Disable other formatters that might interfere
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+  
+  // Enable ESLint
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  // Ensure ESLint auto-fix is enabled
+  "eslint.codeActionsOnSave.mode": "all",
+  // Use the workspace root for ESLint
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  // Show ESLint status in status bar for debugging
+  "eslint.alwaysShowStatus": true,
+  // Ensure ESLint uses the correct package manager
+  "eslint.packageManager": "npm"
 }

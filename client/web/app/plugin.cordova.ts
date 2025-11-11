@@ -14,11 +14,11 @@
 
 /// <reference types='cordova'/>
 
-import { deserializeError } from '../model/platform_error';
+import {deserializeError} from '../model/platform_error';
 
 export const OUTLINE_PLUGIN_NAME = 'OutlinePlugin';
 
-type VpnStatusPayload = { id: string; status: number };
+type VpnStatusPayload = {id: string; status: number};
 
 function throwDeserialized(error: unknown): never {
   throw deserializeError(error);

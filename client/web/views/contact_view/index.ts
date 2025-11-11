@@ -257,9 +257,7 @@ export class ContactView extends LitElement {
     const radio = e.target as Radio;
     const hasOpenTicket = radio.value;
     if (hasOpenTicket) {
-      this.exitTemplate = html`${this.localize(
-        'contact-view-exit-open-ticket'
-      )}`;
+      this.exitTemplate = html`${this.localize('contact-view-exit-open-ticket')}`;
       this.currentStep = ProgressStep.EXIT;
       return;
     }

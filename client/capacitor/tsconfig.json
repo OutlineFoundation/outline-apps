@@ -1,0 +1,24 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": "./",
+        "rootDir": "./",
+        "outDir": "./build"
+    },
+    "include": [
+        "src",
+        "scripts",
+        "build.action.mjs",
+        "start.action.mjs",
+        "plugins/capacitor-plugin-outline/src"
+    ],
+    "exclude": [
+        "node_modules",
+        "android",
+        "ios",
+        "www",
+        "build",
+        "dist",
+        "**/*.js"
+    ]
+}

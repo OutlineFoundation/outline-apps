@@ -7,8 +7,10 @@
  * Usage: npm run cap:sync:ios or called automatically by build.action.mjs
  */
 
+import { getRootDir } from '@outline/infrastructure/build/get_root_dir.mjs';
+import { runAction } from '@outline/infrastructure/build/run_action.mjs';
 import { spawn } from 'child_process';
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { rm } from 'fs/promises';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -56,6 +58,48 @@ function fixPackageSwift() {
     }
 }
 
+async function checkTun2socksFramework() {
+    const rootDir = getRootDir();
+    const frameworkPath = resolve(rootDir, 'output', 'client', 'apple', 'Tun2socks.xcframework');
+    
+    if (!existsSync(frameworkPath)) {
+        console.warn('⚠️  Tun2socks.xcframework not found at:', frameworkPath);
+        console.log('📦 Building Tun2socks.xcframework...');
+        try {
+            await runAction('client/go/build', 'ios');
+            if (!existsSync(frameworkPath)) {
+                throw new Error('XCFramework was not created after build');
+            }
+            console.log('✅ Tun2socks.xcframework built successfully!');
+        } catch (error) {
+            console.error('❌ Failed to build Tun2socks.xcframework:', error.message);
+            console.error('💡 Please run: npm run action client/go/build ios');
+            process.exit(1);
+        }
+    } else {
+        console.log('✅ Tun2socks.xcframework found at:', frameworkPath);
+    }
+    
+    // Verify the path in Xcode project resolves correctly
+    // The project uses SOURCE_ROOT, which is the directory containing the .xcodeproj
+    // From: client/capacitor/ios/App/ (SOURCE_ROOT)
+    // Path: ../../../../output/client/apple/Tun2socks.xcframework (4 levels up to root)
+    const sourceRoot = resolve(__dirname, '../ios/App'); // SOURCE_ROOT is the App directory
+    const relativePath = '../../../../output/client/apple/Tun2socks.xcframework';
+    const resolvedPath = resolve(sourceRoot, relativePath);
+    
+    if (!existsSync(resolvedPath)) {
+        console.error('❌ Xcode project path resolution failed!');
+        console.error(`   SOURCE_ROOT: ${sourceRoot}`);
+        console.error(`   Resolved path: ${resolvedPath}`);
+        console.error(`   Actual framework: ${frameworkPath}`);
+        console.error('   The relative path in project.pbxproj may be incorrect.');
+        throw new Error(`XCFramework not found at resolved path: ${resolvedPath}`);
+    }
+    
+    console.log('✅ Xcode project path resolves correctly to:', resolvedPath);
+}
+
 async function removePluginsFolder() {
     const pluginsPath = resolve(__dirname, '../ios/App/App/Plugins');
 
@@ -69,6 +113,9 @@ async function removePluginsFolder() {
         }
     }
 }
+
+// Check for Tun2socks.xcframework before syncing
+await checkTun2socksFramework();
 
 const syncProcess = spawn('npx', ['cap', 'sync', 'ios'], {
     cwd: join(__dirname, '..'),

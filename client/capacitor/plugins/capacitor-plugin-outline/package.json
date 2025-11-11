@@ -20,6 +20,7 @@
         "native"
     ],
     "scripts": {
+        "clean": "rm -rf node_modules dist",
         "build": "tsc"
     },
     "devDependencies": {

@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml:2:13-83
-INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml:2:13-83
+ADDED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml:2:13-83
+INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml:2:13-83
 	package
-		INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml
+		INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml
 	xmlns:android
-		ADDED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml:2:23-81
+		ADDED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml:2:23-81
 uses-sdk
-INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml reason: use-sdk injection requested
-INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml
-INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml
+INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml reason: use-sdk injection requested
+INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml
+INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml
 	android:targetSdkVersion
-		INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml
+		INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml
 	android:minSdkVersion
-		INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest4260606158817975986.xml
+		INJECTED from /Users/Apple/Dev/outline-apps/client/capacitor/plugins/capacitor-plugin-outline/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest8309419587014694234.xml

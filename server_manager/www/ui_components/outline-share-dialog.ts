@@ -167,19 +167,19 @@ Polymer({
     this.$.dialog.open();
   },
 
-  copyInvite() {
+  async copyInvite() {
     const dt = new clipboard.DT();
     dt.setData('text/plain', this.$.selectableInviteText.innerText);
     dt.setData('text/html', this.$.selectableInviteText.innerHTML);
-    clipboard.write(dt);
+    await clipboard.write(dt);
     this.$.copyInvitationIndicator.removeAttribute('hidden');
   },
 
-  copyAccessKey() {
+  async copyAccessKey() {
     const dt = new clipboard.DT();
     dt.setData('text/plain', this.$.selectableAccessKey.innerText);
     dt.setData('text/html', this.$.selectableAccessKey.innerHTML);
-    clipboard.write(dt);
+    await clipboard.write(dt);
     this.$.copyAccessKeyIndicator.removeAttribute('hidden');
   },
 });
