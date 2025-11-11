@@ -1,10 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="app_name">Outline</string>
     <string name="title_activity_main">Outline</string>
-    <string name="launcher_name">@string/app_name</string>
-    <string name="activity_name">@string/launcher_name</string>
-    <string name="connected_server_state">Connected</string>
-    <string name="reconnecting_server_state">Reconnecting...</string>
-    <string name="server_default_name_outline">Outline Server</string>
+    <string name="package_name">org.outline.client</string>
+    <string name="custom_url_scheme">org.outline.client</string>
 </resources>

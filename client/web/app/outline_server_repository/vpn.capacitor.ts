@@ -46,7 +46,8 @@ export class CapacitorVpnApi implements VpnApi {
         const callback = (data: { id: string; status: TunnelStatus }) => {
             listener(data.id, data.status);
         };
-        console.debug('CapacitorVpnApi: registering onStatusChange callback');
-        registerVpnStatusListener(callback, onError);
+        registerVpnStatusListener(callback, onError).catch((err: unknown) => {
+            console.error('CapacitorVpnApi: failed to register status listener', err);
+        });
     }
 }

@@ -46,10 +46,20 @@ export class UrlInterceptor {
 export class AndroidUrlInterceptor extends UrlInterceptor {
   constructor() {
     super();
-    window.webintent.getUri(launchUrl => {
-      window.webintent.onNewIntent(this.executeListeners.bind(this));
-      this.executeListeners(launchUrl);
-    });
+    // Check if webintent (Cordova plugin) is available
+    if (typeof window !== 'undefined' && (window as any).webintent) {
+      const webintent = (window as any).webintent;
+      webintent.getUri((launchUrl: string) => {
+        webintent.onNewIntent(this.executeListeners.bind(this));
+        this.executeListeners(launchUrl);
+      });
+    } else {
+      // For Capacitor, we'll use the App plugin for URL handling
+      // This is a fallback - URL interception will be handled by Capacitor's App plugin
+      console.debug(
+        '[AndroidUrlInterceptor] webintent not available, using base UrlInterceptor'
+      );
+    }
   }
 }
 

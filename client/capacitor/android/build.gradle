@@ -1,5 +1,4 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
     
     repositories {
@@ -10,35 +9,29 @@ buildscript {
         classpath 'com.android.tools.build:gradle:8.7.3'
         classpath 'com.google.gms:google-services:4.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
     }
 }
 
 apply from: "variables.gradle"
 
-// android/build.gradle (project-level)
 allprojects {
     repositories {
         maven { url uri("$rootDir/../../../output/client/android") }
         google()
         mavenCentral()
     }
-    // Ensure Java compile tasks use 17
+
     tasks.withType(JavaCompile).configureEach {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // For Android modules (app, capacitor, plugins…), set compileOptions + Kotlin jvmTarget
     afterEvaluate { p ->
         if (p.extensions.findByName("android") != null) {
             p.extensions.getByName("android").compileOptions {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17
             }
-            // If the module has Kotlin
             def kotlinExt = p.extensions.findByName("kotlinOptions")
             if (kotlinExt != null) {
                 kotlinExt.jvmTarget = "17"
@@ -46,7 +39,6 @@ allprojects {
         }
     }
 }
-
 
 task clean(type: Delete) {
     delete rootProject.buildDir

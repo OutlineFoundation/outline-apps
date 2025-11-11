@@ -119,9 +119,16 @@ class CapacitorClipboard extends AbstractClipboard {
 }
 
 class CapacitorErrorReporter extends SentryErrorReporter {
+    private readonly hasNativeErrorReporting: boolean;
+
     constructor(appVersion: string, dsn: string, tags: Tags) {
         super(appVersion, dsn, tags);
-        pluginExec<void>('initializeErrorReporting', dsn).catch(console.error);
+        this.hasNativeErrorReporting = Boolean(dsn && dsn.trim().length > 0);
+        if (this.hasNativeErrorReporting) {
+            pluginExec<void>('initializeErrorReporting', dsn.trim()).catch(
+                console.error
+            );
+        }
     }
 
     async report(
@@ -130,16 +137,25 @@ class CapacitorErrorReporter extends SentryErrorReporter {
         userEmail?: string
     ): Promise<void> {
         await super.report(userFeedback, feedbackCategory, userEmail);
-        await pluginExec<void>('reportEvents', Sentry.lastEventId() || '');
+        if (this.hasNativeErrorReporting) {
+            await pluginExec<void>('reportEvents', Sentry.lastEventId() || '');
+        }
     }
 }
 
 class CapacitorMethodChannel implements MethodChannel {
     async invokeMethod(methodName: string, params: string): Promise<string> {
         try {
-            return await pluginExec('invokeMethod', methodName, params);
+            return await pluginExec<string>(
+                'invokeMethod',
+                methodName,
+                params
+            );
         } catch (e) {
-            console.debug('invokeMethod failed', methodName, e);
+            console.error(
+                `[CapacitorMethodChannel] invokeMethod failed - methodName: ${methodName}`,
+                e
+            );
             throw e;
         }
     }

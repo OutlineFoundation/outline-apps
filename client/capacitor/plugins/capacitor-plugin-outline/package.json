@@ -9,6 +9,7 @@
     "files": [
         "dist/",
         "ios/",
+        "android/",
         "src/"
     ],
     "author": "Outline Authors",
@@ -31,6 +32,9 @@
     "capacitor": {
         "ios": {
             "src": "ios"
+        },
+        "android": {
+            "src": "android"
         }
     }
 }

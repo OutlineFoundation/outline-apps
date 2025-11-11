@@ -15,14 +15,12 @@
 import { getRootDir } from '@outline/infrastructure/build/get_root_dir.mjs';
 import { runAction } from '@outline/infrastructure/build/run_action.mjs';
 import { spawnStream } from '@outline/infrastructure/build/spawn_stream.mjs';
-import fs from 'fs/promises';
 import path from 'path';
 import url from 'url';
 
 export async function main(...argv) {
   const root = getRootDir();
   const capRoot = path.resolve(root, 'client', 'capacitor');
-  const www = path.resolve(root, 'client', 'www');
 
   // Map Capacitor platforms to their native equivalents for Go build and Capacitor CLI
   const platformMap = {

@@ -165,11 +165,12 @@ export class AddAccessKeyDialog extends LitElement {
   }
 
   private async runAccessKeyChecks(accessKey: string | null) {
-    if (accessKey === null) {
+    if (accessKey === null || accessKey.trim() === '') {
       this.hasInvalidAccessKey = true;
       this.hasEmptyAccessKey = true;
     } else {
-      this.hasInvalidAccessKey = !(await this.accessKeyValidator(accessKey));
+      const isValid = await this.accessKeyValidator(accessKey);
+      this.hasInvalidAccessKey = !isValid;
       this.hasEmptyAccessKey = false;
     }
   }
@@ -177,7 +178,9 @@ export class AddAccessKeyDialog extends LitElement {
   private async edit(event: InputEvent) {
     event.preventDefault();
 
-    this.accessKey = (event.target as HTMLInputElement).value;
+    const newAccessKey = (event.target as HTMLInputElement).value;
+    this.accessKey = newAccessKey;
+    await this.runAccessKeyChecks(newAccessKey || null);
   }
 
   private confirm(event: Event) {
