@@ -11,15 +11,11 @@ public class MainActivity extends BridgeActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    Log.d(TAG, "onCreate: Starting MainActivity");
-    Log.d(TAG, "onCreate: Registering CapacitorPluginOutline");
     try {
       registerPlugin(CapacitorPluginOutline.class);
-      Log.d(TAG, "onCreate: CapacitorPluginOutline registered successfully");
     } catch (Exception e) {
-      Log.e(TAG, "onCreate: Failed to register CapacitorPluginOutline", e);
+      // Plugin registration failed
     }
     super.onCreate(savedInstanceState);
-    Log.d(TAG, "onCreate: MainActivity initialization complete");
   }
 }

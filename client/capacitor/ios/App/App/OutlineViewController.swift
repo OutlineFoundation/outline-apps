@@ -34,13 +34,11 @@ class OutlineViewController: CAPBridgeViewController {
     
     private func registerOutlinePlugin() {
         guard let bridge = self.bridge as? CapacitorBridge else {
-            NSLog("[OutlineViewController] Bridge not ready for plugin registration")
             return
         }
         
         let plugin = CapacitorPluginOutline()
         bridge.registerPluginInstance(plugin)
-        NSLog("[OutlineViewController] CapacitorPluginOutline registered")
     }
     
     private func enableSafariDebugging() {

@@ -8,14 +8,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private var hasAdjustedWorkingDirectory = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        NSLog("[OutlineApp] App launching...")
-        
         window = UIWindow(frame: UIScreen.main.bounds)
         let rootViewController = OutlineViewController()
         window?.rootViewController = rootViewController
         window?.makeKeyAndVisible()
-        
-        NSLog("[OutlineApp] OutlineViewController set as root")
         return true
     }
 
@@ -61,21 +57,16 @@ extension AppDelegate {
     private func adjustWorkingDirectoryIfNeeded(context: String) {
         guard !hasAdjustedWorkingDirectory else { return }
         guard let bridgeController = window?.rootViewController as? OutlineViewController else {
-            NSLog("[OutlineApp] Working directory update skipped (%@): root view controller unavailable", context)
             retryWorkingDirectoryAdjustment()
             return
         }
         guard let appPath = bridgeController.bridge?.config.appLocation.path else {
-            NSLog("[OutlineApp] Working directory update skipped (%@): bridge not ready", context)
             retryWorkingDirectoryAdjustment()
             return
         }
 
         if FileManager.default.changeCurrentDirectoryPath(appPath) {
             hasAdjustedWorkingDirectory = true
-            NSLog("[OutlineApp] Working directory set to %@", appPath)
-        } else {
-            NSLog("[OutlineApp] Failed to set working directory to %@", appPath)
         }
     }
 

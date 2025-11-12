@@ -100,26 +100,19 @@ import AppKit
         }
         let input = call.getString(CallKeys.input, "")
         
-        DDLogDebug("Invoking Method \(methodName) with input \(input)")
-        
         Task {
             do {
                 guard let result = OutlineInvokeMethod(methodName, input) else {
-                    DDLogError("InvokeMethod \(methodName) got nil result")
                     throw OutlineError.internalError(message: "unexpected invoke error")
                 }
                 if let platformError = result.error {
-                    let errorJson = marshalErrorJson(error: OutlineError.platformError(platformError))
-                    DDLogDebug("InvokeMethod \(methodName) failed with error \(errorJson)")
                     throw OutlineError.platformError(platformError)
                 }
-                DDLogDebug("InvokeMethod result: \(result.value)")
                 await MainActor.run {
                     call.resolve(["value": result.value])
                 }
             } catch {
                 let errorJson = marshalErrorJson(error: error)
-                DDLogError("InvokeMethod \(methodName) threw exception: \(errorJson)")
                 await MainActor.run {
                     call.reject(errorJson)
                 }
@@ -137,8 +130,6 @@ import AppKit
         guard let transportConfig = call.getString(CallKeys.transportConfig) else {
             return call.reject("Missing transport configuration")
         }
-        
-        DDLogInfo("start \(serverName) (\(tunnelId))")
         
         Task {
             do {
@@ -164,8 +155,6 @@ import AppKit
         guard let tunnelId = call.getString(CallKeys.tunnelId) else {
             return call.reject("Missing tunnel ID")
         }
-        
-        DDLogInfo("stop \(tunnelId)")
         
         Task {
             await OutlineVpn.shared.stop(tunnelId)
@@ -198,8 +187,6 @@ import AppKit
         guard let dsn = call.getString(CallKeys.apiKey) else {
             return call.reject("Missing error reporting API key")
         }
-        
-        DDLogInfo("initializeErrorReporting")
         
         SentrySDK.start { options in
             options.dsn = dsn
@@ -247,10 +234,6 @@ import AppKit
     }
     
     private func emitVpnStatus(_ status: NEVPNStatus, tunnelId: String) {
-        DDLogDebug(
-            "CapacitorPluginOutline received onStatusChange (\(String(describing: status))) for tunnel \(tunnelId)"
-        )
-        
         let mappedStatus: Int32
         switch status {
         case .connected:
@@ -302,7 +285,6 @@ import AppKit
             ).path
             goConfig.dataDir = dataPath
         } catch {
-            DDLogWarn("Error finding Application Support directory: \(error)")
         }
     }
     
@@ -311,20 +293,18 @@ import AppKit
     #if os(macOS)
     @objc private func handleOpenUrl(_ notification: Notification) {
         guard let url = notification.object as? String else {
-            return NSLog("Received non-String object.")
+            return
         }
-        NSLog("Intercepted URL.")
         guard let urlJson = try? JSONEncoder().encode(url),
               let encodedUrl = String(data: urlJson, encoding: .utf8)
         else {
-            return NSLog("Failed to JS-encode intercepted URL")
+            return
         }
         // In Capacitor, URL handling is typically done through AppDelegate
         // This notification can be used to trigger JavaScript handlers
         DispatchQueue.main.async {
             // Capacitor handles URL interception differently than Cordova
             // The URL should be handled by the Capacitor AppDelegate
-            NSLog("URL intercepted: \(url)")
         }
     }
     #endif
@@ -358,7 +338,7 @@ import AppKit
         let uiWebViewLocalStorageDir: URL
         #if targetEnvironment(macCatalyst)
         guard let bundleID = Bundle.main.bundleIdentifier else {
-            return DDLogError("Unable to get bundleID for app.")
+            return
         }
         let appSupportDir = fileManager.urls(
             for: .applicationSupportDirectory,
@@ -378,16 +358,15 @@ import AppKit
         #endif
         let uiWebViewLocalStorage = uiWebViewLocalStorageDir.appendingPathComponent(kUIWebViewLocalStorageFilename)
         if !fileManager.fileExists(atPath: uiWebViewLocalStorage.relativePath) {
-            return DDLogInfo("Not migrating, UIWebView local storage files missing.")
+            return
         }
         
         let wkWebViewLocalStorageDir = appLibraryDir.appendingPathComponent("WebKit/WebsiteData/LocalStorage/")
         let wkWebViewLocalStorage = wkWebViewLocalStorageDir.appendingPathComponent(kWKWebViewLocalStorageFilename)
         // Only copy the local storage files if they don't exist for WKWebView.
         if fileManager.fileExists(atPath: wkWebViewLocalStorage.relativePath) {
-            return DDLogInfo("Not migrating, WKWebView local storage files present.")
+            return
         }
-        DDLogInfo("Migrating UIWebView local storage to WKWebView")
         
         // Create the WKWebView local storage directory; this is safe if the directory already exists.
         do {
@@ -396,7 +375,7 @@ import AppKit
                 withIntermediateDirectories: true
             )
         } catch {
-            return DDLogError("Failed to create WKWebView local storage directory")
+            return
         }
         
         // Create a tmp directory and copy onto it the local storage files.
@@ -406,7 +385,7 @@ import AppKit
             appropriateFor: wkWebViewLocalStorage,
             create: true
         ) else {
-            return DDLogError("Failed to create tmp dir")
+            return
         }
         do {
             try fileManager.copyItem(
@@ -422,7 +401,7 @@ import AppKit
                 to: tmpDir.appendingPathComponent("\(kWKWebViewLocalStorageFilename)-wal")
             )
         } catch {
-            return DDLogError("Local storage migration failed.")
+            return
         }
         
         // Atomically move the tmp directory to the WKWebView local storage directory.
@@ -432,10 +411,8 @@ import AppKit
             backupItemName: nil,
             options: .usingNewMetadataOnly
         )) != nil else {
-            return DDLogError("Failed to copy tmp dir to WKWebView local storage dir")
+            return
         }
-        
-        DDLogInfo("Local storage migration succeeded")
     }
     #endif
 }

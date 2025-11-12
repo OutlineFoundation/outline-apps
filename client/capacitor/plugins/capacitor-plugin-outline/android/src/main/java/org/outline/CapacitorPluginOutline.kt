@@ -68,27 +68,21 @@ class CapacitorPluginOutline : Plugin() {
   private val vpnServiceConnection =
       object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-          Log.d(TAG, "VPN service connected - ComponentName: $name")
           vpnTunnelService = IVpnTunnelService.Stub.asInterface(service)
           logger.info("VPN service connected")
-          Log.d(TAG, "VPN service connection established successfully")
           
           // Execute any pending start tunnel request
           pendingStartTunnelRequest?.let { request ->
-            Log.d(TAG, "VPN service connected - Executing pending start tunnel request for tunnel: ${request.tunnelId}")
             val call = bridge.getSavedCall(request.callId)
             if (call != null) {
               // executeStartTunnel will handle releasing the call when it completes
               executeStartTunnel(call, request.tunnelId, request.transportConfig, request.serverName)
-            } else {
-              Log.w(TAG, "VPN service connected - No saved call found for pending start tunnel request")
             }
             pendingStartTunnelRequest = null
           }
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
-          Log.w(TAG, "VPN service disconnected - ComponentName: $name")
           logger.warning("VPN service disconnected")
           val context = baseContext()
           val rebind = Intent(context, VpnTunnelService::class.java).apply {
@@ -98,22 +92,18 @@ class CapacitorPluginOutline : Plugin() {
                 errorReportingApiKey,
             )
           }
-          Log.d(TAG, "Attempting to rebind VPN service")
           context.bindService(rebind, this, Context.BIND_AUTO_CREATE)
         }
       }
 
   private val vpnTunnelBroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-      Log.d(TAG, "VPN tunnel broadcast received - Action: ${intent.action}")
       val tunnelId =
           intent.getStringExtra(VpnTunnelService.MessageData.TUNNEL_ID.value) ?: run {
-            Log.w(TAG, "Tunnel status broadcast missing tunnel ID")
             logger.warning("Tunnel status broadcast missing tunnel ID")
             return
           }
       if (statusCallbackIds.isEmpty()) {
-        Log.d(TAG, "No Capacitor status listeners registered; dropping update for tunnel $tunnelId")
         logger.fine(
             "No Capacitor status listeners registered; dropping update for tunnel $tunnelId")
         return
@@ -123,7 +113,6 @@ class CapacitorPluginOutline : Plugin() {
               VpnTunnelService.MessageData.PAYLOAD.value,
               VpnTunnelService.TunnelStatus.INVALID.value,
           )
-      Log.d(TAG, "VPN connectivity changed - tunnelId: $tunnelId, status: $status")
       logger.fine(
           String.format(Locale.ROOT, "VPN connectivity changed: %s, %d", tunnelId, status))
 
@@ -131,14 +120,12 @@ class CapacitorPluginOutline : Plugin() {
         put("id", tunnelId)
         put("status", status)
       }
-      Log.d(TAG, "Notifying listeners of VPN status change - listeners: ${statusCallbackIds.size}")
       notifyListeners(VPN_STATUS_EVENT, payload)
 
       // Also resolve long-lived callbacks to mirror the Cordova plugin behaviour so the
       // TypeScript side can keep using the same contract until we migrate it fully.
       statusCallbackIds.forEach { callbackId ->
         bridge.getSavedCall(callbackId)?.let { savedCall ->
-          Log.d(TAG, "Resolving saved call for callbackId: $callbackId")
           savedCall.resolve(payload)
         }
       }
@@ -146,20 +133,15 @@ class CapacitorPluginOutline : Plugin() {
   }
 
   override fun load() {
-    Log.d(TAG, "load() called - Plugin is being loaded")
     super.load()
-    Log.d(TAG, "load() - super.load() completed")
 
     val context = baseContext()
-    Log.d(TAG, "load() - Context obtained: ${context.packageName}")
 
     try {
       OutlineLogger.registerLogHandler(SentryErrorReporter.BREADCRUMB_LOG_HANDLER)
-      Log.d(TAG, "load() - OutlineLogger registered")
       
       val goConfig: GoBackendConfig = Outline.getBackendConfig()
       goConfig.dataDir = context.filesDir.absolutePath
-      Log.d(TAG, "load() - Go backend config initialized, dataDir: ${goConfig.dataDir}")
 
       val broadcastFilter = IntentFilter().apply {
         addAction(VpnTunnelService.STATUS_BROADCAST_KEY)
@@ -170,17 +152,13 @@ class CapacitorPluginOutline : Plugin() {
           broadcastFilter,
           Context.RECEIVER_NOT_EXPORTED,
       )
-      Log.d(TAG, "load() - VPN tunnel broadcast receiver registered")
 
       context.bindService(
           Intent(context, VpnTunnelService::class.java),
           vpnServiceConnection,
           Context.BIND_AUTO_CREATE,
       )
-      Log.d(TAG, "load() - VPN tunnel service binding initiated")
-      Log.d(TAG, "load() - Plugin load completed successfully")
     } catch (e: Exception) {
-      Log.e(TAG, "load() - Error during plugin initialization", e)
       throw e
     }
   }
@@ -201,32 +179,25 @@ class CapacitorPluginOutline : Plugin() {
   fun invokeMethod(call: PluginCall) {
     val methodName = call.getString("method")
     val input = call.getString("input", "")
-    Log.d(TAG, "invokeMethod() called - method: $methodName, input: $input")
-    
     if (methodName.isNullOrEmpty()) {
-      Log.e(TAG, "invokeMethod() - Missing Outline method name")
       call.reject("Missing Outline method name.")
       return
     }
     executor.execute {
       try {
-        Log.d(TAG, "invokeMethod() - Executing: Outline.invokeMethod($methodName, $input)")
         logger.fine(
             String.format(Locale.ROOT, "Calling Outline.invokeMethod(%s, %s)", methodName, input))
         val result: InvokeMethodResult = Outline.invokeMethod(methodName, input)
         val error = result.error
         if (error != null) {
-          Log.w(TAG, "invokeMethod() - InvokeMethod($methodName) failed: $error")
           logger.warning(
               String.format(Locale.ROOT, "InvokeMethod(%s) failed: %s", methodName, error))
           rejectWithPlatformError(call, error)
           return@execute
         }
-        Log.d(TAG, "invokeMethod() - InvokeMethod($methodName) succeeded, value: ${result.value}")
         val payload = JSObject().apply { put("value", result.value) }
         call.resolve(payload)
       } catch (e: Exception) {
-        Log.e(TAG, "invokeMethod() - Exception in invokeMethod($methodName)", e)
         logger.log(
             Level.SEVERE,
             String.format(Locale.ROOT, "invokeMethod(%s) threw exception", methodName),
@@ -244,20 +215,15 @@ class CapacitorPluginOutline : Plugin() {
     val tunnelId = call.getString("tunnelId")
     val serverName = call.getString("serverName")
     val transportConfig = call.getString("transportConfig")
-    Log.d(TAG, "start() called - tunnelId: $tunnelId, serverName: $serverName")
-
     if (tunnelId.isNullOrEmpty() || transportConfig.isNullOrEmpty() || serverName.isNullOrEmpty()) {
-      Log.e(TAG, "start() - Missing tunnel start parameters")
       call.reject("Missing tunnel start parameters.")
       return
     }
 
     if (!prepareVpnService(call, tunnelId, serverName, transportConfig)) {
-      Log.d(TAG, "start() - VPN service preparation returned false, waiting for permission")
       return
     }
 
-    Log.d(TAG, "start() - Executing start tunnel")
     executeStartTunnel(call, tunnelId, transportConfig, serverName)
   }
 
@@ -285,11 +251,9 @@ class CapacitorPluginOutline : Plugin() {
 
   @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
   fun onStatusChange(call: PluginCall) {
-    Log.d(TAG, "onStatusChange() called - callbackId: ${call.callbackId}")
     call.setKeepAlive(true)
     statusCallbackIds.add(call.callbackId)
     saveCall(call)
-    Log.d(TAG, "onStatusChange() - Status listener registered, total listeners: ${statusCallbackIds.size}")
     call.resolve()
   }
 
@@ -358,30 +322,24 @@ class CapacitorPluginOutline : Plugin() {
   override fun handleOnActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.handleOnActivityResult(requestCode, resultCode, data)
 
-    Log.d(TAG, "handleOnActivityResult() called - requestCode: $requestCode, resultCode: $resultCode")
     if (requestCode != REQUEST_CODE_PREPARE_VPN) {
-      Log.w(TAG, "handleOnActivityResult() - Unknown requestCode: $requestCode")
       logger.warning("Received unknown activity result requestCode=$requestCode")
       return
     }
 
     val startRequest = pendingStartRequest ?: run {
-      Log.w(TAG, "handleOnActivityResult() - No pending VPN start request")
       logger.warning("No pending VPN start request to resume.")
       return
     }
 
-    Log.d(TAG, "handleOnActivityResult() - Found pending request for tunnel: ${startRequest.tunnelId}")
     val call =
         bridge.getSavedCall(startRequest.callId) ?: run {
-          Log.w(TAG, "handleOnActivityResult() - Failed to retrieve saved call")
           logger.warning("Failed to retrieve saved call for VPN start.")
           pendingStartRequest = null
           return
         }
 
     if (resultCode != Activity.RESULT_OK) {
-      Log.w(TAG, "handleOnActivityResult() - VPN permission denied by user")
       logger.warning("Failed to prepare VPN; permission denied by user.")
       rejectWithPlatformError(
           call,
@@ -395,7 +353,6 @@ class CapacitorPluginOutline : Plugin() {
       return
     }
 
-    Log.d(TAG, "handleOnActivityResult() - VPN permission granted, starting tunnel")
     executeStartTunnel(
         call,
         startRequest.tunnelId,
@@ -404,7 +361,6 @@ class CapacitorPluginOutline : Plugin() {
     )
     bridge.releaseCall(call)
     pendingStartRequest = null
-    Log.d(TAG, "handleOnActivityResult() - Completed")
   }
 
   private fun executeStartTunnel(
@@ -413,12 +369,8 @@ class CapacitorPluginOutline : Plugin() {
       transportConfig: String,
       serverName: String,
   ) {
-    Log.d(TAG, "executeStartTunnel() called - tunnelId: $tunnelId, serverName: $serverName")
-    Log.d(TAG, "executeStartTunnel() - VPN tunnel service: ${if (vpnTunnelService != null) "connected" else "null"}")
-    
     // Wait for VPN service to be connected
     if (vpnTunnelService == null) {
-      Log.d(TAG, "executeStartTunnel() - VPN service not connected yet, queuing start request")
       val request = StartVpnRequest(
           tunnelId = tunnelId,
           serverName = serverName,
@@ -428,13 +380,11 @@ class CapacitorPluginOutline : Plugin() {
       pendingStartTunnelRequest = request
       call.setKeepAlive(true)
       saveCall(call)
-      Log.d(TAG, "executeStartTunnel() - Start request queued, waiting for VPN service connection")
       return
     }
     
     executor.execute {
       try {
-        Log.d(TAG, "executeStartTunnel() - Executing on background thread")
         logger.info(
             String.format(
                 Locale.ROOT,
@@ -447,20 +397,15 @@ class CapacitorPluginOutline : Plugin() {
           name = serverName
           this.transportConfig = transportConfig
         }
-        Log.d(TAG, "executeStartTunnel() - Calling vpnTunnelService.startTunnel()")
         val result = vpnTunnelService?.startTunnel(config)
-        Log.d(TAG, "executeStartTunnel() - startTunnel() returned: ${if (result == null) "success" else "error: $result"}")
         resolveOrReject(call, result)
-        Log.d(TAG, "executeStartTunnel() - Call resolved/rejected")
       } catch (e: RemoteException) {
-        Log.e(TAG, "executeStartTunnel() - startTunnel failed with RemoteException", e)
         logger.log(Level.SEVERE, "startTunnel failed", e)
         rejectWithPlatformError(
             call,
             PlatformError(Platerrors.InternalError, e.toString()),
         )
       } catch (e: Exception) {
-        Log.e(TAG, "executeStartTunnel() - startTunnel failed with exception", e)
         logger.log(Level.SEVERE, "startTunnel failed", e)
         rejectWithPlatformError(
             call,
@@ -476,18 +421,14 @@ class CapacitorPluginOutline : Plugin() {
       serverName: String,
       transportConfig: String,
   ): Boolean {
-    Log.d(TAG, "prepareVpnService() called - tunnelId: $tunnelId")
     val context = baseContext()
     val prepareIntent = VpnService.prepare(context)
     if (prepareIntent == null) {
-      Log.d(TAG, "prepareVpnService() - VPN permission already granted")
       return true
     }
 
-    Log.d(TAG, "prepareVpnService() - VPN permission needed, requesting...")
     val activity = activity
     if (activity == null) {
-      Log.e(TAG, "prepareVpnService() - No activity available")
       call.reject("Unable to request VPN permission without an active activity.")
       return false
     }
@@ -502,9 +443,7 @@ class CapacitorPluginOutline : Plugin() {
     pendingStartRequest = request
     call.setKeepAlive(true)
     saveCall(call)
-    Log.d(TAG, "prepareVpnService() - Starting VPN permission activity")
     activity.startActivityForResult(prepareIntent, REQUEST_CODE_PREPARE_VPN)
-    Log.d(TAG, "prepareVpnService() - VPN permission activity started, waiting for result")
     return false
   }
 
