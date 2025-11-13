@@ -36,26 +36,26 @@ import './outline-server-settings';
 import './outline-share-dialog';
 import './outline-sort-span';
 
-import { html, PolymerElement } from '@polymer/polymer';
-import type { PolymerElementProperties } from '@polymer/polymer/interfaces';
-import { DirMixin } from '@polymer/polymer/lib/mixins/dir-mixin';
+import {html, PolymerElement} from '@polymer/polymer';
+import type {PolymerElementProperties} from '@polymer/polymer/interfaces';
+import {DirMixin} from '@polymer/polymer/lib/mixins/dir-mixin';
 import '../views/server_view/server_metrics_row/bandwidth';
 import '../views/server_view/server_metrics_row/tunnel_time';
 
-import type { CloudLocation } from '../../model/location';
+import type {CloudLocation} from '../../model/location';
 import * as formatting from '../data_formatting';
-import { getShortName } from '../location_formatting';
+import {getShortName} from '../location_formatting';
+import {getCloudIcon} from './cloud-assets';
+import type {OutlineHelpBubble} from './outline-help-bubble';
+import type {OutlineServerSettings} from './outline-server-settings';
 import {
   AccessKeyDataTableEvent,
   AccessKeyDataTableRow,
 } from '../views/server_view/access_key_data_table';
-import { DataTableSortDirection } from '../views/server_view/access_key_data_table/data_table';
-import type { ServerMetricsData } from '../views/server_view/server_metrics_row';
-import { ServerMetricsBandwidthLocation } from '../views/server_view/server_metrics_row/bandwidth';
-import { ServerMetricsTunnelTimeLocation } from '../views/server_view/server_metrics_row/tunnel_time';
-import { getCloudIcon } from './cloud-assets';
-import type { OutlineHelpBubble } from './outline-help-bubble';
-import type { OutlineServerSettings } from './outline-server-settings';
+import {DataTableSortDirection} from '../views/server_view/access_key_data_table/data_table';
+import type {ServerMetricsData} from '../views/server_view/server_metrics_row';
+import {ServerMetricsBandwidthLocation} from '../views/server_view/server_metrics_row/bandwidth';
+import {ServerMetricsTunnelTimeLocation} from '../views/server_view/server_metrics_row/tunnel_time';
 
 export const MY_CONNECTION_USER_ID = '0';
 

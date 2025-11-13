@@ -32,6 +32,75 @@ class OutlineViewController: CAPBridgeViewController {
         registerOutlinePlugin()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        view.isHidden = false
+        view.backgroundColor = .clear
+        ensureWebViewVisible()
+    }
+    
+    func ensureWebViewVisible() {
+        guard let webView = webView else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.ensureWebViewVisible()
+            }
+            return
+        }
+        
+        webView.isHidden = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+        
+        let needsReload = webView.url == nil || 
+                         webView.url?.absoluteString.isEmpty == true ||
+                         webView.url?.absoluteString == "about:blank"
+        
+        if needsReload {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                guard let self = self, let webView = self.webView else { return }
+                
+                if let currentUrl = webView.url, 
+                   !currentUrl.absoluteString.isEmpty && 
+                   currentUrl.absoluteString != "about:blank" {
+                    webView.reload()
+                } else {
+                    if let bridge = self.bridge {
+                        let config = bridge.config
+                        let startUrl = config.serverURL.absoluteString
+                        if let url = URL(string: startUrl) {
+                            let request = URLRequest(url: url)
+                            webView.load(request)
+                        }
+                    }
+                }
+            }
+        }
+        
+        webView.setNeedsLayout()
+        webView.layoutIfNeeded()
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        setupExternalLinkHandling()
+    }
+    
+    private var originalNavigationDelegate: WKNavigationDelegate?
+    
+    private func setupExternalLinkHandling() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            if let webView = self.webView {
+                self.originalNavigationDelegate = webView.navigationDelegate
+                webView.navigationDelegate = self
+            } else {
+                self.setupExternalLinkHandling()
+            }
+        }
+    }
+    
     private func registerOutlinePlugin() {
         guard let bridge = self.bridge as? CapacitorBridge else {
             return
@@ -55,6 +124,37 @@ class OutlineViewController: CAPBridgeViewController {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+extension OutlineViewController: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = navigationAction.request.url else {
+            if let original = originalNavigationDelegate {
+                original.webView?(webView, decidePolicyFor: navigationAction, decisionHandler: decisionHandler)
+            } else {
+                decisionHandler(.allow)
+            }
+            return
+        }
+        
+        let isHttpHttps = url.scheme == "http" || url.scheme == "https"
+        let isLocalhost = url.host == "localhost" || url.host == "127.0.0.1"
+        let isCapacitor = url.scheme == "capacitor" || url.scheme == "ionic"
+        let isExternalLink = isHttpHttps && !isLocalhost && !isCapacitor
+        
+        if isExternalLink {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+            decisionHandler(.cancel)
+        } else {
+            if let original = originalNavigationDelegate {
+                original.webView?(webView, decidePolicyFor: navigationAction, decisionHandler: decisionHandler)
+            } else {
+                decisionHandler(.allow)
             }
         }
     }

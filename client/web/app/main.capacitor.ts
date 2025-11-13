@@ -235,16 +235,28 @@ async function initializeCapacitorPlugins(): Promise<void> {
 }
 
 (async () => {
-  await initializeCapacitorPlugins();
-  installDefaultMethodChannel(new CapacitorMethodChannel());
   try {
+    await initializeCapacitorPlugins();
+
+    installDefaultMethodChannel(new CapacitorMethodChannel());
+
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+      try {
+        await SplashScreen.show({
+          autoHide: false,
+          fadeInDuration: 0,
+          fadeOutDuration: 0,
+        });
+      } catch {}
+    }
+
     await main(new CapacitorPlatform());
+
     if (Capacitor.isNativePlatform()) {
       try {
-        await SplashScreen.hide();
-      } catch {
-        console.debug('[Capacitor] SplashScreen not available in simulator');
-      }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await SplashScreen.hide({fadeOutDuration: 300});
+      } catch {}
     }
   } catch (e) {
     console.error('[Capacitor] main() failed:', e);

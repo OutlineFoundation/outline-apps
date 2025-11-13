@@ -9,7 +9,7 @@
 
 import { getRootDir } from '@outline/infrastructure/build/get_root_dir.mjs';
 import { runAction } from '@outline/infrastructure/build/run_action.mjs';
-import { spawn } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { rm } from 'fs/promises';
 import { dirname, join, resolve } from 'path';
@@ -194,6 +194,65 @@ async function restoreProjectPbxproj() {
     }
 }
 
+
+function resizeSplashImages() {
+    const splashImagesetPath = resolve(__dirname, '../ios/App/App/Assets.xcassets/Splash.imageset');
+    
+    if (!existsSync(splashImagesetPath)) {
+        return false;
+    }
+    
+    try {
+        const images = [
+            'Default@1x~universal~anyany.png',
+            'Default@1x~universal~anyany-dark.png',
+            'Default@2x~universal~anyany.png',
+            'Default@2x~universal~anyany-dark.png',
+            'Default@3x~universal~anyany.png',
+            'Default@3x~universal~anyany-dark.png'
+        ];
+        
+        let resized = false;
+        for (const image of images) {
+            const imagePath = resolve(splashImagesetPath, image);
+            if (existsSync(imagePath)) {
+                try {
+                    const sizeInfo = execSync(`sips -g pixelWidth "${imagePath}"`, { encoding: 'utf8' });
+                    const widthMatch = sizeInfo.match(/pixelWidth: (\d+)/);
+                    if (widthMatch) {
+                        const width = parseInt(widthMatch[1]);
+                        if (image.includes('@1x')) {
+                            if (width > 512) {
+                                execSync(`sips -Z 512 "${imagePath}"`, { stdio: 'ignore' });
+                                resized = true;
+                            }
+                        } else if (image.includes('@2x')) {
+                            if (width > 1024) {
+                                execSync(`sips -Z 1024 "${imagePath}"`, { stdio: 'ignore' });
+                                resized = true;
+                            }
+                        } else if (image.includes('@3x')) {
+                            if (width > 1536) {
+                                execSync(`sips -Z 1536 "${imagePath}"`, { stdio: 'ignore' });
+                                resized = true;
+                            }
+                        }
+                    }
+                } catch (error) {
+                }
+            }
+        }
+        
+        if (resized) {
+            console.log(' Resized splash images to meet iOS launch screen memory limits');
+        }
+        return resized;
+    } catch (error) {
+        console.warn('  Could not resize splash images:', error.message);
+        return false;
+    }
+}
+
 // Check for Tun2socks.xcframework before syncing
 await checkTun2socksFramework();
 
@@ -212,21 +271,21 @@ const syncProcess = spawn('npx', ['cap', 'sync', 'ios'], {
 syncProcess.on('close', async (code) => {
     if (code !== 0) {
         console.error(`\n❌ Capacitor sync failed with code ${code}`);
-        // Still restore project.pbxproj even if sync failed
         if (hadBackup) {
             await restoreProjectPbxproj();
         }
         process.exit(code);
     }
 
-    // Restore the exact working project.pbxproj (replicates it as it was before sync)
     if (hadBackup) {
         await restoreProjectPbxproj();
     }
 
+    resizeSplashImages();
+
     fixPackageSwift();
     await removePluginsFolder();
-    console.log(' Capacitor sync completed - project.pbxproj restored to working version');
+    console.log(' Capacitor sync completed - project.pbxproj restored and splash images resized');
 });
 
 syncProcess.on('error', (error) => {
