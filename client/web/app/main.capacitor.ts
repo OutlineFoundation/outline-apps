@@ -25,10 +25,10 @@ import {EnvironmentVariables} from './environment';
 import {main} from './main';
 import {installDefaultMethodChannel, MethodChannel} from './method_channel';
 import {VpnApi} from './outline_server_repository/vpn';
-import {CapacitorVpnApi} from './outline_server_repository/vpn.capacitor';
+import {CordovaVpnApi} from './outline_server_repository/vpn.cordova';
 import {FakeVpnApi} from './outline_server_repository/vpn.fake';
 import {OutlinePlatform} from './platform';
-import {pluginExec} from './plugin.capacitor';
+import {pluginExec} from './plugin.cordova';
 import {AbstractUpdater} from './updater';
 import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
@@ -160,7 +160,7 @@ class CapacitorMethodChannel implements MethodChannel {
 class CapacitorPlatform implements OutlinePlatform {
   getVpnApi(): VpnApi | undefined {
     if (hasDeviceSupport) {
-      return new CapacitorVpnApi();
+      return new CordovaVpnApi();
     }
     return new FakeVpnApi();
   }
@@ -245,9 +245,11 @@ async function initializeCapacitorPlugins(): Promise<void> {
         await SplashScreen.show({
           autoHide: false,
           fadeInDuration: 0,
-          fadeOutDuration: 0,
         });
-      } catch {}
+        console.log('[Capacitor] Splash screen shown');
+      } catch (error) {
+        console.warn('[Capacitor] Failed to show splash screen:', error);
+      }
     }
 
     await main(new CapacitorPlatform());

@@ -25,7 +25,6 @@
 		6318D1DB2EB1232D006D5B40 /* Tun2socks.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */; };
 		6318D1DC2EB1232D006D5B40 /* Tun2socks.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6318D1DA2EB1232C006D5B40 /* Tun2socks.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		6318D1E02EB1235E006D5B40 /* OutlineAppleLib in Frameworks */ = {isa = PBXBuildFile; productRef = 6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */; };
-		6318D1E22EB1235E006D5B40 /* OutlineVPNExtensionLib in Frameworks */ = {isa = PBXBuildFile; productRef = 6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -125,7 +124,6 @@
 			files = (
 				6318D1DB2EB1232D006D5B40 /* Tun2socks.xcframework in Frameworks */,
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
-				6318D1E22EB1235E006D5B40 /* OutlineVPNExtensionLib in Frameworks */,
 				6318D1E02EB1235E006D5B40 /* OutlineAppleLib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -226,7 +224,6 @@
 			packageProductDependencies = (
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
 				6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */,
-				6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */,
 			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
@@ -238,8 +235,9 @@
 		504EC2FC1FED79650016851F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 920;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					18E12A162EC4C940001BF6C8 = {
 						CreatedOnToolsVersion = 16.4;
@@ -261,7 +259,7 @@
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
-				6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../plugins/apple/OutlineAppleLib" */,
+				6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/cordova/apple/OutlineAppleLib" */,
 				18E12A292EC4C940001BF6C8 /* XCRemoteSwiftPackageReference "CocoaLumberjack" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
@@ -449,6 +447,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -456,8 +455,10 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -506,6 +507,7 @@
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
@@ -513,8 +515,10 @@
 				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -636,9 +640,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../plugins/apple/OutlineAppleLib" */ = {
+		6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/cordova/apple/OutlineAppleLib" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../plugins/apple/OutlineAppleLib;
+			relativePath = ../../../src/cordova/apple/OutlineAppleLib;
 		};
 		D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -675,10 +679,12 @@
 		};
 		6318D1DF2EB1235E006D5B40 /* OutlineAppleLib */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/cordova/apple/OutlineAppleLib" */;
 			productName = OutlineAppleLib;
 		};
 		6318D1E12EB1235E006D5B40 /* OutlineVPNExtensionLib */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 6318D1DE2EB1235E006D5B40 /* XCLocalSwiftPackageReference "../../../src/cordova/apple/OutlineAppleLib" */;
 			productName = OutlineVPNExtensionLib;
 		};
 /* End XCSwiftPackageProductDependency section */

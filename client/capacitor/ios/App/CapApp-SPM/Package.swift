@@ -12,8 +12,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "6.2.1"),
-        .package(path: "../../../../capacitor/plugins/capacitor-plugin-outline/ios"),
-        .package(path: "../../../../capacitor/plugins/apple/OutlineAppleLib")
+        .package(url: "https://github.com/CocoaLumberjack/CocoaLumberjack.git", from: "3.8.5"),
+        .package(name: "CordovaPluginOutline", path: "../../capacitor-cordova-ios-plugins/sources/CordovaPluginOutline")
     ],
     targets: [
         .target(
@@ -21,8 +21,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "CapacitorPluginOutline", package: "ios"),
-                .product(name: "OutlineAppleLib", package: "OutlineAppleLib")
+                .product(name: "CordovaPluginOutline", package: "CordovaPluginOutline")
             ]
         )
     ]

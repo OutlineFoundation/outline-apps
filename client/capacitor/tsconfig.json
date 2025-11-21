@@ -1,6 +1,20 @@
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
+        "allowJs": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "removeComments": false,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "target": "es2017",
+        "lib": [
+            "es2022"
+        ],
         "baseUrl": "./",
         "rootDir": "./",
         "outDir": "./build"
@@ -9,8 +23,7 @@
         "src",
         "scripts",
         "build.action.mjs",
-        "start.action.mjs",
-        "plugins/capacitor-plugin-outline/src"
+        "start.action.mjs"
     ],
     "exclude": [
         "node_modules",
@@ -19,6 +32,8 @@
         "www",
         "build",
         "dist",
-        "**/*.js"
+        "*.cjs",
+        "*.js",
+        "*.mjs"
     ]
 }

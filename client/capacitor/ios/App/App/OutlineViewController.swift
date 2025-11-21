@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import Capacitor
+import CordovaPluginOutline
 import UIKit
 import WebKit
-import CapacitorPluginOutline
 
 class OutlineViewController: CAPBridgeViewController {
     
@@ -29,7 +29,8 @@ class OutlineViewController: CAPBridgeViewController {
     
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
-        registerOutlinePlugin()
+        // Force link the OutlinePlugin class to ensure it's available to Cordova
+        _ = OutlinePlugin.self
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -100,16 +101,7 @@ class OutlineViewController: CAPBridgeViewController {
             }
         }
     }
-    
-    private func registerOutlinePlugin() {
-        guard let bridge = self.bridge as? CapacitorBridge else {
-            return
-        }
         
-        let plugin = CapacitorPluginOutline()
-        bridge.registerPluginInstance(plugin)
-    }
-    
     private func enableSafariDebugging() {
         if #available(iOS 16.4, *) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in

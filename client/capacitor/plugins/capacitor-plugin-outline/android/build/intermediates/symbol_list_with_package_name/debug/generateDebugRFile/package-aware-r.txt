@@ -1,2 +1,0 @@
-org.outline.capacitor
-array reserved_bypass_subnets

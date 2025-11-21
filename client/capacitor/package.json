@@ -13,7 +13,7 @@
     "cap:sync:ios": "node scripts/cap-sync-ios.mjs",
     "cap:sync:android": "node scripts/cap-sync-android.mjs"
   },
-  "dependencies": {
-    "capacitor-plugin-outline": "file:./plugins/capacitor-plugin-outline"
+  "devDependencies": {
+    "cordova-plugin-outline": "file:../src/cordova/plugin"
   }
 }

@@ -28,8 +28,7 @@
       "./client/tsconfig.json",
       "./infrastructure/tsconfig.json",
       "./server_manager/tsconfig.json",
-      "./client/capacitor/tsconfig.json",
-      "./client/capacitor/plugins/capacitor-plugin-outline/tsconfig.json"
+      "./client/capacitor/tsconfig.json"
     ]
   },
   "plugins": [

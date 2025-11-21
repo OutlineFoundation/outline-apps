@@ -29,7 +29,8 @@ import {runWebpack} from '../build/run_webpack.mjs';
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  const {sentryDsn, platform, buildMode, versionName, buildNumber} = getBuildParameters(parameters);
+  const {sentryDsn, platform, buildMode, versionName, buildNumber} =
+    getBuildParameters(parameters);
 
   await rmfr(path.resolve(getRootDir(), 'www'));
 
@@ -38,11 +39,15 @@ export async function main(...parameters) {
 
   if (buildMode === 'release') {
     if (versionName === '0.0.0') {
-      throw new TypeError('Release builds require a valid versionName, but it is set to 0.0.0.');
+      throw new TypeError(
+        'Release builds require a valid versionName, but it is set to 0.0.0.'
+      );
     }
 
     if (!sentryDsn) {
-      throw new TypeError('Release builds require SENTRY_DSN, but it is not defined.');
+      throw new TypeError(
+        'Release builds require SENTRY_DSN, but it is not defined.'
+      );
     }
 
     /*
@@ -56,7 +61,9 @@ export async function main(...parameters) {
     }
   }
 
-  await fs.mkdir(path.resolve(getRootDir(), 'client', 'www'), {recursive: true});
+  await fs.mkdir(path.resolve(getRootDir(), 'client', 'www'), {
+    recursive: true,
+  });
 
   await fs.writeFile(
     path.resolve(getRootDir(), 'client', 'www', 'environment.json'),

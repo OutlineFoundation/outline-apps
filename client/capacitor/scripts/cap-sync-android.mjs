@@ -1,25 +1,35 @@
-#!/usr/bin/env node
-
 /**
  * Wrapper script for `npx cap sync android` that reapplies the Outline-specific
  * Android Gradle and source customisations after Capacitor regenerates them.
  */
 
-import { spawn } from 'child_process';
-import { mkdirSync, writeFileSync } from 'fs';
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import {spawn} from 'child_process';
+import {mkdirSync, readFileSync, writeFileSync} from 'fs';
+import {dirname, relative, resolve} from 'path';
+import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const capacitorRoot = resolve(__dirname, '..');
 const androidRoot = resolve(capacitorRoot, 'android');
-const outlineAndroidLibRoot = resolve(capacitorRoot, 'plugins', 'android', 'OutlineAndroidLib');
+const outlineAndroidLibRoot = resolve(
+  capacitorRoot,
+  '..',
+  'src',
+  'cordova',
+  'android',
+  'OutlineAndroidLib'
+);
+
+const relativeOutlineAndroidLibPath = relative(
+  androidRoot,
+  outlineAndroidLibRoot
+);
 
 const settingsGradleContent = `include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
-includeBuild '../plugins/android/OutlineAndroidLib'
+includeBuild '${relativeOutlineAndroidLibPath}'
 
 apply from: 'capacitor.settings.gradle'
 `;
@@ -180,17 +190,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.getcapacitor.BridgeActivity;
-import org.outline.CapacitorPluginOutline;
 
 public class MainActivity extends BridgeActivity {
   private static final String TAG = "OutlineMainActivity";
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    try {
-      registerPlugin(CapacitorPluginOutline.class);
-    } catch (Exception e) {
-    }
     super.onCreate(savedInstanceState);
   }
 
@@ -317,71 +322,6 @@ public class MainActivity extends BridgeActivity {
 }
 `;
 
-const pluginBuildGradleContent = `// Copyright 2025 The Outline Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-apply plugin: 'com.android.library'
-apply plugin: 'org.jetbrains.kotlin.android'
-
-android {
-    namespace "org.outline.capacitor"
-    compileSdk rootProject.ext.compileSdkVersion
-
-    defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-}
-
-repositories {
-    maven {
-        // This is relative to $WORKSPACE/client/capacitor/android/
-        url = uri("\${rootProject.projectDir}/../../../output/client/android")
-    }
-    google()
-    mavenCentral()
-}
-
-dependencies {
-    implementation project(':capacitor-android')
-    // From --include-build.
-    implementation 'org.outline:outline:0.0'
-    // From local Maven directory.
-    implementation('org.getoutline.client:tun2socks:0.0.1') {
-        exclude group: 'com.android.support'
-    }
-    // From public Maven.
-    implementation 'io.sentry:sentry-android:2.0.2'
-    // AppCompat for AppCompatActivity
-    implementation "androidx.appcompat:appcompat:\$androidxAppCompatVersion"
-}
-`;
-
 const androidManifestContent = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.outline.client">
@@ -456,51 +396,161 @@ const androidManifestContent = `<?xml version="1.0" encoding="utf-8"?>
 `;
 
 function applyAndroidPatches() {
-    writeFileSync(resolve(androidRoot, 'settings.gradle'), settingsGradleContent, 'utf8');
-    writeFileSync(resolve(androidRoot, 'build.gradle'), buildGradleContent, 'utf8');
-    writeFileSync(resolve(androidRoot, 'app', 'build.gradle'), appBuildGradleContent, 'utf8');
-    writeFileSync(resolve(outlineAndroidLibRoot, 'settings.gradle'), outlineSettingsGradleContent, 'utf8');
+  writeFileSync(
+    resolve(androidRoot, 'settings.gradle'),
+    settingsGradleContent,
+    'utf8'
+  );
+  writeFileSync(
+    resolve(androidRoot, 'build.gradle'),
+    buildGradleContent,
+    'utf8'
+  );
+  writeFileSync(
+    resolve(androidRoot, 'app', 'build.gradle'),
+    appBuildGradleContent,
+    'utf8'
+  );
+  writeFileSync(
+    resolve(outlineAndroidLibRoot, 'settings.gradle'),
+    outlineSettingsGradleContent,
+    'utf8'
+  );
 
-    const pluginBuildGradlePath = resolve(capacitorRoot, 'plugins', 'capacitor-plugin-outline', 'android', 'build.gradle');
-    writeFileSync(pluginBuildGradlePath, pluginBuildGradleContent, 'utf8');
+  const originalBuildExtrasPath = resolve(
+    capacitorRoot,
+    '..',
+    'src',
+    'cordova',
+    'plugin',
+    'android',
+    'build-extras.gradle'
+  );
+  let buildExtrasContent = readFileSync(originalBuildExtrasPath, 'utf8');
+  buildExtrasContent = buildExtrasContent.replace(
+    /url = uri\(layout\.settingsDirectory\.dir\("\.\.\/\.\.\/\.\.\/output\/client\/android"\)\)/,
+    'url = uri("${rootProject.projectDir}/../../../output/client/android")'
+  );
+  buildExtrasContent = buildExtrasContent.replace(
+    / {2}implementation 'com\.android\.support:appcompat-v7:23\.4\.0'\n/,
+    ''
+  );
+  buildExtrasContent = buildExtrasContent.replace(
+    / {2}implementation 'org\.getoutline\.client:tun2socks:0\.0\.1'/,
+    `  implementation('org.getoutline.client:tun2socks:0.0.1') {
+    exclude group: 'com.android.support'
+  }`
+  );
 
-    const mainSrcDir = resolve(androidRoot, 'app', 'src');
-    const mainActivityDir = resolve(mainSrcDir, 'main', 'java', 'org', 'outline', 'client');
-    mkdirSync(mainActivityDir, { recursive: true });
-    writeFileSync(resolve(mainActivityDir, 'MainActivity.java'), mainActivityContent, 'utf8');
+  buildExtrasContent = buildExtrasContent.replace(
+    / {2}\/\/ From public Maven\./,
+    `  // From public Maven.
+  // Note: AndroidX dependencies (like appcompat) are provided by Capacitor`
+  );
 
-    const manifestDir = resolve(mainSrcDir, 'main');
-    mkdirSync(manifestDir, { recursive: true });
-    writeFileSync(resolve(manifestDir, 'AndroidManifest.xml'), androidManifestContent, 'utf8');
+  const capacitorBuildGradlePath = resolve(
+    androidRoot,
+    'app',
+    'capacitor.build.gradle'
+  );
+  try {
+    let capacitorBuildGradleContent = readFileSync(
+      capacitorBuildGradlePath,
+      'utf8'
+    );
+    capacitorBuildGradleContent = capacitorBuildGradleContent.replace(
+      /apply from: "\.\.\/\.\.\/\.\.\/src\/cordova\/plugin\/android\/build-extras\.gradle"/,
+      buildExtrasContent
+    );
+    writeFileSync(
+      capacitorBuildGradlePath,
+      capacitorBuildGradleContent,
+      'utf8'
+    );
+    console.log(
+      'Patched capacitor.build.gradle with Capacitor-compatible build-extras.'
+    );
+  } catch (error) {
+    console.warn('Could not patch capacitor.build.gradle:', error.message);
+  }
 
-    const pluginValuesDir = resolve(capacitorRoot, 'plugins', 'capacitor-plugin-outline', 'android', 'src', 'main', 'res', 'values');
-    mkdirSync(pluginValuesDir, { recursive: true });
+  const cordovaPluginsBuildGradlePath = resolve(
+    androidRoot,
+    'capacitor-cordova-android-plugins',
+    'build.gradle'
+  );
+  try {
+    let cordovaPluginsBuildGradleContent = readFileSync(
+      cordovaPluginsBuildGradlePath,
+      'utf8'
+    );
+    cordovaPluginsBuildGradleContent = cordovaPluginsBuildGradleContent.replace(
+      /apply from: "\.\.\/\.\.\/\.\.\/src\/cordova\/plugin\/android\/build-extras\.gradle"/,
+      buildExtrasContent
+    );
+    writeFileSync(
+      cordovaPluginsBuildGradlePath,
+      cordovaPluginsBuildGradleContent,
+      'utf8'
+    );
+    console.log(
+      'Patched capacitor-cordova-android-plugins/build.gradle with Capacitor-compatible build-extras.'
+    );
+  } catch (error) {
+    console.warn(
+      'Could not patch capacitor-cordova-android-plugins/build.gradle:',
+      error.message
+    );
+  }
 
-    console.log('Applied Outline Android Gradle and source customisations.');
+  const mainSrcDir = resolve(androidRoot, 'app', 'src');
+  const mainActivityDir = resolve(
+    mainSrcDir,
+    'main',
+    'java',
+    'org',
+    'outline',
+    'client'
+  );
+  mkdirSync(mainActivityDir, {recursive: true});
+  writeFileSync(
+    resolve(mainActivityDir, 'MainActivity.java'),
+    mainActivityContent,
+    'utf8'
+  );
+
+  const manifestDir = resolve(mainSrcDir, 'main');
+  mkdirSync(manifestDir, {recursive: true});
+  writeFileSync(
+    resolve(manifestDir, 'AndroidManifest.xml'),
+    androidManifestContent,
+    'utf8'
+  );
+
+  console.log('Applied Outline Android Gradle and source customisations.');
 }
 
 const syncProcess = spawn('npx', ['cap', 'sync', 'android'], {
-    cwd: capacitorRoot,
-    stdio: 'inherit',
-    shell: true,
+  cwd: capacitorRoot,
+  stdio: 'inherit',
+  shell: true,
 });
 
-syncProcess.on('close', (code) => {
-    if (code !== 0) {
-        console.error(`\nCapacitor sync failed with code ${code}`);
-        process.exit(code);
-    }
+syncProcess.on('close', code => {
+  if (code !== 0) {
+    console.error(`\nCapacitor sync failed with code ${code}`);
+    process.exit(code);
+  }
 
-    try {
-        applyAndroidPatches();
-    } catch (error) {
-        console.error('Failed to apply Outline Android patches:', error.message);
-        process.exit(1);
-    }
-});
-
-syncProcess.on('error', (error) => {
-    console.error('Failed to start Capacitor sync:', error);
+  try {
+    applyAndroidPatches();
+  } catch (error) {
+    console.error('Failed to apply Outline Android patches:', error.message);
     process.exit(1);
+  }
 });
 
+syncProcess.on('error', error => {
+  console.error('Failed to start Capacitor sync:', error);
+  process.exit(1);
+});

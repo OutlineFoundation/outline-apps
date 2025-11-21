@@ -23,8 +23,7 @@
     "infrastructure",
     "server_manager",
     "client",
-    "client/capacitor",
-    "client/capacitor/plugins/capacitor-plugin-outline"
+    "client/capacitor"
   ],
   "devDependencies": {
     "@storybook/addon-essentials": "^8.2.6",
