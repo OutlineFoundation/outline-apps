@@ -530,27 +530,38 @@ function applyAndroidPatches() {
   console.log('Applied Outline Android Gradle and source customisations.');
 }
 
-const syncProcess = spawn('npx', ['cap', 'sync', 'android'], {
-  cwd: capacitorRoot,
-  stdio: 'inherit',
-  shell: true,
-});
+async function syncAndroid() {
+  return new Promise((resolve, reject) => {
+    const syncProcess = spawn('npx', ['cap', 'sync', 'android'], {
+      cwd: capacitorRoot,
+      stdio: 'inherit',
+      shell: true,
+    });
 
-syncProcess.on('close', code => {
-  if (code !== 0) {
-    console.error(`\nCapacitor sync failed with code ${code}`);
-    process.exit(code);
-  }
+    syncProcess.on('close', code => {
+      if (code !== 0) {
+        console.error(`\nCapacitor sync failed with code ${code}`);
+        reject(new Error(`Capacitor sync failed with code ${code}`));
+        return;
+      }
 
-  try {
-    applyAndroidPatches();
-  } catch (error) {
-    console.error('Failed to apply Outline Android patches:', error.message);
-    process.exit(1);
-  }
-});
+      try {
+        applyAndroidPatches();
+        resolve();
+      } catch (error) {
+        console.error(
+          'Failed to apply Outline Android patches:',
+          error.message
+        );
+        reject(error);
+      }
+    });
 
-syncProcess.on('error', error => {
-  console.error('Failed to start Capacitor sync:', error);
-  process.exit(1);
-});
+    syncProcess.on('error', error => {
+      console.error('Failed to start Capacitor sync:', error);
+      reject(error);
+    });
+  });
+}
+
+await syncAndroid();
