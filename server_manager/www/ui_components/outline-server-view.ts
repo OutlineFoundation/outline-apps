@@ -13,12 +13,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-import '@material/mwc-linear-progress';
-import '@polymer/iron-icons/editor-icons';
-import '@polymer/iron-icons/iron-icons';
-import '@polymer/iron-icons/social-icons';
-import '@polymer/iron-pages/iron-pages';
 import '@polymer/paper-dialog/paper-dialog';
+import '@polymer/iron-icons/iron-icons';
+import '@polymer/iron-pages/iron-pages';
+import '@polymer/iron-icons/editor-icons';
+import '@polymer/iron-icons/social-icons';
 import '@polymer/paper-icon-button/paper-icon-button';
 import '@polymer/paper-item/paper-item';
 import '@polymer/paper-listbox/paper-listbox';
@@ -26,9 +25,10 @@ import '@polymer/paper-menu-button/paper-menu-button';
 import '@polymer/paper-progress/paper-progress';
 import '@polymer/paper-tabs/paper-tabs';
 import '@polymer/paper-tooltip/paper-tooltip';
+import '@material/mwc-linear-progress';
 import './cloud-install-styles';
-import './outline-help-bubble';
 import './outline-iconset';
+import './outline-help-bubble';
 import './outline-metrics-option-dialog';
 import './outline-progress-spinner';
 import './outline-server-progress-step';
@@ -36,18 +36,18 @@ import './outline-server-settings';
 import './outline-share-dialog';
 import './outline-sort-span';
 
+import '../views/server_view/server_metrics_row/bandwidth';
+import '../views/server_view/server_metrics_row/tunnel_time';
 import {html, PolymerElement} from '@polymer/polymer';
 import type {PolymerElementProperties} from '@polymer/polymer/interfaces';
 import {DirMixin} from '@polymer/polymer/lib/mixins/dir-mixin';
-import '../views/server_view/server_metrics_row/bandwidth';
-import '../views/server_view/server_metrics_row/tunnel_time';
 
-import type {CloudLocation} from '../../model/location';
-import * as formatting from '../data_formatting';
-import {getShortName} from '../location_formatting';
 import {getCloudIcon} from './cloud-assets';
 import type {OutlineHelpBubble} from './outline-help-bubble';
 import type {OutlineServerSettings} from './outline-server-settings';
+import type {CloudLocation} from '../../model/location';
+import * as formatting from '../data_formatting';
+import {getShortName} from '../location_formatting';
 import {
   AccessKeyDataTableEvent,
   AccessKeyDataTableRow,

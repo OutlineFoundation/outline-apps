@@ -185,7 +185,10 @@ export class AccessKeyDataTable extends LitElement {
             tooltip: this.localize('server-view-access-keys-usage-tooltip'),
             render: ({dataTransferred, dataLimit}: AccessKeyDataTableRow) => {
               if (!dataLimit) {
-                return html`${formatBytes(dataTransferred.bytes, this.language)}`;
+                return html`${formatBytes(
+                  dataTransferred.bytes,
+                  this.language
+                )}`;
               }
 
               return html`<access-key-usage-meter
