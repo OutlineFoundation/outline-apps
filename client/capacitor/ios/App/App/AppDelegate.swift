@@ -22,11 +22,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        if let outlineViewController = window?.rootViewController as? OutlineViewController {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                outlineViewController.ensureWebViewVisible()
-            }
-        }
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
@@ -36,12 +31,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             window.makeKeyAndVisible()
             rootViewController.view.setNeedsLayout()
             rootViewController.view.layoutIfNeeded()
-            
-            if let outlineViewController = rootViewController as? OutlineViewController {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    outlineViewController.ensureWebViewVisible()
-                }
-            }
         }
     }
 

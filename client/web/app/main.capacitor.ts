@@ -34,9 +34,7 @@ import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
 import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
-setRootPath(
-  location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1)
-);
+setRootPath('./');
 
 if (typeof HTMLSlotElement !== 'undefined') {
   const originalAssignedNodes = HTMLSlotElement.prototype.assignedNodes;

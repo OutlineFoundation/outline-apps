@@ -116,7 +116,7 @@ export default merge(baseConfig, browserConfig, {
     },
     new HtmlWebpackPlugin({
       filename: 'index.html',
-      template: path.resolve(__dirname, 'index_capacitor.html'),
+      template: path.resolve(__dirname, 'index_cordova.html'),
     }),
   ],
 });
