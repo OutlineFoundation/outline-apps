@@ -1,4 +1,4 @@
-// Copyright 2018 The Outline Authors
+// Copyright 2025 The Outline Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@ import '@babel/polyfill';
 import {Capacitor} from '@capacitor/core';
 import {SplashScreen} from '@capacitor/splash-screen';
 import {StatusBar, Style} from '@capacitor/status-bar';
+import {
+  isCapacitorNativePlatform,
+  isCapacitorPlatform,
+} from '@outline/infrastructure/platforms';
 import {setRootPath} from '@polymer/polymer/lib/utils/settings.js';
 import * as Sentry from '@sentry/browser';
 
 import 'web-animations-js/web-animations-next-lite.min.js';
+
 import {AbstractClipboard} from './clipboard';
 import {EnvironmentVariables} from './environment';
 import {main} from './main';
@@ -34,7 +39,11 @@ import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
 import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
-setRootPath('./');
+const isCapacitorRuntime = isCapacitorPlatform();
+const isNativeCapacitorPlatform = isCapacitorNativePlatform();
+if (isCapacitorRuntime) {
+  setRootPath('./');
+}
 
 if (typeof HTMLSlotElement !== 'undefined') {
   const originalAssignedNodes = HTMLSlotElement.prototype.assignedNodes;
@@ -100,7 +109,7 @@ window.addEventListener(
   true
 );
 
-const hasDeviceSupport = Capacitor.isNativePlatform();
+const hasDeviceSupport = isNativeCapacitorPlatform;
 
 class CapacitorClipboard extends AbstractClipboard {
   async getContents(): Promise<string> {

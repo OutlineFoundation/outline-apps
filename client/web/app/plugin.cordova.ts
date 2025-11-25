@@ -18,19 +18,15 @@ import {deserializeError} from '../model/platform_error';
 
 export const OUTLINE_PLUGIN_NAME = 'OutlinePlugin';
 
-type VpnStatusPayload = {id: string; status: number};
-
-function throwDeserialized(error: unknown): never {
-  throw deserializeError(error);
-}
-
 // Helper function to call the Outline Cordova plugin.
 export async function pluginExec<T>(
   cmd: string,
   ...args: unknown[]
 ): Promise<T> {
   if (typeof cordova === 'undefined' || typeof cordova.exec !== 'function') {
-    throwDeserialized(new Error('Cordova is not available on this platform'));
+    throw deserializeError(
+      new Error('Cordova is not available on this platform')
+    );
   }
 
   return new Promise<T>((resolve, reject) => {
@@ -39,8 +35,9 @@ export async function pluginExec<T>(
   });
 }
 
-export function registerVpnStatusListener(
-  listener: (payload: VpnStatusPayload) => void,
+export function pluginRegisterListener<TPayload = unknown>(
+  eventName: string,
+  listener: (payload: TPayload) => void,
   onError?: (err: unknown) => void
 ): void {
   if (typeof cordova === 'undefined' || typeof cordova.exec !== 'function') {
@@ -57,7 +54,7 @@ export function registerVpnStatusListener(
     listener,
     onError ? (err: unknown) => onError(deserializeError(err)) : console.warn,
     OUTLINE_PLUGIN_NAME,
-    'onStatusChange',
+    eventName,
     []
   );
 }

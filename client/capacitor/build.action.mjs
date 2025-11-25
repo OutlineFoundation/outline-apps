@@ -72,9 +72,9 @@ export async function main(...parameters) {
     await spawnStream('npx', 'capacitor-assets', 'generate');
 
     if (nativePlatform === 'ios') {
-      await spawnStream('node', 'scripts/cap-sync-ios.mjs');
+      await spawnStream('node', 'build/cap-sync-ios.mjs');
     } else if (nativePlatform === 'android') {
-      await spawnStream('node', 'scripts/cap-sync-android.mjs');
+      await spawnStream('node', 'build/cap-sync-android.mjs');
     }
 
     switch (platform + buildMode) {

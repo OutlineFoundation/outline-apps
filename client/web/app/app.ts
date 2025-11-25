@@ -135,12 +135,31 @@ export class App {
       'add-server',
       this.requestPromptAddServer.bind(this)
     );
-
+    this.rootEl.addEventListener(
+      'ShowAddServerDialog',
+      this.showAddServerDialog.bind(this)
+    );
+    this.rootEl.addEventListener(
+      'ShowNavigation',
+      this.showNavigation.bind(this)
+    );
+    this.rootEl.addEventListener(
+      'HideNavigation',
+      this.hideNavigation.bind(this)
+    );
+    this.rootEl.addEventListener('ChangePage', this.changePage.bind(this));
     this.rootEl.addEventListener(
       'AddServerConfirmationRequested',
       this.requestAddServerConfirmation.bind(this)
     );
-
+    this.rootEl.addEventListener(
+      'AddServerRequested',
+      this.requestAddServer.bind(this)
+    );
+    this.rootEl.addEventListener(
+      'IgnoreServerRequested',
+      this.requestIgnoreServer.bind(this)
+    );
     this.rootEl.addEventListener(
       'ConnectPressed',
       this.connectServer.bind(this)
@@ -408,7 +427,10 @@ export class App {
   }
 
   private changePage(event: CustomEvent) {
-    this.rootEl.changePage(event.detail.page);
+    if (event.detail?.page) {
+      this.rootEl.changePage(event.detail.page);
+      this.hideNavigation();
+    }
   }
 
   private async handleClipboardText(text: string) {

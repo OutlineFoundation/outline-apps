@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "clean": "rm -rf node_modules",
-    "cap:sync:ios": "node scripts/cap-sync-ios.mjs",
-    "cap:sync:android": "node scripts/cap-sync-android.mjs"
+    "cap:sync:ios": "node build/cap-sync-ios.mjs",
+    "cap:sync:android": "node build/cap-sync-android.mjs"
   },
   "devDependencies": {
     "cordova-plugin-outline": "file:../src/cordova/plugin"

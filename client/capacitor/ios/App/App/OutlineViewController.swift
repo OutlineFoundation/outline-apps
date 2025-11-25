@@ -19,12 +19,33 @@ class OutlineViewController: CAPBridgeViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        #if DEBUG
+        enableSafariDebugging()
+        #endif
     }
     
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
         // Force link the OutlinePlugin class to ensure it's available to Cordova
         _ = OutlinePlugin.self
+    }
+
+    private func enableSafariDebugging() {
+        if #available(iOS 16.4, *) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self = self else { return }
+                
+                if let webView = self.webView {
+                    webView.isInspectable = true
+                } else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                        if let webView = self?.webView {
+                            webView.isInspectable = true
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

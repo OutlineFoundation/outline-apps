@@ -66,6 +66,8 @@ import '../views/root_view/root_navigation';
 import '../views/appearance_view';
 // eslint-disable-next-line n/no-missing-import
 import * as i18n from '@outline/infrastructure/i18n';
+// eslint-disable-next-line n/no-missing-import
+import {isCapacitorPlatform} from '@outline/infrastructure/platforms';
 import {AppLocalizeBehavior} from '@polymer/app-localize-behavior/app-localize-behavior.js';
 import {PaperMenuButton} from '@polymer/paper-menu-button/paper-menu-button.js';
 import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
@@ -607,34 +609,11 @@ export class AppRoot extends mixinBehaviors(
 
   ready() {
     super.ready();
-    this.rootPath = './';
+    if (isCapacitorPlatform()) {
+      this.rootPath = './';
+    }
 
     this.setLanguage(this.language);
-    this.addEventListener('ShowNavigation', () => {
-      this.openDrawer();
-    });
-    this.addEventListener('HideNavigation', () => {
-      this.closeDrawer();
-    });
-    this.addEventListener('ShowAddServerDialog', () => {
-      if (this.$.addServerView) {
-        this.$.addServerView.open = true;
-      }
-    });
-    this.addEventListener('AddServerRequested', () => {
-      if (this.$.addServerView) this.$.addServerView.open = false;
-    });
-    this.addEventListener('IgnoreServerRequested', () => {
-      if (this.$.addServerView) this.$.addServerView.open = false;
-    });
-    this.addEventListener('ChangePage', event => {
-      const detail = /** @type {CustomEvent} */ (event).detail || {};
-      if (detail.page) {
-        this.changePage(detail.page);
-      }
-      this.closeDrawer();
-    });
-
     // Workaround for paper-behaviors' craptastic keyboard focus detection:
     // https://github.com/PolymerElements/paper-behaviors/issues/80
     // Monkeypatch the faulty Polymer.IronButtonStateImpl._detectKeyboardFocus implementation
