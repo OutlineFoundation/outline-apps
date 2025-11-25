@@ -50,8 +50,8 @@ android {
 }
 
 dependencies {
-    // From our local maven repository directory; expose to consumers so generated Go bindings are visible.
-    api 'org.getoutline.client:tun2socks:0.0.1'
+    // From our local maven repository directory.
+    implementation 'org.getoutline.client:tun2socks:0.0.1'
 
     implementation 'io.sentry:sentry-android:2.0.2'
     implementation 'org.apache.commons:commons-collections4:4.4'

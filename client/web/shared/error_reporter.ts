@@ -18,36 +18,18 @@ import {Integration as SentryIntegration} from '@sentry/types';
 export type Tags = {[id: string]: string | boolean | number};
 
 export interface OutlineErrorReporter {
-  report(
-    userFeedback: string,
-    feedbackCategory: string,
-    userEmail?: string,
-    tags?: Tags
-  ): Promise<void>;
+  report(userFeedback: string, feedbackCategory: string, userEmail?: string, tags?: Tags): Promise<void>;
 }
 
 export class SentryErrorReporter implements OutlineErrorReporter {
-  constructor(
-    appVersion: string,
-    dsn: string,
-    private tags: Tags
-  ) {
+  constructor(appVersion: string, dsn: string, private tags: Tags) {
     if (dsn) {
-      Sentry.init({
-        dsn,
-        release: appVersion,
-        integrations: getSentryBrowserIntegrations,
-      });
+      Sentry.init({dsn, release: appVersion, integrations: getSentryBrowserIntegrations});
     }
     this.setUpUnhandledRejectionListener();
   }
 
-  async report(
-    userFeedback: string,
-    feedbackCategory: string,
-    userEmail?: string,
-    tags?: Tags
-  ): Promise<void> {
+  async report(userFeedback: string, feedbackCategory: string, userEmail?: string, tags?: Tags): Promise<void> {
     const combinedTags = {...this.tags, ...tags};
     Sentry.captureEvent({
       message: userFeedback,
@@ -75,23 +57,18 @@ export class SentryErrorReporter implements OutlineErrorReporter {
     // Chrome is the only browser that supports the unhandledrejection event.
     // This is fine for Android, but will not work in iOS.
     const unhandledRejection = 'unhandledrejection';
-    window.addEventListener(
-      unhandledRejection,
-      (event: PromiseRejectionEvent) => {
-        const reason = event.reason;
-        const msg = reason.stack ? reason.stack : reason;
-        Sentry.addBreadcrumb({message: msg, category: unhandledRejection});
-      }
-    );
+    window.addEventListener(unhandledRejection, (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const msg = reason.stack ? reason.stack : reason;
+      Sentry.addBreadcrumb({message: msg, category: unhandledRejection});
+    });
   }
 }
 
 // Returns a list of Sentry browser integrations that maintains the default integrations,
 // but replaces the Breadcrumbs integration with a custom one that only collects console statements.
 // See https://docs.sentry.io/platforms/javascript/configuration/integrations/default/
-export function getSentryBrowserIntegrations(
-  defaultIntegrations: SentryIntegration[]
-): SentryIntegration[] {
+export function getSentryBrowserIntegrations(defaultIntegrations: SentryIntegration[]): SentryIntegration[] {
   const integrations = defaultIntegrations.filter(integration => {
     return integration.name !== 'Breadcrumbs';
   });

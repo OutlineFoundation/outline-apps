@@ -16,6 +16,7 @@ import {InMemoryStorage} from '@outline/infrastructure/memory_storage';
 
 import {Settings, SettingsKey} from './settings';
 
+
 const FAKE_SETTINGS_KEYS = ['key', 'key1', 'key2'];
 
 describe('Settings', () => {
@@ -28,13 +29,8 @@ describe('Settings', () => {
   });
 
   it('loads existing settings', () => {
-    const store = new Map([
-      [Settings.STORAGE_KEY, '{"key1": "value1", "key2": "value2"}'],
-    ]);
-    const settings = new Settings(
-      new InMemoryStorage(store),
-      FAKE_SETTINGS_KEYS
-    );
+    const store = new Map([[Settings.STORAGE_KEY, '{"key1": "value1", "key2": "value2"}']]);
+    const settings = new Settings(new InMemoryStorage(store), FAKE_SETTINGS_KEYS);
     expect(settings.get('key1')).toEqual('value1');
     expect(settings.get('key2')).toEqual('value2');
   });
@@ -73,9 +69,7 @@ describe('Settings', () => {
   it('is initialized with default valid keys', () => {
     // Constructor uses SettingKeys as the default value for valid keys.
     const settings = new Settings(new InMemoryStorage());
-    expect(
-      settings.isValidSetting(SettingsKey.VPN_WARNING_DISMISSED)
-    ).toBeTruthy();
+    expect(settings.isValidSetting(SettingsKey.VPN_WARNING_DISMISSED)).toBeTruthy();
   });
 
   it('throws when setting an invalid key', () => {
@@ -86,9 +80,7 @@ describe('Settings', () => {
   });
 
   it('throws when storage is corrupted', () => {
-    const storage = new InMemoryStorage(
-      new Map([[Settings.STORAGE_KEY, '"malformed": "json"']])
-    );
+    const storage = new InMemoryStorage(new Map([[Settings.STORAGE_KEY, '"malformed": "json"']]));
     expect(() => {
       new Settings(storage, FAKE_SETTINGS_KEYS);
     }).toThrowError(SyntaxError);

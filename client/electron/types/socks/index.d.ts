@@ -36,9 +36,5 @@ declare module 'socks' {
     callback: (err: Error, socket: net.Socket, info: SocksAddress) => void
   ): void;
 
-  export function createUDPFrame(
-    target: SocksAddress,
-    data: Buffer,
-    frame?: number
-  ): Buffer;
+  export function createUDPFrame(target: SocksAddress, data: Buffer, frame?: number): Buffer;
 }

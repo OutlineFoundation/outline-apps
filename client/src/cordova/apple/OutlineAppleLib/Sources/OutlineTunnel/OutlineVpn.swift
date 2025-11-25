@@ -20,8 +20,7 @@ import OutlineError
 @objcMembers
 public class OutlineVpn: NSObject {
   public static let shared = OutlineVpn()
-  // Bundle ID must match the provisioning profile: com.nthlink.outline.PacketTunnel
-  private static let kVpnExtensionBundleId = "\(Bundle.main.bundleIdentifier!).PacketTunnel"
+  private static let kVpnExtensionBundleId = "\(Bundle.main.bundleIdentifier!).VpnExtension"
 
   public typealias VpnStatusObserver = (NEVPNStatus, String) -> Void
 
@@ -53,6 +52,7 @@ public class OutlineVpn: NSObject {
   /** Starts a VPN tunnel as specified in the OutlineTunnel object. */
   public func start(_ tunnelId: String, named name: String?, withTransport transportConfig: String) async throws {
     if let manager = await getTunnelManager(), isActiveSession(manager.connection) {
+      DDLogDebug("Stoppping active session before starting new one")
       await stopSession(manager)
     }
 
@@ -60,6 +60,7 @@ public class OutlineVpn: NSObject {
     do {
       manager = try await setupVpn(withId: tunnelId, named: name ?? "Outline Server", withTransport: transportConfig)
     } catch {
+      DDLogError("Failed to setup VPN: \(error.localizedDescription)")
       throw OutlineError.vpnPermissionNotGranted(cause: error)
     }
     let session = manager.connection as! NETunnelProviderSession
@@ -74,15 +75,18 @@ public class OutlineVpn: NSObject {
               tokenHolder.token = NotificationCenter.default.addObserver(forName: .NEVPNStatusDidChange, object: manager.connection, queue: nil) { notification in
                   // The notification object is always the session, so we can rely on that to not be nil.
                   guard let connection = notification.object as? NETunnelProviderSession else {
+                      DDLogDebug("Failed to cast notification.object to NETunnelProviderSession")
                       return
                   }
                   
                   let status = connection.status
+                  DDLogDebug("OutlineVpn.start got status \(String(describing: status)), notification: \(String(describing: notification))")
                   // The observer may be triggered multiple times, but we only remove it when we reach an end state.
                   // A successful connection will go through .connecting -> .disconnected
                   // A failed connection will go through .connecting -> .disconnecting -> .disconnected
                   // An .invalid event may happen if the configuration is modified and ends in an invalid state.
                   if status == .connected || status == .disconnected || status == .invalid {
+                      DDLogDebug("Tunnel start done.")
                       if let token = tokenHolder.token {
                           NotificationCenter.default.removeObserver(token, name: .NEVPNStatusDidChange, object: connection)
                       }
@@ -94,42 +98,41 @@ public class OutlineVpn: NSObject {
 
     // Start the session.
     do {
+      DDLogDebug("Calling NETunnelProviderSession.startTunnel([:])")
       try session.startTunnel(options: [:])
+      DDLogDebug("NETunnelProviderSession.startTunnel() returned")
     } catch {
+      DDLogError("Failed to start VPN: \(error.localizedDescription)")
       throw OutlineError.setupSystemVPNFailed(cause: error)
     }
 
     // Wait for it to be done.
     await startDone.value
 
-    let finalStatus = manager.connection.status
-    switch finalStatus {
+    switch manager.connection.status {
     case .connected:
       break
     case .disconnected, .invalid:
       guard let err = await fetchExtensionLastDisconnectError(session) else {
-        throw OutlineError.internalError(
-          message: "VPN extension failed to start and did not provide error details. " +
-          "The extension may have crashed during initialization. " +
-          "Expected bundle ID: \(OutlineVpn.kVpnExtensionBundleId). " +
-          "Check Xcode console or device logs for extension crash details."
-        )
+        throw OutlineError.internalError(message: "unexpected nil disconnect error")
       }
       throw err
     default:
       // This shouldn't happen.
-      throw OutlineError.internalError(message: "unexpected connection status: \(String(describing: finalStatus))")
+      throw OutlineError.internalError(message: "unexpected connection status")
     }
 
     // Set an on-demand rule to connect to any available network to implement auto-connect on boot
     do { try await manager.loadFromPreferences() }
     catch {
+      DDLogWarn("OutlineVpn.start: Failed to reload preferences: \(error.localizedDescription)")
     }
     let connectRule = NEOnDemandRuleConnect()
     connectRule.interfaceTypeMatch = .any
     manager.onDemandRules = [connectRule]
     do { try await manager.saveToPreferences() }
     catch {
+      DDLogWarn("OutlineVpn.start: Failed to save on-demand preference change: \(error.localizedDescription)")
     }
   }
 
@@ -138,6 +141,7 @@ public class OutlineVpn: NSObject {
     guard let manager = await getTunnelManager(),
           getTunnelId(forManager: manager) == tunnelId,
           isActiveSession(manager.connection) else {
+      DDLogWarn("Trying to stop tunnel \(tunnelId) that is not running")
       return
     }
     await stopSession(manager)
@@ -203,16 +207,22 @@ public class OutlineVpn: NSObject {
   // Receives NEVPNStatusDidChange notifications. Calls onTunnelStatusChange for the active
   // tunnel.
   func vpnStatusChanged(notification: NSNotification) {
+    DDLogDebug("OutlineVpn.vpnStatusChanged: \(String(describing: notification))")
     guard let session = notification.object as? NETunnelProviderSession else {
+      DDLogDebug("Bad session in OutlineVpn.vpnStatusChanged")
       return
     }
     guard let manager = session.manager as? NETunnelProviderManager else {
+      // For some reason we get spurious notifications with connecting and disconnecting states
+      DDLogDebug("Bad manager in OutlineVpn.vpnStatusChanged session=\(String(describing:session)) status=\(String(describing: session.status))")
       return
     }
     guard let protoConfig = manager.protocolConfiguration as? NETunnelProviderProtocol,
           let tunnelId = protoConfig.providerConfiguration?["id"] as? String else {
+      DDLogWarn("Bad VPN Config: \(String(describing: session.manager.protocolConfiguration))")
       return
     }
+    DDLogDebug("OutlineVpn received status change for \(tunnelId): \(String(describing: session.status))")
     if isActiveSession(session) {
       Task {
         await setConnectVpnOnDemand(manager, true)
@@ -227,10 +237,12 @@ private func getTunnelManager() async -> NETunnelProviderManager? {
   do {
     let managers: [NETunnelProviderManager] = try await NETunnelProviderManager.loadAllFromPreferences()
     guard managers.count > 0 else {
+      DDLogDebug("OutlineVpn.getTunnelManager: No managers found")
       return nil
     }
     return managers.first
   } catch {
+    DDLogError("Failed to get tunnel manager: \(error.localizedDescription)")
     return nil
   }
 }
@@ -258,6 +270,7 @@ private func stopSession(_ manager:NETunnelProviderManager) async {
     await withCheckedContinuation { continuation in
       tokenHolder.token = NotificationCenter.default.addObserver(forName: .NEVPNStatusDidChange, object: manager.connection, queue: nil) { notification in
         if manager.connection.status == .disconnected {
+          DDLogDebug("Tunnel stopped. Ready to start again.")
           if let token = tokenHolder.token {
             NotificationCenter.default.removeObserver(token, name: .NEVPNStatusDidChange, object: manager.connection)
           }
@@ -266,6 +279,7 @@ private func stopSession(_ manager:NETunnelProviderManager) async {
       }
     }
   } catch {
+    DDLogWarn("Failed to stop VPN")
   }
 }
 
@@ -275,6 +289,7 @@ private func setConnectVpnOnDemand(_ manager: NETunnelProviderManager?, _ enable
     manager?.isOnDemandEnabled = enabled
     try await manager?.saveToPreferences()
   } catch {
+    DDLogError("Failed to set VPN on demand to \(enabled): \(error)")
     return
   }
 }
@@ -306,12 +321,15 @@ private func fetchExtensionLastDisconnectError(_ session: NETunnelProviderSessio
     }
     return try await withCheckedThrowingContinuation { continuation in
       do {
+        DDLogDebug("Calling Extension IPC: \(ExtensionIPC.fetchLastDetailedJsonError)")
         try session.sendProviderMessage(rpcNameData) { data in
           guard let response = data else {
+            DDLogDebug("Extension IPC returned with nil error")
             return continuation.resume(returning: nil)
           }
           do {
             let lastError = try PropertyListDecoder().decode(LastErrorIPCData.self, from: response)
+            DDLogDebug("Extension IPC returned with \(lastError)")
             continuation.resume(returning: OutlineError.detailedJsonError(code: lastError.errorCode,
                                                                           json: lastError.errorJson))
           } catch {
@@ -323,6 +341,7 @@ private func fetchExtensionLastDisconnectError(_ session: NETunnelProviderSessio
       }
     }
   } catch {
+    DDLogError("Failed to invoke VPN Extension IPC: \(error)")
     return OutlineError.internalError(
       message: "IPC fetchLastDisconnectError failed: \(error.localizedDescription)"
     )
