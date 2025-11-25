@@ -18,8 +18,8 @@
 import {html} from 'lit';
 
 import './index';
-import {ServerConnectionType} from '..';
 import {ServerCard} from './index';
+import {ServerConnectionType} from '..';
 import {localize} from '../../../../testing/localize';
 import {ServerConnectionState} from '../../server_connection_indicator';
 

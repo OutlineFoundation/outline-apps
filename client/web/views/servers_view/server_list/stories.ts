@@ -52,6 +52,5 @@ export default {
   },
 };
 
-export const Example = ({servers}: ServerList) => html`
-  <server-list .localize="${localize}" .servers="${servers}"></server-list>
-`;
+export const Example = ({servers}: ServerList) =>
+  html` <server-list .localize="${localize}" .servers="${servers}"></server-list> `;

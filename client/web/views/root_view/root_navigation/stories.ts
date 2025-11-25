@@ -23,7 +23,8 @@ export default {
   component: 'root-navigation',
   args: {
     open: true,
-    dataCollectionPageUrl: 'https://support.google.com/outline/answer/15331222',
+    dataCollectionPageUrl:
+      'https://support.google.com/outline/answer/15331222',
   },
 };
 
