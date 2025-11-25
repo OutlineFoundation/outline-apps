@@ -17,7 +17,8 @@ import {OperationTimedOut} from '@outline/infrastructure/timeout_promise';
 
 import {Clipboard} from './clipboard';
 import {EnvironmentVariables} from './environment';
-import {Appearance, Settings, SettingsKey} from './settings';
+import * as config from './outline_server_repository/config';
+import {Settings, SettingsKey, Appearance} from './settings';
 import {Updater} from './updater';
 import {UrlInterceptor} from './url_interceptor';
 import {VpnInstaller} from './vpn_installer';
@@ -26,7 +27,6 @@ import * as events from '../model/events';
 import {Server, ServerRepository} from '../model/server';
 import {OutlineErrorReporter} from '../shared/error_reporter';
 import {ServerConnectionState, ServerListItem} from '../views/servers_view';
-import * as config from './outline_server_repository/config';
 import {SERVER_CONNECTION_INDICATOR_DURATION_MS} from '../views/servers_view/server_connection_indicator';
 
 enum OUTLINE_ACCESS_KEY_SCHEME {
@@ -188,10 +188,6 @@ export class App {
     this.rootEl.addEventListener(
       'SetLanguageRequested',
       this.setAppLanguage.bind(this)
-    );
-    this.rootEl.addEventListener(
-      'AddServerRequested',
-      this.requestAddServer.bind(this)
     );
 
     if (this.appearanceFeatureEnabled) {
@@ -427,10 +423,7 @@ export class App {
   }
 
   private changePage(event: CustomEvent) {
-    if (event.detail?.page) {
-      this.rootEl.changePage(event.detail.page);
-      this.hideNavigation();
-    }
+    this.rootEl.changePage(event.detail.page);
   }
 
   private async handleClipboardText(text: string) {

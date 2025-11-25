@@ -85,14 +85,10 @@ export interface FirstHopAndTunnelConfigJson extends TunnelConfigJson {
 export async function parseTunnelConfig(
   tunnelConfigText: string
 ): Promise<FirstHopAndTunnelConfigJson | null> {
-  try {
-    const config = await methodChannel
-      .getDefaultMethodChannel()
-      .invokeMethod('ParseTunnelConfig', tunnelConfigText);
-    return JSON.parse(config);
-  } catch (e) {
-    throw e;
-  }
+  const config = await methodChannel
+    .getDefaultMethodChannel()
+    .invokeMethod('ParseTunnelConfig', tunnelConfigText);
+  return JSON.parse(config);
 }
 
 export async function parseAccessKey(
