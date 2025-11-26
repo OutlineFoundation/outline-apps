@@ -54,10 +54,6 @@ const appBuildGradleTemplate = readFileSync(
   resolve(templatesRoot, 'app.build.gradle.template'),
   'utf8'
 );
-const androidManifestTemplate = readFileSync(
-  resolve(templatesRoot, 'AndroidManifest.xml.template'),
-  'utf8'
-);
 
 function applyAndroidPatches() {
   const settingsGradleContent = settingsGradleTemplate.replace(
@@ -165,15 +161,6 @@ function applyAndroidPatches() {
       error.message
     );
   }
-
-  const mainSrcDir = resolve(androidRoot, 'app', 'src');
-  const manifestDir = resolve(mainSrcDir, 'main');
-  mkdirSync(manifestDir, { recursive: true });
-  writeFileSync(
-    resolve(manifestDir, 'AndroidManifest.xml'),
-    androidManifestTemplate,
-    'utf8'
-  );
 
   console.log('Applied Outline Android Gradle and source customisations.');
 }

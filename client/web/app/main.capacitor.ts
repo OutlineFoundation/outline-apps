@@ -29,6 +29,7 @@ import {AbstractClipboard} from './clipboard';
 import {EnvironmentVariables} from './environment';
 import {main} from './main';
 import {installDefaultMethodChannel, MethodChannel} from './method_channel';
+import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 import {VpnApi} from './outline_server_repository/vpn';
 import {CordovaVpnApi} from './outline_server_repository/vpn.cordova';
 import {FakeVpnApi} from './outline_server_repository/vpn.fake';
@@ -37,7 +38,6 @@ import {pluginExec} from './plugin.cordova';
 import {AbstractUpdater} from './updater';
 import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
-import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
 const isCapacitorRuntime = isCapacitorPlatform();
 const isNativeCapacitorPlatform = isCapacitorNativePlatform();
@@ -223,7 +223,7 @@ window.handleOpenURL = (url: string) => {
 };
 
 async function initializeCapacitorPlugins(): Promise<void> {
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNativeCapacitorPlatform) {
     return;
   }
 
@@ -241,33 +241,42 @@ async function initializeCapacitorPlugins(): Promise<void> {
   }
 }
 
+async function showSplashScreen() {
+  if (isNativeCapacitorPlatform) {
+    try {
+      await SplashScreen.show({
+        autoHide: false,
+        fadeInDuration: 0,
+      });
+      console.log('[Capacitor] Splash screen shown');
+    } catch (error) {
+      console.warn('[Capacitor] Failed to show splash screen:', error);
+    }
+  }
+}
+
+async function hideSplashScreen() {
+  if (isNativeCapacitorPlatform) {
+    try {
+      // Wait a bit to ensure app is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await SplashScreen.hide({fadeOutDuration: 300});
+      console.log('[Capacitor] Splash screen hidden');
+    } catch (error) {
+      console.warn('[Capacitor] Failed to hide splash screen:', error);
+    }
+  }
+}
+
 (async () => {
   try {
+    await showSplashScreen();
     await initializeCapacitorPlugins();
-
     installDefaultMethodChannel(new CapacitorMethodChannel());
-
-    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-      try {
-        await SplashScreen.show({
-          autoHide: false,
-          fadeInDuration: 0,
-        });
-        console.log('[Capacitor] Splash screen shown');
-      } catch (error) {
-        console.warn('[Capacitor] Failed to show splash screen:', error);
-      }
-    }
-
     await main(new CapacitorPlatform());
-
-    if (Capacitor.isNativePlatform()) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await SplashScreen.hide({fadeOutDuration: 300});
-      } catch {}
-    }
+    await hideSplashScreen();
   } catch (e) {
     console.error('[Capacitor] main() failed:', e);
+    await hideSplashScreen();
   }
 })();

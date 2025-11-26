@@ -14,6 +14,7 @@
 
 import CocoaLumberjack
 import CocoaLumberjackSwift
+import Cordova
 import NetworkExtension
 import OutlineError
 import OutlineNotification
@@ -28,9 +29,10 @@ public enum TunnelStatus: Int {
   case reconnecting = 2
   case disconnecting = 3
 }
-
+// Exposes the Swift class to Objective-C runtime which can be discovered by both cordova and capacitor
+@objc(OutlinePlugin)
 @objcMembers
-class OutlinePlugin: CDVPlugin {
+public class OutlinePlugin: CDVPlugin {
 
   private enum Action {
     static let start = "start"
@@ -50,7 +52,7 @@ class OutlinePlugin: CDVPlugin {
   #endif
   private static let kAppGroup = "group.org.getoutline.client"
 
-  override func pluginInitialize() {
+  public override func pluginInitialize() {
     #if DEBUG
       dynamicLogLevel = .all
     #else

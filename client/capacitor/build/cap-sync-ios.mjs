@@ -70,25 +70,6 @@ function fixCordovaPluginPackageSwift() {
   }
 }
 
-function fixOutlinePluginSwift() {
-  const outlinePluginPath = resolve(
-    __dirname,
-    '../ios/capacitor-cordova-ios-plugins/sources/CordovaPluginOutline/OutlinePlugin.swift'
-  );
-
-  if (!existsSync(outlinePluginPath)) {
-    return;
-  }
-
-  try {
-    const template = readTemplate('OutlinePlugin.swift.template');
-    writeFileSync(outlinePluginPath, template, 'utf8');
-    console.log(' OutlinePlugin.swift restored from template');
-  } catch (error) {
-    console.error(' Failed to fix OutlinePlugin.swift:', error.message);
-  }
-}
-
 async function checkTun2socksFramework() {
   const rootDir = getRootDir();
   const frameworkPath = resolve(
@@ -160,6 +141,64 @@ function verifyVpnExtensionSetup() {
   }
 }
 
+function resizeSplashImages() {
+    const splashImagesetPath = resolve(__dirname, '../ios/App/App/Assets.xcassets/Splash.imageset');
+    
+    if (!existsSync(splashImagesetPath)) {
+        return false;
+    }
+    
+    try {
+        const images = [
+            'Default@1x~universal~anyany.png',
+            'Default@1x~universal~anyany-dark.png',
+            'Default@2x~universal~anyany.png',
+            'Default@2x~universal~anyany-dark.png',
+            'Default@3x~universal~anyany.png',
+            'Default@3x~universal~anyany-dark.png'
+        ];
+        
+        let resized = false;
+        for (const image of images) {
+            const imagePath = resolve(splashImagesetPath, image);
+            if (existsSync(imagePath)) {
+                try {
+                    const sizeInfo = execSync(`sips -g pixelWidth "${imagePath}"`, { encoding: 'utf8' });
+                    const widthMatch = sizeInfo.match(/pixelWidth: (\d+)/);
+                    if (widthMatch) {
+                        const width = parseInt(widthMatch[1]);
+                        if (image.includes('@1x')) {
+                            if (width > 512) {
+                                execSync(`sips -Z 512 "${imagePath}"`, { stdio: 'ignore' });
+                                resized = true;
+                            }
+                        } else if (image.includes('@2x')) {
+                            if (width > 1024) {
+                                execSync(`sips -Z 1024 "${imagePath}"`, { stdio: 'ignore' });
+                                resized = true;
+                            }
+                        } else if (image.includes('@3x')) {
+                            if (width > 1536) {
+                                execSync(`sips -Z 1536 "${imagePath}"`, { stdio: 'ignore' });
+                                resized = true;
+                            }
+                        }
+                    }
+                } catch (error) {
+                }
+            }
+        }
+        
+        if (resized) {
+            console.log(' Resized splash images to meet iOS launch screen memory limits');
+        }
+        return resized;
+    } catch (error) {
+        console.warn('  Could not resize splash images:', error.message);
+        return false;
+    }
+}
+
 await checkTun2socksFramework();
 verifyVpnExtensionSetup();
 
@@ -170,9 +209,9 @@ const syncProcess = spawn('npx', ['cap', 'sync', 'ios'], {
 });
 
 syncProcess.on('close', async code => {
+  resizeSplashImages();
   fixCapAppPackageSwift();
   fixCordovaPluginPackageSwift();
-  fixOutlinePluginSwift();
   console.log(' Capacitor sync completed');
 });
 
