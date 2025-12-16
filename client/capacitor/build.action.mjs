@@ -117,16 +117,9 @@ export async function main(...parameters) {
         break;
     }
 
-    // Open the native IDE after successful build
-    console.log('\n Opening native IDE...');
-    if (nativePlatform === 'ios') {
-      const iosProjectPath = path.resolve(capRoot, 'ios', 'App', 'App.xcworkspace');
-      await spawnStream('open', iosProjectPath);
-      console.log(' Opened Xcode workspace');
-    } else if (nativePlatform === 'android') {
-      const androidProjectPath = path.resolve(capRoot, 'android');
-      await spawnStream('open', '-a', 'Android Studio', androidProjectPath);
-      console.log(' Opened Android Studio project');
+    // Open the project in the native IDE via Capacitor CLI after a successful build
+    if (nativePlatform === 'ios' || nativePlatform === 'android') {
+      await spawnStream('npx', 'cap', 'open', nativePlatform);
     }
 
     return buildResult;
