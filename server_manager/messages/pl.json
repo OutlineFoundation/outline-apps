@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline to projekt open source tworzony przez <a href={jigsawUrl}>Jigsaw</a>, by zapewnić dziennikarzom i organizacjom medialnym bezpieczniejszy dostęp do internetu.<br><br> Outline wykorzystuje technologię <a href={shadowsocksUrl}>Shadowsocks</a> i jest jeszcze na wczesnym etapie rozwoju. Kod źródłowy jest dostępny w serwisie <a href={gitHubUrl}>GitHub</a>. Informacje o projekcie (nowych platformach, nowych funkcjach itd.) można śledzić w serwisach <a href={redditUrl}>Reddit</a> i <a href={mediumUrl}>Medium</a>.",
+  "about-outline": "Outline to projekt open source tworzony przez Outline Foundation, by zapewnić dziennikarzom i organizacjom medialnym bezpieczniejszy dostęp do internetu.<br><br> Outline wykorzystuje technologię <a href={shadowsocksUrl}>Shadowsocks</a> i jest jeszcze na wczesnym etapie rozwoju. Kod źródłowy jest dostępny w serwisie <a href={gitHubUrl}>GitHub</a>. Informacje o projekcie (nowych platformach, nowych funkcjach itd.) można śledzić w serwisach <a href={redditUrl}>Reddit</a> i <a href={mediumUrl}>Medium</a>.",
   "about-version": "Wersja {version}",
   "aws-lightsail-firewall-0": "Przejdź do ekranu z wystąpieniami {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Kliknij wystąpienie, w którym będzie hostowany serwer Outline.",

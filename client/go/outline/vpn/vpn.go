@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/callback"
+	"localhost/client/go/outline/callback"
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 )

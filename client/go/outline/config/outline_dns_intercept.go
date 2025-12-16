@@ -20,8 +20,8 @@ import (
 	"math/rand/v2"
 	"net/netip"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/connectivity"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/dnsintercept"
+	"localhost/client/go/outline/connectivity"
+	"localhost/client/go/outline/dnsintercept"
 	"github.com/Jigsaw-Code/outline-sdk/network"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 )

@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
+	"localhost/client/go/configyaml"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 	"github.com/Jigsaw-Code/outline-sdk/transport/shadowsocks"
 )

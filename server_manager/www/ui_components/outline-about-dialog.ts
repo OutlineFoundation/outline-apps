@@ -37,10 +37,6 @@ Polymer({
         margin-top: 20px;
       }
 
-      #jigsaw-logo {
-        max-width: 25%;
-      }
-
       #version {
         font-weight: bold;
       }
@@ -80,11 +76,6 @@ Polymer({
         inner-h-t-m-l="[[localize('about-outline', 'jigsawUrl', 'https://jigsaw.google.com', 'shadowsocksUrl', 'https://shadowsocks.org', 'gitHubUrl', 'https://github.com/jigsaw-Code/?q=outline', 'redditUrl', 'https://www.reddit.com/r/outlinevpn', 'mediumUrl', 'https://medium.com/jigsaw')]]"
       >
         &gt;
-      </p>
-      <p>
-        <a href="https://jigsaw.google.com/">
-          <img id="jigsaw-logo" src="images/jigsaw-logo.svg" />
-        </a>
       </p>
       <div class="buttons">
         <paper-button dialog-dismiss="" autofocus=""

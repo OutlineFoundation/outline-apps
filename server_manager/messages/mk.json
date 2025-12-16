@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline е проект за софтвер со отворен код создаден од <a href={jigsawUrl}>Jigsaw</a> за да обезбеди побезбеден начин за пристап на интернет за организациите за вести и новинарите.<br><br> Outline е овозможен од <a href={shadowsocksUrl}>Shadowsocks</a> и сѐ уште е производ во рана фаза. Може да придонесете на кодот на <a href={gitHubUrl}>GitHub</a>, и да нѐ следите на <a href={redditUrl}>Reddit</a> и <a href={mediumUrl}>Medium</a> за да дознаете кога ќе се прошириме на повеќе платформи и ќе додадеме нови функции.",
+  "about-outline": "Outline е проект за софтвер со отворен код создаден од Outline Foundation за да обезбеди побезбеден начин за пристап на интернет за организациите за вести и новинарите.<br><br> Outline е овозможен од <a href={shadowsocksUrl}>Shadowsocks</a> и сѐ уште е производ во рана фаза. Може да придонесете на кодот на <a href={gitHubUrl}>GitHub</a>, и да нѐ следите на <a href={redditUrl}>Reddit</a> и <a href={mediumUrl}>Medium</a> за да дознаете кога ќе се прошириме на повеќе платформи и ќе додадеме нови функции.",
   "about-version": "Верзија {version}",
   "aws-lightsail-firewall-0": "Одете на екранот со примероци на {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Кликнете на примерокот на којшто сакате да ја хостирате Outline.",

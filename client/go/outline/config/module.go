@@ -19,7 +19,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
+	"localhost/client/go/configyaml"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 )
 

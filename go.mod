@@ -1,4 +1,4 @@
-module github.com/Jigsaw-Code/outline-apps
+module localhost
 
 go 1.25
 

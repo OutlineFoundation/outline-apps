@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline is een product van <a href={jigsawUrl}>Jigsaw</a> waarmee iedereen een eigen VPN kan maken, kan beheren en anderen er toegang toe kan geven. Outline is zo gemaakt dat het moeilijk te blokkeren is. Ga naar <a href={outlineUrl}>getoutline.org</a> om aan de slag te gaan.<br><br>Outline is opensource-software mogelijk gemaakt door <a href={shadowsocksUrl}>Shadowsocks</a>. Je kunt bijdragen aan de code via <a href={gitHubUrl}>GitHub</a> en erover meepraten op <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline is een product van Outline Foundation waarmee iedereen een eigen VPN kan maken, kan beheren en anderen er toegang toe kan geven. Outline is zo gemaakt dat het moeilijk te blokkeren is. Ga naar <a href={outlineUrl}>getoutline.org</a> om aan de slag te gaan.<br><br>Outline is opensource-software mogelijk gemaakt door <a href={shadowsocksUrl}>Shadowsocks</a>. Je kunt bijdragen aan de code via <a href={gitHubUrl}>GitHub</a> en erover meepraten op <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Over",
   "add-access-key-dialog-error-text": "Ongeldige toegangssleutel.",
   "add-access-key-dialog-header": "VPN-toegangssleutel toevoegen",

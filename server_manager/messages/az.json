@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline xəbər təşkilatları və jurnalistlərə internetə daha təhlükəsiz giriş təmin etmək üçün <a href={jigsawUrl}>Jigsaw</a> tərəfindən yaradılan açıq mənbə layihəsidir.<br><br> Outline <a href={shadowsocksUrl}>Shadowsocks</a> tərəfindən hazırlanıb və hələ ilkin mərhələ məhsuludur. <a href={gitHubUrl}>GitHub</a> ünvanında koda töhfə verə, həmçinin tətbiq daha çox platforma üzrə genişləndirildikdə və yeni funksiyalar əlavə edildikdə xəbərdar olmaq üçün bizi <a href={redditUrl}>Reddit</a> və <a href={mediumUrl}>Medium</a> ünvanlarında izləyə bilərsiniz.",
+  "about-outline": "Outline xəbər təşkilatları və jurnalistlərə internetə daha təhlükəsiz giriş təmin etmək üçün Outline Foundation tərəfindən yaradılan açıq mənbə layihəsidir.<br><br> Outline <a href={shadowsocksUrl}>Shadowsocks</a> tərəfindən hazırlanıb və hələ ilkin mərhələ məhsuludur. <a href={gitHubUrl}>GitHub</a> ünvanında koda töhfə verə, həmçinin tətbiq daha çox platforma üzrə genişləndirildikdə və yeni funksiyalar əlavə edildikdə xəbərdar olmaq üçün bizi <a href={redditUrl}>Reddit</a> və <a href={mediumUrl}>Medium</a> ünvanlarında izləyə bilərsiniz.",
   "about-version": "{version} versiyası",
   "aws-lightsail-firewall-0": "{openLink}Amazon Lightsail{closeLink} nümunələri ekranına keçin.",
   "aws-lightsail-firewall-1": "Outline'ı yerləşdirmək istədiyiniz nümunəyə klikləyin.",

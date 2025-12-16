@@ -21,9 +21,9 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline"
-	perrs "github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/vpn"
+	"localhost/client/go/outline"
+	perrs "localhost/client/go/outline/platerrors"
+	"localhost/client/go/outline/vpn"
 )
 
 // RemoteDevice is an IO device that connects to a remote Outline server.

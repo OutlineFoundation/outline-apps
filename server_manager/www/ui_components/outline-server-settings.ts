@@ -341,7 +341,7 @@ Polymer({
             >
               <iron-icon icon="icons:error-outline"></iron-icon>
               <p
-                inner-h-t-m-l="[[localize('data-limits-disclaimer', 'openLink', '<a href=https://support.google.com/outline/answer/15331222>', 'closeLink', '</a>')]]"
+                inner-h-t-m-l="[[localize('data-limits-disclaimer', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
               ></p>
             </div>
             <div
@@ -394,7 +394,7 @@ Polymer({
             <div class="sub-section">
               <iron-icon icon="icons:error-outline"></iron-icon>
               <p
-                inner-h-t-m-l="[[localize('experiments-disclaimer', 'openLink', '<a href=https://support.google.com/outline/answer/15331222>', 'closeLink', '</a>')]]"
+                inner-h-t-m-l="[[localize('experiments-disclaimer', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
               ></p>
             </div>
           </div>
@@ -414,7 +414,7 @@ Polymer({
               <h3>[[localize('settings-metrics-header')]]</h3>
             </div>
             <p
-              inner-h-t-m-l="[[localize('metrics-description', 'openLink', '<a href=https://support.google.com/outline/answer/15331222>', 'closeLink', '</a>')]]"
+              inner-h-t-m-l="[[localize('metrics-description', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
             ></p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline হল <a href={jigsawUrl}>Jigsaw</a>-এর একটি প্রোডাক্ট যা যেকোনও ব্যক্তিকে তার নিজস্ব VPN তৈরি করতে, চালাতে এবং শেয়ার করতে দেয়। ব্লকিং প্রতিরোধের কথা মাথায় রেখে Outline ডিজাইন করা হয়েছে। কীভাবে শুরু করবেন তা জানতে <a href={outlineUrl}>getoutline.org</a> দেখুন।<br><br>Outline হল <a href={shadowsocksUrl}>Shadowsocks</a> দ্বারা পরিচালিত ওপেন সোর্স সফ্টওয়্যার। আপনি <a href={gitHubUrl}>GitHub</a>-এর কোডে কন্ট্রিবিউট করতে এবং <a href={redditUrl}>Reddit</a>-এ কথোপকথনে যোগ দিতে পারেন।",
+  "about-outline": "Outline হল Outline Foundation-এর একটি প্রোডাক্ট যা যেকোনও ব্যক্তিকে তার নিজস্ব VPN তৈরি করতে, চালাতে এবং শেয়ার করতে দেয়। ব্লকিং প্রতিরোধের কথা মাথায় রেখে Outline ডিজাইন করা হয়েছে। কীভাবে শুরু করবেন তা জানতে <a href={outlineUrl}>getoutline.org</a> দেখুন।<br><br>Outline হল <a href={shadowsocksUrl}>Shadowsocks</a> দ্বারা পরিচালিত ওপেন সোর্স সফ্টওয়্যার। আপনি <a href={gitHubUrl}>GitHub</a>-এর কোডে কন্ট্রিবিউট করতে এবং <a href={redditUrl}>Reddit</a>-এ কথোপকথনে যোগ দিতে পারেন।",
   "about-page-title": "সম্পর্কে",
   "add-access-key-dialog-error-text": "'অ্যাক্সেস কী' সঠিক নয়।",
   "add-access-key-dialog-header": "VPN 'অ্যাক্সেস কী' যোগ করুন",

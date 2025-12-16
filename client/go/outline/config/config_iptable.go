@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"net/netip"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/iptable"
+	"localhost/client/go/configyaml"
+	"localhost/client/go/outline/iptable"
 	"github.com/Jigsaw-Code/outline-sdk/transport"
 )
 

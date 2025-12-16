@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/useragent"
+	"localhost/client/go/outline/useragent"
 )
 
 // Reporter is used to register reports.

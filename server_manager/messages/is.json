@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline er verkefni með opnum kóða úr smiðju <a href={jigsawUrl}>Jigsaw</a> sem veitir fréttaveitum og blaðamönnum öruggari aðgang að netinu.<br><br> Outline er knúið af <a href={shadowsocksUrl}>Shadowsocks</a> og er enn á frumstigi. Þú getur lagt þitt af mörkum til kóðans á <a href={gitHubUrl}>GitHub</a> og fylgt okkur á <a href={redditUrl}>Reddit</a> og <a href={mediumUrl}>Medium</a> til að fá fréttir af því þegar við færum út kvíarnar og bætum við fleiri verkvöngum eða nýjum eiginleikum.",
+  "about-outline": "Outline er verkefni með opnum kóða úr smiðju Outline Foundation sem veitir fréttaveitum og blaðamönnum öruggari aðgang að netinu.<br><br> Outline er knúið af <a href={shadowsocksUrl}>Shadowsocks</a> og er enn á frumstigi. Þú getur lagt þitt af mörkum til kóðans á <a href={gitHubUrl}>GitHub</a> og fylgt okkur á <a href={redditUrl}>Reddit</a> og <a href={mediumUrl}>Medium</a> til að fá fréttir af því þegar við færum út kvíarnar og bætum við fleiri verkvöngum eða nýjum eiginleikum.",
   "about-version": "Útgáfa {version}",
   "aws-lightsail-firewall-0": "Farðu á tilvikaskjá {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Smelltu á tilvikið sem þú vilt að hýsi Outline.",

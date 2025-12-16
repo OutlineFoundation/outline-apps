@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline არის <a href={jigsawUrl}>Jigsaw</a>-ის პროდუქტი, რომელიც საშუალებას აძლევს ნებისმიერს, შექმნას, გაუშვას და გაუზიაროს წვდომა საკუთარ VPN-ზე. Outline შექმნილია, როგორც ბლოკირების მიმართ მდგრადი. მოინახულეთ <a href={outlineUrl}>getoutline.org</a> და შეიტყვეთ, როგორ დაიწყოთ.<br><br>Outline არის ღია კოდის პროგრამული უზრუნველყოფა, რომელიც შემუშავებულია <a href={shadowsocksUrl}>Shadowsocks</a> ტექნოლოგიით. შეგიძლიათ წვლილი შეიტანოთ კოდში <a href={gitHubUrl}>GitHub</a>-ზე და ჩაერთოთ საუბარში <a href={redditUrl}>Reddit</a>-ზე.",
+  "about-outline": "Outline არის Outline Foundation-ის პროდუქტი, რომელიც საშუალებას აძლევს ნებისმიერს, შექმნას, გაუშვას და გაუზიაროს წვდომა საკუთარ VPN-ზე. Outline შექმნილია, როგორც ბლოკირების მიმართ მდგრადი. მოინახულეთ <a href={outlineUrl}>getoutline.org</a> და შეიტყვეთ, როგორ დაიწყოთ.<br><br>Outline არის ღია კოდის პროგრამული უზრუნველყოფა, რომელიც შემუშავებულია <a href={shadowsocksUrl}>Shadowsocks</a> ტექნოლოგიით. შეგიძლიათ წვლილი შეიტანოთ კოდში <a href={gitHubUrl}>GitHub</a>-ზე და ჩაერთოთ საუბარში <a href={redditUrl}>Reddit</a>-ზე.",
   "about-page-title": "ინფორმაცია",
   "add-access-key-dialog-error-text": "წვდომის გასაღები არასწორია.",
   "add-access-key-dialog-header": "VPN-ზე წვდომის გასაღების დამატება",

@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline/platerrors"
 	"github.com/stretchr/testify/require"
 )
 

@@ -22,9 +22,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/reporting"
+	"localhost/client/go/configyaml"
+	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/reporting"
 	"github.com/stretchr/testify/require"
 )
 

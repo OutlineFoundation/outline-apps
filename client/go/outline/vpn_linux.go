@@ -22,10 +22,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/callback"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	perrs "github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/vpn"
+	"localhost/client/go/outline/callback"
+	"localhost/client/go/outline/config"
+	perrs "localhost/client/go/outline/platerrors"
+	"localhost/client/go/outline/vpn"
 )
 
 // establishVpnRequestJSON must match TypeScript's EstablishVpnRequestJson.

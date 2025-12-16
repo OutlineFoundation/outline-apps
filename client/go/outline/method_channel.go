@@ -22,7 +22,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline/platerrors"
 )
 
 // API name constants. Keep sorted by name.

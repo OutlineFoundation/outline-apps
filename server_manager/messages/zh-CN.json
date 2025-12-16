@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline 是由 <a href={jigsawUrl}>Jigsaw</a> 创立的开放源代码项目，旨在为新闻机构和记者提供更安全的互联网访问方式。<br><br> Outline 由 <a href={shadowsocksUrl}>Shadowsocks</a> 提供支持，目前仍处于产品的初级阶段。您可以在 <a href={gitHubUrl}>GitHub</a> 上参与代码编写，还可以通过 <a href={redditUrl}>Reddit</a> 和 <a href={mediumUrl}>Medium</a> 关注我们，及时掌握我们扩展平台范围和添加新功能的最新动态。",
+  "about-outline": "Outline 是由 Outline Foundation 创立的开放源代码项目，旨在为新闻机构和记者提供更安全的互联网访问方式。<br><br> Outline 由 <a href={shadowsocksUrl}>Shadowsocks</a> 提供支持，目前仍处于产品的初级阶段。您可以在 <a href={gitHubUrl}>GitHub</a> 上参与代码编写，还可以通过 <a href={redditUrl}>Reddit</a> 和 <a href={mediumUrl}>Medium</a> 关注我们，及时掌握我们扩展平台范围和添加新功能的最新动态。",
   "about-version": "{version} 版",
   "aws-lightsail-firewall-0": "转到 {openLink}Amazon Lightsail{closeLink} 实例页面。",
   "aws-lightsail-firewall-1": "点击您要用来托管 Outline 的实例。",

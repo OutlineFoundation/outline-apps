@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ni mradi wa programu huria uliobuniwa na <a href={jigsawUrl}>Jigsaw</a> ili kutoa njia salama kwa mashirika ya habari na waandishi wa habari kufikia intaneti.<br><br> Outline inaendeshwa na <a href={shadowsocksUrl}>Shadowsocks</a> na bado ni bidhaa ya hatua ya awali. Unaweza kuchangia kwenye msimbo katika <a href={gitHubUrl}>GitHub</a> na utufuatilie katika <a href={redditUrl}>Reddit</a> na <a href={mediumUrl}>Medium</a> ili ufahamu tutakapopanuka katika mifumo na vipengele vipya.",
+  "about-outline": "Outline ni mradi wa programu huria uliobuniwa na Outline Foundation ili kutoa njia salama kwa mashirika ya habari na waandishi wa habari kufikia intaneti.<br><br> Outline inaendeshwa na <a href={shadowsocksUrl}>Shadowsocks</a> na bado ni bidhaa ya hatua ya awali. Unaweza kuchangia kwenye msimbo katika <a href={gitHubUrl}>GitHub</a> na utufuatilie katika <a href={redditUrl}>Reddit</a> na <a href={mediumUrl}>Medium</a> ili ufahamu tutakapopanuka katika mifumo na vipengele vipya.",
   "about-version": "Toleo la {version}",
   "aws-lightsail-firewall-0": "Nenda kwenye skrini ya matukio ya {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Bofya tukio ambalo unataka kupangisha Outline.",

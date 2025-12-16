@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline হল <a href={jigsawUrl}>Jigsaw</a>-এর একটি ওপেন সোর্স প্রজেক্ট যা সংবাদ সংস্থা এবং সাংবাদিকদের জন্য ইন্টারনেট অ্যাক্সেস করার একটি নিরাপদ উপায় প্রদান করার উদ্দেশ্যে তৈরি করা হয়েছে।<br><br> Outline হল <a href={shadowsocksUrl}>Shadowsocks</a>-এর পরিচালিত একটি প্রোডাক্ট এবং এটি এখনও প্রথমিক পর্যায়ে আছে। আপনি <a href={gitHubUrl}>GitHub</a>-এর কোডে কন্ট্রিবিউট করতে পারেন এবং আমরা যখন আরও প্ল্যাটফর্মে পরিষেবা উপলভ্য করব এবং নতুন ফিচার যোগ করব তা জানার জন্য আমাদের <a href={redditUrl}>Reddit</a> এবং <a href={mediumUrl}>Medium</a>-এ ফলো করতে পারেন।",
+  "about-outline": "Outline হল Outline Foundation-এর একটি ওপেন সোর্স প্রজেক্ট যা সংবাদ সংস্থা এবং সাংবাদিকদের জন্য ইন্টারনেট অ্যাক্সেস করার একটি নিরাপদ উপায় প্রদান করার উদ্দেশ্যে তৈরি করা হয়েছে।<br><br> Outline হল <a href={shadowsocksUrl}>Shadowsocks</a>-এর পরিচালিত একটি প্রোডাক্ট এবং এটি এখনও প্রথমিক পর্যায়ে আছে। আপনি <a href={gitHubUrl}>GitHub</a>-এর কোডে কন্ট্রিবিউট করতে পারেন এবং আমরা যখন আরও প্ল্যাটফর্মে পরিষেবা উপলভ্য করব এবং নতুন ফিচার যোগ করব তা জানার জন্য আমাদের <a href={redditUrl}>Reddit</a> এবং <a href={mediumUrl}>Medium</a>-এ ফলো করতে পারেন।",
   "about-version": "ভার্সন {version}",
   "aws-lightsail-firewall-0": "{openLink}Amazon Lightsail{closeLink} দৃষ্টান্ত স্ক্রিনে নেভিগেট করুন।",
   "aws-lightsail-firewall-1": "আপনি যে দৃষ্টান্তে Outline হোস্ট করতে চান সেটিতে ক্লিক করুন।",

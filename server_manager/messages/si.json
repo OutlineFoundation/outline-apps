@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline යනු පුවත් සංවිධානවලටත් මාධ්‍යවේදීන්ටත් අන්තර්ජාලයට ප්‍රවේශ වීමට ඉතා ආරක්‍ෂිත මාර්ගයක් ලබා දීමට <a href={jigsawUrl}>Jigsaw</a> විසින් සාදන ලද විවෘත මූලාශ්‍ර ව්‍යාපෘතියකි.<br><br> Outline හට <a href={shadowsocksUrl}>Shadowsocks</a> විසින් බලගන්වනු ලබන අතර එය තවමත් මුල් වියේ නිෂ්පාදනයකි. ඔබට <a href={gitHubUrl}>GitHub</a> මත කේතයට දායක වීමටත්, අපි තවත් වේදිකාවලට දිග හරින විටත් නව විශේෂාංග එක් කරන විටත් දැන ගැනීමට <a href={redditUrl}>Reddit</a> සහ <a href={mediumUrl}>Medium</a> මත අප අනුගමන කරන්න.",
+  "about-outline": "Outline යනු පුවත් සංවිධානවලටත් මාධ්‍යවේදීන්ටත් අන්තර්ජාලයට ප්‍රවේශ වීමට ඉතා ආරක්‍ෂිත මාර්ගයක් ලබා දීමට Outline Foundation විසින් සාදන ලද විවෘත මූලාශ්‍ර ව්‍යාපෘතියකි.<br><br> Outline හට <a href={shadowsocksUrl}>Shadowsocks</a> විසින් බලගන්වනු ලබන අතර එය තවමත් මුල් වියේ නිෂ්පාදනයකි. ඔබට <a href={gitHubUrl}>GitHub</a> මත කේතයට දායක වීමටත්, අපි තවත් වේදිකාවලට දිග හරින විටත් නව විශේෂාංග එක් කරන විටත් දැන ගැනීමට <a href={redditUrl}>Reddit</a> සහ <a href={mediumUrl}>Medium</a> මත අප අනුගමන කරන්න.",
   "about-version": "අනුවාදය {version}",
   "aws-lightsail-firewall-0": "{openLink}Amazon Lightsail{closeLink} නිදර්ශන තිරයට සංචලන වන්න.",
   "aws-lightsail-firewall-1": "ඔබට Outline ධාරන කිරීමට අවශ්‍ය නිදර්ශන මත ක්ලික් කරන්න.",

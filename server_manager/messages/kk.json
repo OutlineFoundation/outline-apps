@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline – <a href={jigsawUrl}>Jigsaw</a> әзірлеген ашық кодты бағдарлама жобасы. Ол ақпараттық агенттіктер мен журналистердің интернетті қауіпсіз пайдалануына мүмкіндік береді.<br><br> Outline <a href={shadowsocksUrl}>Shadowsocks</a> технологиясын пайдаланады және ол әлі де әзірлеудің бастапқы кезеңінде. <a href={gitHubUrl}>GitHub</a> сайтында кодқа үлес қоса аласыз, сонымен қатар <a href={redditUrl}>Reddit</a> және <a href={mediumUrl}>Medium</a> желілеріне жазылып, қосымша платформалар және жаңа функциялар қосылғаны туралы хабардар болыңыз.",
+  "about-outline": "Outline – Outline Foundation әзірлеген ашық кодты бағдарлама жобасы. Ол ақпараттық агенттіктер мен журналистердің интернетті қауіпсіз пайдалануына мүмкіндік береді.<br><br> Outline <a href={shadowsocksUrl}>Shadowsocks</a> технологиясын пайдаланады және ол әлі де әзірлеудің бастапқы кезеңінде. <a href={gitHubUrl}>GitHub</a> сайтында кодқа үлес қоса аласыз, сонымен қатар <a href={redditUrl}>Reddit</a> және <a href={mediumUrl}>Medium</a> желілеріне жазылып, қосымша платформалар және жаңа функциялар қосылғаны туралы хабардар болыңыз.",
   "about-version": "Нұсқасы: {version}",
   "aws-lightsail-firewall-0": "{openLink}Amazon Lightsail{closeLink} экранына өтіңіз.",
   "aws-lightsail-firewall-1": "Outline орналастырылатын нұсқаны басыңыз.",

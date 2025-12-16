@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline คือโครงการโอเพนซอร์สที่ <a href={jigsawUrl}>Jigsaw</a> สร้างขึ้นเพื่อให้สำนักข่าวและนักข่าวเข้าถึงอินเทอร์เน็ตได้อย่างปลอดภัย<br><br> Outline ขับเคลื่อนโดย <a href={shadowsocksUrl}>Shadowsocks</a> และยังเป็นผลิตภัณฑ์ที่พัฒนาในระยะเริ่มต้น คุณมีส่วนร่วมในการเขียนโค้ดได้ใน <a href={gitHubUrl}>GitHub</a> และติดตามเราได้ที่ <a href={redditUrl}>Reddit</a> และ <a href={mediumUrl}>Medium</a> เพื่อรับข่าวสารเมื่อเราขยายบริการไปยังแพลตฟอร์มอื่นๆ และเพิ่มฟีเจอร์ใหม่ๆ",
+  "about-outline": "Outline คือโครงการโอเพนซอร์สที่ Outline Foundation สร้างขึ้นเพื่อให้สำนักข่าวและนักข่าวเข้าถึงอินเทอร์เน็ตได้อย่างปลอดภัย<br><br> Outline ขับเคลื่อนโดย <a href={shadowsocksUrl}>Shadowsocks</a> และยังเป็นผลิตภัณฑ์ที่พัฒนาในระยะเริ่มต้น คุณมีส่วนร่วมในการเขียนโค้ดได้ใน <a href={gitHubUrl}>GitHub</a> และติดตามเราได้ที่ <a href={redditUrl}>Reddit</a> และ <a href={mediumUrl}>Medium</a> เพื่อรับข่าวสารเมื่อเราขยายบริการไปยังแพลตฟอร์มอื่นๆ และเพิ่มฟีเจอร์ใหม่ๆ",
   "about-version": "เวอร์ชัน {version}",
   "aws-lightsail-firewall-0": "ไปที่หน้าจออินสแตนซ์ {openLink}Amazon Lightsail{closeLink}",
   "aws-lightsail-firewall-1": "คลิกอินสแตนซ์ที่ต้องการฝาก Outline",

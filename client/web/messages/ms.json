@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ialah sebuah produk oleh <a href={jigsawUrl}>Jigsaw</a> yang membolehkan sesiapa sahaja membuat, menjalankan dan berkongsi akses kepada VPN mereka sendiri. Outline direka bentuk untuk mengatasi sekatan. Lawati <a href={outlineUrl}>getoutline.org</a> untuk mengetahui cara bermula.<br><br>Outline ialah perisian sumber terbuka yang dikuasakan oleh <a href={shadowsocksUrl}>Shadowsocks</a>. Anda boleh memberikan sumbangan kepada kod ini pada <a href={gitHubUrl}>GitHub</a> dan menyertai perbualan di <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline ialah sebuah produk oleh Outline Foundation yang membolehkan sesiapa sahaja membuat, menjalankan dan berkongsi akses kepada VPN mereka sendiri. Outline direka bentuk untuk mengatasi sekatan. Lawati <a href={outlineUrl}>getoutline.org</a> untuk mengetahui cara bermula.<br><br>Outline ialah perisian sumber terbuka yang dikuasakan oleh <a href={shadowsocksUrl}>Shadowsocks</a>. Anda boleh memberikan sumbangan kepada kod ini pada <a href={gitHubUrl}>GitHub</a> dan menyertai perbualan di <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Perihal",
   "add-access-key-dialog-error-text": "Kunci akses tidak sah.",
   "add-access-key-dialog-header": "Tambahkan kunci akses VPN",

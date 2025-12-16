@@ -9,7 +9,7 @@ The client's user interface is implemented in [Polymer](https://www.polymer-proj
 
 ## Requirements for all builds
 
-All builds require [Node](https://nodejs.org/) 18 (lts/hydrogen), and [Go](https://golang.org/) 1.22 installed in addition to other per-platform requirements.
+All builds require [Node](https://nodejs.org/) 22 (lts/hydrogen), and [Go](https://golang.org/) 1.22 installed in addition to other per-platform requirements.
 
 > 💡 NOTE: if you have `nvm` installed, run `nvm use` to switch to the correct node version!
 

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline er et prosjekt med åpen kildekode og er opprettet av <a href={jigsawUrl}>Jigsaw</a> for å gi nyhetsorganisasjoner og journalister mulighet til å bruke Internett på en tryggere måte.<br><br> Outline drives av <a href={shadowsocksUrl}>Shadowsocks</a> og er fortsatt på et tidlig stadium. Du kan bidra med koding ved å gå til <a href={gitHubUrl}>GitHub</a>, og du kan følge oss på <a href={redditUrl}>Reddit</a> og <a href={mediumUrl}>Medium</a> for å bli varslet når vi utvider til flere plattformer og legger til nye funksjoner.",
+  "about-outline": "Outline er et prosjekt med åpen kildekode og er opprettet av Outline Foundation for å gi nyhetsorganisasjoner og journalister mulighet til å bruke Internett på en tryggere måte.<br><br> Outline drives av <a href={shadowsocksUrl}>Shadowsocks</a> og er fortsatt på et tidlig stadium. Du kan bidra med koding ved å gå til <a href={gitHubUrl}>GitHub</a>, og du kan følge oss på <a href={redditUrl}>Reddit</a> og <a href={mediumUrl}>Medium</a> for å bli varslet når vi utvider til flere plattformer og legger til nye funksjoner.",
   "about-version": "Versjon {version}",
   "aws-lightsail-firewall-0": "Naviger til skjermbildet med {openLink}Amazon Lightsail{closeLink}-forekomster.",
   "aws-lightsail-firewall-1": "Klikk på forekomsten du vil bruke som vert for Outline.",

@@ -373,7 +373,7 @@ export class AppRoot extends mixinBehaviors(
         localize="[[localize]]"
         id="drawer"
         show-quit="[[shouldShowQuitButton]]"
-        data-collection-page-url="[[_computeSupportSiteUrl(language, 'https://support.google.com/outline/answer/15331222')]]"
+        data-collection-page-url="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
         show-appearance-view="[[showAppearanceView]]"
       ></root-navigation>
 
@@ -390,7 +390,7 @@ export class AppRoot extends mixinBehaviors(
       <privacy-acknowledgement-dialog
         id="privacyView"
         localize="[[localize]]"
-        privacy-page-url="[[_computeSupportSiteUrl(language, 'https://support.google.com/outline/answer/15331222')]]"
+        privacy-page-url="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
       ></privacy-acknowledgement-dialog>
 
       <auto-connect-dialog
@@ -813,22 +813,6 @@ export class AppRoot extends mixinBehaviors(
   _computeShouldShowAddButton(page) {
     // Only show the add button if we're on the home page.
     return page === 'home';
-  }
-
-  _computeSupportSiteLanguageCode(languages, language) {
-    return languages[language].supportId;
-  }
-
-  _computeSupportSiteUrl(language, url) {
-    const parsedUrl = new URL(url);
-    const supportLanguageCode = this._computeSupportSiteLanguageCode(
-      this.LANGUAGES_AVAILABLE,
-      language
-    );
-    if (supportLanguageCode) {
-      parsedUrl.searchParams.append('language', supportLanguageCode);
-    }
-    return parsedUrl.toString();
   }
 
   _goBack() {

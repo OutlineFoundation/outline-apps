@@ -19,7 +19,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
+	"localhost/client/go/configyaml"
 )
 
 type FirstSupportedConfig struct {

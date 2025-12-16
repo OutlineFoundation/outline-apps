@@ -20,7 +20,7 @@ import (
 	"log/slog"
 	"net"
 
-	perrs "github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	perrs "localhost/client/go/outline/platerrors"
 	gonm "github.com/Wifx/gonetworkmanager/v2"
 )
 

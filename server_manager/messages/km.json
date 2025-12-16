@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline គឺជាគម្រោងកូដចំហមួយ ដែលបង្កើតឡើងដោយ <a href={jigsawUrl}>Jigsaw</a> ដើម្បីផ្ដល់​វិធីដែល​កាន់តែ​មានសុវត្ថិភាពដល់​ស្ថាប័នព័ត៌មាន និង​អ្នកកាសែត​ក្នុងការចូលប្រើ​អ៊ីនធឺណិត។<br><br> Outline ត្រូវបាន​ដំណើរការដោយ <a href={shadowsocksUrl}>Shadowsocks</a> និងស្ថិតក្នុងដំណាក់កាល​ដំបូងនៅឡើយ។ អ្នកអាច​រួមចំណែក​ដល់កូដនេះនៅលើ <a href={gitHubUrl}>GitHub</a> និងតាមដានយើងនៅលើ <a href={redditUrl}>Reddit</a> និង <a href={mediumUrl}>Medium</a> ដើម្បីដឹងនៅពេល​យើង​ពង្រីកទៅ​ប្រព័ន្ធ​ច្រើនទៀត និងបញ្ចូល​មុខងារថ្មីៗ។",
+  "about-outline": "Outline គឺជាគម្រោងកូដចំហមួយ ដែលបង្កើតឡើងដោយ Outline Foundation ដើម្បីផ្ដល់​វិធីដែល​កាន់តែ​មានសុវត្ថិភាពដល់​ស្ថាប័នព័ត៌មាន និង​អ្នកកាសែត​ក្នុងការចូលប្រើ​អ៊ីនធឺណិត។<br><br> Outline ត្រូវបាន​ដំណើរការដោយ <a href={shadowsocksUrl}>Shadowsocks</a> និងស្ថិតក្នុងដំណាក់កាល​ដំបូងនៅឡើយ។ អ្នកអាច​រួមចំណែក​ដល់កូដនេះនៅលើ <a href={gitHubUrl}>GitHub</a> និងតាមដានយើងនៅលើ <a href={redditUrl}>Reddit</a> និង <a href={mediumUrl}>Medium</a> ដើម្បីដឹងនៅពេល​យើង​ពង្រីកទៅ​ប្រព័ន្ធ​ច្រើនទៀត និងបញ្ចូល​មុខងារថ្មីៗ។",
   "about-version": "ជំនាន់ {version}",
   "aws-lightsail-firewall-0": "ទៅ​កាន់​អេក្រង់​ម៉ាស៊ីននិម្មិត​របស់ {openLink}Amazon Lightsail{closeLink}។",
   "aws-lightsail-firewall-1": "ចុច​លើ​ម៉ាស៊ីននិម្មិត​ដែល​អ្នក​ចង់​បង្ហោះ Outline។",

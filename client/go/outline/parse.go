@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/platerrors"
 	"github.com/goccy/go-yaml"
 )
 

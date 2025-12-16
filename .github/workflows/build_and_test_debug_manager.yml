@@ -103,7 +103,7 @@ jobs:
 
   mac_debug_build:
     name: MacOS Debug Build
-    runs-on: macos-13
+    runs-on: macos-15
     needs: web_test
     env:
       SENTRY_DSN: debug

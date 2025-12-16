@@ -34,7 +34,7 @@ describe('fetchWithPin', () => {
   });
 
   // Make a certificate.
-  const {privateKey, publicKey} = forge.pki.rsa.generateKeyPair(1024);
+  const {privateKey, publicKey} = forge.pki.rsa.generateKeyPair(2048);
   const cert = forge.pki.createCertificate();
   cert.publicKey = publicKey;
   cert.sign(privateKey); // Self-signed cert

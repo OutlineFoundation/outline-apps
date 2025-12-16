@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline یک پروژه منبع آزاد است که توسط <a href={jigsawUrl}>Jigsaw</a> ایجاد شده است تا سازمان‌های خبری و خبرنگاران بتوانند دسترسی ایمن‌تری به اینترنت داشته باشند.<br><br>Outline توسط <a href={shadowsocksUrl}>Shadowsocks</a> ارائه می‌شود و محصولی است که همچنان در ابتدای راه است. در <a href={gitHubUrl}>GitHub</a> می‌توانید درزمینه کد همکاری داشته باشید، ما را در <a href={redditUrl}>Reddit</a> و <a href={mediumUrl}>Medium</a> دنبال کنید تا در صورت حضور گسترده‌تر در پلتفورم‌های بیشتر و افزودن ویژگی‌های جدید مطلع شوید.",
+  "about-outline": "Outline یک پروژه منبع آزاد است که توسط Outline Foundation ایجاد شده است تا سازمان‌های خبری و خبرنگاران بتوانند دسترسی ایمن‌تری به اینترنت داشته باشند.<br><br>Outline توسط <a href={shadowsocksUrl}>Shadowsocks</a> ارائه می‌شود و محصولی است که همچنان در ابتدای راه است. در <a href={gitHubUrl}>GitHub</a> می‌توانید درزمینه کد همکاری داشته باشید، ما را در <a href={redditUrl}>Reddit</a> و <a href={mediumUrl}>Medium</a> دنبال کنید تا در صورت حضور گسترده‌تر در پلتفورم‌های بیشتر و افزودن ویژگی‌های جدید مطلع شوید.",
   "about-version": "نسخه {version}",
   "aws-lightsail-firewall-0": "به صفحه نمونه‌های {openLink}Amazon Lightsail{closeLink} پیمایش کنید.",
   "aws-lightsail-firewall-1": "روی نمونه‌ای که می‌خواهید میزبان Outline باشد، کلیک کنید.",

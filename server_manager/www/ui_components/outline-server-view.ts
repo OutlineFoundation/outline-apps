@@ -447,7 +447,7 @@ export class ServerView extends DirMixin(PolymerElement) {
               >
               <a
                 class="privacy-statement-link"
-                href="https://support.google.com/outline/answer/15331222"
+                href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
                 >[[localize('server-view-privacy-statement-link')]]</a
               >
             </p>
@@ -499,7 +499,7 @@ export class ServerView extends DirMixin(PolymerElement) {
               >
               <a
                 class="privacy-statement-link"
-                href="https://support.google.com/outline/answer/15331222"
+                href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
                 >[[localize('server-view-privacy-statement-link')]]</a
               >
             </p>
@@ -600,6 +600,7 @@ export class ServerView extends DirMixin(PolymerElement) {
       isHostnameEditable: Boolean,
       isServerReachable: Boolean,
       language: String,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       localize: Function,
       metricsEnabled: Boolean,
       metricsId: String,
@@ -764,6 +765,7 @@ export class ServerView extends DirMixin(PolymerElement) {
   _computeAccessKeyTabMessage(
     hasAccessKeyData: boolean,
     accessKeyData: AccessKeyDataTableRow[],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     localize: Function
   ) {
     if (!hasAccessKeyData) {
@@ -812,6 +814,7 @@ export class ServerView extends DirMixin(PolymerElement) {
     return formatting.bytesToDisplayDataAmount(limit);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   _formatDisplayDataLimit(limit: number, language: string, localize: Function) {
     return exists(limit)
       ? formatting.formatBytes(limit, language)
