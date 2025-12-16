@@ -1,0 +1,1710 @@
+{
+  "about_outline": {
+    "message": "Outline is an open source project created by $JIGSAW$ to provide a safer way for news organizations and journalists to access the internet.$NEW_LINE$$NEW_LINE$ Outline is powered by $SHADOWSOCKS$ and is still an early stage product. You can contribute to the code on $GITHUB$, and follow us on $REDDIT$ and $MEDIUM$ to hear when we expand to more platforms and add new features.",
+    "description": "This string appears in a dialog as a paragraph to provide a description of the product. Outline is the product name and should not be translated.",
+    "placeholders": {
+      "GITHUB": {
+        "content": "<a href={gitHubUrl}>GitHub</a>"
+      },
+      "JIGSAW": {
+        "content": "<a href={jigsawUrl}>Jigsaw</a>"
+      },
+      "MEDIUM": {
+        "content": "<a href={mediumUrl}>Medium</a>"
+      },
+      "NEW_LINE": {
+        "content": "<br>"
+      },
+      "REDDIT": {
+        "content": "<a href={redditUrl}>Reddit</a>"
+      },
+      "SHADOWSOCKS": {
+        "content": "<a href={shadowsocksUrl}>Shadowsocks</a>"
+      }
+    }
+  },
+  "about_version": {
+    "message": "Version $VERSION$",
+    "description": "This string appears in a dialog as a header to indicate the version of the application.",
+    "placeholders": {
+      "VERSION": {
+        "content": "{version}",
+        "example": "1.0.2"
+      }
+    }
+  },
+  "aws_lightsail_firewall_0": {
+    "message": "Navigate to the $START_OF_LINK$Amazon Lightsail$END_OF_LINK$ instances screen.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Amazon Lightsail is a product name and should not be translated.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "aws_lightsail_firewall_1": {
+    "message": "Click the instance on which you want to host Outline.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail."
+  },
+  "aws_lightsail_firewall_2": {
+    "message": "Navigate to the 'Networking' tab.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail.. 'Networking' should be translated and included untranslated in parentheses."
+  },
+  "aws_lightsail_firewall_3": {
+    "message": "In the 'IPv4 Firewall' section, click 'Add rule'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "aws_lightsail_firewall_4": {
+    "message": "Set 'Application' value to 'All protocols'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "aws_lightsail_firewall_5": {
+    "message": "Click 'Create'.",
+    "meaning": "MsgID-20251015-UpdateWhenDescriptionChanged",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "aws-lightsail-firewall-6": {
+    "message": "In the 'IPv4 Networking' section, click 'Attach static IP'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "aws-lightsail-firewall-7": {
+    "message": "Enter a name and click 'Create and attach'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure firewall rules in Amazon Lightsail. Words in quotes should be translated and included untranslated in parentheses."
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "This string appears across the application as a button. Clicking it aborts the current flow."
+  },
+  "contact_view_exit_cannot_add_server": {
+    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
+    "message": "The Outline team is not able to assist with adding a server. Please try the troubleshooting steps listed $START_OF_LINK$here$END_OF_LINK$ and then contact the person who gave you the access key to troubleshoot this issue.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "contact_view_exit_connection": {
+    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
+    "meaning": "MsgID-20240319-UpdateWhenPlaceHolderChanged",
+    "message": "The Outline team is not able to assist with connecting to a server. Please try the troubleshooting steps listed $START_OF_LINK$here$END_OF_LINK$ and then contact the person who gave you the access key to troubleshoot this issue.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "contact_view_exit_open_ticket": {
+    "description": "Message shown to users who are trying to contact support again while having a pending support ticket open.",
+    "message": "We are currently experiencing high support volume and appreciate your patience. Please do not submit a new request for this concern. If you have additional information to provide, please reply to the initial email about this request."
+  },
+  "contact_view_intro": {
+    "description": "Introduction message to users who are looking to contact support.",
+    "message": "Tell us how we can help. Please explain your issue in detail and do not enter personal information that is not requested below."
+  },
+  "contact_view_issue_cannot_add_server": {
+    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
+    "message": "I am having trouble adding a server using my access key"
+  },
+  "contact_view_issue_connection": {
+    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
+    "message": "I am having trouble connecting to my Outline VPN server"
+  },
+  "contact_view_issue_general": {
+    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
+    "message": "General feedback & suggestions"
+  },
+  "contact_view_issue_managing": {
+    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
+    "message": "I need assistance managing my Outline VPN server or helping others connect to it"
+  },
+  "contact_view_issue_performance": {
+    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
+    "message": "My internet access is slow while connected to my Outline VPN server"
+  },
+  "contact_view_issue": {
+    "description": "Label of a Contact Support form input field.",
+    "message": "Outline issue"
+  },
+  "contact_view_open_ticket": {
+    "description": "Label for a Contact Support form asking if the user already has a pending ticket open with support.",
+    "message": "Do you have an open ticket for this issue?"
+  },
+  "geo_amsterdam": {
+    "message": "Amsterdam",
+    "description": "Name of the city in the Netherlands."
+  },
+  "geo_bangalore": {
+    "message": "Bangalore",
+    "description": "Name of the city in India."
+  },
+  "geo_changhua_county": {
+    "message": "Changhua County",
+    "description": "Name of the county in Taiwan."
+  },
+  "geo_delhi": {
+    "message": "Delhi",
+    "description": "Name of the city in India."
+  },
+  "geo_eemshaven": {
+    "message": "Eemshaven",
+    "description": "Name of the seaport in the Netherlands."
+  },
+  "geo_frankfurt": {
+    "message": "Frankfurt",
+    "description": "Name of the city in Germany."
+  },
+  "geo_hamina": {
+    "message": "Hamina",
+    "description": "Name of the town in Finland."
+  },
+  "geo_hk": {
+    "message": "Hong Kong",
+    "description": "Name of Hong Kong in China"
+  },
+  "geo_iowa": {
+    "message": "Iowa",
+    "description": "Name of the US state."
+  },
+  "geo_jakarta": {
+    "message": "Jakarta",
+    "description": "Name of the capital of Indonesia."
+  },
+  "geo_jurong_west": {
+    "message": "Jurong West",
+    "description": "Name of the area in Singapore."
+  },
+  "geo_las_vegas": {
+    "message": "Las Vegas",
+    "description": "Name of the city in the Nevada, USA."
+  },
+  "geo_london": {
+    "message": "London",
+    "description": "Name of the city in England."
+  },
+  "geo_los_angeles": {
+    "message": "Los Angeles",
+    "description": "Name of the city in California, USA."
+  },
+  "geo_melbourne": {
+    "message": "Melbourne",
+    "description": "Name of the city in Australia."
+  },
+  "geo_montreal": {
+    "message": "Montréal",
+    "description": "Name of the city in Canada."
+  },
+  "geo_mumbai": {
+    "message": "Mumbai",
+    "description": "Name of the city in India."
+  },
+  "geo_new_york_city": {
+    "message": "New York",
+    "description": "Name of the city in the United States."
+  },
+  "geo_northern_virginia": {
+    "message": "Northern Virginia",
+    "description": "Name of the area in Virginia, USA."
+  },
+  "geo_oregon": {
+    "message": "Oregon",
+    "description": "Name of the US state."
+  },
+  "geo_osaka": {
+    "message": "Osaka",
+    "description": "Name of the city in Japan."
+  },
+  "geo_salt_lake_city": {
+    "message": "Salt Lake City",
+    "description": "Name of the city in Utah, USA."
+  },
+  "geo_san_francisco": {
+    "message": "San Francisco",
+    "description": "Name of the city in the United States."
+  },
+  "geo_sao_paulo": {
+    "message": "São Paulo",
+    "description": "Name of the state in Brazil."
+  },
+  "geo_seoul": {
+    "message": "Seoul",
+    "description": "Name of the city in South Korea."
+  },
+  "geo_sg": {
+    "message": "Singapore",
+    "description": "Name of the country of Singapore"
+  },
+  "geo_south_carolina": {
+    "message": "South Carolina",
+    "description": "Name of the US state."
+  },
+  "geo_st_ghislain": {
+    "message": "St. Ghislain",
+    "description": "Name of the town in Belgium."
+  },
+  "geo_sydney": {
+    "message": "Sydney",
+    "description": "Name of the city in Australia."
+  },
+  "geo_tokyo": {
+    "message": "Tokyo",
+    "description": "Name of the city in Japan."
+  },
+  "geo_toronto": {
+    "message": "Toronto",
+    "description": "Name of the city in Canada."
+  },
+  "geo_warsaw": {
+    "message": "Warsaw",
+    "description": "Name of the city in Poland."
+  },
+  "geo_zurich": {
+    "message": "Zürich",
+    "description": "Name of the city in Switzerland."
+  },
+  "close": {
+    "message": "Close",
+    "description": "This string appears in dialogs as a button. Clicking it dismisses the dialog."
+  },
+  "confirmation_server_destroy": {
+    "message": "Existing users will lose access. This action cannot be undone.",
+    "description": "This string appears in a dialog that requests user confirmation for destroying a server. It informs the user about the consequences of destroying a server. 'Destroy' in this context implies that the server will be deleted."
+  },
+  "confirmation_server_destroy_title": {
+    "message": "Destroy Server?",
+    "description": "This string appears in a dialog that requests user confirmation for destroying a server. 'Destroy' in this context implies that the server will be deleted."
+  },
+  "confirmation_server_remove": {
+    "message": "This action removes your server from the Outline Manager, but does not block proxy access to users. You will still need to manually delete the Outline server from your host machine.",
+    "description": "This string appears in a dialog that requests user confirmation for removing a server from the application. It informs the user about the consequences of removing a server. 'Remove' in this context does not imply server deletion."
+  },
+  "confirmation_server_remove_title": {
+    "message": "Remove Server?",
+    "description": "This string appears in a dialog that requests user confirmation for removing a server from the application. 'Remove' in this context does not imply server deletion."
+  },
+  "data_limit": {
+    "message": "Data Limit",
+    "Description": "This string appears in various places related to the data transfer limit for a single access key."
+  },
+  "data_limit_per_key": {
+    "message": "Data limit per key",
+    "description": "This string appears as a label to an input to set the default access key data limit for a server."
+  },
+  "data_limits": {
+    "message": "Data limits",
+    "description": "This string appears as a title in a section to configure access key data transfer limits."
+  },
+  "data_limits_description": {
+    "message": "Set a 30 day trailing data transfer limit for access keys on this server.",
+    "description": "This string appears as an explanation to the access key data transfer limits feature."
+  },
+  "data_limits_dialog_text": {
+    "message": "Go to the Settings tab to set a data transfer limit for access keys on this server.",
+    "description": "This string appears as a text in a dialog to advertise the data limits feature."
+  },
+  "data_limits_dialog_title": {
+    "message": "Avoid data overages",
+    "description": "This string appears as a title in a dialog to advertise the data limits feature."
+  },
+  "data_limits_disclaimer": {
+    "message": "Since you are currently reporting metrics, use of the data limits feature will be included. Please see the $START_OF_LINK$data collection policy$END_OF_LINK$ for more details.",
+    "description": "This string provides a data collection disclaimer to opting into the data limits features.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "data_limits_usage": {
+    "message": "$USED$ of $TOTAL$ used",
+    "description": "This string appears in a tooltip when the data limits feature is enabled. It lets the user know how much data an access key has used, relative to the limit.",
+    "placeholders": {
+      "USED": {
+        "content": "{used}",
+        "example": "10 GB"
+      },
+      "TOTAL": {
+        "content": "{total}",
+        "example": "50 GB"
+      }
+    }
+  },
+  "destroy": {
+    "message": "Destroy",
+    "description": "This string appears as a button in a dialog that requests user confirmation for destroying a server. Clicking the button causes the server to be deleted."
+  },
+  "disconnect": {
+    "message": "Disconnect",
+    "description": "This string appears as a button in a dialog to disconnect the user's cloud service account from the application. Clicking it signs the user out of the cloud server provider."
+  },
+  "digitalocean_disconnect_account": {
+    "message": "Disconnect DigitalOcean account",
+    "description": "This string appears as a header in a dialog to disconnect the user's DigitalOcean account from the application. DigitalOcean is a cloud server provider name and should not be translated."
+  },
+  "digitalocean_unreachable": {
+    "message": "This error may be due to a firewall on your network or temporary connectivity issues with digitalocean.com.",
+    "description": "This string appears in a dialog as a paragraph. It is shown when a DigitalOcean server cannot be reached. DigitalOcean is a cloud server provider."
+  },
+  "disabled": {
+    "message": "Disabled",
+    "description": "This string appears across the application as a drop-down menu option. It allows the user to deactivate features."
+  },
+  "done": {
+    "message": "Done",
+    "description": "This string appears across the application as a button. It lets the user indicate that an action, such as entering text or reading a dialog, has been completed."
+  },
+  "enabled": {
+    "message": "Enabled",
+    "description": "This string appears across the application as a drop-down menu option. It allows the user to activate features."
+  },
+  "error_connectivity": {
+    "message": "We're having trouble connecting to your DigitalOcean account. This is sometimes a temporary problem with DigitalOcean or with your internet connection. If retrying doesn't work, logging into DigitalOcean again should fix the problem.",
+    "description": "This string appears in a dialog as a paragraph. The dialog is shown when an operation on a DigitalOcean server fails due to connectivity issues. The dialog displays buttons that allow the user to retry the operation. DigitalOcean is a cloud server provider name and should not be translated."
+  },
+  "error_connectivity_title": {
+    "message": "Connection problem",
+    "description": "This string appears in a dialog as a header. The dialog is shown when an operation on a server fails due to connectivity issues. The dialog displays buttons that allow the user to retry the operation."
+  },
+  "error_do_account_info": {
+    "message": "Failed to get DigitalOcean account information",
+    "description": "This string appears in an error notification toast. It is shown when there is an error retrieving the user's DigitalOcean account. DigitalOcean is a cloud server provider name and should not be translated."
+  },
+  "error_do_auth": {
+    "message": "Authentication with DigitalOcean failed",
+    "description": "This string appears in an error notification toast. It is shown when there is an error when logging in to the user's DigitalOcean account. DigitalOcean is a cloud server provider name and should not be translated."
+  },
+  "error_do_regions": {
+    "message": "Failed to get list of available regions",
+    "description": "This string appears in an error notification toast. It is shown when there is an error retrieving the regions available for server deployment."
+  },
+  "error_do_limit": {
+    "message": "Your DigitalOcean account has reached its limit of $NUM$ Droplets.  You can request an increase at https://cloud.digitalocean.com/account/team/droplet_limit_increase",
+    "description": "This string appears in an error notification toast. It is shown when the user has created the maximum number of allowed servers.",
+    "placeholders": {
+      "NUM": {
+        "content": "{num}",
+        "example": "3"
+      }
+    }
+  },
+  "error_do_warning": {
+    "message": "DigitalOcean warning: \"$MESSAGE$\"",
+    "description": "This string appears in an error notification toast when login has succeeded but there is a warning message.",
+    "placeholders": {
+      "MESSAGE": {
+        "content": "{message}",
+        "example": "Your team has been locked due to improper use of the platform."
+      }
+    }
+  },
+  "error_gcp_auth": {
+    "message": "Authentication with Google Cloud Platform failed",
+    "description": "This string appears in an error notification toast. It is shown when there is an error when logging in to the user's Google Cloud Platform account. Google Cloud Platform is a cloud server provider name and should not be translated."
+  },
+  "error_feedback": {
+    "message": "Failed to submit feedback. Please try again.",
+    "description": "This string appears in an error notification toast. It is shown when there is an error submitting the user's feedback."
+  },
+  "error_hostname_invalid": {
+    "message": "Must be an IP address or valid hostname.",
+    "description": "This string appears in an inline error message.  It signifies that the user has input an invalid hostname."
+  },
+  "error_key_add": {
+    "message": "Failed to add key",
+    "description": "This string appears in an error notification toast. It is shown when there is an error creating a server access key."
+  },
+  "error_key_remove": {
+    "message": "Failed to remove key",
+    "description": "This string appears in an error notification toast. It is shown when there is an error deleting a server access key."
+  },
+  "error_key_rename": {
+    "message": "Failed to rename key",
+    "description": "This string appears in an error notification toast. It is shown when there is an error renaming a server access key."
+  },
+  "error_keys_get": {
+    "message": "Could not load keys",
+    "description": "This string appears in an error notification toast. It is shown when there is an error retrieving a server access keys."
+  },
+  "error_keys_port_bad_input": {
+    "message": "The port must be an integer between 1 and 65,535.",
+    "description": "This string appears in an inline error message.  It signifies that the input number for the port for new access keys is invalid."
+  },
+  "error_keys_port_in_use": {
+    "message": "The port is already in use on the server.",
+    "description": "This string appears in an inline error message.  It signifies that the input port for new access keys is already being used on the server and is unavailable."
+  },
+  "error_licenses": {
+    "message": "Could not load licenses.",
+    "description": "This string appears in a dialog that shows the application's software licenses. It is shown instead of the licenses' text when loading them fails."
+  },
+  "error_metrics": {
+    "message": "Error setting metrics enabled",
+    "description": "This string appears in an error notification toast. It is shown when there is an error enabling or disabling a server's metrics reporting."
+  },
+  "error_network": {
+    "message": "A network error occurred.",
+    "description": "This string indicates that an error happened due to network errors like not being connected to the internet."
+  },
+  "error_not_saved": {
+    "message": "Not Saved",
+    "description": "This string appears in an error notification toast.  It signifies failure to submit user input to change the port number for new access keys."
+  },
+  "error_server_creation": {
+    "message": "There was an error creating your Outline server.",
+    "description": "This string appears in an dialog as a paragraph. The dialog is shown when there is an creating a server; the user can retry the operation or destroy the server."
+  },
+  "error_server_destroy": {
+    "message": "Failed to destroy server",
+    "description": "This string appears in an error notification toast. It is shown when there is an error destroying a server."
+  },
+  "error_server_removed": {
+    "message": "$SERVER_NAME$ no longer present in your DigitalOcean account.",
+    "description": "This string appears in an error notification toast. It is shown when a DigitalOcean server was destroyed outside the application to let the user know that it will not be displayed in the UI. DigitalOcean is a cloud server provider name and should not be translated.",
+    "placeholders": {
+      "SERVER_NAME": {
+        "content": "{serverName}",
+        "example": "New York Outline Server"
+      }
+    }
+  },
+  "error_server_rename": {
+    "message": "Failed to rename server",
+    "description": "This string appears in an error notification toast. It is shown when there is an error renaming a server."
+  },
+  "error_server_unreachable": {
+    "message": "Your Outline Server was installed correctly, but we are not able to connect to it. Most likely this is because your server's firewall rules are blocking incoming connections. Please review them and make sure to allow incoming TCP connections on ports ranging from 1024 to 65535.",
+    "description": "This string appears in dialog as a paragraph. The dialog is shown when a server is installed successfully but cannot be reached. The dialog provides possible solutions and displays buttons that allow the user to retry reaching the server."
+  },
+  "error_server_unreachable_title": {
+    "message": "Unable to connect to your Outline Server",
+    "description": "This string appears in dialog as a header. The dialog is shown when a server is installed successfully but cannot be reached."
+  },
+  "error_servers_removed": {
+    "message": "$SERVER_NAMES$ no longer present in your DigitalOcean account.",
+    "description": "This string appears in an error notification toast. It is shown when multiple DigitalOcean servers were destroyed outside the application to let the user know that they will not be displayed in the UI. DigitalOcean is a cloud server provider name and should not be translated.",
+    "placeholders": {
+      "SERVER_NAMES": {
+        "content": "{serverNames}",
+        "example": "New York Outline Server, Amsterdam Outline Server"
+      }
+    }
+  },
+  "error_unexpected": {
+    "message": "An unexpected error occurred.",
+    "description": "This string signifies that an error we didn't expect was encountered."
+  },
+  "error_set_data_limit": {
+    "message": "Could not set default data limit",
+    "description": "This string appears in an error notification toast. It is shown on failure to set the default data transfer limit on access keys."
+  },
+  "error_remove_data_limit": {
+    "message": "Could not disable default data limit",
+    "description": "This string appears in an error notification toast. It is shown on failure to remove the default data transfer limit on access keys."
+  },
+  "error_set_per_key_limit": {
+    "message": "Could not set data limit for this access key",
+    "description": "This string appears in an error notification toast. It is shown on failure to set the data transfer limit on a particular access key."
+  },
+  "error_remove_per_key_limit": {
+    "message": "Could not remove data limit from this access key",
+    "description": "This string appears in an error notification toast. It is shown on failure to remove the data transfer limit on a particular access key."
+  },
+  "experimental": {
+    "message": "Experimental",
+    "description": "This tag appears above a feature that is not yet fully tested."
+  },
+  "experiments": {
+    "message": "Experiments",
+    "description": "This string is the title of a section that displays opt-in experimental features."
+  },
+  "experiments_description": {
+    "message": "Test new features and provide us with feedback before they are released.",
+    "description": "This string is the description of a section that displays opt-in experimental features."
+  },
+  "experiments_disclaimer": {
+    "message": "Experiments are in development and may change or be removed from the app. If you are currently reporting metrics, use of experimental features will be included. Please see the $START_OF_LINK$data collection policy$END_OF_LINK$ for more details.",
+    "description": "This string provides a disclaimer to opting into experimental features.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "experiments_feedback": {
+    "message": "Have suggestions? $START_OF_LINK$Submit feedback here.$END_OF_LINK$",
+    "description": "This string appears in a section that allows the user to enable experimental features. Allows the user to submit feedback about a particular feature.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "feedback_cloud_provider": {
+    "message": "Select cloud provider",
+    "description": "This string appears in the feedback dialog as an placeholder within a drop-down. Allows the user to select a cloud provider for certain feedback categories."
+  },
+  "feedback_cloud_provider_error": {
+    "message": "Please select a cloud provider.",
+    "description": "This string appears in the feedback dialog as an error message within a drop-down. The string appears when the user attempts to submit feedback without selecting a cloud provider."
+  },
+  "feedback_connection": {
+    "message": "Can't connect to my server",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of feedback categories. Indicates that the user cannot connect to their server."
+  },
+  "feedback_connection_others": {
+    "message": "Others can't connect to my server",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of feedback categories. Indicates that users who have been given access keys cannot connect to the server."
+  },
+  "feedback_disclaimer": {
+    "message": "Please note that our team is only able to answer feedback in English.",
+    "description": "This string appears in the feedback dialog as a paragraph under the feedback form. Lets the user know that, although the application is localized, our team can only respond to feedback in English."
+  },
+  "feedback_email": {
+    "message": "Email address (optional)",
+    "description": "This string appears in the feedback dialog as a label of the email input form."
+  },
+  "feedback_error": {
+    "message": "Please enter feedback.",
+    "description": "This string appears in the feedback dialog as a paragraph below the feedback input form. It is displayed when the user clicks the submit button without having entered feedback in the input form."
+  },
+  "feedback_explanation_install": {
+    "message": "An error occurred while attempting to install Outline on your server. If you haven't been able to figure out a solution, please consider sending us feedback and telling us your email address (optional) so that we can get back to you.",
+    "description": "This string appears in the feedback dialog as a paragraph above the feedback input form. The feedback dialog gets automatically displayed with this message when a server installation fails."
+  },
+  "feedback_general": {
+    "message": "General feedback",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of feedback categories. Indicates that the user is providing general feedback."
+  },
+  "feedback_install": {
+    "message": "Having trouble installing Outline",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of feedback categories. Indicates that the user cannot install Outline on their server."
+  },
+  "feedback_label": {
+    "message": "Your feedback",
+    "description": "This string appears in the feedback dialog as a placeholder of the feedback input form."
+  },
+  "feedback_management": {
+    "message": "Having trouble managing my server",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of feedback categories. Indicates that the user is having issues managing their server."
+  },
+  "feedback_other": {
+    "message": "Other",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of cloud providers. Indicates that the user has a server on an unlisted cloud provider."
+  },
+  "feedback_privacy": {
+    "message": "Your feedback, email address (if provided) and additional information referred to in the $START_OF_LINK$privacy policy$END_OF_LINK$ will be sent to the Outline team.",
+    "description": "This string appears in the feedback dialog as paragraph below the feedback input form. Lets the user know how their feedback and personal information will be handled.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "feedback_submit": {
+    "message": "Submit",
+    "description": "This string appears in the feedback dialog as a button. Clicking it submits the feedback form."
+  },
+  "feedback_suggestion": {
+    "message": "Suggestions",
+    "description": "This string appears in the feedback dialog as an option within a drop-down of feedback categories. Indicates that the user is providing a product suggestion."
+  },
+  "feedback_title_generic": {
+    "message": "Send Feedback",
+    "description": "This string appears in the feedback dialog as a header."
+  },
+  "feedback_title_install": {
+    "message": "Outline Server Installation Failed",
+    "description": "This string appears in the feedback dialog as a header. The feedback dialog gets automatically displayed with this header when a server installation fails."
+  },
+  "gcp_billing_description": {
+    "message": "$START_OF_LINK$Open the Cloud Console billing page$END_OF_LINK$ and add an account in order to proceed.",
+    "description": "This instruction is a clarification regarding the title of the billing page.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "gcp_billing_action": {
+    "message": "Next",
+    "description": "Button label for a button that opens the billing page in the web browser (i.e. next step).",
+    "meaning": "gcp_billing_action"
+  },
+  "gcp_billing_body": {
+    "message": "Waiting for you to $START_OF_LINK$add a billing account on Google Cloud$END_OF_LINK$",
+    "description": "Body text on the billing page",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "gcp_billing_error": {
+    "message": "Unable to retrieve billing information",
+    "description": "Error popup message in response to a user click"
+  },
+  "gcp_billing_error_zero": {
+    "message": "You must add a billing account before proceeding.",
+    "description": "Error popup message in response to a user click"
+  },
+  "gcp_click_create": {
+    "message": "Click 'Create'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure a firewall in Google Cloud Platform. 'Create' should be translated and included untranslated in parentheses."
+  },
+  "gcp_create_new_project": {
+    "message": "$START_OF_LINK$Create a new Google Cloud Project$END_OF_LINK$.",
+    "description": "This string appears in the server setup view as a card header for creating a new Google Cloud project",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "gcp_create_new_vm": {
+    "message": "$START_OF_LINK$Create a new VM instance$END_OF_LINK$.",
+    "description": "This string appears in the server setup view as an section header for instructions for creating a VM on Google Cloud.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "gcp_create_project": {
+    "message": "Create a Google Cloud project",
+    "description": "This string appears as a header of a set of instructions for creating a new Google Cloud project"
+  },
+  "gcp_create_server": {
+    "message": "Create your Google Cloud Project",
+    "description": "This string appears in the server setup view as a section header for creating a new Google Cloud project"
+  },
+  "gcp_create_vm": {
+    "message": "Create a VM Instance",
+    "description": "This string appears as a header for a set of instructions for creating a new Google Cloud VM"
+  },
+  "gcp_disconnect_account": {
+    "message": "Disconnect Google Cloud Platform account",
+    "description": "This string appears as a header in a dialog to disconnect the user's Google Cloud Platform account from the application. Google Cloud Platform is a cloud server provider name and should not be translated."
+  },
+  "gcp_firewall_create_0": {
+    "message": "$START_OF_LINK$Add a new firewall rule$END_OF_LINK$ to your Compute Engine project.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure a firewall in Google Cloud Platform. Compute Engine is a product of Google Cloud Platform and should not be translated.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "gcp_firewall_create_1": {
+    "message": "Type 'outline' in the 'Name' field.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure a firewall in Google Cloud Platform. 'Name' should be translated and included untranslated in parentheses."
+  },
+  "gcp_firewall_create_2": {
+    "message": "Type 'outline' in the 'Target tags' field.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure a firewall in Google Cloud Platform. 'Target tags' should be translated and included untranslated in parentheses."
+  },
+  "gcp_firewall_create_3": {
+    "message": "Type '0.0.0.0/0' in the 'Source IP ranges' field.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure a firewall in Google Cloud Platform. 'Source IP ranges' should be translated and included untranslated in parentheses."
+  },
+  "gcp_firewall_create_4": {
+    "message": "Select 'Allow all' under 'Protocols and ports'.",
+    "description": "This string appears within the server setup view as an item of a list that provides instructions to configure a firewall in Google Cloud Platform. 'Allow all' and 'Protocols and ports' should be translated and included untranslated in parentheses."
+  },
+  "gcp_name_your_project": {
+    "message": "Name your project in the 'Project name' field.",
+    "description": "This string appears as instructions for naming a new Google Cloud Project.  'Project Name' should be translated and include untranslated in parentheses"
+  },
+  "gcp_oauth_connect_title": {
+    "message": "Sign in or create an account with Google Cloud Platform.",
+    "description": "This string appears in the server setup view as a header. Displayed when the user is prompted to connect to their Google Cloud account."
+  },
+  "gcp_project_setup_error": {
+    "message": "An error occurred while setting up your Google Cloud project",
+    "description": "Error message, shown in a popup when server creation fails"
+  },
+  "gcp_select_machine_type": {
+    "message": "Select 'f1-micro' under 'Machine type'",
+    "description": "This string appears as an instruction for selecting the machine type for a new Google Cloud VM.  'Machine type' should be translated and include untranslated in parentheses."
+  },
+  "gcp_select_networking": {
+    "message": "Click 'Management, security, disks, networking, sole tenancy', then 'Networking'",
+    "description": "This string appears as an instruction to find  the networking options when creating a new Google Cloud VM.  'Management, security, disks, networking, sole tenancy' and 'Networking' should match that used in the Google Cloud Console should be translated and included untranslated in parentheses."
+  },
+  "gcp_select_region": {
+    "message": "Select a region close to where the server's users will be under 'Region'.",
+    "description": "This string appears as an instruction for selecting a region for a new Google Cloud VM.  'Region' should be translated and include untranslated in parentheses."
+  },
+  "gcp_type_network_tag": {
+    "message": "Type 'outline' in the 'Network tags' field",
+    "description": "This string appears as an instruction for specifying a network tag in a new Google Cloud VM.  'Network tags' should be translated and include untranslated in parentheses"
+  },
+  "gcp_type_outline_server": {
+    "message": "Type 'outline-server' in the 'Name' field.",
+    "description": "This string is an instruction in directions for creating a new Google Cloud VM.  'Name' should be translated and include untranslated in parentheses"
+  },
+  "key": {
+    "message": "Key $KEY_ID$",
+    "description": "This string appears in the server view as a placeholder for a newly created access key with id number KEY_ID.",
+    "placeholders": {
+      "KEY_ID": {
+        "content": "{keyId}",
+        "example": "1"
+      }
+    }
+  },
+  "manager_resources": {
+    "message": "Manager Resources",
+    "description": "This string appears within the manager sidebar as a link to the manager documentation."
+  },
+  "management_api_documentation": {
+    "message": "Server Management API Documentation",
+    "description": "This string appears next to the management API url, pointing to the API documentation."
+  },
+  "manual_server_assign_firewall": {
+    "message": "Assign firewall rule",
+    "description": "This string appears in the server setup view as a sub-header of a section that provides instructions to configure the server's firewall."
+  },
+  "manual_server_assign_group": {
+    "message": "Assign Security Group",
+    "description": "This string appears in the server setup view as a sub-header of a section that provides instructions to configure the server's firewall."
+  },
+  "manual_server_create_firewall": {
+    "message": "Create a firewall rule",
+    "description": "This string appears in the server setup view as a sub-header of a section that provides instructions to configure the server's firewall."
+  },
+  "manual_server_create_group": {
+    "message": "Create a Security Group",
+    "description": "This string appears in the server setup view as a sub-header of a section that provides instructions to configure the server's firewall."
+  },
+  "manual_server_description": {
+    "message": "These steps will help you install Outline on a $CLOUD_PROVIDER$ Linux server.",
+    "description": "This string appears in the server setup view as a header when a specific cloud provider (AWS or GCP) is selected. The placeholder will be replaced with the cloud provider name (e.g., 'Amazon Web Services' or 'Google Cloud Platform'). Lets the user know that the following sections provide instructions on how to install Outline on their server.",
+    "placeholders": {
+      "CLOUD_PROVIDER": {
+        "content": "{cloudProvider}",
+        "example": "Amazon Web Services"
+      }
+    }
+  },
+  "manual_server_description_generic": {
+    "message": "These steps will help you install Outline on a Linux server.",
+    "description": "This string appears in the server setup view as a header when no specific cloud provider is selected. Lets the user know that the following sections provide instructions on how to install Outline on their server."
+  },
+
+  "manual_server_firewall": {
+    "message": "Configure your firewall",
+    "description": "This string appears in the server setup view as the header of a section that provides instructions to configure the server's firewall."
+  },
+  "manual_server_install_paste": {
+    "message": "Paste your installation output here.",
+    "description": "This string appears in the server setup view as a header of a section that contains an input form. The user must enter the output of the server installation script to manage their server in the application."
+  },
+  "manual_server_install_run": {
+    "message": "Log into your server, and run this command.",
+    "description": "This string appears in the server setup view as a header of a section that displays a command to install Outline on their server."
+  },
+  "manual_server_instructions": {
+    "message": "Instructions",
+    "description": "This string appears in the server setup view as a toggle of a section that provides instructions to configure the server's firewall."
+  },
+  "manual_server_show_me": {
+    "message": "Show me where",
+    "description": "This string appears in the server setup view as a button. Clicking the button opens a link to the cloud server provider management console."
+  },
+  "manual_server_title": {
+    "message": "Follow the instructions below",
+    "description": "This string appears in the server setup view as a header. Communicates to the user that they need to perform a series of actions to install Outline on their server."
+  },
+  "metrics_description": {
+    "message": "Share anonymized metrics to help improve the reliability and performance of Outline, for you and for those you share your server with. $START_OF_LINK$Learn more.$END_OF_LINK$",
+    "description": "This string appears in the server settings view as a paragraph next to a toggle that enables/disables server metrics reporting.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "metrics_setup_description": {
+    "message": "Share anonymized metrics to help improve the reliability and performance of Outline, for you and those you share a server with. You can update these preferences any time in the server settings tab.",
+    "description": "This string appears as a paragraph in a dialog that prompts the user to share server metrics. It provides information about the purpose of metrics sharing."
+  },
+  "metrics_setup_learn_more": {
+    "message": "Learn more",
+    "description": "This string appears as a link in a dialog that prompts the user to share server metrics. Clicking it opens a browser tab with more information about metrics sharing."
+  },
+  "metrics_setup_title": {
+    "message": "Share anonymous metrics for this server",
+    "description": "This string appears as the header of a dialog that prompts the user to share server metrics."
+  },
+  "metrics_share": {
+    "message": "Share metrics",
+    "description": "This string appears as a button of a dialog that prompts the user to share server metrics. Clicking it enables server metrics reporting."
+  },
+  "metrics_skip": {
+    "message": "Skip",
+    "description": "This string appears as a button of a dialog that prompts the user to share server metrics. Clicking it dismisses the dialog."
+  },
+  "metrics_title": {
+    "message": "Metrics sharing",
+    "description": "This string appears as the header of a dialog that prompts the user to share server metrics."
+  },
+  "nav_about": {
+    "message": "About",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens a dialog with information about Outline."
+  },
+  "no_data_limit": {
+    "message": "None",
+    "description": "This string appears alongside each access key in the data transfer stats section if it is under no data limit.  Example: 450 MB / None"
+  },
+  "nav_contact_us": {
+    "message": "Contact us",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens a dialog that allows the user to contact us."
+  },
+  "nav_data_collection": {
+    "message": "Data collection",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens Outline's data collection policy in the browser."
+  },
+  "nav_feedback": {
+    "message": "Feedback",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens a dialog that allows the user to submit feedback."
+  },
+  "nav_help": {
+    "message": "Help",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens Outline's support website."
+  },
+  "nav_licenses": {
+    "message": "Licenses",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens a dialog listing Outline's software licenses."
+  },
+  "nav_privacy": {
+    "message": "Privacy",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens Outline's privacy policy in the browser."
+  },
+  "nav_terms": {
+    "message": "Terms",
+    "description": "This string appears in an application drawer as a navigation link. Clicking it opens Outline's terms of service in the browser."
+  },
+  "no": {
+    "description": "Negative answer to a form question.",
+    "message": "No"
+  },
+  "notification_app_update": {
+    "message": "An updated version of the Outline Manager has been downloaded. It will be installed when you restart the application.",
+    "description": "This string appears in a transient notification toast. It is shown when an update to the application is ready to install."
+  },
+  "notification_feedback_thanks": {
+    "message": "Thanks for helping us improve! We love hearing from you.",
+    "description": "This string appears in a transient notification toast. It is shown when the user has successfully submitted feedback."
+  },
+  "notification_key_added": {
+    "message": "Key added",
+    "description": "This string appears in a transient notification toast. It is shown when a server access key has been successfully created."
+  },
+  "notification_key_removed": {
+    "message": "Key removed",
+    "description": "This string appears in a transient notification toast. It is shown when a server access key has been successfully removed."
+  },
+  "notification_server_destroyed": {
+    "message": "Server destroyed",
+    "description": "This string appears in a transient notification toast. It is shown when a server has been successfully destroyed."
+  },
+  "notification_server_exists": {
+    "message": "Server already added",
+    "description": "This string appears in a transient notification toast. It is shown when the user attempts to add server that is already present in the application."
+  },
+  "notification_server_removed": {
+    "message": "Server removed",
+    "description": "This string appears in a transient notification toast. It is shown when a server has been successfully removed from the application."
+  },
+  "oauth_account_active": {
+    "message": "Your DigitalOcean account has been activated.",
+    "description": "This string appears in the DigitalOcean account creation flow as a sub-header. Lets the user know their DigitalOcean account is active. DigitalOcean is a cloud provider name and should not be translated."
+  },
+  "oauth_account_active_tag": {
+    "message": "Account activated! Loading server locations...",
+    "description": "This string appears in the DigitalOcean account creation flow as a paragraph. Displayed when the user's DigitalOcean account has been successfully activated."
+  },
+  "oauth_activate_account": {
+    "message": "Activate your DigitalOcean account.",
+    "description": "This string appears in the DigitalOcean account creation flow as a header. Displayed when the account has been created but not yet active. DigitalOcean is a cloud provider name and should not be translated."
+  },
+  "oauth_billing": {
+    "message": "Enter your billing information on digitalocean.com and return to the app once you are done.",
+    "description": "This string appears in the DigitalOcean account creation flow as a sub-header. Prompts the user to enter their billing information on DigitalOcean's website."
+  },
+  "oauth_billing_tag": {
+    "message": "Enter billing information...",
+    "description": "This string appears in the DigitalOcean account creation flow as a paragraph. Prompts the user to enter their billing information on DigitalOcean's website."
+  },
+  "oauth_connect_description": {
+    "message": "With your account, Outline makes it easy to create a server and get connected.",
+    "description": "This string appears in the DigitalOcean account creation flow as a sub-header. Displayed when the user has not yet authorized Outline to access their DigitalOcean account."
+  },
+  "oauth_connect_tag": {
+    "message": "Waiting to connect your account...",
+    "description": "This string appears in the DigitalOcean account creation flow as a paragraph. Displayed when the user has not yet authorized Outline to access their DigitalOcean account."
+  },
+  "oauth_connect_title": {
+    "message": "Sign in or create an account with DigitalOcean.",
+    "description": "This string appears in the DigitalOcean account creation flow as a header. Displayed when the user has not yet signed in to DigitalOcean or created an account."
+  },
+  "oauth_sign_out": {
+    "message": "Sign Out",
+    "description": "This string appears in the DigitalOcean account creation flow as a button. Displayed when the user has authorized Outline to access their account. Clicking it aborts the account creation flow and signs out the user."
+  },
+  "oauth_verify": {
+    "message": "Check your inbox for an email from DigitalOcean, and click the link in it to confirm your account.",
+    "description": "This string appears in the DigitalOcean account creation flow as a sub-header. Displayed when the user has not yet entered billing information to activate their DigitalOcean account. DigitalOcean is a cloud provider name and should not be translated."
+  },
+  "oauth_verify_tag": {
+    "message": "Confirm your email...",
+    "description": "This string appears in the DigitalOcean account creation flow as a paragraph. Displayed when the user has not yet confirmed the registered email for their DigitalOcean account."
+  },
+  "okay": {
+    "message": "OK",
+    "description": "This string appears across the application as a button. It lets the user acknowledge displayed information. Clicking dismisses the enclosing UI element."
+  },
+  "per_key_data_limit_dialog_set_custom": {
+    "message": "Set a custom data limit",
+    "description": "This string appears next to a checkbox in the per-key data limit dialog which, when selected, shows the input to add a data limit to an access key"
+  },
+  "per_key_data_limit_dialog_title": {
+    "message": "Data Limit - $KEY_NAME$",
+    "description": "This string appears as the title of the per-key data limit dialog.",
+    "placeholders": {
+      "KEY_NAME": {
+        "content": "{keyName}",
+        "Example": "Key 1"
+      }
+    }
+  },
+  "region_description": {
+    "message": "This is where your internet experience will come from.",
+    "description": "This string appears within the server creation flow, as a sub-header of the server selection view. Lets the user know about the implications of selecting a server location."
+  },
+  "region_best_value": {
+    "message": "Best Value",
+    "description": "Appears within the server creation flow, indicating that a server option costs less than the other options."
+  },
+  "region_setup": {
+    "message": "Set up Outline",
+    "description": "This string appears within the server creation flow, as a button of the server selection view. Clicking it creates an Outline server at the selected location. 'Set up' means install and run the Outline server software."
+  },
+  "region_title": {
+    "message": "Select the location of your server.",
+    "description": "This string appears within the server creation flow, as the header of the server selection view."
+  },
+  "remove": {
+    "message": "Remove",
+    "description": "This string appears across the application as a button. It allows the user to confirm the removal of a server or access key."
+  },
+  "retry": {
+    "message": "Retry",
+    "description": "This string appears across the application as a button. It allows the user to retry a failed operation."
+  },
+  "save": {
+    "message": "Save",
+    "description": "This string appears across the application as a button.  It allows the user to submit some input"
+  },
+  "saved": {
+    "message": "Saved",
+    "description": "This string appears across the application as a transient notification toast.  It appears when user input has been accepted."
+  },
+  "saving": {
+    "message": "Saving...",
+    "description": "This string appears across the application as a transient notification toast.  It appears when user input is being processed."
+  },
+  "server_access": {
+    "message": "Server access",
+    "description": "This string appears within the server view as the header of a card that displays the number of server access keys."
+  },
+  "server_access_key_new": {
+    "message": "Add new key",
+    "description": "This string appears within the server view as a button. Clicking it creates a new server access key."
+  },
+  "server_access_key_rename": {
+    "message": "Rename",
+    "description": "This string appears within the server view as a button of a drop-down to manage a server access key. Clicking it renames the access key."
+  },
+  "server_access_keys": {
+    "message": "Access keys",
+    "description": "This string appears within the server view as a header of a table column that displays server access keys."
+  },
+  "server_access_keys_tab": {
+    "message": "Access keys ($KEY_COUNT$)",
+    "description": "This string is a tab header indicating to the user that they're currently managing their access keys.",
+    "placeholders": {
+      "KEY_COUNT": {
+        "content": "{keyCount}",
+        "example": "12"
+      }
+    }
+  },
+  "server_connections": {
+    "message": "Connections",
+    "description": "This string appears within the server view as a header of the section that displays server information and access keys."
+  },
+  "server_data_transfer": {
+    "message": "Data transferred / last 30 days",
+    "description": "This string appears within the server view as the header of a card that displays the amount of data transferred by the server."
+  },
+  "server_data_used": {
+    "message": "Allowance used / last 30 days",
+    "description": "This string appears within the server view as the header of a card that displays the amount of data transferred by the server as a percentage of the total available data."
+  },
+  "server_destroy": {
+    "message": "Destroy server",
+    "description": "This string appears within the server view as a button of a drop-down to manage a server. Clicking it opens a confirmation dialog to destroy the server."
+  },
+  "server_help_access_key_description": {
+    "message": "Share access keys with friends, so they can connect to your Outline server. They can use the same access key on all their devices.",
+    "description": "This string appears within a help bubble as a paragraph. The help bubble is displayed when a server is installed. Informs to the user how to share access to their server."
+  },
+  "server_help_access_key_next": {
+    "message": "Next",
+    "description": "This string appears within a help bubble as a button. Clicking it displays the next help bubble."
+  },
+  "server_help_access_key_title": {
+    "message": "Create keys, share access",
+    "description": "This string appears within a help bubble as a header. The help bubble provides information about sharing access to the server through access keys."
+  },
+  "server_help_connection_description": {
+    "message": "Click here to install the Outline client app, using your personal access key to your Outline server.",
+    "description": "This string appears within a help bubble as a paragraph. Informs the user how to install the Outline clients and get connected to the server."
+  },
+  "server_help_connection_ok": {
+    "message": "Okay, got it!",
+    "description": "This string appears within a help bubble as a button. Clicking it dismisses the help bubble."
+  },
+  "server_help_connection_title": {
+    "message": "You are not connected yet!",
+    "description": "This string appears within a help bubble as a header. The help bubble provides information about connecting to the server."
+  },
+  "server_keys": {
+    "message": "Keys",
+    "description": "This string appears within the server view as the unit of a card that displays the number of server access keys."
+  },
+  "server_metrics": {
+    "message": "Metrics",
+    "description": "This string appears within the server view as a header of the section that displays server metrics."
+  },
+  "server_metrics_data_transferred": {
+    "message": "Data transferred in the last 30 days",
+    "description": "This string indicates to the user that the metric displayed counts how much data was sent through the server over the last 30 days"
+  },
+  "server_metrics_user_hours": {
+    "message": "User hours spent on the VPN in the last 30 days",
+    "description": "This string indicates to the user that the metric displayed counts how many hours users used the VPN over the last 30 days."
+  },
+  "server_metrics_user_hours_unit": {
+    "message": "hours",
+    "description": "This string indicates to the user that the metric displayed is in hours."
+  },
+  "server_metrics_average_devices": {
+    "message": "Average number of devices used in the last 30 days",
+    "description": "This string indicates to the user that the metric displayed corresponds to the average number of devices that used the VPN over the last 30 days."
+  },
+  "server_my_access_key": {
+    "message": "My access key",
+    "description": "This string appears within the server view as the header for the default server access key. This key is meant to be used by the server administrator."
+  },
+  "server_name": {
+    "message": "Outline Server $SEVER_LOCATION$",
+    "description": "This string appears within the server view and in the application drawer. It is the default name for a newly created server.",
+    "placeholders": {
+      "SEVER_LOCATION": {
+        "content": "{serverLocation}",
+        "example": "New York"
+      }
+    }
+  },
+  "server_remove": {
+    "message": "Remove server",
+    "description": "This string appears within the server view as a button of a drop-down to manage a server. Clicking it opens a confirmation dialog to remove the server from the application."
+  },
+  "server_settings": {
+    "message": "Settings",
+    "description": "This string appears within the server view as a header of the section that displays server settings."
+  },
+  "server_unreachable": {
+    "message": "Server unreachable",
+    "description": "This string appears within a server view as a header. Displayed when a server's information cannot be displayed because it is not reachable."
+  },
+  "server_unreachable_description": {
+    "message": "We're having issues connecting to this server.",
+    "description": "This string appears within a server view as a paragraph. Informs the user that a server's information cannot be displayed because it is not reachable."
+  },
+  "server_unreachable_managed_description": {
+    "message": "Try again or remove this server from the application.",
+    "description": "This string appears within a server view as a header. Displayed when a server's information cannot be displayed because it is not reachable. Prompts the user to retry contacting the server or remove it from the application."
+  },
+  "server_unreachable_manual_description": {
+    "message": "Try again or destroy this server and the virtual host.",
+    "description": "This string appears within a server view as a header. Displayed when a server's information cannot be displayed because it is not reachable. Prompts the user to retry contacting the server or destroy it."
+  },
+  "server_view_access_keys_tab": {
+    "description": "The title of the Access Keys tab, displayed to the user to navigate to the access key management section.",
+    "message": "Access Keys ($ACCESS_KEY_COUNT$)",
+    "placeholders": {
+      "ACCESS_KEY_COUNT": {
+        "content": "{accessKeyCount}",
+        "example": "17"
+      }
+    }
+  },
+  "server_view_privacy_statement": {
+    "description": "The privacy statement text displayed to the user on the Access Keys and Server Metrics tabs, explaining data collection practices.",
+    "message": "We are committed to protecting the privacy and security of our users. Each Outline server automatically collects aggregated and anonymized usage data. This data does not include information about the websites users visit or their communications. It is also not shared with the Outline team unless you, as the server administrator, explicitly opt in to sharing."
+  },
+  "server_view_privacy_statement_link": {
+    "description": "This is a link that apprears at the end of the privacy statement which explains data collection practices, calling them to learn more about our policies.",
+    "message": "Learn more."
+  },
+  "server_view_access_keys_key_column_header": {
+    "description": "The header for the Key name column in the Access Keys table, labeling the column containing access key identifiers.",
+    "message": "Key"
+  },
+  "server_view_access_keys_last_connected_column_header": {
+    "description": "The header for the Last connected column in the Access Keys table, labeling the column showing the last successful connection time for each key.",
+    "message": "Last connected"
+  },
+  "server_view_access_keys_last_active_column_header": {
+    "description": "The header for the Traffic last seen column in the Access Keys table, labeling the column indicating the last time data was sent or received using each key.",
+    "message": "Last active"
+  },
+  "server_view_access_keys_usage_column_header": {
+    "description": "The header for the Usage column in the Access Keys table, labeling the column displaying data transfer volume for each key over the past 30 days.",
+    "message": "Usage $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_access_keys_peak_devices_column_header": {
+    "description": "The header for the Peak devices column in the Access Keys table, labeling the column showing the maximum number of devices connected simultaneously using each key in the past 30 days.",
+    "message": "Peak devices $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_access_keys_as_count_column_header": {
+    "description": "The header for the Unique ASes column in the Access Keys table, labeling the column showing the number of unique Autonomous Systems - or administrative internet regions - connected using each key in the past 30 days.",
+    "message": "Unique ASes $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_access_keys_last_active_tooltip": {
+    "description": "The tooltip displayed when hovering over the \"Last active\" column in the Access Keys table, providing additional information about the last activity time.",
+    "message": "This shows the last time the key successfully connected to the server."
+  },
+  "server_view_access_keys_usage_tooltip": {
+    "description": "The tooltip displayed when hovering over the Usage column in the Access Keys table, providing additional information about data transfer volume.",
+    "message": "This shows how much data the key transferred through the server over the last 30 days."
+  },
+  "server_view_access_keys_peak_devices_tooltip": {
+    "description": "The tooltip displayed when hovering over the Peak devices column in the Access Keys table, providing additional information about maximum simultaneous connections.",
+    "message": "This shows the most devices connected to the server using this key at one time, within the last 30 days. It also shows the time when this occurred."
+  },
+  "server_view_access_keys_as_count_tooltip": {
+    "description": "The tooltip displayed when hovering over the Unique ASes column in the Access Keys table, providing additional information about Autonomous Systems - or administrative internet regions.",
+    "message": "This shows the number of different Autonomous Systems (ASes) that connected to the server using this key over the last 30 days. An AS is a network that’s typically run by one organization, like an internet service provider, a large company, or a university."
+  },
+  "server_view_access_keys_usage_limit": {
+    "description": "The text displayed to the user when their access key usage approaches a defined limit (e.g., 80%).",
+    "message": ">80% used"
+  },
+  "server_view_access_keys_add_key_action": {
+    "description": "The text on the button or link that allows the user to create a new access key.",
+    "message": "Create key"
+  },
+  "server_view_server_metrics_tab": {
+    "description": "The title of the Server Metrics tab, displayed to the user to navigate to the server performance statistics section.",
+    "message": "Server Metrics"
+  },
+  "server_view_server_metrics_bandwidth_title": {
+    "description": "The title displayed for the total bandwidth usage metric, showing the overall data transfer volume for the server.",
+    "message": "Total bandwidth usage $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_bandwidth_tooltip": {
+    "description": "The tooltip displayed when hovering over the total bandwidth usage metric, providing additional details about the data transfer volume.",
+    "message": "This shows the total amount of data transferred through the server over the last 30 days."
+  },
+  "server_view_server_metrics_bandwidth_limit_tooltip": {
+    "description": "The tooltip displayed when hovering over a warning message next to the bandwidth card, informing the user that their bandwidth is running out.",
+    "message": "High bandwidth usage detected over the last 30 days. Consider setting data limits to prevent overages and keep your service running smoothly."
+  },
+  "server_view_server_metrics_bandwidth_usage": {
+    "description": "The label displayed for the current bandwidth usage metric, showing the real-time data transfer rate.",
+    "message": "Current bandwidth usage"
+  },
+  "server_view_server_metrics_bandwidth_usage_max": {
+    "description": "The label displayed for the maximum bandwidth usage metric, showing the highest data transfer rate recorded over the past 30 days.",
+    "message": "Maximum bandwidth usage $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_bandwidth_as_breakdown": {
+    "description": "The title or label for the bandwidth usage breakdown by Autonomous System - or administrative internet regions - showing the data transfer volume attributed to different ASes.",
+    "message": "ASes with most bandwidth usage $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_tunnel_time_title": {
+    "description": "The title displayed for the total tunnel time metric, showing the cumulative connection time for all users.",
+    "message": "Total Tunnel Time $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_tunnel_time_tooltip": {
+    "description": "The tooltip displayed when hovering over the total tunnel time metric, providing additional details about the cumulative connection time.",
+    "message": "This shows the total time users were connected to the server over the last 30 days. It is calculated by adding up the connection time (Tunnel Time) for each device."
+  },
+  "server_view_server_metrics_tunnel_time_as_breakdown": {
+    "description": "The title or label for the tunnel time breakdown by Autonomous System - or administrative internet regions - showing the cumulative connection time attributed to different ASes.",
+    "message": "ASes with highest Tunnel Time $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_devices_title": {
+    "description": "The title displayed for the total devices connected metric, showing the minimum number of unique devices connected to the server.",
+    "message": "Total devices connected $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_devices_tooltip": {
+    "description": "The tooltip displayed when hovering over the total devices connected metric, clarifying that it represents a minimum count.",
+    "message": "At least this many devices connected to the server in the last 30 days. This is a $START_OF_ITALICS$minimum$END_OF_ITALICS$ count",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_devices_unit_label": {
+    "description": "The unit label displayed alongside the total devices connected metric.",
+    "message": "Devices"
+  },
+  "server_view_server_metrics_devices_as_breakdown": {
+    "description": "The title or label for the devices connected breakdown by Autonomous System - or administrative internet regions - showing the number of devices connected from different ASes.",
+    "message": "ASes with the most devices connected $START_OF_ITALICS$(last 30 days)$END_OF_ITALICS$",
+    "placeholders": {
+      "END_OF_ITALICS": {
+        "content": "{closeItalics}"
+      },
+      "START_OF_ITALICS": {
+        "content": "{openItalics}"
+      }
+    }
+  },
+  "server_view_server_metrics_advanced_metrics_link": {
+    "description": "The text of a link that directs the user to a help center article with more detailed information about accessing advanced server metrics.",
+    "message": "Learn how to view detailed server metrics"
+  },
+  "server_view_update_notification_bar_message": {
+    "description": "A banner that appears when the user's server is out of date, requesting that they upgrade.",
+    "message": "New server version available! Upgrade your server to access the latest features."
+  },
+  "server_view_update_notification_bar_link": {
+    "description": "A link in the banner that appears when the user's server is out of date, instructing them to learn how to update it.",
+    "message": "Learn how"
+  },
+  "server_usage": {
+    "message": "Usage (last 30 days)",
+    "description": "This string appears within the server view as a header of a table column that displays the breakdown of data usage by access key."
+  },
+  "servers_add": {
+    "message": "Add server",
+    "description": "This string appears in an application drawer as a button. Clicking it starts the server setup flow."
+  },
+  "servers_digitalocean": {
+    "message": "DigitalOcean servers",
+    "description": "This string appears in an application drawer as the header of a section that displays the list of DigitalOcean servers. DigitalOcean is a cloud server provider name and should not be translated."
+  },
+  "servers_gcp": {
+    "message": "Google Cloud Platform servers",
+    "description": "This string appears in an application drawer as the header of a section that displays the list of Google Cloud Platform servers. Google Cloud Platform is a cloud server provider name and should not be translated."
+  },
+  "servers_manual": {
+    "message": "Servers",
+    "description": "This string appears in an application drawer as the header of a section that displays a list of servers."
+  },
+  "settings_access_key_port": {
+    "message": "Port for new access keys",
+    "description": "This string appears in the server settings view as a label for the server port number used to create new access keys."
+  },
+  "settings_metrics_header": {
+    "message": "Share anonymous metrics",
+    "description": "This string appears in the server settings view as a header of the section to configure server metrics reporting."
+  },
+  "settings_server_api_url": {
+    "message": "Management API URL",
+    "description": "This string appears in the server settings view as a label for the server's management API URL. API stands for application programming interface; the acronym should not be translated."
+  },
+  "settings_server_cost": {
+    "message": "Monthly cost",
+    "description": "This string appears in the server settings view as a label for the server's monthly cost."
+  },
+  "settings_server_creation": {
+    "message": "Created",
+    "description": "This string appears in the server settings view as a label for the server's creation date."
+  },
+  "settings_server_hostname": {
+    "message": "Hostname",
+    "description": "This string appears in the server settings view as a label for the server's IP address or domain name."
+  },
+  "settings_server_id": {
+    "message": "Server ID",
+    "description": "This string appears in the server settings view as a label for the server's unique identifier."
+  },
+  "settings_server_info": {
+    "message": "Server Information",
+    "description": "This string appears in the server settings view as a header of the section that displays server details."
+  },
+  "settings_server_location": {
+    "message": "Server location",
+    "description": "This string appears in the server settings view as a label for the server's location."
+  },
+  "settings_server_name": {
+    "message": "Name",
+    "description": "This string appears in the server settings view as a label for the server's name."
+  },
+  "settings_server_rename": {
+    "message": "Set a new name for your server. Note that this will not be reflected on the devices of the users that you invited to connect to it.",
+    "description": "This string appears in the server settings view as a paragraph below the server's name. Informs the user about the implications of renaming a server."
+  },
+  "settings_server_version": {
+    "message": "Server version",
+    "description": "This string appears in the server settings view as a label for the server version."
+  },
+  "settings_transfer_limit": {
+    "message": "Data transfer allowance",
+    "description": "This string appears in the server settings view as a label for the server's data transfer allowance."
+  },
+  "setup_action": {
+    "message": "Set up",
+    "description": "This string appears in the server setup view as a button. Clicking it starts the server setup flow. 'Set up' means install and run the Outline server software."
+  },
+  "setup_advanced": {
+    "message": "Advanced",
+    "description": "This string appears in the server setup view as a label. Advanced in this context implies that the user will have to follow technical instructions to install Outline."
+  },
+  "setup_anywhere": {
+    "message": "Set up Outline anywhere",
+    "description": "This string appears in the server setup view as a header within a card. The card provides information about installing Outline on an arbitrary cloud server provider."
+  },
+  "setup_create": {
+    "message": "Create server",
+    "description": "This string appears in the server setup view as a button. Clicking it starts the server creation flow."
+  },
+  "setup_description": {
+    "message": "Don't have a server? Create an account with DigitalOcean.",
+    "description": "This string appears in the server setup view as a sub-header. Prompts the user to create a DigitalOcean account to deploy Outline servers. DigitalOcean is a cloud provider name and should not be translated."
+  },
+  "setup_cancel": {
+    "message": "Cancel at any time",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features."
+  },
+  "setup_do_cost": {
+    "message": "Only US$6 a month",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features."
+  },
+  "setup_do_create": {
+    "message": "Create a new server with your DigitalOcean account for an additional US$6/30 days for 1 TB of data transfer.",
+    "description": "This string appears in the server setup view as a paragraph within a card. Describes Outline servers' features when deployed on DigitalOcean. DigitalOcean is a cloud provider name and should not be translated; TB is an abbreviation for terabyte and should not be translated"
+  },
+  "setup_do_data": {
+    "message": "1 TB data transfer allowance",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features. Refers to the monthly amount of transfer data offered by a cloud server provider. TB is an abbreviation for terabyte and should not be translated."
+  },
+  "setup_do_description": {
+    "message": "This could take several minutes. You can destroy this server at any time.",
+    "description": "This string appears in the server setup view as a sub-header. Displayed when a server is being created along a progress bar."
+  },
+  "setup_do_easiest": {
+    "message": "Easiest setup process",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features."
+  },
+  "setup_do_title": {
+    "message": "Setting up Outline.",
+    "description": "This string appears in the server setup view as a header. Displayed when a server is being created along a progress bar."
+  },
+  "setup_gcp_easy": {
+    "message": "Easy setup process",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features."
+  },
+  "setup_gcp_free_tier": {
+    "message": "With $START_OF_LINK1$Free Tier$END_OF_LINK$, your first server starts at $START_OF_LINK2$US$3/month$END_OF_LINK$",
+    "description": "Describes the benefits of the GCP Free Tier program (https://cloud.google.com/free/docs/gcp-free-tier)",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK1": {
+        "content": "{openLinkFreeTier}"
+      },
+      "START_OF_LINK2": {
+        "content": "{openLinkIpPrice}"
+      }
+    }
+  },
+  "setup_gcp_free_trial": {
+    "message": "$START_OF_LINK$90 day free trial$END_OF_LINK$ for new users",
+    "description": "Describes the benefits of the GCP Free Trial program (https://cloud.google.com/free/docs/gcp-free-tier/#free-trial)",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLinkFreeTrial}"
+      }
+    }
+  },
+  "setup_gcp_create": {
+    "message": "Create a new server with your Google account. Costs vary by location and usage.",
+    "description": "This string appears in the server setup view as a paragraph within a card. Describes Outline servers' features when deployed on Google Cloud Platform."
+  },
+  "setup_gcp_promo": {
+    "message": "Try the new automatic Outline server creation process for Google Cloud",
+    "description": "Link text that takes users to an easier setup procedure"
+  },
+  "setup_firewall_instructions": {
+    "message": "Firewall instructions",
+    "description": "This string appears in the server setup view as the header of a section that provides instructions to configure the server's firewall."
+  },
+  "setup_recommended": {
+    "message": "Recommended",
+    "description": "This string appears in the server setup view as a label. Describes Outline servers deployment on DigitalOcean, which is easier from a user perspective."
+  },
+  "setup_simple_commands": {
+    "message": "Simple install commands",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features."
+  },
+  "setup_step-by-step": {
+    "message": "Step-by-step set-up guide",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features."
+  },
+  "setup_tested": {
+    "message": "Tested on VULTR, Linode, and Liquid Web",
+    "description": "This string appears in the server setup view as an item of a list describing Outline's features. VULTR, Linode, and Liquid Web a cloud provider names and should not be translated."
+  },
+  "setup_title": {
+    "message": "Choose a cloud service to set up Outline.",
+    "description": "This string appears in the server setup view as a header. Prompts the user to create deploy Outline servers on the cloud provider of their choice. 'Set up' means install and run the Outline server software."
+  },
+  "share_description": {
+    "message": "Copy this invitation and send it from a communication tool you trust. $START_OF_LINK$Need help?$END_OF_LINK$",
+    "description": "This string appears as a sub-header of a dialog that provides instructions on how to share access to a server.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "share_invite_html": {
+    "message": "Use this server to safely access the open internet:$LINE_BREAK$$LINE_BREAK$1) Download and install the Outline app for your device:$LINE_BREAK$$LINE_BREAK$  - iOS: https://itunes.apple.com/app/outline-app/id1356177741$LINE_BREAK$  - MacOS: https://itunes.apple.com/app/outline-app/id1356178125$LINE_BREAK$  - Windows: https://s3.amazonaws.com/outline-releases/client/windows/stable/Outline-Client.exe$LINE_BREAK$  - Linux: https://s3.amazonaws.com/outline-releases/client/linux/stable/Outline-Client.AppImage$LINE_BREAK$  - Android: https://play.google.com/store/apps/details?id=org.outline.android.client$LINE_BREAK$   - Android alternative link: https://s3.amazonaws.com/outline-releases/client/android/stable/Outline-Client.apk$LINE_BREAK$$LINE_BREAK$2) You will receive an access key that starts with ss://. Once you receive it, copy this access key.$LINE_BREAK$$LINE_BREAK$3) Open the Outline client app. If your access key is auto-detected, tap \"Connect\" and proceed. If your access key is not auto-detected, then paste it in the field, then tap \"Connect\" and proceed.$LINE_BREAK$$LINE_BREAK$You're ready to use the open internet! To make sure you successfully connected to the server, try searching for \"what is my ip\" on Google Search. The IP address shown in Google should match the IP address in the Outline client.$LINE_BREAK$$LINE_BREAK$Learn more about Outline here: https://getoutline.org/",
+    "description": "This string appears as an email invitation instructing new Outline users how to set up and connect to Outline.",
+    "placeholders": {
+      "LINE_BREAK": {
+        "content": "<br>"
+      }
+    }
+  },
+  "share_invite_copied": {
+    "message": "Copied invitation to clipboard",
+    "description": "This string appears as a label within a dialog that provides an invitation to share access to a server. Displayed when the user clicks a button to copy the invitation text to the clipboard."
+  },
+  "share_invite_copy": {
+    "message": "Copy invitation",
+    "description": "This string appears as a button within a dialog that provides an invitation to share access to a server. Clicking it copies the invitation instructions text to the clipboard."
+  },
+  "share_invite_copy_access_key": {
+    "message": "Copy access key",
+    "description": "This string appears as a button within a dialog that provides an access key to use a server. Clicking it copies the access key to the clipboard."
+  },
+  "share_invite_access_key_copied": {
+    "message": "Copied access key to clipboard",
+    "description": "This string appears as a label within a dialog that provides an access key to use a server. Displayed when the user clicks a button to copy this access key to the clipboard."
+  },
+  "share_invite_instructions": {
+    "message": "Follow our invitation instructions on GitHub:",
+    "description": "This string appears as a list item within a dialog that provides an invitation to share access to a server. Belongs to the instructions for the user with whom access is being shared."
+  },
+  "share_invite_trouble": {
+    "message": "Having trouble accessing the invitation link?",
+    "description": "This string appears as a paragraph within a dialog that provides an invitation to share access to a server. Belongs to the instructions for the user with whom access is being shared."
+  },
+  "share_title": {
+    "message": "Share access",
+    "description": "This string appears as the header of a dialog that provides an invitation to share access to a server."
+  },
+  "support_form_cloud_provider_aws": {
+    "description": "Item in a dropdown menu to select the cloud provider that the user is contacting support about.",
+    "message": "Amazon Web Services"
+  },
+  "support_form_cloud_provider_digitalocean": {
+    "description": "Item in a dropdown menu to select the cloud provider that the user is contacting support about.",
+    "message": "DigitalOcean"
+  },
+  "support_form_cloud_provider_gcloud": {
+    "description": "Item in a dropdown menu to select the cloud provider that the user is contacting support about.",
+    "message": "Google Cloud"
+  },
+  "support_form_cloud_provider": {
+    "description": "Label of a Contact Support form input field.",
+    "message": "Cloud Provider"
+  },
+  "support_form_description": {
+    "description": "Label of a Contact Support form input field.",
+    "message": "Description of the issue"
+  },
+  "support_form_email_invalid": {
+    "description": "Error message shown to a user supplying an invalid email address on the Contact Support form.",
+    "message": "You have entered an invalid format."
+  },
+  "support_form_email": {
+    "description": "Label of a Contact Support form input field.",
+    "message": "Email"
+  },
+  "support_form_outreach_consent": {
+    "description": "Label for a consent checkbox that opts users in to being contacted in the future.",
+    "message": "Yes, I'd like to sign up to be contacted about collaboration opportunities."
+  },
+  "support_form_required_field": {
+    "description": "Text on a Contact Support form indicating that a field is required.",
+    "message": "Required field"
+  },
+  "support_form_subject": {
+    "description": "Label of a Contact Support form input field.",
+    "message": "Subject"
+  },
+  "survey_data_limits_title": {
+    "message": "Help us understand how to improve data limits",
+    "description": "This string appears as the title of a dialog that prompts the user to complete a survey about the data limits feature."
+  },
+  "survey_decline": {
+    "message": "Decline",
+    "description": "This string appears in a dialog that prompts the user to complete a survey. It is shown in a button that dismisses the dialog."
+  },
+  "survey_disclaimer": {
+    "message": "By clicking continue you will be sent to a short survey on Google Forms. We recommend taking the survey while connected to Outline.",
+    "description": "This string appears in a dialog that prompts the user to complete a survey as a disclaimer."
+  },
+  "survey_go_to_survey": {
+    "message": "Go to survey",
+    "description": "This string appears in a dialog that prompts the user to complete a survey. It is shown in a button that takes the user to the online survey."
+  },
+  "terms_of_service": {
+    "message": "I have read and understood the $START_OF_LINK$Outline Terms of Service$END_OF_LINK$",
+    "description": "This string appears within an overlay the first time the user runs the app. Prompts the user to review and accept Outline's terms of service.",
+    "placeholders": {
+      "END_OF_LINK": {
+        "content": "{closeLink}"
+      },
+      "START_OF_LINK": {
+        "content": "{openLink}"
+      }
+    }
+  },
+  "yes": {
+    "description": "Affirmative answer to a form question.",
+    "message": "Yes"
+  }
+}
