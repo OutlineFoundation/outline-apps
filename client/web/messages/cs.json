@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline je produkt společnosti <a href={jigsawUrl}>Jigsaw</a>, který umožňuje komukoli vytvořit a provozovat vlastní síť VPN a nabídnout k ní přístup ostatním. Aplikace Outline je koncipovaná tak, aby odolala blokování. Začít vám pomůžou informace na stránce <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline je opensourcový software založený na protokolu <a href={shadowsocksUrl}>Shadowsocks</a>. Můžete se zapojit do tvorby kódu na platformě <a href={gitHubUrl}>GitHub</a> nebo do debaty v síti <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline je produkt společnosti Outline Foundation, který umožňuje komukoli vytvořit a provozovat vlastní síť VPN a nabídnout k ní přístup ostatním. Aplikace Outline je koncipovaná tak, aby odolala blokování. Začít vám pomůžou informace na stránce <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline je opensourcový software založený na protokolu <a href={shadowsocksUrl}>Shadowsocks</a>. Můžete se zapojit do tvorby kódu na platformě <a href={gitHubUrl}>GitHub</a> nebo do debaty v síti <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "O aplikaci",
   "add-access-key-dialog-error-text": "Neplatný přístupový klíč.",
   "add-access-key-dialog-header": "Přidat přístupový klíč pro VPN",

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline عبارة عن منتج مقدَّم من <a href={jigsawUrl}>Jigsaw</a> يتيح لأي مستخدم إنشاء صلاحية الوصول إلى شبكته الافتراضية الخاصة (VPN) وإدارتها ومشاركتها. تم تصميم Outline ليكون مقاومًا للحظر. يمكنك زيارة <a href={outlineUrl}>getoutline.org</a> للتعرّف على طريقة البدء.<br><br>Outline هو برنامج مفتوح المصدر مقدَّم من <a href={shadowsocksUrl}>Shadowsocks</a>. يمكنك المساهمة في التعليمات البرمجية على <a href={gitHubUrl}>GitHub</a> والانضمام إلى المحادثة على <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline عبارة عن منتج مقدَّم من Outline Foundation يتيح لأي مستخدم إنشاء صلاحية الوصول إلى شبكته الافتراضية الخاصة (VPN) وإدارتها ومشاركتها. تم تصميم Outline ليكون مقاومًا للحظر. يمكنك زيارة <a href={outlineUrl}>getoutline.org</a> للتعرّف على طريقة البدء.<br><br>Outline هو برنامج مفتوح المصدر مقدَّم من <a href={shadowsocksUrl}>Shadowsocks</a>. يمكنك المساهمة في التعليمات البرمجية على <a href={gitHubUrl}>GitHub</a> والانضمام إلى المحادثة على <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "لمحة",
   "add-access-key-dialog-error-text": "مفتاح الوصول غير صالح.",
   "add-access-key-dialog-header": "إضافة مفتاح وصول إلى شبكة VPN",

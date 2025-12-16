@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline በ <a href={jigsawUrl}>Jigsaw</a> የተዘጋጀ ክፍት ምንጭ ፕሮጀክት ሲሆን ለዜና አቅራቢ ድርጅቶችና ጋዜጠኞች ደኅንነቱ የተጠበቀ የኢንተርኔት አጠቃቀምን እንዲያገኙ ታልሞ የተዘጋጀ ነው፡፡ <br><br> Outline (አውትላይን) በ <a href={shadowsocksUrl}>Shadowsocks</a> የተደገፈ አዲስ ምርት ነው፡፡ በ <a href={gitHubUrl}>GitHub</a> ላይ ለፕሮግራሙ አስተዋፅዖ ማድረግ ይችላሉ፡፡ በተጨማሪም <a href={redditUrl}>Reddit</a> እና <a href={mediumUrl}>Medium</a> ላይ ሊከታተሉን እና መድረካችንን እና አገልግሎቶቻችንን ስናሳድግ መስማት ይችላሉ።",
+  "about-outline": "Outline በ Outline Foundation የተዘጋጀ ክፍት ምንጭ ፕሮጀክት ሲሆን ለዜና አቅራቢ ድርጅቶችና ጋዜጠኞች ደኅንነቱ የተጠበቀ የኢንተርኔት አጠቃቀምን እንዲያገኙ ታልሞ የተዘጋጀ ነው፡፡ <br><br> Outline (አውትላይን) በ <a href={shadowsocksUrl}>Shadowsocks</a> የተደገፈ አዲስ ምርት ነው፡፡ በ <a href={gitHubUrl}>GitHub</a> ላይ ለፕሮግራሙ አስተዋፅዖ ማድረግ ይችላሉ፡፡ በተጨማሪም <a href={redditUrl}>Reddit</a> እና <a href={mediumUrl}>Medium</a> ላይ ሊከታተሉን እና መድረካችንን እና አገልግሎቶቻችንን ስናሳድግ መስማት ይችላሉ።",
   "about-version": "ሥሪት {version}",
   "aws-lightsail-firewall-0": "ወደ {openLink}Amazon Lightsail{closeLink} የአጋጣሚዎች ማያ ገፅ ያስሱ",
   "aws-lightsail-firewall-1": "Outlineን ማስተናገድ የሚፈልጉበትን አጋጣሚ ጠቅ ያድርጉ።",

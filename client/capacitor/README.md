@@ -27,27 +27,32 @@ npm run action client/capacitor/start
 ### Build for iOS
 
 **Debug mode:**
+
 ```sh
 npm run action client/capacitor/build capacitor-ios
 ```
 
 **Release mode:**
+
 ```sh
 SENTRY_DSN=<your sentry dsn> npm run action client/capacitor/build capacitor-ios -- --buildMode=release --versionName=<your version name>
 ```
 
 **Note**: Release builds require:
+
 - `versionName`: A valid version string (e.g., "1.0.0") - passed as CLI argument
 - `SENTRY_DSN`: Sentry DSN for error reporting - set as environment variable
 
 ### Build for Android
 
 **Debug mode:**
+
 ```sh
 npm run action client/capacitor/build capacitor-android
 ```
 
 **Release mode:**
+
 ```sh
 SENTRY_DSN=<your sentry dsn> \
 JAVA_HOME=<path to java 17> \
@@ -57,6 +62,7 @@ npm run action client/capacitor/build capacitor-android -- --buildMode=release -
 ```
 
 **Note**: Release builds require:
+
 - `versionName`: A valid version string (e.g., "1.0.0") - passed as CLI argument
 - `SENTRY_DSN`: Sentry DSN for error reporting - set as environment variable
 - `JAVA_HOME`: Path to JDK 17 installation - set as environment variable
@@ -70,12 +76,14 @@ npm run action client/capacitor/build capacitor-android -- --buildMode=release -
 To debug the Android app using Chrome DevTools:
 
 1. **Enable USB debugging** on your Android device:
+
    - Go to Settings → About phone
    - Tap "Build number" 7 times to enable Developer options
    - Go to Settings → Developer options
    - Enable "USB debugging"
 
 2. **Connect your device** via USB and ensure it's recognized:
+
    ```sh
    adb devices
    ```
@@ -83,6 +91,7 @@ To debug the Android app using Chrome DevTools:
 3. **Launch the app** on your device (either via Android Studio or by installing the APK)
 
 4. **Open Chrome DevTools**:
+
    - Open Chrome browser on your computer
    - Navigate to `chrome://inspect`
    - Under "Remote Target", you should see your device and the app
@@ -100,6 +109,7 @@ To debug the Android app using Chrome DevTools:
 To debug the iOS app using Safari Web Inspector:
 
 1. **Enable Web Inspector** on your iOS device:
+
    - Go to Settings → Safari → Advanced
    - Enable "Web Inspector"
 
@@ -108,6 +118,7 @@ To debug the iOS app using Safari Web Inspector:
 3. **Launch the app** on your device (either via Xcode or by installing the app)
 
 4. **Open Safari Web Inspector**:
+
    - Open Safari on your Mac
    - Go to Safari → Settings → Advanced
    - Enable "Show features for web developers" (if not already enabled)

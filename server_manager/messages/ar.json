@@ -1,5 +1,5 @@
 {
-  "about-outline": "تطبيق Outline هو أحد مشروعات البرامج مفتوحة المصدر التي تم إنشاؤها بواسطة <a href={jigsawUrl}>Jigsaw</a> حتى تتمكّن المؤسسات الإخبارية والصحفيون من الاتصال بالإنترنت بطريقة أكثر أمانًا.<br><br> يتمتع تطبيق Outline بدعم من مشروع <a href={shadowsocksUrl}>Shadowsocks</a> وهو ما زال منتجًا في طور النشوء. يمكنك المساهمة في عملية الترميز على موقع <a href={gitHubUrl}>GitHub</a> ومتابعتنا على <a href={redditUrl}>Reddit</a> و<a href={mediumUrl}>Medium</a> لمعرفة آخر أخبارنا المتعلّقة بإتاحته على المزيد من الأنظمة الأساسية أو إضافة ميزات جديدة.",
+  "about-outline": "تطبيق Outline هو أحد مشروعات البرامج مفتوحة المصدر التي تم إنشاؤها بواسطة Outline Foundation حتى تتمكّن المؤسسات الإخبارية والصحفيون من الاتصال بالإنترنت بطريقة أكثر أمانًا.<br><br> يتمتع تطبيق Outline بدعم من مشروع <a href={shadowsocksUrl}>Shadowsocks</a> وهو ما زال منتجًا في طور النشوء. يمكنك المساهمة في عملية الترميز على موقع <a href={gitHubUrl}>GitHub</a> ومتابعتنا على <a href={redditUrl}>Reddit</a> و<a href={mediumUrl}>Medium</a> لمعرفة آخر أخبارنا المتعلّقة بإتاحته على المزيد من الأنظمة الأساسية أو إضافة ميزات جديدة.",
   "about-version": "الإصدار {version}",
   "aws-lightsail-firewall-0": "انتقِل إلى شاشة مثيلات {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "انقر على المثيل الذي تريد استضافة Outline فيه.",

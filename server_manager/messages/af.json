@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline is ’n oopbronprojek wat deur <a href={jigsawUrl}>Jigsaw</a> geskep is om aan nuusorganisasies en joernaliste ’n veiliger manier te bied om by die oop internet in te gaan.<br><br> Outline word deur <a href={shadowsocksUrl}>Shadowsocks</a> aangedryf en die produk is nog in ’n vroeë stadium. Jy kan tot die kode bydra op <a href={gitHubUrl}>GitHub</a>, en ons op <a href={redditUrl}>Reddit</a> en <a href={mediumUrl}>Medium</a> volg om ingelig te word wanneer ons na meer platforms uitbrei en nuwe kenmerke byvoeg.",
+  "about-outline": "Outline is ’n oopbronprojek wat deur Outline Foundation geskep is om aan nuusorganisasies en joernaliste ’n veiliger manier te bied om by die oop internet in te gaan.<br><br> Outline word deur <a href={shadowsocksUrl}>Shadowsocks</a> aangedryf en die produk is nog in ’n vroeë stadium. Jy kan tot die kode bydra op <a href={gitHubUrl}>GitHub</a>, en ons op <a href={redditUrl}>Reddit</a> en <a href={mediumUrl}>Medium</a> volg om ingelig te word wanneer ons na meer platforms uitbrei en nuwe kenmerke byvoeg.",
   "about-version": "Weergawe {version}",
   "aws-lightsail-firewall-0": "Navigeer na die skerm vir {openLink}Amazon Lightsail{closeLink}-gevalle .",
   "aws-lightsail-firewall-1": "Klik die geval waarop jy Outline wil huisves.",

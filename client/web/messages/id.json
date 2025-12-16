@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline adalah produk <a href={jigsawUrl}>Jigsaw</a> yang memungkinkan siapa pun membuat, menjalankan, dan berbagi akses ke VPN-nya sendiri. Outline didesain agar tahan terhadap pemblokiran. Kunjungi <a href={outlineUrl}>getoutline.org</a> untuk mempelajari cara memulai.<br><br>Outline adalah software open source yang didukung oleh <a href={shadowsocksUrl}>Shadowsocks</a>. Anda dapat berkontribusi dalam bidang coding di <a href={gitHubUrl}>GitHub</a> dan bergabung dalam percakapan di <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline adalah produk Outline Foundation yang memungkinkan siapa pun membuat, menjalankan, dan berbagi akses ke VPN-nya sendiri. Outline didesain agar tahan terhadap pemblokiran. Kunjungi <a href={outlineUrl}>getoutline.org</a> untuk mempelajari cara memulai.<br><br>Outline adalah software open source yang didukung oleh <a href={shadowsocksUrl}>Shadowsocks</a>. Anda dapat berkontribusi dalam bidang coding di <a href={gitHubUrl}>GitHub</a> dan bergabung dalam percakapan di <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Tentang",
   "add-access-key-dialog-error-text": "Kode akses tidak valid.",
   "add-access-key-dialog-header": "Tambahkan kunci akses VPN",

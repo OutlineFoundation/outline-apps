@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline är ett projekt baserat på öppen källkod som <a href={jigsawUrl}>Jigsaw</a> har skapat i syfte att erbjuda nyhetsorganisationer och journalister ett säkrare sätt att få åtkomst internet.<br><br> Outline drivs med <a href={shadowsocksUrl}>Shadowsocks</a> och är fortfarande en produkt i ett tidigt skede. Du kan bidra till koden på <a href={gitHubUrl}>GitHub</a> och följa oss på <a href={redditUrl}>Reddit</a> och <a href={mediumUrl}>Medium</a> om du vill ha koll på när vi expanderar till fler plattformar och lägger till nya funktioner.",
+  "about-outline": "Outline är ett projekt baserat på öppen källkod som Outline Foundation har skapat i syfte att erbjuda nyhetsorganisationer och journalister ett säkrare sätt att få åtkomst internet.<br><br> Outline drivs med <a href={shadowsocksUrl}>Shadowsocks</a> och är fortfarande en produkt i ett tidigt skede. Du kan bidra till koden på <a href={gitHubUrl}>GitHub</a> och följa oss på <a href={redditUrl}>Reddit</a> och <a href={mediumUrl}>Medium</a> om du vill ha koll på när vi expanderar till fler plattformar och lägger till nya funktioner.",
   "about-version": "Version {version}",
   "aws-lightsail-firewall-0": "Navigera till skärmen för {openLink}Amazon Lightsail{closeLink}-instanser.",
   "aws-lightsail-firewall-1": "Klicka på den instans som du vill ska stå värd för Outline.",

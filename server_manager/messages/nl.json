@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline is een opensource-project van <a href={jigsawUrl}>Jigsaw</a> waarmee nieuwsorganisaties en journalisten veiliger toegang hebben tot internet.<br><br> Outline wordt aangeboden door <a href={shadowsocksUrl}>Shadowsocks</a> en bevindt zich nog in een vroege fase. Je kunt bijdragen aan de code op <a href={gitHubUrl}>GitHub</a> en ons volgen op <a href={redditUrl}>Reddit</a> en <a href={mediumUrl}>Medium</a> voor meer informatie over wanneer we meer platforms en functies toevoegen.",
+  "about-outline": "Outline is een opensource-project van Outline Foundation waarmee nieuwsorganisaties en journalisten veiliger toegang hebben tot internet.<br><br> Outline wordt aangeboden door <a href={shadowsocksUrl}>Shadowsocks</a> en bevindt zich nog in een vroege fase. Je kunt bijdragen aan de code op <a href={gitHubUrl}>GitHub</a> en ons volgen op <a href={redditUrl}>Reddit</a> en <a href={mediumUrl}>Medium</a> voor meer informatie over wanneer we meer platforms en functies toevoegen.",
   "about-version": "Versie {version}",
   "aws-lightsail-firewall-0": "Ga naar het instantiescherm van {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Klik op de instantie waarop je Outline wilt hosten.",

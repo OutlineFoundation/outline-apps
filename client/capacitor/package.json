@@ -14,6 +14,6 @@
     "cap:sync:android": "node build/cap-sync-android.mjs"
   },
   "devDependencies": {
-    "cordova-plugin-outline": "file:../src/cordova/plugin"
+    "capacitor-plugin-outline": "file:./plugins/capacitor-plugin-outline"
   }
 }

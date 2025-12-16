@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline je open-sourceový projekt od společnosti <a href={jigsawUrl}>Jigsaw</a>, který si klade za cíl poskytnout novinářům a zpravodajským organizacím bezpečný přístup k internetu.<br><br> Outline je postaven na technologiích <a href={shadowsocksUrl}>Shadowsocks</a> a je stále v raných fázích vývoje. Kód můžete rozšiřovat na <a href={gitHubUrl}>GitHub</a>u, a pokud se chcete dozvědět, když přidáme nové funkce nebo podporu dalších platforem, sledujte nás ve službách <a href={redditUrl}>Reddit</a> a <a href={mediumUrl}>Medium</a>.",
+  "about-outline": "Outline je open-sourceový projekt od společnosti Outline Foundation, který si klade za cíl poskytnout novinářům a zpravodajským organizacím bezpečný přístup k internetu.<br><br> Outline je postaven na technologiích <a href={shadowsocksUrl}>Shadowsocks</a> a je stále v raných fázích vývoje. Kód můžete rozšiřovat na <a href={gitHubUrl}>GitHub</a>u, a pokud se chcete dozvědět, když přidáme nové funkce nebo podporu dalších platforem, sledujte nás ve službách <a href={redditUrl}>Reddit</a> a <a href={mediumUrl}>Medium</a>.",
   "about-version": "Verze {version}",
   "aws-lightsail-firewall-0": "Přejděte na obrazovku s instancemi virtuálního počítače {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Klikněte na instanci, kde chcete Outline hostovat.",

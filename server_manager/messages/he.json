@@ -1,5 +1,5 @@
 {
-  "about-outline": "אפליקציית Outline היא פרויקט בקוד פתוח שנוצר על ידי <a href={jigsawUrl}>Jigsaw</a> כדי להעניק לגופי תקשורת ועיתונאים גישה מאובטחת יותר לאינטרנט.<br><br> Outline מופעלת על ידי <a href={shadowsocksUrl}>Shadowsocks</a> ועדיין נמצאת בשלבי פיתוח מוקדמים. אפשר לתרום לקוד ב-<a href={gitHubUrl}>GitHub</a> ולעקוב אחרינו ב-<a href={redditUrl}>Reddit</a> וב-<a href={mediumUrl}>Medium</a> כדי להיות עם יד על הדופק ולשמוע כשנוספות תכונות חדשות וכשהאפליקציה מתרחבת לפלטפורמות נוספות.",
+  "about-outline": "אפליקציית Outline היא פרויקט בקוד פתוח שנוצר על ידי Outline Foundation כדי להעניק לגופי תקשורת ועיתונאים גישה מאובטחת יותר לאינטרנט.<br><br> Outline מופעלת על ידי <a href={shadowsocksUrl}>Shadowsocks</a> ועדיין נמצאת בשלבי פיתוח מוקדמים. אפשר לתרום לקוד ב-<a href={gitHubUrl}>GitHub</a> ולעקוב אחרינו ב-<a href={redditUrl}>Reddit</a> וב-<a href={mediumUrl}>Medium</a> כדי להיות עם יד על הדופק ולשמוע כשנוספות תכונות חדשות וכשהאפליקציה מתרחבת לפלטפורמות נוספות.",
   "about-version": "גרסה {version}",
   "aws-lightsail-firewall-0": "עוברים למסך של מופעי {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "לוחצים על המופע שבו רוצים לארח את Outline.",

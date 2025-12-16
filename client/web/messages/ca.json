@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline és un producte de <a href={jigsawUrl}>Jigsaw</a> que permet a tots els usuaris crear i executar una VPN pròpia, així com compartir-hi l'accés. Outline s'ha dissenyat perquè sigui resistent als bloquejos. Visita <a href={outlineUrl}>getoutline.org</a> per saber com pots començar.<br><br>Outline és un programari lliure que funciona amb la tecnologia de <a href={shadowsocksUrl}>Shadowsocks</a>. Pots contribuir al codi des de <a href={gitHubUrl}>GitHub</a> i unir-te a la conversa a <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline és un producte de Outline Foundation que permet a tots els usuaris crear i executar una VPN pròpia, així com compartir-hi l'accés. Outline s'ha dissenyat perquè sigui resistent als bloquejos. Visita <a href={outlineUrl}>getoutline.org</a> per saber com pots començar.<br><br>Outline és un programari lliure que funciona amb la tecnologia de <a href={shadowsocksUrl}>Shadowsocks</a>. Pots contribuir al codi des de <a href={gitHubUrl}>GitHub</a> i unir-te a la conversa a <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Informació",
   "add-access-key-dialog-error-text": "La clau d'accés no és vàlida.",
   "add-access-key-dialog-header": "Afegeix una clau d'accés per a la VPN",

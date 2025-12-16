@@ -1,5 +1,5 @@
 {
-  "about-outline": "Programmatūra Outline ir struktūrvienības <a href={jigsawUrl}>Jigsaw</a> produkts, kas ikvienam lietotājam dod iespēju izveidot un darbināt savu VPN un kopīgot piekļuvi tam. Programmatūra Outline ir izstrādāta tā, lai to būtu grūti bloķēt. Lai uzzinātu, kā sākt darbu, apmeklējiet vietni <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline ir atklātā pirmkoda programmatūra, kuras darbību nodrošina <a href={shadowsocksUrl}>Shadowsocks</a>. Varat piedalīties koda izstrādē vietnē <a href={gitHubUrl}>GitHub</a> un pievienoties sarunai vietnē <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Programmatūra Outline ir struktūrvienības Outline Foundation produkts, kas ikvienam lietotājam dod iespēju izveidot un darbināt savu VPN un kopīgot piekļuvi tam. Programmatūra Outline ir izstrādāta tā, lai to būtu grūti bloķēt. Lai uzzinātu, kā sākt darbu, apmeklējiet vietni <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline ir atklātā pirmkoda programmatūra, kuras darbību nodrošina <a href={shadowsocksUrl}>Shadowsocks</a>. Varat piedalīties koda izstrādē vietnē <a href={gitHubUrl}>GitHub</a> un pievienoties sarunai vietnē <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Par",
   "add-access-key-dialog-error-text": "Nederīga piekļuves atslēga.",
   "add-access-key-dialog-header": "VPN piekļuves atslēgas pievienošana",

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline არის ღია კოდის პროექტი, რომელიც შექმნილია <a href={jigsawUrl}>Jigsaw</a>-ის მიერ ახალი ამბების ორგანიზაციებისა და ჟურნალისტებისთვის ინტერნეტზე წვდომის უსაფრთხო გზების უზრუნველსაყოფად.<br><br> Outline მუშაობს <a href={shadowsocksUrl}>Shadowsocks</a>-ზე და ჯერ კიდევ ადრეული ეტაპის პროდუქტია. შეგიძლიათ წვლილი შეიტანოთ კოდში <a href={gitHubUrl}>GitHub</a>-ზე და თვალი გვადევნოთ <a href={redditUrl}>Reddit</a>-ზე და <a href={mediumUrl}>Medium</a>-ზე, რომ გაიგოთ, როდის გავაფართოვებთ მეტ პლატფორმაზე და დავამატებთ ახალ ფუნქციებს.",
+  "about-outline": "Outline არის ღია კოდის პროექტი, რომელიც შექმნილია Outline Foundation-ის მიერ ახალი ამბების ორგანიზაციებისა და ჟურნალისტებისთვის ინტერნეტზე წვდომის უსაფრთხო გზების უზრუნველსაყოფად.<br><br> Outline მუშაობს <a href={shadowsocksUrl}>Shadowsocks</a>-ზე და ჯერ კიდევ ადრეული ეტაპის პროდუქტია. შეგიძლიათ წვლილი შეიტანოთ კოდში <a href={gitHubUrl}>GitHub</a>-ზე და თვალი გვადევნოთ <a href={redditUrl}>Reddit</a>-ზე და <a href={mediumUrl}>Medium</a>-ზე, რომ გაიგოთ, როდის გავაფართოვებთ მეტ პლატფორმაზე და დავამატებთ ახალ ფუნქციებს.",
   "about-version": "ვერსია {version}",
   "aws-lightsail-firewall-0": "გადადით {openLink}Amazon Lightsail{closeLink} ეგზემპლარების ეკრანზე.",
   "aws-lightsail-firewall-1": "დააწკაპუნეთ ეგზემპლარზე, რომელზეც გსურთ Outline-ის ჰოსტინგი.",

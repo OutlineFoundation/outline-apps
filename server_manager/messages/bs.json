@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline je projekat otvorenog koda iz kompanije <a href={jigsawUrl}>Jigsaw</a> koji novinskim agencijama i novinarima pruža sigurniji način pristupa internetu.<br><br> Outline omogućava <a href={shadowsocksUrl}>Shadowsocks</a> i još uvijek je proizvod u ranoj fazi razvoja. Kodu možete doprinijeti na web lokaciji <a href={gitHubUrl}>GitHub</a> i pratiti nas na mrežama <a href={redditUrl}>Reddit</a> i <a href={mediumUrl}>Medium</a> da saznate kada se proširimo na više platformi i dodamo nove funkcije.",
+  "about-outline": "Outline je projekat otvorenog koda iz kompanije Outline Foundation koji novinskim agencijama i novinarima pruža sigurniji način pristupa internetu.<br><br> Outline omogućava <a href={shadowsocksUrl}>Shadowsocks</a> i još uvijek je proizvod u ranoj fazi razvoja. Kodu možete doprinijeti na web lokaciji <a href={gitHubUrl}>GitHub</a> i pratiti nas na mrežama <a href={redditUrl}>Reddit</a> i <a href={mediumUrl}>Medium</a> da saznate kada se proširimo na više platformi i dodamo nove funkcije.",
   "about-version": "Verzija {version}",
   "aws-lightsail-firewall-0": "Pređite na ekran instanci za {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Kliknite na instancu na kojoj želite hostirati Outline.",

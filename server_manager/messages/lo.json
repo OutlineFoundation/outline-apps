@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ແມ່ນໂຄງການໂອເພນຊອດທີ່ <a href={jigsawUrl}>Jigsaw</a> ສ້າງຂຶ້ນເພື່ອໃຫ້ສຳນັກຂ່າວ ແລະ ນັກຂ່າວເຂົ້າເຖິງອິນເຕີເນັດໄດ້ຢ່າງປອດໄພ.<br><br> Outline ຂັບເຄື່ອນໂດຍ <a href={shadowsocksUrl}>Shadowsocks</a> ແລະ ຍັງເປັນຜະລິດຕະພັນທີ່ພັດທະນາໃນໄລຍະເລີ່ມຕົ້ນ. ທ່ານສາມາດປະກອບສ່ວນໃນການຂຽນໂຄດໄດ້ຢູ່ <a href={gitHubUrl}>GitHub</a> ແລະ ຕິດຕາມພວກເຮົາໄດ້ຢູ່ທີ່ <a href={redditUrl}>Reddit</a> ແລະ <a href={mediumUrl}>Medium</a> ເພື່ອຮັບຂໍ້ມູນເມື່ອພວກເຮົາຂະຫຍາຍບໍລິການໄປຫາແພລດຟອມອື່ນໆ ແລະ ເພີ່ມຄຸນສົມບັດໃໝ່ໆ.",
+  "about-outline": "Outline ແມ່ນໂຄງການໂອເພນຊອດທີ່ Outline Foundation ສ້າງຂຶ້ນເພື່ອໃຫ້ສຳນັກຂ່າວ ແລະ ນັກຂ່າວເຂົ້າເຖິງອິນເຕີເນັດໄດ້ຢ່າງປອດໄພ.<br><br> Outline ຂັບເຄື່ອນໂດຍ <a href={shadowsocksUrl}>Shadowsocks</a> ແລະ ຍັງເປັນຜະລິດຕະພັນທີ່ພັດທະນາໃນໄລຍະເລີ່ມຕົ້ນ. ທ່ານສາມາດປະກອບສ່ວນໃນການຂຽນໂຄດໄດ້ຢູ່ <a href={gitHubUrl}>GitHub</a> ແລະ ຕິດຕາມພວກເຮົາໄດ້ຢູ່ທີ່ <a href={redditUrl}>Reddit</a> ແລະ <a href={mediumUrl}>Medium</a> ເພື່ອຮັບຂໍ້ມູນເມື່ອພວກເຮົາຂະຫຍາຍບໍລິການໄປຫາແພລດຟອມອື່ນໆ ແລະ ເພີ່ມຄຸນສົມບັດໃໝ່ໆ.",
   "about-version": "ເວີຊັນ {version}",
   "aws-lightsail-firewall-0": "ນຳທາງໄປຫາໜ້າຈໍອິນສະແຕນ {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "ຄລິກອິນສະແຕນທີ່ທ່ານຕ້ອງການໂຮສ Outline.",

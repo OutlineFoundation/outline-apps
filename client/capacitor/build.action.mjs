@@ -77,9 +77,11 @@ export async function main(...parameters) {
       await spawnStream('node', 'build/cap-sync-android.mjs');
     }
 
+    let buildResult;
     switch (platform + buildMode) {
       case 'capacitor-android' + 'debug':
-        return androidDebug(verbose);
+        buildResult = await androidDebug(verbose);
+        break;
       case 'capacitor-android' + 'release':
         if (!process.env.JAVA_HOME) {
           throw new ReferenceError(
@@ -99,18 +101,35 @@ export async function main(...parameters) {
         }
 
         await setAndroidVersion(versionName, buildNumber);
-        return androidRelease(
+        buildResult = await androidRelease(
           process.env.ANDROID_KEY_STORE_PASSWORD,
           process.env.ANDROID_KEY_STORE_CONTENTS,
           process.env.JAVA_HOME,
           verbose
         );
+        break;
       case 'capacitor-ios' + 'debug':
-        return iosDebug();
+        buildResult = await iosDebug();
+        break;
       case 'capacitor-ios' + 'release':
         await setIOSVersion(versionName, buildNumber);
-        return iosRelease();
+        buildResult = await iosRelease();
+        break;
     }
+
+    // Open the native IDE after successful build
+    console.log('\n Opening native IDE...');
+    if (nativePlatform === 'ios') {
+      const iosProjectPath = path.resolve(capRoot, 'ios', 'App', 'App.xcworkspace');
+      await spawnStream('open', iosProjectPath);
+      console.log(' Opened Xcode workspace');
+    } else if (nativePlatform === 'android') {
+      const androidProjectPath = path.resolve(capRoot, 'android');
+      await spawnStream('open', '-a', 'Android Studio', androidProjectPath);
+      console.log(' Opened Android Studio project');
+    }
+
+    return buildResult;
   } finally {
     process.chdir(prevCwd);
   }

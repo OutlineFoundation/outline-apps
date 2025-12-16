@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline हे <a href={jigsawUrl}>Jigsaw</a> चे उत्पादन आहे, जे कोणालाही त्यांचे स्वतःचे VPN तयार, रन आणि त्याचा अ‍ॅक्सेस शेअर करू देते. Outline हे ब्लॉक करण्यास अवरोध व्हावा यासाठी डिझाइन केले आहे. सुरुवात कशी करावी याबद्दल जाणून घेण्यासाठी <a href={outlineUrl}>getoutline.org</a> येथे भेट द्या.<br><br>Outline हे <a href={shadowsocksUrl}>Shadowsocks</a> द्वारे समर्थित मुक्त स्रोत सॉफ्टवेअर आहे. तुम्ही <a href={gitHubUrl}>GitHub</a> वर कोडसाठी योगदान देऊ शकता आणि <a href={redditUrl}>Reddit</a> वर संभाषणामध्ये सामील होऊ शकता.",
+  "about-outline": "Outline हे Outline Foundation चे उत्पादन आहे, जे कोणालाही त्यांचे स्वतःचे VPN तयार, रन आणि त्याचा अ‍ॅक्सेस शेअर करू देते. Outline हे ब्लॉक करण्यास अवरोध व्हावा यासाठी डिझाइन केले आहे. सुरुवात कशी करावी याबद्दल जाणून घेण्यासाठी <a href={outlineUrl}>getoutline.org</a> येथे भेट द्या.<br><br>Outline हे <a href={shadowsocksUrl}>Shadowsocks</a> द्वारे समर्थित मुक्त स्रोत सॉफ्टवेअर आहे. तुम्ही <a href={gitHubUrl}>GitHub</a> वर कोडसाठी योगदान देऊ शकता आणि <a href={redditUrl}>Reddit</a> वर संभाषणामध्ये सामील होऊ शकता.",
   "about-page-title": "याबद्दल",
   "add-access-key-dialog-error-text": "अवैध ॲक्सेस की.",
   "add-access-key-dialog-header": "VPN ॲक्सेस की जोडा",

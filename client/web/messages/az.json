@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline <a href={jigsawUrl}>Jigsaw</a> tərəfindən hazırlanmış və hər kəsə öz VPN şəbəkəsini yaratmağa, idarə etməyə və paylaşmağa imkan verən məhsuldur. Outline blokdan etibarlı qorunma təmin edir. Necə başlayacağınızı bilmək üçün <a href={outlineUrl}>getoutline.org</a> səhifəsinə daxil olun.<br><br>Outline <a href={shadowsocksUrl}>Shadowsocks</a> tərəfindən hazırlanan açıq mənbə proqram təminatıdır. Siz <a href={gitHubUrl}>GitHub</a> platformasında koda töhfə verə, <a href={redditUrl}>Reddit</a> platformasında isə müzakirəyə qoşula bilərsiniz.",
+  "about-outline": "Outline Outline Foundation tərəfindən hazırlanmış və hər kəsə öz VPN şəbəkəsini yaratmağa, idarə etməyə və paylaşmağa imkan verən məhsuldur. Outline blokdan etibarlı qorunma təmin edir. Necə başlayacağınızı bilmək üçün <a href={outlineUrl}>getoutline.org</a> səhifəsinə daxil olun.<br><br>Outline <a href={shadowsocksUrl}>Shadowsocks</a> tərəfindən hazırlanan açıq mənbə proqram təminatıdır. Siz <a href={gitHubUrl}>GitHub</a> platformasında koda töhfə verə, <a href={redditUrl}>Reddit</a> platformasında isə müzakirəyə qoşula bilərsiniz.",
   "about-page-title": "Haqqında",
   "add-access-key-dialog-error-text": "Giriş açarı yanlışdır.",
   "add-access-key-dialog-header": "VPN giriş açarı əlavə edin",

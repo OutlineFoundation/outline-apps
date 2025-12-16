@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline là một dự án nguồn mở do <a href={jigsawUrl}>Jigsaw</a> tạo ra nhằm mang đến một phương thức truy cập Internet an toàn hơn cho các cơ quan báo chí và nhà báo.<br><br> Outline chạy trên nền tảng <a href={shadowsocksUrl}>Shadowsocks</a> và vẫn là một sản phẩm ở giai đoạn đầu. Bạn có thể đóng góp mã trên <a href={gitHubUrl}>GitHub</a> và theo dõi chúng tôi trên <a href={redditUrl}>Reddit</a> và <a href={mediumUrl}>Medium</a> để nhận tin tức khi chúng tôi mở rộng ra nhiều nền tảng khác và thêm các tính năng mới.",
+  "about-outline": "Outline là một dự án nguồn mở do Outline Foundation tạo ra nhằm mang đến một phương thức truy cập Internet an toàn hơn cho các cơ quan báo chí và nhà báo.<br><br> Outline chạy trên nền tảng <a href={shadowsocksUrl}>Shadowsocks</a> và vẫn là một sản phẩm ở giai đoạn đầu. Bạn có thể đóng góp mã trên <a href={gitHubUrl}>GitHub</a> và theo dõi chúng tôi trên <a href={redditUrl}>Reddit</a> và <a href={mediumUrl}>Medium</a> để nhận tin tức khi chúng tôi mở rộng ra nhiều nền tảng khác và thêm các tính năng mới.",
   "about-version": "Phiên bản {version}",
   "aws-lightsail-firewall-0": "Chuyển đến màn hình phiên bản {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Nhấp vào phiên bản mà bạn muốn lưu trữ Outline.",

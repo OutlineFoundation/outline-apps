@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline, <a href={jigsawUrl}>Jigsaw</a> का एक 'ओपन सोर्स प्रोजेक्ट' है, जो समाचार संगठनों और पत्रकारों को इंटरनेट ऐक्सेस करने के लिए सुरक्षित तरीका देता है.<br><br> Outline, <a href={shadowsocksUrl}>Shadowsocks</a> से चलता है और अब भी शुरुआती चरण का प्रॉडक्ट है. आप <a href={gitHubUrl}>GitHub</a> पर कोड में योगदान कर सकते हैं और आप हमारी तरफ से ज़्यादा प्लैटफ़ॉर्म बढ़ाने और नई सुविधाएं जोड़ने के बारे में जानने के लिए <a href={redditUrl}>Reddit</a> और <a href={mediumUrl}>Medium</a> पर हमें फ़ॉलो कर सकते हैं.",
+  "about-outline": "Outline, Outline Foundation का एक 'ओपन सोर्स प्रोजेक्ट' है, जो समाचार संगठनों और पत्रकारों को इंटरनेट ऐक्सेस करने के लिए सुरक्षित तरीका देता है.<br><br> Outline, <a href={shadowsocksUrl}>Shadowsocks</a> से चलता है और अब भी शुरुआती चरण का प्रॉडक्ट है. आप <a href={gitHubUrl}>GitHub</a> पर कोड में योगदान कर सकते हैं और आप हमारी तरफ से ज़्यादा प्लैटफ़ॉर्म बढ़ाने और नई सुविधाएं जोड़ने के बारे में जानने के लिए <a href={redditUrl}>Reddit</a> और <a href={mediumUrl}>Medium</a> पर हमें फ़ॉलो कर सकते हैं.",
   "about-version": "वर्शन {version}",
   "aws-lightsail-firewall-0": "{openLink}Amazon Lightsail{closeLink} की इंस्टेंस स्क्रीन पर जाएं.",
   "aws-lightsail-firewall-1": "उस इंस्टेंस पर क्लिक करें जिस पर आप Outline को होस्ट करना चाहते हैं.",

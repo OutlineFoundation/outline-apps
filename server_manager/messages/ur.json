@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ایک اوپن سورس پروجیکٹ ہے جو <a href={jigsawUrl}>Jigsaw</a> کی جانب سے خبر رساں اداروں اور صحافیوں کو انٹرنیٹ پر محفوظ رسائی دینے کیلئے بنایا گیا ہے۔<br><br> Outline کو <a href={shadowsocksUrl}>Shadowsocks</a> کی جانب سے طاقت مہیا کی جاتی ہے اور ابھی یہ اپنی تکمیل کے ابتدائی مراحل میں ہے۔ آپ <a href={gitHubUrl}>GitHub</a> پر کوڈ میں تعاون کر سکتے ہیں، اور یہ جاننے کیلئے کہ ہم کب مزید پلیٹ فارمز شامل کریں گے اور نئی خصوصیات شامل کریں گے، <a href={redditUrl}>Reddit</a> اور <a href={mediumUrl}>Medium</a> پر ہماری پیروی بھی کر سکتے ہیں۔",
+  "about-outline": "Outline ایک اوپن سورس پروجیکٹ ہے جو Outline Foundation کی جانب سے خبر رساں اداروں اور صحافیوں کو انٹرنیٹ پر محفوظ رسائی دینے کیلئے بنایا گیا ہے۔<br><br> Outline کو <a href={shadowsocksUrl}>Shadowsocks</a> کی جانب سے طاقت مہیا کی جاتی ہے اور ابھی یہ اپنی تکمیل کے ابتدائی مراحل میں ہے۔ آپ <a href={gitHubUrl}>GitHub</a> پر کوڈ میں تعاون کر سکتے ہیں، اور یہ جاننے کیلئے کہ ہم کب مزید پلیٹ فارمز شامل کریں گے اور نئی خصوصیات شامل کریں گے، <a href={redditUrl}>Reddit</a> اور <a href={mediumUrl}>Medium</a> پر ہماری پیروی بھی کر سکتے ہیں۔",
   "about-version": "ورژن {version}",
   "aws-lightsail-firewall-0": "{openLink}Amazon Lightsail{closeLink} نمونوں کی اسکرین میں نیویگیٹ کریں۔",
   "aws-lightsail-firewall-1": "اس نمونے پر کلک کریں جس پر آپ Outline کی میزبانی کرنا چاہتے ہیں۔",

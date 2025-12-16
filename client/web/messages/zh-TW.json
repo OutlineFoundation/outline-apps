@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline 是由 <a href={jigsawUrl}>Jigsaw</a> 推出的產品，可讓任何人建立與執行自己專屬的 VPN，以及分享 VPN 的存取權。由於經過特殊設計，Outline 可防禦封鎖機制，如需使用入門說明，請前往 <a href={outlineUrl}>getoutline.org</a>。<br><br>Outline 是採用 <a href={shadowsocksUrl}>Shadowsocks</a> 技術的開放原始碼軟體。你可以在 <a href={gitHubUrl}>GitHub</a> 上參與程式碼編寫工作，並透過 <a href={redditUrl}>Reddit</a> 加入相關討論。",
+  "about-outline": "Outline 是由 Outline Foundation 推出的產品，可讓任何人建立與執行自己專屬的 VPN，以及分享 VPN 的存取權。由於經過特殊設計，Outline 可防禦封鎖機制，如需使用入門說明，請前往 <a href={outlineUrl}>getoutline.org</a>。<br><br>Outline 是採用 <a href={shadowsocksUrl}>Shadowsocks</a> 技術的開放原始碼軟體。你可以在 <a href={gitHubUrl}>GitHub</a> 上參與程式碼編寫工作，並透過 <a href={redditUrl}>Reddit</a> 加入相關討論。",
   "about-page-title": "關於",
   "add-access-key-dialog-error-text": "存取金鑰無效。",
   "add-access-key-dialog-header": "新增 VPN 存取金鑰",

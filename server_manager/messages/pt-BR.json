@@ -1,5 +1,5 @@
 {
-  "about-outline": "O Outline é um projeto de código aberto criado pela <a href={jigsawUrl}>Jigsaw</a> para proporcionar aos jornalistas e às agências de notícias uma forma mais segura de acessar a Internet.<br><br> O Outline usa a tecnologia <a href={shadowsocksUrl}>Shadowsocks</a> e ainda está nas etapas iniciais de desenvolvimento. Você pode contribuir para o código no <a href={gitHubUrl}>GitHub</a> e nos seguir no <a href={redditUrl}>Reddit</a> e no <a href={mediumUrl}>Medium</a> para saber quando o produto chegar a outras plataformas e receber novos recursos.",
+  "about-outline": "O Outline é um projeto de código aberto criado pela Outline Foundation para proporcionar aos jornalistas e às agências de notícias uma forma mais segura de acessar a Internet.<br><br> O Outline usa a tecnologia <a href={shadowsocksUrl}>Shadowsocks</a> e ainda está nas etapas iniciais de desenvolvimento. Você pode contribuir para o código no <a href={gitHubUrl}>GitHub</a> e nos seguir no <a href={redditUrl}>Reddit</a> e no <a href={mediumUrl}>Medium</a> para saber quando o produto chegar a outras plataformas e receber novos recursos.",
   "about-version": "Versão {version}",
   "aws-lightsail-firewall-0": "Acesse a tela com as instâncias do {openLink}Amazon Lightsail{closeLink}.",
   "aws-lightsail-firewall-1": "Clique na instância onde você quer hospedar o Outline.",

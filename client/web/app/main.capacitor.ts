@@ -29,15 +29,15 @@ import {AbstractClipboard} from './clipboard';
 import {EnvironmentVariables} from './environment';
 import {main} from './main';
 import {installDefaultMethodChannel, MethodChannel} from './method_channel';
-import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 import {VpnApi} from './outline_server_repository/vpn';
-import {CordovaVpnApi} from './outline_server_repository/vpn.cordova';
+import {CapacitorVpnApi} from './outline_server_repository/vpn.capacitor';
 import {FakeVpnApi} from './outline_server_repository/vpn.fake';
 import {OutlinePlatform} from './platform';
-import {pluginExec} from './plugin.cordova';
+import {pluginExec} from './plugin.capacitor';
 import {AbstractUpdater} from './updater';
 import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
+import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
 const isCapacitorRuntime = isCapacitorPlatform();
 const isNativeCapacitorPlatform = isCapacitorNativePlatform();
@@ -167,7 +167,7 @@ class CapacitorMethodChannel implements MethodChannel {
 class CapacitorPlatform implements OutlinePlatform {
   getVpnApi(): VpnApi | undefined {
     if (hasDeviceSupport) {
-      return new CordovaVpnApi();
+      return new CapacitorVpnApi();
     }
     return new FakeVpnApi();
   }

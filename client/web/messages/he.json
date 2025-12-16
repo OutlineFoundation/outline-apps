@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline היא תוכנה של <a href={jigsawUrl}>Jigsaw</a> שמאפשרת לכל אחד ליצור ולהפעיל שרת VPN משלו ולשתף את הגישה אליו. Outline תוכננה להתמודד עם חסימות תוכן. איך מתחילים? ההסברים מופיעים כאן: <a href={outlineUrl}>getoutline.org</a>.<br><br>‏Outline היא תוכנה בקוד פתוח שמופעלת באמצעות <a href={shadowsocksUrl}>Shadowsocks</a>. אנחנו מזמינים אותך להוסיף רכיבים לקוד ב-<a href={gitHubUrl}>GitHub</a> ולהצטרף לשיחה ב-<a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline היא תוכנה של Outline Foundation שמאפשרת לכל אחד ליצור ולהפעיל שרת VPN משלו ולשתף את הגישה אליו. Outline תוכננה להתמודד עם חסימות תוכן. איך מתחילים? ההסברים מופיעים כאן: <a href={outlineUrl}>getoutline.org</a>.<br><br>‏Outline היא תוכנה בקוד פתוח שמופעלת באמצעות <a href={shadowsocksUrl}>Shadowsocks</a>. אנחנו מזמינים אותך להוסיף רכיבים לקוד ב-<a href={gitHubUrl}>GitHub</a> ולהצטרף לשיחה ב-<a href={redditUrl}>Reddit</a>.",
   "about-page-title": "מידע כללי",
   "add-access-key-dialog-error-text": "מפתח הגישה לא חוקי.",
   "add-access-key-dialog-header": "הוספת מפתח גישה לרשת VPN",

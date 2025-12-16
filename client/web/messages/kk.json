@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline – кез келген пайдаланушының жеке VPN желісін жасауына, оны іске қосуына және пайдалану рұқсатын бөлісуіне мүмкіндік беретін, <a href={jigsawUrl}>Jigsaw</a> әзірлеген өнім. Outline бөгеуге төзімді етіп әзірленген. Жұмысты бастау әдісін білу үшін <a href={outlineUrl}>getoutline.org</a> бетіне өтіңіз.<br><br>Outline — <a href={shadowsocksUrl}>Shadowsocks</a> протоколын пайдаланатын ашық кодты бағдарлама. <a href={gitHubUrl}>GitHub</a> платформасында кодқа үлес қосып, <a href={redditUrl}>Reddit</a> сайтында талқылай аласыз.",
+  "about-outline": "Outline – кез келген пайдаланушының жеке VPN желісін жасауына, оны іске қосуына және пайдалану рұқсатын бөлісуіне мүмкіндік беретін, Outline Foundation әзірлеген өнім. Outline бөгеуге төзімді етіп әзірленген. Жұмысты бастау әдісін білу үшін <a href={outlineUrl}>getoutline.org</a> бетіне өтіңіз.<br><br>Outline — <a href={shadowsocksUrl}>Shadowsocks</a> протоколын пайдаланатын ашық кодты бағдарлама. <a href={gitHubUrl}>GitHub</a> платформасында кодқа үлес қосып, <a href={redditUrl}>Reddit</a> сайтында талқылай аласыз.",
   "about-page-title": "Ақпарат",
   "add-access-key-dialog-error-text": "Рұқсат кілті жарамсыз.",
   "add-access-key-dialog-header": "VPN рұқсат кілтін қосыңыз",

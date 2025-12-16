@@ -1,5 +1,5 @@
 {
-  "about-outline": "Ang Outline ay produkto ng <a href={jigsawUrl}>Jigsaw</a> na nagbibigay-daan sa kahit sino na gumawa, magpatakbo, at magbahagi ng access sa sarili nilang VPN. Idinisenyo ang Outline para maging matatag laban sa pag-block. Bumisita sa <a href={outlineUrl}>getoutline.org</a> para alamin kung paano magsimula.<br><br>Ang Outline ay open source na software na pinapagana ng <a href={shadowsocksUrl}>Shadowsocks</a>. Puwede kang mag-ambag sa code sa <a href={gitHubUrl}>GitHub</a> at sumali sa pag-uusap sa <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Ang Outline ay produkto ng Outline Foundation na nagbibigay-daan sa kahit sino na gumawa, magpatakbo, at magbahagi ng access sa sarili nilang VPN. Idinisenyo ang Outline para maging matatag laban sa pag-block. Bumisita sa <a href={outlineUrl}>getoutline.org</a> para alamin kung paano magsimula.<br><br>Ang Outline ay open source na software na pinapagana ng <a href={shadowsocksUrl}>Shadowsocks</a>. Puwede kang mag-ambag sa code sa <a href={gitHubUrl}>GitHub</a> at sumali sa pag-uusap sa <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Tungkol dito",
   "add-access-key-dialog-error-text": "Invalid na access key.",
   "add-access-key-dialog-header": "Magdagdag ng access key ng VPN",

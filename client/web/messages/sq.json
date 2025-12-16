@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline është një produkt nga <a href={jigsawUrl}>Jigsaw</a> që lejon çdo person të krijojë, të ekzekutojë dhe të ndajë qasjen në rrjetin e vet VPN. Outline është projektuar të jetë rezistent ndaj bllokimit. Vizito <a href={outlineUrl}>getoutline.org</a> për të mësuar se si të fillosh.<br><br>Outline është një softuer me burim të hapur i mundësuar nga <a href={shadowsocksUrl}>Shadowsocks</a>. Mund të kontribuosh për kodin në <a href={gitHubUrl}>GitHub</a> dhe të bashkohesh te biseda në <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline është një produkt nga Outline Foundation që lejon çdo person të krijojë, të ekzekutojë dhe të ndajë qasjen në rrjetin e vet VPN. Outline është projektuar të jetë rezistent ndaj bllokimit. Vizito <a href={outlineUrl}>getoutline.org</a> për të mësuar se si të fillosh.<br><br>Outline është një softuer me burim të hapur i mundësuar nga <a href={shadowsocksUrl}>Shadowsocks</a>. Mund të kontribuosh për kodin në <a href={gitHubUrl}>GitHub</a> dhe të bashkohesh te biseda në <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Informacione",
   "add-access-key-dialog-error-text": "Çelës i pavlefshëm qasjeje.",
   "add-access-key-dialog-header": "Shto çelësin e qasjes të VPN-së",
