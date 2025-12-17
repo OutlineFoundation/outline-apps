@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package org.outline.android.client;
 
 import static org.junit.Assert.*;
 

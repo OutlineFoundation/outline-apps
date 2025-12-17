@@ -375,7 +375,8 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nthlink.outline.PacketTunnel;
+				PRODUCT_BUNDLE_IDENTIFIER = org.outline.ios.client.PacketTunnel;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = org.outline.macos.client.PacketTunnel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Outline PT dev profile";
@@ -420,7 +421,8 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nthlink.outline.PacketTunnel;
+				PRODUCT_BUNDLE_IDENTIFIER = org.outline.ios.client.PacketTunnel;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = org.outline.macos.client.PacketTunnel;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Outline PT dev profile";
@@ -568,12 +570,13 @@
 				);
 				MARKETING_VERSION = 1.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
-				PRODUCT_BUNDLE_IDENTIFIER = com.nthlink.outline;
+				PRODUCT_BUNDLE_IDENTIFIER = org.outline.ios.client;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = org.outline.macos.client;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Outline Dev Profile";
 				SUPPORTS_MACCATALYST = YES;
-				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = YES;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
@@ -599,12 +602,13 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.nthlink.outline;
+				PRODUCT_BUNDLE_IDENTIFIER = org.outline.ios.client;
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = org.outline.macos.client;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Outline Dev Profile";
 				SUPPORTS_MACCATALYST = YES;
-				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = YES;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,6";
