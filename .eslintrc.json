@@ -1,25 +1,5 @@
 {
   "extends": "./node_modules/gts/",
-  "ignorePatterns": [
-    "**/node_modules/**",
-    "**/build/**",
-    "**/dist/**",
-    "**/.next/**",
-    "**/coverage/**",
-    "**/*.min.js",
-    "**/output/**",
-    "**/third_party/**",
-    "client/capacitor/android/app/**",
-    "client/capacitor/ios/**",
-    "client/capacitor/src/index.js",
-    "client/capacitor/webpack.config.js",
-    "commitlint.config.js",
-    "server_manager/**/*.js",
-    "server_manager/**/*.webpack.js",
-    "server_manager/electron/release/**",
-    "server_manager/install_scripts/**/*.node.js",
-    "server_manager/www/app.spec.ts"
-  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
@@ -27,8 +7,7 @@
     "project": [
       "./client/tsconfig.json",
       "./infrastructure/tsconfig.json",
-      "./server_manager/tsconfig.json",
-      "./client/capacitor/tsconfig.json"
+      "./server_manager/tsconfig.json"
     ]
   },
   "plugins": [
