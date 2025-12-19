@@ -53,6 +53,10 @@ npm run action client/capacitor/build capacitor-android
 
 **Release mode:**
 
+You can either set environment variables inline or use a `.env` file in the project root:
+
+**Option 1: Inline environment variables**
+
 ```sh
 SENTRY_DSN=<your sentry dsn> \
 JAVA_HOME=<path to java 17> \
@@ -61,13 +65,32 @@ ANDROID_KEY_STORE_CONTENTS=<base64 encoded keystore> \
 npm run action client/capacitor/build capacitor-android -- --buildMode=release --versionName=<your version name>
 ```
 
+**Option 2: Using a `.env` file**
+
+Create a `.env` file in the project root with:
+
+```env
+SENTRY_DSN=<your sentry dsn>
+JAVA_HOME=<path to java 17>
+ANDROID_KEY_STORE_PASSWORD=<keystore password>
+ANDROID_KEY_STORE_CONTENTS=<base64 encoded keystore>
+```
+
+Then run:
+
+```sh
+npm run action client/capacitor/build capacitor-android -- --buildMode=release --versionName=<your version name>
+```
+
 **Note**: Release builds require:
 
 - `versionName`: A valid version string (e.g., "1.0.0") - passed as CLI argument
-- `SENTRY_DSN`: Sentry DSN for error reporting - set as environment variable
-- `JAVA_HOME`: Path to JDK 17 installation - set as environment variable
-- `ANDROID_KEY_STORE_PASSWORD`: Password for the signing keystore - set as environment variable
-- `ANDROID_KEY_STORE_CONTENTS`: Base64-encoded keystore file contents - set as environment variable
+- `SENTRY_DSN`: Sentry DSN for error reporting - set as environment variable or in `.env` file
+- `JAVA_HOME`: Path to JDK 17 installation - set as environment variable or in `.env` file
+- `ANDROID_KEY_STORE_PASSWORD`: Password for the signing keystore - set as environment variable or in `.env` file
+- `ANDROID_KEY_STORE_CONTENTS`: Base64-encoded keystore file contents - set as environment variable or in `.env` file
+
+> ⚠️ **Important**: Make sure to add `.env` to your `.gitignore` file to avoid committing sensitive credentials!
 
 ## Debugging
 

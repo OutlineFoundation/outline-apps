@@ -21,6 +21,7 @@ import { downloadHttpsFile } from '@outline/infrastructure/build/download_file.m
 import { getRootDir } from '@outline/infrastructure/build/get_root_dir.mjs';
 import { runAction } from '@outline/infrastructure/build/run_action.mjs';
 import { spawnStream } from '@outline/infrastructure/build/spawn_stream.mjs';
+import * as dotenv from 'dotenv';
 
 import { getBuildParameters } from '@outline/client/build/get_build_parameters.mjs';
 import { makeReplacements } from '@outline/client/build/make_replacements.mjs';
@@ -48,6 +49,7 @@ export async function main(...parameters) {
   }
 
   const root = getRootDir();
+  dotenv.config({ path: path.resolve(root, '.env') });
   const capRoot = path.resolve(root, 'client', 'capacitor');
 
   // Map Capacitor platforms to their native equivalents for Go build and Capacitor CLI
@@ -152,23 +154,25 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
   const root = getRootDir();
   const androidRoot = path.resolve(root, 'client', 'capacitor', 'android');
   const keystorePath = path.resolve(androidRoot, 'keystore.p12');
-  const gradlewPath = path.resolve(androidRoot, 'gradlew');
 
   await fs.writeFile(keystorePath, Buffer.from(ksContents, 'base64'));
 
-  await spawnStream(
-    gradlewPath,
-    'bundleRelease',
-    `-Pandroid.injected.signing.store.file=${keystorePath}`,
-    `-Pandroid.injected.signing.store.password=${ksPassword}`,
-    `-Pandroid.injected.signing.key.alias=privatekey`,
-    `-Pandroid.injected.signing.key.password=${ksPassword}`,
-    verbose ? '--info' : '--quiet',
-    {
-      cwd: androidRoot,
-      shell: true,
-    }
-  );
+  const prevCwd = process.cwd();
+  try {
+    process.chdir(androidRoot);
+
+    await spawnStream(
+      './gradlew',
+      'bundleRelease',
+      `-Pandroid.injected.signing.store.file=${keystorePath}`,
+      `-Pandroid.injected.signing.store.password=${ksPassword}`,
+      `-Pandroid.injected.signing.key.alias=privatekey`,
+      `-Pandroid.injected.signing.key.password=${ksPassword}`,
+      verbose ? '--info' : '--quiet'
+    );
+  } finally {
+    process.chdir(prevCwd);
+  }
 
   const bundletoolPath = path.resolve(androidRoot, 'bundletool.jar');
   await downloadHttpsFile(JAVA_BUNDLETOOL_RESOURCE_URL, bundletoolPath);

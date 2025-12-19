@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import fs from 'fs';
 import path from 'path';
 
 import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
@@ -89,26 +90,41 @@ export default merge(baseConfig, browserConfig, {
       // Statically link the Roboto font, rather than link to fonts.googleapis.com
       'window.polymerSkipLoadingFontRoboto': JSON.stringify(true),
     }),
-    // Generate environment.json for development
+    // Generate environment.json for development (only if it doesn't exist)
     {
       apply: compiler => {
         compiler.hooks.emit.tapAsync(
           'EnvironmentJsonPlugin',
           (compilation, callback) => {
-            const envContent = JSON.stringify(
-              {
-                SENTRY_DSN: process.env.SENTRY_DSN || '',
-                APP_VERSION: '0.0.0-dev',
-                APP_BUILD_NUMBER: '0',
-              },
-              null,
-              2
+            const envJsonPath = path.resolve(
+              getRootDir(),
+              'client',
+              'www',
+              'environment.json'
             );
 
-            compilation.assets['environment.json'] = {
-              source: () => envContent,
-              size: () => envContent.length,
-            };
+            if (fs.existsSync(envJsonPath)) {
+              const existingContent = fs.readFileSync(envJsonPath, 'utf8');
+              compilation.assets['environment.json'] = {
+                source: () => existingContent,
+                size: () => existingContent.length,
+              };
+            } else {
+              const envContent = JSON.stringify(
+                {
+                  SENTRY_DSN: process.env.SENTRY_DSN || '',
+                  APP_VERSION: '0.0.0-dev',
+                  APP_BUILD_NUMBER: '0',
+                },
+                null,
+                2
+              );
+
+              compilation.assets['environment.json'] = {
+                source: () => envContent,
+                size: () => envContent.length,
+              };
+            }
             callback();
           }
         );
