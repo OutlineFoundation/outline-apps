@@ -137,17 +137,19 @@ async function androidDebug(verbose) {
 
   const root = getRootDir();
   const androidRoot = path.resolve(root, 'client', 'capacitor', 'android');
-  const gradlewPath = path.resolve(androidRoot, 'gradlew');
 
-  await spawnStream(
-    gradlewPath,
-    'assembleDebug',
-    verbose ? '--info' : '--quiet',
-    {
-      cwd: androidRoot,
-      shell: true,
-    }
-  );
+  const prevCwd = process.cwd();
+  try {
+    process.chdir(androidRoot);
+
+    await spawnStream(
+      './gradlew',
+      'assembleDebug',
+      verbose ? '--info' : '--quiet'
+    );
+  } finally {
+    process.chdir(prevCwd);
+  }
 }
 
 async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
