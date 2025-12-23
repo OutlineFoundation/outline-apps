@@ -40,7 +40,6 @@ export class LanguageView extends LitElement {
       color: var(--outline-text-color);
       display: block;
       box-sizing: border-box;
-      padding-top: var(--language-safe-area-top);
     }
 
     @supports (padding-top: constant(safe-area-inset-top)) {

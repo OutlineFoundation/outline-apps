@@ -94,6 +94,75 @@ npm run action client/capacitor/build capacitor-android -- --buildMode=release -
 
 ## Debugging
 
+## Hot reloading on Android & iOS emulators
+
+You can run the Capacitor app on both Android and iOS emulators at the same time and see live UI changes using the webpack dev server.
+
+1. **Start the Android emulator** (example):
+
+   ```sh
+   ~/Library/Android/sdk/emulator/emulator -avd Pixel_9
+   ```
+
+2. **Start the iOS Simulator** (one option):
+
+   ```sh
+   open -a Simulator
+   ```
+
+3. **Start the dev server (hot reloading)** from the repo root:
+
+   - **Default (localhost for all platforms – best for iOS / browser):**
+
+     ```sh
+     npm run action client/capacitor/start
+     ```
+
+   - **Android emulator (uses host via 10.0.2.2):**
+
+     ```sh
+     npm run action client/capacitor/start --android
+     ```
+
+   - **iOS Simulator only (explicit, same as default):**
+
+     ```sh
+     npm run action client/capacitor/start --ios
+     ```
+
+   In all cases this will:
+
+   - Start the webpack dev server on port `8080`
+   - Update `capacitor.config.json` with a temporary `server.url`:
+     - Default / `--ios`: `http://localhost:8080`
+     - `--android`: `http://10.0.2.2:8080`
+   - Restore the original `capacitor.config.json` when you stop the server (Ctrl+C)
+
+5. **Build and run on emulators**:
+
+   - **Android (debug build):**
+
+     ```sh
+     npm run action client/capacitor/build capacitor-android
+     ```
+
+     Then run the app from Android Studio on your emulator.
+
+   - **iOS (debug build):**
+
+     ```sh
+     npm run action client/capacitor/build capacitor-ios
+     ```
+
+     Then run the app from Xcode on your simulator.
+
+6. **Develop with hot reloading**:
+
+   - Keep the dev server (`client/capacitor/start`) running
+   - Make changes in the shared web app (`client/web/...`)
+   - Both the Android emulator and iOS Simulator will automatically reload when you save changes
+
+
 ### Android - Chrome DevTools
 
 To debug the Android app using Chrome DevTools:

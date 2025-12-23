@@ -44,11 +44,11 @@ export class ServerList extends LitElement {
         flex-direction: column;
         font-size: 0.9rem;
         height: 100%;
-        /* Dynamic height: subtract header (93px) + safe area insets (notch/home indicator) */
-        height: calc(
-          100vh - 93px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-        );
         justify-content: center;
+        /* Use vh, as % does not work in iOS. |header-height|+|server-margin| = 64px.
+         * Subtract |header-height| to fix iOS padding, and |server-margin| to fix scrolling in Android.
+         */
+        height: -webkit-calc(100vh - 64px);
         line-height: 1.25rem;
         margin: auto;
         max-width: 400px;

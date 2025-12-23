@@ -34,7 +34,7 @@ export class ServerList extends LitElement {
       }
 
       server-row-card {
-        margin: 0 auto 8px auto;
+        margin: 0 auto 10px auto;
         height: auto;
       }
 

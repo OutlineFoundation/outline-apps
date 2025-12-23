@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-import {LitElement, html, css} from 'lit';
+import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 
 import outlineDarkLogo from '../../assets/brand-logo-dark.png';
@@ -56,18 +56,6 @@ export class AboutView extends LitElement {
     article {
       height: 100%;
       padding: calc(32px + var(--about-safe-area-top)) 24px 0 24px;
-    }
-
-    @supports (padding-top: constant(safe-area-inset-top)) {
-      :host {
-        --about-safe-area-top: constant(safe-area-inset-top);
-      }
-    }
-
-    @supports (padding-top: env(safe-area-inset-top)) {
-      :host {
-        --about-safe-area-top: env(safe-area-inset-top);
-      }
     }
 
     header img {
