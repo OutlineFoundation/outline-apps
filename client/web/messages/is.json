@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline er vara frá Outline Foundation sem gerir öllum kleift að búa til, reka og deila aðgangi að eigin VPN-neti. Outline er hannað til að standast lokun. Skoðaðu <a href={outlineUrl}>getoutline.org</a> til að kynna þér hvernig þú hefst handa.<br><br>Outline er hugbúnaður með opinn kóða sem er knúinn af <a href={shadowsocksUrl}>Shadowsocks</a>. Þú getur lagt þitt af mörkum til kóðans á <a href={gitHubUrl}>GitHub</a> og tekið þátt í umræðunum á <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline er vara frá <a href={jigsawUrl}>Jigsaw</a> sem gerir öllum kleift að búa til, reka og deila aðgangi að eigin VPN-neti. Outline er hannað til að standast lokun. Skoðaðu <a href={outlineUrl}>getoutline.org</a> til að kynna þér hvernig þú hefst handa.<br><br>Outline er hugbúnaður með opinn kóða sem er knúinn af <a href={shadowsocksUrl}>Shadowsocks</a>. Þú getur lagt þitt af mörkum til kóðans á <a href={gitHubUrl}>GitHub</a> og tekið þátt í umræðunum á <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Um",
   "add-access-key-dialog-error-text": "Ógildur aðgangslykill.",
   "add-access-key-dialog-header": "Bæta VPN-aðgangslykli við",

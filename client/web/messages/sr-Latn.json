@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline je proizvod kompanije Outline Foundation koji omogućava svakom da pravi, koristi i deli pristup svom VPN-u. Outline je osmišljen tako da bude otporan na blokiranje. Posetite <a href={outlineUrl}>getoutline.org</a> da biste saznali kako da započnete.<br><br>Outline je softver otvorenog koda koji koristi tehnologiju <a href={shadowsocksUrl}>Shadowsocks</a>. Možete da doprinesete kodu na <a href={gitHubUrl}>GitHub</a>-u i da se pridružite diskusiji na <a href={redditUrl}>Reddit</a>-u.",
+  "about-outline": "Outline je proizvod kompanije <a href={jigsawUrl}>Jigsaw</a> koji omogućava svakom da pravi, koristi i deli pristup svom VPN-u. Outline je osmišljen tako da bude otporan na blokiranje. Posetite <a href={outlineUrl}>getoutline.org</a> da biste saznali kako da započnete.<br><br>Outline je softver otvorenog koda koji koristi tehnologiju <a href={shadowsocksUrl}>Shadowsocks</a>. Možete da doprinesete kodu na <a href={gitHubUrl}>GitHub</a>-u i da se pridružite diskusiji na <a href={redditUrl}>Reddit</a>-u.",
   "about-page-title": "Osnovni podaci",
   "add-access-key-dialog-error-text": "Nevažeći pristupni ključ.",
   "add-access-key-dialog-header": "Dodajte pristupni ključ za VPN",

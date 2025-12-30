@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline என்பது Outline Foundation தயாரிப்பாகும். இதன் மூலம் யார் வேண்டுமானாலும் தங்களுக்கான VPNனை உருவாக்கலாம் இயக்கலாம், அதற்கான அணுகலைப் பகிரலாம். தடுக்கப்படுவதை எதிர்க்கும் வகையில் Outline வடிவமைக்கப்பட்டுள்ளது. இதை எப்படிப் பயன்படுத்தத் தொடங்குவது என்பதைத் தெரிந்துகொள்ள <a href={outlineUrl}>getoutline.org</a> பக்கத்தைப் பாருங்கள்.<br><br>Outline என்பது <a href={shadowsocksUrl}>Shadowsocks</a> வழங்கும் ஓப்பன் சோர்ஸ் மென்பொருள் ஆகும். <a href={gitHubUrl}>GitHub</a> இல் உங்கள் கோடிங் பங்களிப்பை வழங்கலாம். மேலும் <a href={redditUrl}>Reddit</a> உரையாடலில் பங்கேற்கலாம்.",
+  "about-outline": "Outline என்பது <a href={jigsawUrl}>Jigsaw</a> தயாரிப்பாகும். இதன் மூலம் யார் வேண்டுமானாலும் தங்களுக்கான VPNனை உருவாக்கலாம் இயக்கலாம், அதற்கான அணுகலைப் பகிரலாம். தடுக்கப்படுவதை எதிர்க்கும் வகையில் Outline வடிவமைக்கப்பட்டுள்ளது. இதை எப்படிப் பயன்படுத்தத் தொடங்குவது என்பதைத் தெரிந்துகொள்ள <a href={outlineUrl}>getoutline.org</a> பக்கத்தைப் பாருங்கள்.<br><br>Outline என்பது <a href={shadowsocksUrl}>Shadowsocks</a> வழங்கும் ஓப்பன் சோர்ஸ் மென்பொருள் ஆகும். <a href={gitHubUrl}>GitHub</a> இல் உங்கள் கோடிங் பங்களிப்பை வழங்கலாம். மேலும் <a href={redditUrl}>Reddit</a> உரையாடலில் பங்கேற்கலாம்.",
   "about-page-title": "விவரங்கள்",
   "add-access-key-dialog-error-text": "தவறான அணுகல் கீ.",
   "add-access-key-dialog-header": "VPN அணுகல் கீயைச் சேருங்கள்",

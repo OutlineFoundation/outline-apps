@@ -1,5 +1,5 @@
 {
-  "about-outline": "Mit Outline von Outline Foundation kann jeder ganz einfach ein eigenes virtuelles privates Netzwerk (VPN) erstellen, betreiben und den Zugriff darauf ermöglichen. Outline wurde entwickelt, um Internetsperren zu umgehen. Informationen zum Einstieg finden Sie unter <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline ist eine Open-Source-Software von <a href={shadowsocksUrl}>Shadowsocks</a>. Auf <a href={gitHubUrl}>GitHub</a> können Sie zum Code beitragen und auf <a href={redditUrl}>Reddit</a> Teil der Community werden.",
+  "about-outline": "Mit Outline von <a href={jigsawUrl}>Jigsaw</a> kann jeder ganz einfach ein eigenes virtuelles privates Netzwerk (VPN) erstellen, betreiben und den Zugriff darauf ermöglichen. Outline wurde entwickelt, um Internetsperren zu umgehen. Informationen zum Einstieg finden Sie unter <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline ist eine Open-Source-Software von <a href={shadowsocksUrl}>Shadowsocks</a>. Auf <a href={gitHubUrl}>GitHub</a> können Sie zum Code beitragen und auf <a href={redditUrl}>Reddit</a> Teil der Community werden.",
   "about-page-title": "Informationen zu Outline",
   "add-access-key-dialog-error-text": "Ungültiger Zugriffsschlüssel.",
   "add-access-key-dialog-header": "VPN-Zugriffsschlüssel hinzufügen",

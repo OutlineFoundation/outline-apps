@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline este un produs Outline Foundation prin care oricine poate să creeze, să folosească și să permită accesul la propria rețea VPN. Outline este un produs conceput să reziste la blocare. Accesați <a href={outlineUrl}>getoutline.org</a> ca să aflați cum să începeți.<br><br>Outline este un software open source oferit de <a href={shadowsocksUrl}>Shadowsocks</a>. Puteți să contribuiți la activitatea de codificare pe <a href={gitHubUrl}>GitHub</a> și să participați la conversații pe <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline este un produs <a href={jigsawUrl}>Jigsaw</a> prin care oricine poate să creeze, să folosească și să permită accesul la propria rețea VPN. Outline este un produs conceput să reziste la blocare. Accesați <a href={outlineUrl}>getoutline.org</a> ca să aflați cum să începeți.<br><br>Outline este un software open source oferit de <a href={shadowsocksUrl}>Shadowsocks</a>. Puteți să contribuiți la activitatea de codificare pe <a href={gitHubUrl}>GitHub</a> și să participați la conversații pe <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Despre",
   "add-access-key-dialog-error-text": "Cheie de acces nevalidă.",
   "add-access-key-dialog-header": "Adăugați o cheie de acces VPN",

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline යනු ඕනෑම කෙනෙකුට ඔවුන්ගේ ම VPN එක නිර්මාණ කිරීමටත් ධාවන කිරීමටත් ප්‍රවේශය බෙදා ගැනීමටත් ඉඩ දෙන Outline Foundation හි නිෂ්පාදනයකි. Outline සැලසුම් කර ඇත්තේ අවහිර කිරීමට ඔරොත්තු දෙන ලෙසයි. පටන් ගන්නා ආකාරය දැන ගැනීමට <a href={outlineUrl}>getoutline.org</a> වෙත පැමිණෙන්න.<br><br>Outline යනු <a href={shadowsocksUrl}>Shadowsocks</a> විසින් බල ගැන්වෙන විවෘත මූලාශ්‍ර මෘදුකාංගයකි. ඔබට <a href={gitHubUrl}>GitHub</a> මත කේතයට දායක වීමටත් <a href={redditUrl}>Reddit</a> මත සංවාදයට එක් වීමටත් හැකි ය.",
+  "about-outline": "Outline යනු ඕනෑම කෙනෙකුට ඔවුන්ගේ ම VPN එක නිර්මාණ කිරීමටත් ධාවන කිරීමටත් ප්‍රවේශය බෙදා ගැනීමටත් ඉඩ දෙන <a href={jigsawUrl}>Jigsaw</a> හි නිෂ්පාදනයකි. Outline සැලසුම් කර ඇත්තේ අවහිර කිරීමට ඔරොත්තු දෙන ලෙසයි. පටන් ගන්නා ආකාරය දැන ගැනීමට <a href={outlineUrl}>getoutline.org</a> වෙත පැමිණෙන්න.<br><br>Outline යනු <a href={shadowsocksUrl}>Shadowsocks</a> විසින් බල ගැන්වෙන විවෘත මූලාශ්‍ර මෘදුකාංගයකි. ඔබට <a href={gitHubUrl}>GitHub</a> මත කේතයට දායක වීමටත් <a href={redditUrl}>Reddit</a> මත සංවාදයට එක් වීමටත් හැකි ය.",
   "about-page-title": "පිළිබඳ",
   "add-access-key-dialog-error-text": "අවලංගු ප්‍රවේශ යතුර.",
   "add-access-key-dialog-header": "VPN ප්‍රවේශ යතුර එක් කරන්න",

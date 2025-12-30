@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline은 Outline Foundation에서 만든 제품으로, 누구나 자신만의 VPN을 만들고 운영하고 액세스 권한을 공유할 수 있는 플랫폼입니다. Outline은 차단하기 어렵게 만들어졌습니다. <a href={outlineUrl}>getoutline.org</a>에서 시작하는 방법을 알아보세요.<br><br>Outline은 <a href={shadowsocksUrl}>Shadowsocks</a>에서 제공하는 오픈소스 소프트웨어입니다. <a href={gitHubUrl}>GitHub</a>에서 코드 작성에 참여하고 <a href={redditUrl}>Reddit</a>에서 커뮤니티와 소통할 수 있습니다.",
+  "about-outline": "Outline은 <a href={jigsawUrl}>Jigsaw</a>에서 만든 제품으로, 누구나 자신만의 VPN을 만들고 운영하고 액세스 권한을 공유할 수 있는 플랫폼입니다. Outline은 차단하기 어렵게 만들어졌습니다. <a href={outlineUrl}>getoutline.org</a>에서 시작하는 방법을 알아보세요.<br><br>Outline은 <a href={shadowsocksUrl}>Shadowsocks</a>에서 제공하는 오픈소스 소프트웨어입니다. <a href={gitHubUrl}>GitHub</a>에서 코드 작성에 참여하고 <a href={redditUrl}>Reddit</a>에서 커뮤니티와 소통할 수 있습니다.",
   "about-page-title": "정보",
   "add-access-key-dialog-error-text": "잘못된 액세스 키입니다.",
   "add-access-key-dialog-header": "VPN 액세스 키 추가",

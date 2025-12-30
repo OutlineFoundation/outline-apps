@@ -1,5 +1,5 @@
 {
-  "about-outline": "„Outline“ yra „Outline Foundation“ produktas, kurį naudodami žmonės gali sukurti bei paleisti savo VPN ir bendrinti prieigą prie jo. „Outline“ sukurta taip, kad jos nebūtų galima užblokuoti. Apsilankykite adresu <a href={outlineUrl}>getoutline.org</a> ir sužinokite daugiau, kaip pradėti.<br><br>„Outline“ yra atvirojo šaltinio programinė įranga, kuri teikiama naudojant „<a href={shadowsocksUrl}>Shadowsocks</a>“ protokolą. Galite bendradarbiauti kurdami kodą sistemoje „<a href={gitHubUrl}>GitHub</a>“ ir prisijungti prie pokalbio sistemoje „<a href={redditUrl}>Reddit</a>“.",
+  "about-outline": "„Outline“ yra „<a href={jigsawUrl}>Jigsaw</a>“ produktas, kurį naudodami žmonės gali sukurti bei paleisti savo VPN ir bendrinti prieigą prie jo. „Outline“ sukurta taip, kad jos nebūtų galima užblokuoti. Apsilankykite adresu <a href={outlineUrl}>getoutline.org</a> ir sužinokite daugiau, kaip pradėti.<br><br>„Outline“ yra atvirojo šaltinio programinė įranga, kuri teikiama naudojant „<a href={shadowsocksUrl}>Shadowsocks</a>“ protokolą. Galite bendradarbiauti kurdami kodą sistemoje „<a href={gitHubUrl}>GitHub</a>“ ir prisijungti prie pokalbio sistemoje „<a href={redditUrl}>Reddit</a>“.",
   "about-page-title": "Apie",
   "add-access-key-dialog-error-text": "Netinkamas prieigos raktas.",
   "add-access-key-dialog-header": "Pridėkite VPN prieigos raktą",

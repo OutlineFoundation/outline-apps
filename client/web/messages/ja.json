@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline は、組織が自ら VPN を構築、運用して、アクセスを共有できるようにする Outline Foundation のサービスで、ブロック機能を回避できる設計となっています。使い方については、<a href={outlineUrl}>getoutline.org</a> をご覧ください。<br><br>Outline は <a href={shadowsocksUrl}>Shadowsocks</a> のオープンソース ソフトウェアです。コードを寄稿するには <a href={gitHubUrl}>GitHub</a>、ディスカッションに参加するには <a href={redditUrl}>Reddit</a> にアクセスしてください。",
+  "about-outline": "Outline は、組織が自ら VPN を構築、運用して、アクセスを共有できるようにする <a href={jigsawUrl}>Jigsaw</a> のサービスで、ブロック機能を回避できる設計となっています。使い方については、<a href={outlineUrl}>getoutline.org</a> をご覧ください。<br><br>Outline は <a href={shadowsocksUrl}>Shadowsocks</a> のオープンソース ソフトウェアです。コードを寄稿するには <a href={gitHubUrl}>GitHub</a>、ディスカッションに参加するには <a href={redditUrl}>Reddit</a> にアクセスしてください。",
   "about-page-title": "概要",
   "add-access-key-dialog-error-text": "アクセスキーが無効です。",
   "add-access-key-dialog-header": "VPN アクセスキーを追加する",

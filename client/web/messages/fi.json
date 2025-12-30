@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline on Outline Foundation-tuote, jonka avulla kuka tahansa voi luoda oman VPN:n, ylläpitää sitä sekä jakaa pääsyn siihen. Outline on suunniteltu vaikeaksi estää. Lue lisää Outlinen käytön aloittamisesta: <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline on avoimen lähdekoodin ohjelmisto, joka hyödyntää <a href={shadowsocksUrl}>Shadowsocks</a>ia. Voit osallistua koodin parantamiseen <a href={gitHubUrl}>GitHub</a>issa ja keskusteluun <a href={redditUrl}>Reddit</a>issä.",
+  "about-outline": "Outline on <a href={jigsawUrl}>Jigsaw</a>-tuote, jonka avulla kuka tahansa voi luoda oman VPN:n, ylläpitää sitä sekä jakaa pääsyn siihen. Outline on suunniteltu vaikeaksi estää. Lue lisää Outlinen käytön aloittamisesta: <a href={outlineUrl}>getoutline.org</a>.<br><br>Outline on avoimen lähdekoodin ohjelmisto, joka hyödyntää <a href={shadowsocksUrl}>Shadowsocks</a>ia. Voit osallistua koodin parantamiseen <a href={gitHubUrl}>GitHub</a>issa ja keskusteluun <a href={redditUrl}>Reddit</a>issä.",
   "about-page-title": "Tietoja",
   "add-access-key-dialog-error-text": "Virheellinen pääsyavain.",
   "add-access-key-dialog-header": "Lisää VPN-pääsyavain",

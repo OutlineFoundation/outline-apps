@@ -69,6 +69,10 @@ export class ContactView extends LitElement {
         color: var(--outline-text-color);
         font-family: var(--outline-font-family);
         padding: var(--contact-view-gutter, var(--outline-gutter));
+        padding-top: calc(
+          var(--contact-view-gutter, var(--outline-gutter)) +
+            var(--contact-safe-area-top)
+        );
         width: 100%;
       }
 

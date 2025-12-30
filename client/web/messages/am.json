@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ማንኛውም ሰው የራሱን VPN እንዲፈጥር፣ እንዲያሄድ እና መዳረሻ እንዲያጋራ የሚያስችል በOutline Foundation የተዘጋጀ ምርት ነው። Outline እገዳን የሚቋቋም ሆኖ የተነደፈ ነው። እንዴት መጀመር እንደሚቻል ለመረዳት <a href={outlineUrl}>getoutline.org</a>ን ይጎብኙ።<br><br>Outline በ<a href={shadowsocksUrl}>Shadowsocks</a> የተጎላበተ ክፍት ምንጭ ሶፍትዌር ነው። <a href={gitHubUrl}>GitHub</a> ላይ ለኮዱ አስተዋጽዖ ማበርከት እና ውይይቱን <a href={redditUrl}>Reddit</a> ላይ መቀላቀል ይችላሉ።",
+  "about-outline": "Outline ማንኛውም ሰው የራሱን VPN እንዲፈጥር፣ እንዲያሄድ እና መዳረሻ እንዲያጋራ የሚያስችል በ<a href={jigsawUrl}>Jigsaw</a> የተዘጋጀ ምርት ነው። Outline እገዳን የሚቋቋም ሆኖ የተነደፈ ነው። እንዴት መጀመር እንደሚቻል ለመረዳት <a href={outlineUrl}>getoutline.org</a>ን ይጎብኙ።<br><br>Outline በ<a href={shadowsocksUrl}>Shadowsocks</a> የተጎላበተ ክፍት ምንጭ ሶፍትዌር ነው። <a href={gitHubUrl}>GitHub</a> ላይ ለኮዱ አስተዋጽዖ ማበርከት እና ውይይቱን <a href={redditUrl}>Reddit</a> ላይ መቀላቀል ይችላሉ።",
   "about-page-title": "ስለ",
   "add-access-key-dialog-error-text": "ልክ ያልሆነ የመዳረሻ ቁልፍ።",
   "add-access-key-dialog-header": "የVPN የመዳረሻ ቁልፍ ያክሉ",

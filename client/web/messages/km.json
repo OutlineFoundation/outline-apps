@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline គឺ​ជា​ផលិតផល​របស់ Outline Foundation ដែល​អនុញ្ញាត​ឱ្យ​គ្រប់​គ្នា​បង្កើត ដំណើរការ និង​ចែក​រំលែក​សិទ្ធិ​ចូល​ប្រើប្រាស់ VPN ផ្ទាល់​ខ្លួន។ Outline ត្រូវ​បាន​រចនា​ឡើង​ឱ្យ​ធន់​នឹង​ការទប់ស្កាត់។ សូម​ចូល​ទៅកាន់ <a href={outlineUrl}>getoutline.org</a> ដើម្បី​ស្វែងយល់​​អំពី​របៀប​ចាប់ផ្ដើម។<br><br>Outline គឺ​ជា​​កម្មវិធី​កូដ​ចំហ​ដែល​ដំណើរការ​ដោយ <a href={shadowsocksUrl}>Shadowsocks</a>។ អ្នក​អាច​ចូលរួម​ចំណែក​ដល់​កូដ​នៅ​លើ <a href={gitHubUrl}>GitHub</a> និង​ចូលរួម​ការសន្ទនា​នៅ​លើ <a href={redditUrl}>Reddit</a>។",
+  "about-outline": "Outline គឺ​ជា​ផលិតផល​របស់ <a href={jigsawUrl}>Jigsaw</a> ដែល​អនុញ្ញាត​ឱ្យ​គ្រប់​គ្នា​បង្កើត ដំណើរការ និង​ចែក​រំលែក​សិទ្ធិ​ចូល​ប្រើប្រាស់ VPN ផ្ទាល់​ខ្លួន។ Outline ត្រូវ​បាន​រចនា​ឡើង​ឱ្យ​ធន់​នឹង​ការទប់ស្កាត់។ សូម​ចូល​ទៅកាន់ <a href={outlineUrl}>getoutline.org</a> ដើម្បី​ស្វែងយល់​​អំពី​របៀប​ចាប់ផ្ដើម។<br><br>Outline គឺ​ជា​​កម្មវិធី​កូដ​ចំហ​ដែល​ដំណើរការ​ដោយ <a href={shadowsocksUrl}>Shadowsocks</a>។ អ្នក​អាច​ចូលរួម​ចំណែក​ដល់​កូដ​នៅ​លើ <a href={gitHubUrl}>GitHub</a> និង​ចូលរួម​ការសន្ទនា​នៅ​លើ <a href={redditUrl}>Reddit</a>។",
   "about-page-title": "អំពី",
   "add-access-key-dialog-error-text": "លេខកូដ​ចូលប្រើ​មិនត្រឹមត្រូវ​ទេ។",
   "add-access-key-dialog-header": "បញ្ចូល​លេខកូដ​ចូលប្រើ VPN",

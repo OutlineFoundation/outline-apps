@@ -1,5 +1,5 @@
 {
-  "about-outline": "Το Outline είναι ένα προϊόν Outline Foundation που επιτρέπει σε όλους να δημιουργούν, να εκτελούν και να μοιράζονται την πρόσβαση στα VPN τους. Το Outline έχει σχεδιαστεί έτσι ώστε να είναι ανθεκτικό στον αποκλεισμό. Επισκεφτείτε το <a href={outlineUrl}>getoutline.org</a> για να μάθετε πώς μπορείτε να ξεκινήσετε.<br><br>Το Outline είναι λογισμικό ανοικτού κώδικα με την υποστήριξη του <a href={shadowsocksUrl}>Shadowsocks</a>. Μπορείτε να συνεισφέρετε στον κώδικα στο <a href={gitHubUrl}>GitHub</a> και να λάβετε μέρος στη συζήτηση στο <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Το Outline είναι ένα προϊόν <a href={jigsawUrl}>Jigsaw</a> που επιτρέπει σε όλους να δημιουργούν, να εκτελούν και να μοιράζονται την πρόσβαση στα VPN τους. Το Outline έχει σχεδιαστεί έτσι ώστε να είναι ανθεκτικό στον αποκλεισμό. Επισκεφτείτε το <a href={outlineUrl}>getoutline.org</a> για να μάθετε πώς μπορείτε να ξεκινήσετε.<br><br>Το Outline είναι λογισμικό ανοικτού κώδικα με την υποστήριξη του <a href={shadowsocksUrl}>Shadowsocks</a>. Μπορείτε να συνεισφέρετε στον κώδικα στο <a href={gitHubUrl}>GitHub</a> και να λάβετε μέρος στη συζήτηση στο <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Πληροφορίες",
   "add-access-key-dialog-error-text": "Μη έγκυρο κλειδί πρόσβασης.",
   "add-access-key-dialog-header": "Προσθήκη κλειδιού πρόσβασης VPN",

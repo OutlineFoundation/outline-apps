@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline er et produkt fra Outline Foundation, der gør det muligt for alle at oprette, køre og dele adgangen til deres eget VPN. Outline er udviklet til at være modstandsdygtigt over for blokeringer. Gå til <a href={outlineUrl}>getoutline.org</a> for at se, hvordan du kommer i gang.<br><br>Outline er open source-software, der leveres af <a href={shadowsocksUrl}>Shadowsocks</a>. Du kan bidrage til koden på <a href={gitHubUrl}>GitHub</a> og deltage i samtalen på <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline er et produkt fra <a href={jigsawUrl}>Jigsaw</a>, der gør det muligt for alle at oprette, køre og dele adgangen til deres eget VPN. Outline er udviklet til at være modstandsdygtigt over for blokeringer. Gå til <a href={outlineUrl}>getoutline.org</a> for at se, hvordan du kommer i gang.<br><br>Outline er open source-software, der leveres af <a href={shadowsocksUrl}>Shadowsocks</a>. Du kan bidrage til koden på <a href={gitHubUrl}>GitHub</a> og deltage i samtalen på <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Om",
   "add-access-key-dialog-error-text": "Ugyldig adgangsnøgle.",
   "add-access-key-dialog-header": "Tilføj VPN-adgangskode",

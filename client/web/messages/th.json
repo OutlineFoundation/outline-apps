@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline เป็นผลิตภัณฑ์ของ Outline Foundation ที่ช่วยให้ทุกคนสร้าง ใช้ และแชร์สิทธิ์เข้าถึง VPN ของตัวเองได้ Outline ได้รับการออกแบบมาเพื่อป้องกันการบล็อก ไปที่ <a href={outlineUrl}>getoutline.org</a> เพื่อดูวิธีเริ่มต้นใช้งาน<br><br>Outline เป็นซอฟต์แวร์โอเพนซอร์สที่ขับเคลื่อนโดย <a href={shadowsocksUrl}>Shadowsocks</a> คุณจะเข้ามามีส่วนร่วมกับโค้ดได้ที่ <a href={gitHubUrl}>GitHub</a> และร่วมการสนทนาได้ใน <a href={redditUrl}>Reddit</a>",
+  "about-outline": "Outline เป็นผลิตภัณฑ์ของ <a href={jigsawUrl}>Jigsaw</a> ที่ช่วยให้ทุกคนสร้าง ใช้ และแชร์สิทธิ์เข้าถึง VPN ของตัวเองได้ Outline ได้รับการออกแบบมาเพื่อป้องกันการบล็อก ไปที่ <a href={outlineUrl}>getoutline.org</a> เพื่อดูวิธีเริ่มต้นใช้งาน<br><br>Outline เป็นซอฟต์แวร์โอเพนซอร์สที่ขับเคลื่อนโดย <a href={shadowsocksUrl}>Shadowsocks</a> คุณจะเข้ามามีส่วนร่วมกับโค้ดได้ที่ <a href={gitHubUrl}>GitHub</a> และร่วมการสนทนาได้ใน <a href={redditUrl}>Reddit</a>",
   "about-page-title": "ข้อมูล",
   "add-access-key-dialog-error-text": "คีย์การเข้าถึงไม่ถูกต้อง",
   "add-access-key-dialog-header": "เพิ่มคีย์การเข้าถึง VPN",

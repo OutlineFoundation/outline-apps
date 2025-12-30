@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ni bidhaa ya Outline Foundation ambayo humruhusu mtu yeyote kuunda, kutekeleza na kushiriki idhini ya kufikia VPN yake mwenyewe. Outline imetengenezwa hivi kwamba haiwezi kuzuiwa. Tembelea <a href={outlineUrl}>getoutline.org</a> ili ufahamu jinsi ya kuanza.<br><br>Outline ni programu huria inayoendeshwa na <a href={shadowsocksUrl}>Shadowsocks</a>. Unaweza kuchangia kwenye msimbo katika <a href={gitHubUrl}>GitHub</a> na ujiunge na mazungumzo kwenye <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline ni bidhaa ya <a href={jigsawUrl}>Jigsaw</a> ambayo humruhusu mtu yeyote kuunda, kutekeleza na kushiriki idhini ya kufikia VPN yake mwenyewe. Outline imetengenezwa hivi kwamba haiwezi kuzuiwa. Tembelea <a href={outlineUrl}>getoutline.org</a> ili ufahamu jinsi ya kuanza.<br><br>Outline ni programu huria inayoendeshwa na <a href={shadowsocksUrl}>Shadowsocks</a>. Unaweza kuchangia kwenye msimbo katika <a href={gitHubUrl}>GitHub</a> na ujiunge na mazungumzo kwenye <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Kuhusu",
   "add-access-key-dialog-error-text": "Ufunguo usio sahihi.",
   "add-access-key-dialog-header": "Kuweka ufunguo wa VPN",

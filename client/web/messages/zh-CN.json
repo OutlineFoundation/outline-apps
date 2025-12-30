@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline 是一款由 Outline Foundation 开发的产品，可以供任何人创建和运行自己的专属 VPN 并分享其访问权限，同时能够有效防止网络封锁。请访问 <a href={outlineUrl}>getoutline.org</a> 了解入门方法。<br><br>Outline 是由 <a href={shadowsocksUrl}>Shadowsocks</a> 提供支持的开源软件。您可以在 <a href={gitHubUrl}>GitHub</a> 上参与代码编写，也可以在 <a href={redditUrl}>Reddit</a> 上加入话题讨论。",
+  "about-outline": "Outline 是一款由 <a href={jigsawUrl}>Jigsaw</a> 开发的产品，可以供任何人创建和运行自己的专属 VPN 并分享其访问权限，同时能够有效防止网络封锁。请访问 <a href={outlineUrl}>getoutline.org</a> 了解入门方法。<br><br>Outline 是由 <a href={shadowsocksUrl}>Shadowsocks</a> 提供支持的开源软件。您可以在 <a href={gitHubUrl}>GitHub</a> 上参与代码编写，也可以在 <a href={redditUrl}>Reddit</a> 上加入话题讨论。",
   "about-page-title": "关于",
   "add-access-key-dialog-error-text": "访问密钥无效。",
   "add-access-key-dialog-header": "添加 VPN 访问密钥",
