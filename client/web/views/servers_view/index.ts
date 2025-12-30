@@ -22,8 +22,8 @@ import {customElement, property} from 'lit/decorators.js';
 import {DirectiveResult} from 'lit/directive';
 import {unsafeHTML, UnsafeHTMLDirective} from 'lit/directives/unsafe-html.js';
 
-import './server_connection_indicator';
 import {ServerConnectionState as _ServerConnectionState} from './server_connection_indicator';
+import './server_connection_indicator';
 import './server_list';
 import {ServerListItem as _ServerListItem} from './server_list_item';
 
@@ -44,10 +44,10 @@ export class ServerList extends LitElement {
         flex-direction: column;
         font-size: 0.9rem;
         height: 100%;
-        /* Dynamic height: subtract header (93px) + safe area insets (notch/home indicator) */
-        height: calc(
-          100vh - 93px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-        );
+        /* Use vh, as % does not work in iOS. |header-height|+|server-margin| = 64px.
+         * Subtract |header-height| to fix iOS padding, and |server-margin| to fix scrolling in Android.
+         */
+        height: -webkit-calc(100vh - 64px);
         justify-content: center;
         line-height: 1.25rem;
         margin: auto;

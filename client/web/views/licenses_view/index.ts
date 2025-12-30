@@ -25,24 +25,11 @@ import licenses from './licenses/licenses.txt?raw';
 export class LicensesView extends LitElement {
   static styles = css`
     :host {
-      --licenses-safe-area-top: 0px;
       height: 100%;
       overflow-x: hidden;
       overflow-y: scroll;
-      padding: calc(12px + var(--licenses-safe-area-top)) 12px 12px 12px;
+      padding: 12px;
       width: 100%;
-    }
-
-    @supports (padding-top: constant(safe-area-inset-top)) {
-      :host {
-        --licenses-safe-area-top: constant(safe-area-inset-top);
-      }
-    }
-
-    @supports (padding-top: env(safe-area-inset-top)) {
-      :host {
-        --licenses-safe-area-top: env(safe-area-inset-top);
-      }
     }
 
     code {

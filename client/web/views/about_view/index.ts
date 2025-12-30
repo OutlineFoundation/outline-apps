@@ -31,7 +31,6 @@ export class AboutView extends LitElement {
 
   static styles = css`
     :host {
-      --about-safe-area-top: 0px;
       display: flex;
       flex-direction: column;
       font-family: var(--outline-font-family);
@@ -55,19 +54,7 @@ export class AboutView extends LitElement {
 
     article {
       height: 100%;
-      padding: calc(32px + var(--about-safe-area-top)) 24px 0 24px;
-    }
-
-    @supports (padding-top: constant(safe-area-inset-top)) {
-      :host {
-        --about-safe-area-top: constant(safe-area-inset-top);
-      }
-    }
-
-    @supports (padding-top: env(safe-area-inset-top)) {
-      :host {
-        --about-safe-area-top: env(safe-area-inset-top);
-      }
+      padding: 32px 24px 0 24px;
     }
 
     header img {

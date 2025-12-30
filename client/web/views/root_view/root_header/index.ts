@@ -23,26 +23,12 @@ export class RootHeader extends LitElement {
 
   static styles = css`
     header {
-      --safe-area-top: 0px;
       align-items: center;
       justify-content: space-between;
       background-color: var(--outline-dark-primary);
       display: flex;
-      box-sizing: border-box;
-      min-height: calc(64px + var(--safe-area-top));
-      padding: var(--safe-area-top) 16px 0 16px;
-    }
-
-    @supports (padding-top: constant(safe-area-inset-top)) {
-      header {
-        --safe-area-top: constant(safe-area-inset-top);
-      }
-    }
-
-    @supports (padding-top: env(safe-area-inset-top)) {
-      header {
-        --safe-area-top: env(safe-area-inset-top);
-      }
+      height: 64px;
+      padding: 0 16px;
     }
 
     h1 {

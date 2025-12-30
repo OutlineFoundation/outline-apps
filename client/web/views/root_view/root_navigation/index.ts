@@ -12,7 +12,7 @@
 */
 
 import {Localizer} from '@outline/infrastructure/i18n';
-import {LitElement, css, html, nothing} from 'lit';
+import {LitElement, html, css, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
@@ -42,11 +42,11 @@ export class RootNavigation extends LitElement {
     }
 
     .container {
-      height: calc(100vh - env(safe-area-inset-top));
+      height: 100vh;
       left: 0;
       pointer-events: none;
       position: fixed;
-      top: env(safe-area-inset-top);
+      top: 0;
       width: 100vw;
     }
 
@@ -58,7 +58,7 @@ export class RootNavigation extends LitElement {
       background-color: var(--outline-background);
       color: var(--outline-text-color);
       display: block;
-      height: 100%;
+      height: 100vh;
       position: absolute;
       transition:
         transform 0.3s ease,
