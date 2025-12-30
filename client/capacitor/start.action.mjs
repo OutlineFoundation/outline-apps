@@ -29,13 +29,14 @@ const ANDROID_DEV_SERVER_URL = `http://10.0.2.2:${DEV_SERVER_PORT}`;
 const IOS_DEV_SERVER_URL = `http://localhost:${DEV_SERVER_PORT}`;
 
 function getDevServerConfigFromArgs(args) {
-    const hasAndroidFlag = args.includes('--android');
-    const hasIosFlag = args.includes('--ios');
+    const allArgs = Array.from(new Set([...args, ...process.argv.slice(2)]));
+    const hasAndroidFlag = allArgs.includes('--android');
+    const hasIosFlag = allArgs.includes('--ios');
 
-    if (hasAndroidFlag && !hasIosFlag) {
+    if (hasAndroidFlag) {
         return { platform: 'android', url: ANDROID_DEV_SERVER_URL };
     }
-    if (hasIosFlag && !hasAndroidFlag) {
+    if (hasIosFlag) {
         return { platform: 'ios', url: IOS_DEV_SERVER_URL };
     }
 

@@ -31,10 +31,6 @@
             "autoHide": false,
             "fadeInDuration": 0,
             "fadeOutDuration": 300
-        },
-        "StatusBar": {
-            "style": "DARK",
-            "backgroundColor": "#0F1621"
         }
     }
 }

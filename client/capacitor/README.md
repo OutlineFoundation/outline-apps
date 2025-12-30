@@ -121,13 +121,13 @@ You can run the Capacitor app on both Android and iOS emulators at the same time
    - **Android emulator (uses host via 10.0.2.2):**
 
      ```sh
-     npm run action client/capacitor/start --android
+     npm run action client/capacitor/start -- --android
      ```
 
    - **iOS Simulator only (explicit, same as default):**
 
      ```sh
-     npm run action client/capacitor/start --ios
+     npm run action client/capacitor/start -- --ios
      ```
 
    In all cases this will:

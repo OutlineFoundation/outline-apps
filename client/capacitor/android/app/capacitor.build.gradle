@@ -23,6 +23,7 @@ android {
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
   implementation project(':capacitor-plugin-outline')
+  implementation project(':capacitor-browser')
   
   // From --include-build.
   implementation 'org.outline:outline:0.0'

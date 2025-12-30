@@ -15,7 +15,6 @@
 import '@babel/polyfill';
 import {Capacitor} from '@capacitor/core';
 import {SplashScreen} from '@capacitor/splash-screen';
-import {StatusBar, Style} from '@capacitor/status-bar';
 import {
   isCapacitorNativePlatform,
   isCapacitorPlatform,
@@ -25,6 +24,7 @@ import * as Sentry from '@sentry/browser';
 
 import 'web-animations-js/web-animations-next-lite.min.js';
 
+import {CapacitorInAppBrowser} from './browser';
 import {AbstractClipboard} from './clipboard';
 import {EnvironmentVariables} from './environment';
 import {main} from './main';
@@ -222,25 +222,6 @@ window.handleOpenURL = (url: string) => {
   appleLaunchUrl = url;
 };
 
-async function initializeCapacitorPlugins(): Promise<void> {
-  if (!isNativeCapacitorPlatform) {
-    return;
-  }
-
-  const platform = Capacitor.getPlatform();
-  if (platform === 'ios' || platform === 'android') {
-    try {
-      await StatusBar.setStyle({style: Style.Dark});
-
-      if (platform === 'android') {
-        await StatusBar.setBackgroundColor({color: '#0F1621'});
-      }
-    } catch (error) {
-      console.warn('[Capacitor] StatusBar not available:', error);
-    }
-  }
-}
-
 async function showSplashScreen() {
   if (isNativeCapacitorPlatform) {
     try {
@@ -268,10 +249,15 @@ async function hideSplashScreen() {
   }
 }
 
+function setupInAppBrowser(): void {
+  const browser = new CapacitorInAppBrowser();
+  browser.setup();
+}
+
 (async () => {
   try {
     await showSplashScreen();
-    await initializeCapacitorPlugins();
+    setupInAppBrowser();
     installDefaultMethodChannel(new CapacitorMethodChannel());
     await main(new CapacitorPlatform());
     await hideSplashScreen();

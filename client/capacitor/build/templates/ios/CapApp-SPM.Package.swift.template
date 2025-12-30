@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 // Outline template for ios/App/CapApp-SPM/Package.swift.
-// Why: Capacitor overwrites this file and drops our additional dependencies for CapacitorPluginOutline and OutlineAppleLib, so we reapply the full content via this template.
+// Why: Capacitor overwrites this file and drops our additional dependencies for CapacitorPluginOutline, OutlineAppleLib, CapacitorBrowser, so we reapply the full content via this template.
 
 import PackageDescription
 
@@ -29,7 +29,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "6.2.1"),
         .package(path: "../../../../capacitor/plugins/capacitor-plugin-outline/ios"),
-        .package(path: "../../../../src/cordova/apple/OutlineAppleLib")
+        .package(path: "../../../../src/cordova/apple/OutlineAppleLib"),
+        .package(name: "CapacitorBrowser", path: "../../../../../node_modules/@capacitor/browser")
     ],
     targets: [
         .target(
@@ -38,7 +39,8 @@ let package = Package(
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
                 .product(name: "CapacitorPluginOutline", package: "ios"),
-                .product(name: "OutlineAppleLib", package: "OutlineAppleLib")
+                .product(name: "OutlineAppleLib", package: "OutlineAppleLib"),
+                .product(name: "CapacitorBrowser", package: "CapacitorBrowser")
             ]
         )
     ]

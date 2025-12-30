@@ -4,3 +4,6 @@ project(':capacitor-android').projectDir = new File('../../../node_modules/@capa
 
 include ':capacitor-plugin-outline'
 project(':capacitor-plugin-outline').projectDir = new File('../plugins/capacitor-plugin-outline/android')
+
+include ':capacitor-browser'
+project(':capacitor-browser').projectDir = new File('../../../node_modules/@capacitor/browser/android')
