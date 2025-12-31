@@ -7,9 +7,10 @@
  * Usage: npm run cap:sync:ios or called automatically by build.action.mjs
  */
 
-import { execSync, spawn } from 'child_process';
+import { spawnStream } from '@outline/infrastructure/build/spawn_stream.mjs';
+import { execSync } from 'child_process';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join, resolve } from 'path';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,30 +26,15 @@ function patchCapAppSPMPackage() {
         './templates/ios/CapApp-SPM.Package.swift.template'
     );
 
-    try {
-        if (!existsSync(templatePath)) {
-            console.error(
-                ' CapApp-SPM template not found at:',
-                templatePath
-            );
-            return;
-        }
-
-        const templateContents = readFileSync(templatePath, 'utf8');
-        writeFileSync(packageSwiftPath, templateContents, 'utf8');
-        console.log(
-            ' Package.swift restored from CapApp-SPM.Package.swift.template'
-        );
-    } catch (error) {
-        console.error(
-            ' Failed to patch CapApp-SPM Package.swift:',
-            error.message
-        );
-        process.exit(1);
-    }
+    const templateContents = readFileSync(templatePath, 'utf8');
+    writeFileSync(packageSwiftPath, templateContents, 'utf8');
+    console.log(
+        ' Package.swift restored from CapApp-SPM.Package.swift.template'
+    );
 }
 
 function resizeSplashImages() {
+    //This is a workaround to resize the splash images to meet the iOS launch screen memory limits.
     const splashImagesetPath = resolve(__dirname, '../ios/App/App/Assets.xcassets/Splash.imageset');
 
     if (!existsSync(splashImagesetPath)) {
@@ -104,22 +90,20 @@ function resizeSplashImages() {
     }
 }
 
-const syncProcess = spawn('npx', ['cap', 'sync', 'ios'], {
-    cwd: join(__dirname, '..'),
-    stdio: 'inherit',
-    shell: true
-});
+async function main() {
+    const originalCwd = process.cwd();
+    process.chdir(resolve(__dirname, '..'));
 
-syncProcess.on('close', async (code) => {
-    if (code !== 0) {
-        console.error(`\nCapacitor sync failed with code ${code}`);
-        process.exit(code);
+    try {
+        await spawnStream('npx', 'cap', 'sync', 'ios');
+        resizeSplashImages();
+        patchCapAppSPMPackage();
+    } catch (error) {
+        console.error('\nCapacitor sync or patch failed:', error);
+        process.exit(1);
+    } finally {
+        process.chdir(originalCwd);
     }
-    resizeSplashImages();
-    patchCapAppSPMPackage();
-});
+}
 
-syncProcess.on('error', (error) => {
-    console.error(' Failed to start Capacitor sync:', error);
-    process.exit(1);
-});
+main();

@@ -7,9 +7,9 @@
  * Usage: npm run cap:sync:android or called automatically by build.action.mjs
  */
 
-import { spawn } from 'child_process';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join, resolve } from 'path';
+import { spawnStream } from '@outline/infrastructure/build/spawn_stream.mjs';
+import { readFileSync, writeFileSync } from 'fs';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,27 +25,11 @@ function patchSettingsGradle() {
         './templates/android/settings.gradle.template'
     );
 
-    try {
-        if (!existsSync(templatePath)) {
-            console.error(
-                ' settings.gradle template not found at:',
-                templatePath
-            );
-            return;
-        }
-
-        const templateContents = readFileSync(templatePath, 'utf8');
-        writeFileSync(settingsGradlePath, templateContents, 'utf8');
-        console.log(
-            ' settings.gradle restored from settings.gradle.template'
-        );
-    } catch (error) {
-        console.error(
-            ' Failed to patch settings.gradle:',
-            error.message
-        );
-        process.exit(1);
-    }
+    const templateContents = readFileSync(templatePath, 'utf8');
+    writeFileSync(settingsGradlePath, templateContents, 'utf8');
+    console.log(
+        ' settings.gradle restored from settings.gradle.template'
+    );
 }
 
 function patchCapacitorBuildGradle() {
@@ -58,46 +42,28 @@ function patchCapacitorBuildGradle() {
         './templates/android/capacitor.build.gradle.template'
     );
 
-    try {
-        if (!existsSync(templatePath)) {
-            console.error(
-                ' capacitor.build.gradle template not found at:',
-                templatePath
-            );
-            return;
-        }
+    const templateContents = readFileSync(templatePath, 'utf8');
+    writeFileSync(capacitorBuildGradlePath, templateContents, 'utf8');
+    console.log(
+        ' capacitor.build.gradle restored from capacitor.build.gradle.template'
+    );
+}
 
-        const templateContents = readFileSync(templatePath, 'utf8');
-        writeFileSync(capacitorBuildGradlePath, templateContents, 'utf8');
-        console.log(
-            ' capacitor.build.gradle restored from capacitor.build.gradle.template'
-        );
+async function main() {
+    const originalCwd = process.cwd();
+    process.chdir(resolve(__dirname, '..'));
+
+    try {
+        await spawnStream('npx', 'cap', 'sync', 'android');
+        patchSettingsGradle();
+        patchCapacitorBuildGradle();
     } catch (error) {
-        console.error(
-            ' Failed to patch capacitor.build.gradle:',
-            error.message
-        );
+        console.error('\nCapacitor sync or patch failed:', error);
         process.exit(1);
+    } finally {
+        process.chdir(originalCwd);
     }
 }
 
-const syncProcess = spawn('npx', ['cap', 'sync', 'android'], {
-    cwd: join(__dirname, '..'),
-    stdio: 'inherit',
-    shell: true
-});
-
-syncProcess.on('close', async (code) => {
-    if (code !== 0) {
-        console.error(`\nCapacitor sync failed with code ${code}`);
-        process.exit(code);
-    }
-    patchSettingsGradle();
-    patchCapacitorBuildGradle();
-});
-
-syncProcess.on('error', (error) => {
-    console.error(' Failed to start Capacitor sync:', error);
-    process.exit(1);
-});
+main();
 
