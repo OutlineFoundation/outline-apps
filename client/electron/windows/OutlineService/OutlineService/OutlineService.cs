@@ -544,7 +544,7 @@ namespace OutlineService
 
             // This is for Windows 7: without it, the process exits immediately, presumably
             // because stdin isn't connected to anything:
-            //   https://github.com/Jigsaw-Code/outline-apps/issues/415
+            //   https://github.com/OutlineFoundation/outline-apps/issues/415
             //
             // This seems to make no difference on Windows 8 and 10.
             smartDnsBlock.StartInfo.RedirectStandardInput = true;

@@ -270,7 +270,7 @@ Polymer({
             >
               <a
                 class="management-api-documentation-link"
-                href="https://github.com/Jigsaw-Code/outline-server/tree/master/src/shadowbox#access-keys-management-api"
+                href="https://github.com/OutlineFoundation/outline-server/tree/master/src/shadowbox#access-keys-management-api"
               >
                 <span>[[localize('management-api-documentation')]]</span>
                 <iron-icon icon="open-in-new" />

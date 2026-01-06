@@ -158,7 +158,7 @@ export class ServerCard extends LitElement implements ServerListItemElement {
       font-size: var(--server-name-size);
       margin-bottom: var(--outline-mini-gutter);
       /* To break the line in case a sequence of word characters is longer than the line.
-        See https://github.com/Jigsaw-Code/outline-apps/issues/1372. */
+        See https://github.com/OutlineFoundation/outline-apps/issues/1372. */
       word-break: break-all;
 
       transition: color 0.2s ease-in-out;

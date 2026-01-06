@@ -55,7 +55,7 @@ func MapToAny(in map[string]any, out any) error {
 		newMap[k] = v
 	}
 	// Use JSON marshaling from the standard library because the YAML library is buggy.
-	// See https://github.com/Jigsaw-Code/outline-apps/issues/2576.
+	// See https://github.com/OutlineFoundation/outline-apps/issues/2576.
 	// JSON is a subset of YAML, so that's valid YAML.
 	yamlText, err := json.Marshal(newMap)
 	if err != nil {

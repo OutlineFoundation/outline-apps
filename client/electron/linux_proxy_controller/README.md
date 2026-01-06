@@ -22,7 +22,7 @@ Using -d runs the controller in the daemon mode.
 
 Then you can communicate with the controller through the local unix socket /var/run/outline_controller
 
-You then need to run [`tun2socks` (of outline-go-tun2socks)](https://github.com/Jigsaw-Code/outline-go-tun2socks) with the parameters from the outline server.
+You then need to run [`tun2socks` (of outline-go-tun2socks)](https://github.com/OutlineFoundation/outline-go-tun2socks) with the parameters from the outline server.
 
     ./tun2socks \
         -tunName outline-tun0 -tunDNS 1.1.1.1,9.9.9.9 \
