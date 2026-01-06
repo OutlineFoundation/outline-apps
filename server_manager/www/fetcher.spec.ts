@@ -15,7 +15,9 @@
 import {makePathApiClient} from './fetcher';
 
 describe('makePathApiClient', () => {
-  const api = makePathApiClient('https://api.github.com/repos/OutlineFoundation/');
+  const api = makePathApiClient(
+    'https://api.github.com/repos/OutlineFoundation/'
+  );
 
   it('GET', async () => {
     const response = await api.request<{name: string}>('outline-server');
