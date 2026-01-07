@@ -60,7 +60,7 @@
     "clipboard-polyfill": "^2.8.6",
     "dotenv": "~8.2.0",
     "electron-updater": "^4.6.5",
-    "express": "^4.18.2",
+    "express": "^4.22.1",
     "google-auth-library": "^8.9.0",
     "intl-messageformat": "^7.8.4",
     "jsonic": "^0.3.1",
