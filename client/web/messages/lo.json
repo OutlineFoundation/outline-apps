@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline ແມ່ນຜະລິດຕະພັນຂອງ <a href={jigsawUrl}>Jigsaw</a> ທີ່ຊ່ວຍໃຫ້ທຸກຄົນສ້າງ, ເອີ້ນໃຊ້ ແລະ ແບ່ງປັນສິດເຂົ້າເຖິງ VPN ຂອງຕົນເອງໄດ້. Outline ຖືກອອກແບບມາເພື່ອທົນທານຕໍ່ການບລັອກ. ກະລຸນາເຂົ້າເບິ່ງ <a href={outlineUrl}>getoutline.org</a> ເພື່ອສຶກສາວິທີເລີ່ມຕົ້ນການນຳໃຊ້.<br><br>Outline ເປັນຊອບແວໂອເພນຊອດທີ່ຂັບເຄື່ອນໂດຍ <a href={shadowsocksUrl}>Shadowsocks</a>. ທ່ານສາມາດປະກອບສ່ວນໃນການຂຽນໂຄດຢູ່ <a href={gitHubUrl}>GitHub</a> ແລະ ເຂົ້າຮ່ວມການສົນທະນາຢູ່ <a href={redditUrl}>Reddit</a> ໄດ້.",
+  "about-outline": "Outline ແມ່ນຜະລິດຕະພັນຂອງ Outline Foundation ທີ່ຊ່ວຍໃຫ້ທຸກຄົນສ້າງ, ເອີ້ນໃຊ້ ແລະ ແບ່ງປັນສິດເຂົ້າເຖິງ VPN ຂອງຕົນເອງໄດ້. Outline ຖືກອອກແບບມາເພື່ອທົນທານຕໍ່ການບລັອກ. ກະລຸນາເຂົ້າເບິ່ງ <a href={outlineUrl}>getoutline.org</a> ເພື່ອສຶກສາວິທີເລີ່ມຕົ້ນການນຳໃຊ້.<br><br>Outline ເປັນຊອບແວໂອເພນຊອດທີ່ຂັບເຄື່ອນໂດຍ <a href={shadowsocksUrl}>Shadowsocks</a>. ທ່ານສາມາດປະກອບສ່ວນໃນການຂຽນໂຄດຢູ່ <a href={gitHubUrl}>GitHub</a> ແລະ ເຂົ້າຮ່ວມການສົນທະນາຢູ່ <a href={redditUrl}>Reddit</a> ໄດ້.",
   "about-page-title": "ກ່ຽວກັບ",
   "add-access-key-dialog-error-text": "ກະແຈການເຂົ້າເຖິງບໍ່ຖືກຕ້ອງ.",
   "add-access-key-dialog-header": "ເພີ່ມກະແຈການເຂົ້າເຖິງ VPN",

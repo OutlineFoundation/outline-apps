@@ -23,12 +23,12 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/reporting"
-	"github.com/Jigsaw-Code/outline-sdk/network"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"localhost/client/go/configyaml"
+	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/platerrors"
+	"localhost/client/go/outline/reporting"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/transport"
 	"github.com/goccy/go-yaml"
 )
 

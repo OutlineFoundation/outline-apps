@@ -16,8 +16,6 @@ import {customElement, property} from 'lit/decorators.js';
 
 import outlineDarkLogo from '../../assets/brand-logo-dark.png';
 import outlineLogo from '../../assets/brand-logo.png';
-import jigsawDarkLogo from '../../assets/jigsaw-logo-dark.png';
-import jigsawLogo from '../../assets/jigsaw-logo.png';
 
 @customElement('about-view')
 export class AboutView extends LitElement {
@@ -31,6 +29,7 @@ export class AboutView extends LitElement {
 
   static styles = css`
     :host {
+      --about-safe-area-top: 0px;
       display: flex;
       flex-direction: column;
       font-family: var(--outline-font-family);
@@ -54,7 +53,19 @@ export class AboutView extends LitElement {
 
     article {
       height: 100%;
-      padding: 32px 24px 0 24px;
+      padding: calc(32px + var(--about-safe-area-top)) 24px 0 24px;
+    }
+
+    @supports (padding-top: constant(safe-area-inset-top)) {
+      :host {
+        --about-safe-area-top: constant(safe-area-inset-top);
+      }
+    }
+
+    @supports (padding-top: env(safe-area-inset-top)) {
+      :host {
+        --about-safe-area-top: env(safe-area-inset-top);
+      }
     }
 
     header img {
@@ -107,26 +118,16 @@ export class AboutView extends LitElement {
           id="about-outline-content"
           .innerHTML=${this.localize(
             'about-outline',
-            'jigsawUrl',
-            'https://jigsaw.google.com',
             'outlineUrl',
             'https://getoutline.org',
             'shadowsocksUrl',
             'https://shadowsocks.org',
             'gitHubUrl',
-            'https://github.com/jigsaw-Code/?q=outline',
+            'https://github.com/OutlineFoundation',
             'redditUrl',
             'https://www.reddit.com/r/outlinevpn'
           )}
         ></section>
-        <footer>
-          <a href="https://jigsaw.google.com">
-            <img
-              src="${this.darkMode ? jigsawDarkLogo : jigsawLogo}"
-              alt="jigsaw logo"
-            />
-          </a>
-        </footer>
       </article>
     `;
   }

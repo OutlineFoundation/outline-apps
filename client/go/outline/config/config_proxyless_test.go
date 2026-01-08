@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
+	"localhost/client/go/configyaml"
 	"github.com/stretchr/testify/require"
 )
 

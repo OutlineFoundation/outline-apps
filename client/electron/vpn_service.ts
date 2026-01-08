@@ -42,7 +42,7 @@ export async function establishVpn(tsRequest: StartRequestJson) {
       id: tsRequest.id,
 
       // TUN device name, use 'outline-tun1' to avoid conflict with old 'outline-tun0':
-      // https://github.com/Jigsaw-Code/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L203
+      // https://github.com/OutlineFoundation/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L203
       interfaceName: 'outline-tun1',
 
       // Network Manager connection name, Use "TUN Connection" instead of "VPN Connection"
@@ -50,7 +50,7 @@ export async function establishVpn(tsRequest: StartRequestJson) {
       connectionName: 'Outline TUN Connection',
 
       // TUN IP, use '10.0.85.5' to avoid conflict with old '10.0.85.1':
-      // https://github.com/Jigsaw-Code/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L204
+      // https://github.com/OutlineFoundation/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L204
       ipAddress: '10.0.85.5',
 
       // A "fake" local DNS resolver. Outline will intercept the real resolver at this address.

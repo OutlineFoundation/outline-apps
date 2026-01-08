@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"localhost/client/go/configyaml"
+	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
 )
 

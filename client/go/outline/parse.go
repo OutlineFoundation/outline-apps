@@ -19,8 +19,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/platerrors"
+
 	"github.com/goccy/go-yaml"
 )
 
@@ -131,7 +132,7 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	}
 
 	// Use JSON marshaling from the standard library because the YAML library is buggy.
-	// See https://github.com/Jigsaw-Code/outline-apps/issues/2576.
+	// See https://github.com/OutlineFoundation/outline-apps/issues/2576.
 	// JSON is a subset of YAML, so that's valid YAML.
 	clientConfigBytes, err := json.Marshal(clientConfigMap)
 	if err != nil {

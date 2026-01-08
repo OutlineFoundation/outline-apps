@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"net/netip"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/iptable"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"localhost/client/go/configyaml"
+	"localhost/client/go/outline/iptable"
+	"golang.getoutline.org/sdk/transport"
 )
 
 type ipTableRootConfig struct {

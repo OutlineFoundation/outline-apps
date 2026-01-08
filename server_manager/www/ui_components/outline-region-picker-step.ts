@@ -257,7 +257,7 @@ export class OutlineRegionPicker extends LitElement {
                   </label>
                   <p>${this.localize('metrics-setup-description')}</p>
                   <a
-                    href="https://support.google.com/outline/answer/15331222"
+                    href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
                   >
                     ${this.localize('metrics-setup-learn-more')}
                   </a>

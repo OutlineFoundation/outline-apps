@@ -21,10 +21,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/useragent"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
-	"github.com/Jigsaw-Code/outline-sdk/x/websocket"
+	"localhost/client/go/configyaml"
+	"localhost/client/go/outline/useragent"
+	"golang.getoutline.org/sdk/transport"
+	"golang.getoutline.org/sdk/x/websocket"
 )
 
 type WebsocketEndpointConfig struct {

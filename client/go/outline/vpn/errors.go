@@ -17,7 +17,7 @@ package vpn
 import (
 	"log/slog"
 
-	perrs "github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	perrs "localhost/client/go/outline/platerrors"
 )
 
 func errCancelled(cause error) error {

@@ -160,7 +160,7 @@ function fetch() {
 function install_docker() {
   (
     # Change umask so that /usr/share/keyrings/docker-archive-keyring.gpg has the right permissions.
-    # See https://github.com/Jigsaw-Code/outline-server/issues/951.
+    # See https://github.com/OutlineFoundation/outline-server/issues/951.
     # We do this in a subprocess so the umask for the calling process is unaffected.
     umask 0022
     fetch https://get.docker.com/ | sh
@@ -429,7 +429,7 @@ Make sure to open the following ports on your firewall, router or cloud provider
 function set_hostname() {
   # These are URLs that return the client's apparent IP address.
   # We have more than one to try in case one starts failing
-  # (e.g. https://github.com/Jigsaw-Code/outline-server/issues/776).
+  # (e.g. https://github.com/OutlineFoundation/outline-server/issues/776).
   local -ar urls=(
     'https://icanhazip.com/'
     'https://ipinfo.io/ip'

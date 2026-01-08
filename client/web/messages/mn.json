@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline нь хүн бүрд өөрийн VPN-г үүсгэх, ажиллуулах болон хандалтыг нь хуваалцах боломжийг олгодог <a href={jigsawUrl}>Jigsaw</a>-н бүтээгдэхүүн юм. Outline нь блоклуулахаас хамгаалагдсан хамгаалалттай бүтээгдсэн. Хэрхэн эхлүүлэх талаар мэдэхийн тулд <a href={outlineUrl}>getoutline.org</a>-д зочилно уу.<br><br>Outline нь <a href={shadowsocksUrl}>Shadowsocks</a>-с дэмжигдсэн нээлттэй эх кодтой программ хангамж юм. Та <a href={gitHubUrl}>GitHub</a> дээрх кодод хувь нэмрээ оруулах болон <a href={redditUrl}>Reddit</a>-н харилцан ярианд нэгдэх боломжтой.",
+  "about-outline": "Outline нь хүн бүрд өөрийн VPN-г үүсгэх, ажиллуулах болон хандалтыг нь хуваалцах боломжийг олгодог Outline Foundation-н бүтээгдэхүүн юм. Outline нь блоклуулахаас хамгаалагдсан хамгаалалттай бүтээгдсэн. Хэрхэн эхлүүлэх талаар мэдэхийн тулд <a href={outlineUrl}>getoutline.org</a>-д зочилно уу.<br><br>Outline нь <a href={shadowsocksUrl}>Shadowsocks</a>-с дэмжигдсэн нээлттэй эх кодтой программ хангамж юм. Та <a href={gitHubUrl}>GitHub</a> дээрх кодод хувь нэмрээ оруулах болон <a href={redditUrl}>Reddit</a>-н харилцан ярианд нэгдэх боломжтой.",
   "about-page-title": "Тухай",
   "add-access-key-dialog-error-text": "Хандалтын түлхүүр буруу байна.",
   "add-access-key-dialog-header": "VPN-н хандалтын түлхүүр нэмнэ үү",

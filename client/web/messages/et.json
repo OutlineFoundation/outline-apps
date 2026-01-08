@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline'i lõi <a href={jigsawUrl}>Jigsaw</a> ja see võimaldab igaühel isikliku VPN-i luua ning seda käitada ja sellele juurdepääsu jagada. Outline on loodud blokeerimiskindlaks. Minge saidile <a href={outlineUrl}>getoutline.org</a> ja uurige, kuidas alustada.<br><br>Outline on avatud lähtekoodiga tarkvara, mis töötab teenuse <a href={shadowsocksUrl}>Shadowsocks</a> jõul. Võite panustada koodi teenuses <a href={gitHubUrl}>GitHub</a> ja liituda vestlusega teenuses <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline'i lõi Outline Foundation ja see võimaldab igaühel isikliku VPN-i luua ning seda käitada ja sellele juurdepääsu jagada. Outline on loodud blokeerimiskindlaks. Minge saidile <a href={outlineUrl}>getoutline.org</a> ja uurige, kuidas alustada.<br><br>Outline on avatud lähtekoodiga tarkvara, mis töötab teenuse <a href={shadowsocksUrl}>Shadowsocks</a> jõul. Võite panustada koodi teenuses <a href={gitHubUrl}>GitHub</a> ja liituda vestlusega teenuses <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Teave",
   "add-access-key-dialog-error-text": "Vale pääsuvõti.",
   "add-access-key-dialog-header": "Lisage VPN-i pääsuvõti",

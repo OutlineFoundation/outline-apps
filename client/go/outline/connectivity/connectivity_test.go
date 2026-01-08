@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
-	"github.com/Jigsaw-Code/outline-sdk/transport/shadowsocks"
+	"localhost/client/go/outline/platerrors"
+	"golang.getoutline.org/sdk/transport"
+	"golang.getoutline.org/sdk/transport/shadowsocks"
 	"github.com/stretchr/testify/require"
 )
 

@@ -1,1 +1,1 @@
-CAPACITOR_DEBUG = true
+// Empty base config to satisfy App.xcodeproj.

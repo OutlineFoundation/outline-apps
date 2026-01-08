@@ -27,11 +27,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/connectivity"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/vpn"
+	"localhost/client/go/outline"
+	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/connectivity"
+	"localhost/client/go/outline/platerrors"
+	"localhost/client/go/outline/vpn"
 	_ "github.com/eycorsican/go-tun2socks/common/log/simple" // Register a simple logger.
 	"github.com/eycorsican/go-tun2socks/tun"
 )

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline <a href={jigsawUrl}>Jigsaw</a> کا پروڈکٹ ہے جو ہر کسی کو اپنا خود کا VPN تخلیق کرنے، چلانے اور اس تک رسائی کے اشتراک کرنے کی اجازت دیتا ہے۔ Outline کو مسدودگی مزاحم بنایا گیا ہے۔ شروع کرنے کا طریقہ جاننے کے لیے <a href={outlineUrl}>getoutline.org</a> ملاحظہ کریں۔<br><br>Outline <a href={shadowsocksUrl}>Shadowsocks</a> کے ذریعے تقویت یافتہ اوپن سورس سافٹ ویئر ہے۔ آپ <a href={gitHubUrl}>GitHub</a> پر کوڈ میں تعاون کر سکتے ہیں اور <a href={redditUrl}>Reddit</a> پر بات چیت میں شامل ہو سکتے ہیں۔",
+  "about-outline": "Outline Outline Foundation کا پروڈکٹ ہے جو ہر کسی کو اپنا خود کا VPN تخلیق کرنے، چلانے اور اس تک رسائی کے اشتراک کرنے کی اجازت دیتا ہے۔ Outline کو مسدودگی مزاحم بنایا گیا ہے۔ شروع کرنے کا طریقہ جاننے کے لیے <a href={outlineUrl}>getoutline.org</a> ملاحظہ کریں۔<br><br>Outline <a href={shadowsocksUrl}>Shadowsocks</a> کے ذریعے تقویت یافتہ اوپن سورس سافٹ ویئر ہے۔ آپ <a href={gitHubUrl}>GitHub</a> پر کوڈ میں تعاون کر سکتے ہیں اور <a href={redditUrl}>Reddit</a> پر بات چیت میں شامل ہو سکتے ہیں۔",
   "about-page-title": "تعارف",
   "add-access-key-dialog-error-text": "رسائی کی غلط کلید۔",
   "add-access-key-dialog-header": "‫VPN تک رسائی کی کلید کو شامل کریں",

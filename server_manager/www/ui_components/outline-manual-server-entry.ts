@@ -341,7 +341,7 @@ Polymer({
           <div class="section-content">
             <div id="command">
               sudo bash -c "$(wget -qO-
-              https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh)"
+              https://raw.githubusercontent.com/OutlineFoundation/outline-apps/master/server_manager/install_scripts/install_server.sh)"
             </div>
           </div>
         </div>

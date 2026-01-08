@@ -1,13 +1,10 @@
 {
   "about_outline": {
-    "message": "Outline is an open source project created by $JIGSAW$ to provide a safer way for news organizations and journalists to access the internet.$NEW_LINE$$NEW_LINE$ Outline is powered by $SHADOWSOCKS$ and is still an early stage product. You can contribute to the code on $GITHUB$, and follow us on $REDDIT$ and $MEDIUM$ to hear when we expand to more platforms and add new features.",
+    "message": "Outline is an open source project created by the Outline Foundation to provide a safer way for news organizations and journalists to access the internet.$NEW_LINE$$NEW_LINE$ Outline is powered by $SHADOWSOCKS$ and is still an early stage product. You can contribute to the code on $GITHUB$, and follow us on $REDDIT$ and $MEDIUM$ to hear when we expand to more platforms and add new features.",
     "description": "This string appears in a dialog as a paragraph to provide a description of the product. Outline is the product name and should not be translated.",
     "placeholders": {
       "GITHUB": {
         "content": "<a href={gitHubUrl}>GitHub</a>"
-      },
-      "JIGSAW": {
-        "content": "<a href={jigsawUrl}>Jigsaw</a>"
       },
       "MEDIUM": {
         "content": "<a href={mediumUrl}>Medium</a>"

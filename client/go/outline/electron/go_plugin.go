@@ -53,9 +53,9 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/callback"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline"
+	"localhost/client/go/outline/callback"
+	"localhost/client/go/outline/platerrors"
 )
 
 // InvokeMethod is the unified entry point for TypeScript to invoke various Go functions.

@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"net/netip"
 
-	"github.com/Jigsaw-Code/outline-sdk/network"
-	"github.com/Jigsaw-Code/outline-sdk/network/dnstruncate"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/dnstruncate"
 )
 
 type truncatePacketProxy struct {

@@ -270,7 +270,7 @@ Polymer({
             >
               <a
                 class="management-api-documentation-link"
-                href="https://github.com/Jigsaw-Code/outline-server/tree/master/src/shadowbox#access-keys-management-api"
+                href="https://github.com/OutlineFoundation/outline-server/tree/master/src/shadowbox#access-keys-management-api"
               >
                 <span>[[localize('management-api-documentation')]]</span>
                 <iron-icon icon="open-in-new" />
@@ -341,7 +341,7 @@ Polymer({
             >
               <iron-icon icon="icons:error-outline"></iron-icon>
               <p
-                inner-h-t-m-l="[[localize('data-limits-disclaimer', 'openLink', '<a href=https://support.google.com/outline/answer/15331222>', 'closeLink', '</a>')]]"
+                inner-h-t-m-l="[[localize('data-limits-disclaimer', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
               ></p>
             </div>
             <div
@@ -394,7 +394,7 @@ Polymer({
             <div class="sub-section">
               <iron-icon icon="icons:error-outline"></iron-icon>
               <p
-                inner-h-t-m-l="[[localize('experiments-disclaimer', 'openLink', '<a href=https://support.google.com/outline/answer/15331222>', 'closeLink', '</a>')]]"
+                inner-h-t-m-l="[[localize('experiments-disclaimer', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
               ></p>
             </div>
           </div>
@@ -414,7 +414,7 @@ Polymer({
               <h3>[[localize('settings-metrics-header')]]</h3>
             </div>
             <p
-              inner-h-t-m-l="[[localize('metrics-description', 'openLink', '<a href=https://support.google.com/outline/answer/15331222>', 'closeLink', '</a>')]]"
+              inner-h-t-m-l="[[localize('metrics-description', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
             ></p>
           </div>
         </div>

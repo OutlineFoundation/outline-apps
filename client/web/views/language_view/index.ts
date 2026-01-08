@@ -33,11 +33,26 @@ export class LanguageView extends LitElement {
 
   static styles = css`
     :host {
+      --language-safe-area-top: 0px;
       height: 100%;
       width: 100%;
       background-color: var(--outline-background);
       color: var(--outline-text-color);
       display: block;
+      box-sizing: border-box;
+      padding-top: var(--language-safe-area-top);
+    }
+
+    @supports (padding-top: constant(safe-area-inset-top)) {
+      :host {
+        --language-safe-area-top: constant(safe-area-inset-top);
+      }
+    }
+
+    @supports (padding-top: env(safe-area-inset-top)) {
+      :host {
+        --language-safe-area-top: env(safe-area-inset-top);
+      }
     }
 
     md-list {

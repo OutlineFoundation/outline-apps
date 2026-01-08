@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline is a product by <a href={jigsawUrl}>Jigsaw</a> that lets anyone create, run and share access to their own VPN. Outline is designed to be resistant to blocking. Visit <a href={outlineUrl}>getoutline.org</a> to learn how to get started.<br><br>Outline is open source software powered by <a href={shadowsocksUrl}>Shadowsocks</a>. You can contribute to the code on <a href={gitHubUrl}>GitHub</a> and join the conversation on <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline is a product by the Outline Foundation that lets anyone create, run and share access to their own VPN. Outline is designed to be resistant to blocking. Visit <a href={outlineUrl}>getoutline.org</a> to learn how to get started.<br><br>Outline is open source software powered by <a href={shadowsocksUrl}>Shadowsocks</a>. You can contribute to the code on <a href={gitHubUrl}>GitHub</a> and join the conversation on <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "About",
   "add-access-key-dialog-error-text": "Invalid access key.",
   "add-access-key-dialog-header": "Add VPN access key",

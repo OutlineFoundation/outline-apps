@@ -85,7 +85,7 @@ For the **macOS** client, you can simply select your macOS computer: **Product >
 
 1. **Run** (**Product >> Run** or <kbd>⌘</kbd> <kbd>R</kbd>), via the menu or the play button:
 
-<img width="802" alt="image" src="https://github.com/Jigsaw-Code/outline-internal-sdk/assets/113565/f3289c08-5f33-423a-a496-d5d764f4fce0">
+<img width="802" alt="image" src="https://github.com/OutlineFoundation/outline-sdk/assets/113565/f3289c08-5f33-423a-a496-d5d764f4fce0">
 
 
 ## Development
@@ -104,7 +104,7 @@ log stream  --info --predicate 'senderImagePath contains "Outline.app"'
 
 In the Console app, select the **Action > Include Info Messages** manu, and set the filter to "Library Path" "contains" "Outline.app":
 
-<img width="1371" alt="image" src="https://github.com/Jigsaw-Code/outline-apps/assets/113565/812c9e14-be11-4a64-b90f-58a4bac138b1">
+<img width="1371" alt="image" src="https://github.com/OutlineFoundation/outline-apps/assets/113565/812c9e14-be11-4a64-b90f-58a4bac138b1">
 
 > 💡 Tip: You can **save searches** in the MacOS Console app.
 
@@ -136,7 +136,7 @@ For more info, see [Debug, Profile, and Test Your App Extension](https://develop
 
 Sometimes the app will refuse to connect, with a `VpnStartFailure` error:
 
-<img width="283" alt="image" src="https://github.com/Jigsaw-Code/outline-apps/assets/113565/5f6ff845-8be3-431d-a40c-98bcfbd6ec8a">
+<img width="283" alt="image" src="https://github.com/OutlineFoundation/outline-apps/assets/113565/5f6ff845-8be3-431d-a40c-98bcfbd6ec8a">
 
 If that happens, it may be the case that the app is trying to use the wrong version of the plugin.
 

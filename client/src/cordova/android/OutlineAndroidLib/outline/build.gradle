@@ -43,6 +43,11 @@ android {
         debug {
         }
     }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
@@ -53,7 +58,7 @@ dependencies {
     // From our local maven repository directory.
     implementation 'org.getoutline.client:tun2socks:0.0.1'
 
-    implementation 'io.sentry:sentry-android:2.0.2'
+    implementation 'io.sentry:sentry-android:8.28.0'
     implementation 'org.apache.commons:commons-collections4:4.4'
     implementation 'androidx.annotation:annotation:1.9.1'
     testImplementation 'junit:junit:4.13.2'

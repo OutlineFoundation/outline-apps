@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline to opracowane przez <a href={jigsawUrl}>Jigsaw</a> oprogramowanie, za pomocą którego możesz utworzyć, uruchomić i udostępnić własną sieć VPN. Zaprojektowano je tak, by było odporne na blokowanie. Wejdź na <a href={outlineUrl}>getoutline.org</a>, aby dowiedzieć się, od czego zacząć.<br><br>Outline to oprogramowanie open source korzystające z <a href={shadowsocksUrl}>Shadowsocks</a>. Projekt możesz współtworzyć na stronie <a href={gitHubUrl}>GitHub</a>. Aby porozmawiać z innymi użytkownikami, odwiedź <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "Outline to opracowane przez Outline Foundation oprogramowanie, za pomocą którego możesz utworzyć, uruchomić i udostępnić własną sieć VPN. Zaprojektowano je tak, by było odporne na blokowanie. Wejdź na <a href={outlineUrl}>getoutline.org</a>, aby dowiedzieć się, od czego zacząć.<br><br>Outline to oprogramowanie open source korzystające z <a href={shadowsocksUrl}>Shadowsocks</a>. Projekt możesz współtworzyć na stronie <a href={gitHubUrl}>GitHub</a>. Aby porozmawiać z innymi użytkownikami, odwiedź <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Informacje o aplikacji",
   "add-access-key-dialog-error-text": "Nieprawidłowy klucz dostępu.",
   "add-access-key-dialog-header": "Dodaj klucz dostępu do sieci VPN",

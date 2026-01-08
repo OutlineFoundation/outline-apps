@@ -20,7 +20,7 @@ import (
 	"net"
 	"net/netip"
 
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 func lookupInTable[D any](table IPTable[D], address string) D {

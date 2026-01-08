@@ -18,8 +18,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/config"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/platerrors"
+
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/stretchr/testify/require"
@@ -596,7 +597,7 @@ transport:
 }
 
 // The tests below are to record broken usage of github.com/goccy/go-yaml.
-// See https://github.com/Jigsaw-Code/outline-apps/issues/2576.
+// See https://github.com/OutlineFoundation/outline-apps/issues/2576.
 // We can go back to using those functions if they get fixed.
 
 func Test_Demonstrate_YAMLMarshal_IsBroken(t *testing.T) {

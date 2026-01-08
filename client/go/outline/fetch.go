@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
+	"localhost/client/go/outline/platerrors"
 )
 
 const fetchTimeout = 10 * time.Second

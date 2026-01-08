@@ -23,8 +23,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"localhost/client/go/outline/platerrors"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // TODO: make these values configurable by exposing a struct with the connectivity methods.

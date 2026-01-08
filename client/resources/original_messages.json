@@ -1,16 +1,13 @@
 {
   "about_outline": {
     "description": "The contents of the About page of the app. Outline is the product name and can be found in the translation glossary.",
-    "message": "Outline is a product by $JIGSAW$ that lets anyone create, run, and share access to their own VPN. Outline is designed to be resistant to blocking. Visit $GETOUTLINE$ to learn how to get started.$NEW_LINE$$NEW_LINE$Outline is open source software powered by $SHADOWSOCKS$. You can contribute to the code on $GITHUB$ and join the conversation on $REDDIT$.",
+    "message": "Outline is a product by the Outline Foundation that lets anyone create, run, and share access to their own VPN. Outline is designed to be resistant to blocking. Visit $GETOUTLINE$ to learn how to get started.$NEW_LINE$$NEW_LINE$Outline is open source software powered by $SHADOWSOCKS$. You can contribute to the code on $GITHUB$ and join the conversation on $REDDIT$.",
     "placeholders": {
       "GETOUTLINE": {
         "content": "<a href={outlineUrl}>getoutline.org</a>"
       },
       "GITHUB": {
         "content": "<a href={gitHubUrl}>GitHub</a>"
-      },
-      "JIGSAW": {
-        "content": "<a href={jigsawUrl}>Jigsaw</a>"
       },
       "NEW_LINE": {
         "content": "<br>"

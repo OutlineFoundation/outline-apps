@@ -24,7 +24,7 @@ export default {
   args: {
     open: true,
     dataCollectionPageUrl:
-      'https://support.google.com/outline/answer/15331222',
+      'https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html',
   },
 };
 

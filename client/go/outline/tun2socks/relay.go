@@ -18,8 +18,8 @@ import (
 	"io"
 	"log/slog"
 
-	perrs "github.com/Jigsaw-Code/outline-apps/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-apps/client/go/outline/vpn"
+	perrs "localhost/client/go/outline/platerrors"
+	"localhost/client/go/outline/vpn"
 )
 
 // TunWriter is an interface that allows for outputting packets to the TUN (VPN).

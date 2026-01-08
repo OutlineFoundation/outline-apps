@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/Jigsaw-Code/outline-apps/client/go/configyaml"
+	"localhost/client/go/configyaml"
 )
 
 // DialEndpointConfig is the format for the Dial Endpoint config.

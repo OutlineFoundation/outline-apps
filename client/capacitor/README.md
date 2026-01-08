@@ -11,7 +11,7 @@ All builds require [Node](https://nodejs.org/) 22 (lts/hydrogen), JDK 17 and [Go
 After cloning this repo, install all node dependencies:
 
 ```sh
-npm install
+npm ci
 ```
 
 ## Web Development (Browser)

@@ -1,5 +1,5 @@
 {
-  "about-outline": "Outline သည် <a href={jigsawUrl}>Jigsaw</a> ၏ ထုတ်ကုန်တစ်ခုဖြစ်ပြီး လူတိုင်းက ပြုလုပ်နိုင်၊ လုပ်ဆောင်နိုင်သည့်အပြင် ၎င်း၏ကိုယ်ပိုင် VPN ကို သုံးခွင့်မျှဝေနိုင်သည်။ Outline ကို ပိတ်ဆို့မှုဒဏ်ခံနိုင်ရန် ရေးဆွဲထားသည်။ စတင်ပုံကို လေ့လာရန် <a href={outlineUrl}>getoutline.org</a> ကို ဝင်ကြည့်ပါ။<br><br>Outline သည် <a href={shadowsocksUrl}>Shadowsocks</a> က ပံ့ပိုးထားသော အခမဲ့ရင်းမြစ်ဆော့ဖ်ဝဲ ဖြစ်သည်။ <a href={gitHubUrl}>GitHub</a> တွင် ကုဒ်ကို ပံ့ပိုးနိုင်ပြီး <a href={redditUrl}>Reddit</a> ရှိ စကားဝိုင်းတွင် ပါဝင်နိုင်သည်။",
+  "about-outline": "Outline သည် Outline Foundation ၏ ထုတ်ကုန်တစ်ခုဖြစ်ပြီး လူတိုင်းက ပြုလုပ်နိုင်၊ လုပ်ဆောင်နိုင်သည့်အပြင် ၎င်း၏ကိုယ်ပိုင် VPN ကို သုံးခွင့်မျှဝေနိုင်သည်။ Outline ကို ပိတ်ဆို့မှုဒဏ်ခံနိုင်ရန် ရေးဆွဲထားသည်။ စတင်ပုံကို လေ့လာရန် <a href={outlineUrl}>getoutline.org</a> ကို ဝင်ကြည့်ပါ။<br><br>Outline သည် <a href={shadowsocksUrl}>Shadowsocks</a> က ပံ့ပိုးထားသော အခမဲ့ရင်းမြစ်ဆော့ဖ်ဝဲ ဖြစ်သည်။ <a href={gitHubUrl}>GitHub</a> တွင် ကုဒ်ကို ပံ့ပိုးနိုင်ပြီး <a href={redditUrl}>Reddit</a> ရှိ စကားဝိုင်းတွင် ပါဝင်နိုင်သည်။",
   "about-page-title": "အကြောင်း",
   "add-access-key-dialog-error-text": "အသုံးပြုခွင့်ကီး မမှန်ကန်ပါ။",
   "add-access-key-dialog-header": "VPN အသုံးပြုခွင့်ကီး ထည့်ပါ",

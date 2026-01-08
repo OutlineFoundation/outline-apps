@@ -1,5 +1,5 @@
 {
-  "about-outline": "O Outline é um produto da <a href={jigsawUrl}>Jigsaw</a> que qualquer pessoa pode usar para criar, executar e compartilhar acesso à própria VPN. Ele foi desenvolvido para superar bloqueios. Acesse <a href={outlineUrl}>getoutline.org</a> para saber como usar o produto.<br><br>O Outline é um software de código aberto com tecnologia da <a href={shadowsocksUrl}>Shadowsocks</a>. Você pode colaborar com o código no <a href={gitHubUrl}>GitHub</a> e participar de discussões no <a href={redditUrl}>Reddit</a>.",
+  "about-outline": "O Outline é um produto da Outline Foundation que qualquer pessoa pode usar para criar, executar e compartilhar acesso à própria VPN. Ele foi desenvolvido para superar bloqueios. Acesse <a href={outlineUrl}>getoutline.org</a> para saber como usar o produto.<br><br>O Outline é um software de código aberto com tecnologia da <a href={shadowsocksUrl}>Shadowsocks</a>. Você pode colaborar com o código no <a href={gitHubUrl}>GitHub</a> e participar de discussões no <a href={redditUrl}>Reddit</a>.",
   "about-page-title": "Sobre",
   "add-access-key-dialog-error-text": "Chave de acesso inválida.",
   "add-access-key-dialog-header": "Adicione a chave de acesso da VPN",

@@ -1,8 +1,4 @@
-*                            @Jigsaw-Code/outline-dev
-
-/client/go/                  @Jigsaw-Code/outline-networking-owners
-/client/src/cordova/plugin/  @Jigsaw-Code/outline-networking-owners
-/third_party/                @Jigsaw-Code/outline-networking-owners
+*                            @OutlineFoundation/outline-dev
 
 /client/web/model/       @fortuna
 /server_manager/model/       @fortuna

@@ -17,14 +17,14 @@ package org.outline.log;
 import android.content.Context;
 import android.util.Log;
 import io.sentry.android.core.SentryAndroid;
-import io.sentry.core.Breadcrumb;
-import io.sentry.core.Sentry;
-import io.sentry.core.SentryEvent;
-import io.sentry.core.SentryLevel;
-import io.sentry.core.protocol.Contexts;
-import io.sentry.core.protocol.Device;
-import io.sentry.core.protocol.Message;
-import io.sentry.core.protocol.OperatingSystem;
+import io.sentry.Breadcrumb;
+import io.sentry.Sentry;
+import io.sentry.SentryEvent;
+import io.sentry.SentryLevel;
+import io.sentry.protocol.Contexts;
+import io.sentry.protocol.Device;
+import io.sentry.protocol.Message;
+import io.sentry.protocol.OperatingSystem;
 import java.lang.IllegalStateException;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -205,7 +205,6 @@ public class SentryErrorReporter {
     device.setScreenDensity(null);
     device.setScreenDpi(null);
     device.setScreenHeightPixels(null);
-    device.setScreenResolution(null);
     device.setScreenWidthPixels(null);
 
     final OperatingSystem os = contexts.getOperatingSystem();
@@ -213,7 +212,7 @@ public class SentryErrorReporter {
 
     contexts.setDevice(device);
     contexts.setOperatingSystem(os);
-    event.setContexts(contexts);
+    event.getContexts().putAll(contexts);
     event.setUser(null);
     event.removeTag("os.rooted");
     event.removeTag("user");
