@@ -31,7 +31,7 @@ import {installDefaultMethodChannel, MethodChannel} from './method_channel';
 import {VpnApi} from './outline_server_repository/vpn';
 import {CordovaVpnApi} from './outline_server_repository/vpn.cordova';
 import {OutlinePlatform} from './platform';
-import {OUTLINE_PLUGIN_NAME, pluginExec} from './plugin.cordova';
+import {pluginExec} from './plugin.cordova';
 import {AbstractUpdater} from './updater';
 import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
@@ -129,13 +129,9 @@ class CordovaPlatform implements OutlinePlatform {
 
   quitApplication() {
     // Only used in macOS because menu bar apps provide no alternative way of quitting.
-    cordova.exec(
-      () => {},
-      () => {},
-      OUTLINE_PLUGIN_NAME,
-      'quitApplication',
-      []
-    );
+    pluginExec<void>('quitApplication').catch((err: unknown) => {
+      console.warn('Failed to quit application', err);
+    });
   }
 }
 

@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import {SingleSelectedEvent} from '@material/mwc-list/mwc-list';
-import {Radio} from '@material/mwc-radio';
 import '@material/mwc-circular-progress';
-import '@material/mwc-radio';
-import '@material/mwc-select';
 import '@material/mwc-formfield';
+import '@material/mwc-radio';
+import {Radio} from '@material/mwc-radio';
+import '@material/web/all.js';
+import type {MdFilledSelect} from '@material/web/all.js';
 
 import {Localizer} from '@outline/infrastructure/i18n';
-import {html, css, LitElement, TemplateResult, nothing} from 'lit';
+import {LitElement, TemplateResult, css, html, nothing} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {Ref, createRef, ref} from 'lit/directives/ref.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
 
+import {OutlineErrorReporter} from '../../shared/error_reporter';
 import './support_form';
 import {FormValues, SupportForm} from './support_form';
-import {OutlineErrorReporter} from '../../shared/error_reporter';
 
 /** The possible steps in the stepper. Only one step is shown at a time. */
 enum ProgressStep {
@@ -113,74 +113,30 @@ export class ContactView extends LitElement {
         color: var(--outline-text-color);
       }
 
-      mwc-select {
-        /**
-         * The '<app-header-layout>' restricts the stacking context, which means
-         * the select dropdown will get stacked underneath the header.
-         * See https://github.com/PolymerElements/app-layout/issues/279. Setting
-         * a maximum height will make the dropdown small enough to not run into
-         * this issue.
-         */
-        --mdc-menu-max-height: 200px;
-        --mdc-menu-max-width: min(
-          calc(100vw - calc(var(--outline-gutter) * 4)),
-          var(--contact-view-max-width)
-        );
+      md-filled-select {
+        --md-filled-select-text-field-container-color: transparent;
         margin-top: 1rem;
         max-width: var(--contact-view-max-width);
         width: 100%;
-        --mdc-theme-primary: var(--outline-primary);
-        --mdc-select-ink-color: var(--outline-text-color);
-        --mdc-select-label-ink-color: var(--outline-label-color);
-        --mdc-select-dropdown-icon-color: var(--outline-text-color);
-        --mdc-select-hover-line-color: var(--outline-text-color);
-        --mdc-select-fill-color: rgba(0, 0, 0, 0.08);
-        --mdc-menu-surface-fill-color: var(--outline-card-background);
-        --mdc-theme-surface: var(--outline-card-background);
-        border: 1px solid var(--outline-hairline);
-        border-radius: 4px;
-        padding: 4px 0;
-        margin-top: 16px;
+        min-width: auto;
       }
 
-      mwc-select[hidden] {
+      md-filled-select::part(menu) {
+        --md-menu-container-color: var(--outline-card-background);
+        --md-menu-item-selected-container-color: var(--outline-primary-light);
+        max-height: 200px;
+        max-width: 200px;
+      }
+
+      md-filled-select {
+        --md-filled-field-content-size: 0.875rem;
+        --md-filled-field-leading-space: 2px;
+        --md-filled-field-top-space: var(--outline-mini-gutter);
+        --md-filled-field-bottom-space: var(--outline-mini-gutter);
+      }
+
+      md-filled-select[hidden] {
         display: none;
-      }
-
-      /* Style the dropdown list */
-      mwc-select mwc-menu {
-        --mdc-theme-surface: var(--outline-background);
-      }
-
-      /* Style the list items properly for dark mode */
-      mwc-select mwc-list-item {
-        background-color: var(--outline-background);
-      }
-
-      mwc-list-item {
-        line-height: 1.25rem;
-        /**
-         * The default styling of list items that wrap to 3+ lines is bad, and
-         * our items here are quite long and tend to wrap that much. To allow
-         * all lines to take up as much space as they can, we set the height to
-         * "auto", with a min-height of what the height would have been, which
-         * defaults to "48px" (https://www.npmjs.com/package/@material/mwc-menu#css-custom-properties).
-         */
-        min-height: 48px;
-        --mdc-menu-item-height: auto;
-        padding-bottom: var(--outline-mini-gutter);
-        padding-top: var(--outline-mini-gutter);
-        color: var(--outline-text-color);
-        --mdc-theme-text-primary-on-background: var(--outline-text-color);
-        background-color: var(--outline-background);
-        padding: 8px 16px;
-      }
-
-      mwc-list-item span {
-        white-space: normal;
-        color: var(--outline-text-color);
-        display: block;
-        width: 100%;
       }
 
       /* Fix radio buttons */
@@ -257,17 +213,25 @@ export class ContactView extends LitElement {
     const radio = e.target as Radio;
     const hasOpenTicket = radio.value;
     if (hasOpenTicket) {
-      this.exitTemplate = html`${this.localize(
-        'contact-view-exit-open-ticket'
-      )}`;
+      this.exitTemplate = html`${this.localize('contact-view-exit-open-ticket')}`;
       this.currentStep = ProgressStep.EXIT;
       return;
     }
     this.showIssueSelector = true;
   }
 
-  private selectIssue(e: SingleSelectedEvent) {
-    this.selectedIssueType = ContactView.ISSUES[e.detail.index];
+  private selectIssue(e: Event) {
+    const select = e.target as MdFilledSelect;
+    const selectedValue = select.value as IssueType;
+    const selectedIndex = ContactView.ISSUES.findIndex(
+      issue => issue === selectedValue
+    );
+
+    if (selectedIndex < 0) {
+      return;
+    }
+
+    this.selectedIssueType = ContactView.ISSUES[selectedIndex];
 
     if (UNSUPPORTED_ISSUE_TYPES.has(this.selectedIssueType)) {
       const helpPage = UNSUPPORTED_ISSUE_TYPES.get(this.selectedIssueType);
@@ -402,20 +366,22 @@ export class ContactView extends LitElement {
             )}
           </ol>
 
-          <mwc-select
+          <md-filled-select
             .label=${this.localize('contact-view-issue')}
             ?hidden=${!this.showIssueSelector}
-            ?fixedMenuPosition=${true}
-            @selected="${this.selectIssue}"
+            quick="true"
+            @change=${this.selectIssue}
           >
             ${ContactView.ISSUES.map(value => {
               return html`
-                <mwc-list-item value="${value}">
-                  <span>${this.localize(`contact-view-issue-${value}`)}</span>
-                </mwc-list-item>
+                <md-select-option .value=${value}>
+                  <div slot="headline">
+                    ${this.localize(`contact-view-issue-${value}`)}
+                  </div>
+                </md-select-option>
               `;
             })}
-          </mwc-select>
+          </md-filled-select>
         `;
       }
     }

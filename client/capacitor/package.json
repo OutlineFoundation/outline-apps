@@ -7,5 +7,14 @@
   "keywords": [
     "capacitor",
     "mobile"
-  ]
+  ],
+  "scripts": {
+    "clean": "rm -rf node_modules",
+    "cap:sync:ios": "node build/cap-sync-ios.mjs",
+    "cap:sync:android": "node build/cap-sync-android.mjs"
+  },
+  "devDependencies": {
+    "capacitor-plugin-outline": "file:./plugins/capacitor-plugin-outline",
+    "@capacitor/browser": "^6.0.6"
+  }
 }

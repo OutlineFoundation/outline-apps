@@ -3,9 +3,34 @@
     "appName": "Outline",
     "webDir": "../www",
     "bundledWebRuntime": false,
+    "server": {
+        "cleartext": true,
+        "allowNavigation": [
+            "*"
+        ]
+    },
+    "ios": {
+        "contentInset": "never",
+        "limitsNavigationsToAppBoundDomains": false,
+        "scrollEnabled": true
+    },
     "plugins": {
         "SplashScreen": {
-            "launchAutoHide": true
+            "launchAutoHide": false,
+            "launchShowDuration": 3000,
+            "backgroundColor": "#0F1621",
+            "androidSplashResourceName": "splash",
+            "androidScaleType": "CENTER_CROP",
+            "iosSplashResourceName": "Splash",
+            "showSpinner": false,
+            "androidSpinnerStyle": "large",
+            "iosSpinnerStyle": "small",
+            "spinnerColor": "#999999",
+            "splashFullScreen": true,
+            "splashImmersive": true,
+            "autoHide": false,
+            "fadeInDuration": 0,
+            "fadeOutDuration": 300
         }
     }
 }
