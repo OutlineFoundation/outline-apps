@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"localhost/client/go/outline/callback"
-	"github.com/Jigsaw-Code/outline-sdk/network"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // Config holds the configuration to establish a system-wide [VPNConnection].

@@ -27,8 +27,8 @@ import (
 	"localhost/client/go/outline/config"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
-	"github.com/Jigsaw-Code/outline-sdk/network"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/transport"
 	"github.com/goccy/go-yaml"
 )
 

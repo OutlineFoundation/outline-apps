@@ -23,9 +23,9 @@ import (
 
 	"localhost/client/go/outline/connectivity"
 	perrs "localhost/client/go/outline/platerrors"
-	"github.com/Jigsaw-Code/outline-sdk/network"
-	"github.com/Jigsaw-Code/outline-sdk/network/lwip2transport"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/lwip2transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // RemoteDevice is an IO device that connects to a remote Outline server.

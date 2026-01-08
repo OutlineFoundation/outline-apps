@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"localhost/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
 )
 

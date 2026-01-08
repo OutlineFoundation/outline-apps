@@ -19,7 +19,7 @@ package main
 import (
 	"errors"
 
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 func newBaseDialersWithAdapter(nicIdx int) (transport.StreamDialer, transport.PacketDialer, error) {

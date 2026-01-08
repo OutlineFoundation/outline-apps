@@ -23,8 +23,8 @@ import (
 
 	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/useragent"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
-	"github.com/Jigsaw-Code/outline-sdk/x/websocket"
+	"golang.getoutline.org/sdk/transport"
+	"golang.getoutline.org/sdk/x/websocket"
 )
 
 type WebsocketEndpointConfig struct {

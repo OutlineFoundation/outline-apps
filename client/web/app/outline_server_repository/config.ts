@@ -52,7 +52,7 @@ export class DynamicServiceConfig {
  */
 export interface TunnelConfigJson {
   /** client is an opaque string that describes how to create the client object that establish connections to the destinations.
-   * See https://github.com/Jigsaw-Code/outline-apps/blob/master/client/config.md for format. */
+   * See https://github.com/OutlineFoundation/outline-apps/blob/master/client/config.md for format. */
   client: string;
 }
 

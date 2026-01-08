@@ -42,7 +42,7 @@
       "!output/client/linux-amd64/*.h"
     ],
     "icon": "client/electron/icons/png",
-    "maintainer": "Jigsaw LLC",
+    "maintainer": "Outline Foundation",
     "target": [
       {
         "arch": [

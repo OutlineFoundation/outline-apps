@@ -18,7 +18,7 @@ contact_links:
     url: https://support.getoutline.org/s/contactsupport
     about: Please request troubleshooting assistance with Outline Manager or Outline Client here.
   - name: Outline SDK Discussion Board
-    url: https://github.com/Jigsaw-Code/outline-sdk/discussions
+    url: https://github.com/OutlineFoundation/outline-sdk/discussions
     about: Developers using Outline SDK, please post your questions here.
   - name: Outline Community
     url: https://community.internetfreedomfestival.org/community/channels/outline-community

@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"localhost/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // TCPUDPConfig is the format for the TCPUDP config. It specifies separate TCP and UDP configs

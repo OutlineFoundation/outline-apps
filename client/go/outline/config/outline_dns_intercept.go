@@ -22,8 +22,8 @@ import (
 
 	"localhost/client/go/outline/connectivity"
 	"localhost/client/go/outline/dnsintercept"
-	"github.com/Jigsaw-Code/outline-sdk/network"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // A list of public DNS resolvers that the VPN can use.

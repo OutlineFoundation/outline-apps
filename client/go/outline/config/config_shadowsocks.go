@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	"localhost/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
-	"github.com/Jigsaw-Code/outline-sdk/transport/shadowsocks"
+	"golang.getoutline.org/sdk/transport"
+	"golang.getoutline.org/sdk/transport/shadowsocks"
 )
 
 // ShadowsocksConfig is the format for the Shadowsocks config. It can specify Dialers or PacketListener.

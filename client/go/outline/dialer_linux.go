@@ -18,7 +18,7 @@ import (
 	"net"
 	"syscall"
 
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // newFWMarkProtectedTCPDialer creates a base TCP dialer for [Client]

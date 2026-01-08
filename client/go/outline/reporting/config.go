@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"localhost/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 	persistentcookiejar "go.nhat.io/cookiejar"
 )
 

@@ -22,7 +22,7 @@ import (
 
 	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/iptable"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 type ipTableRootConfig struct {

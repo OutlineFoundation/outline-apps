@@ -20,7 +20,7 @@ import (
 	"net"
 
 	"localhost/client/go/configyaml"
-	"github.com/Jigsaw-Code/outline-sdk/transport"
+	"golang.getoutline.org/sdk/transport"
 )
 
 // newTypeParser is a wrapper around [configyaml.NewTypeParser] that allows us to centralize the registration

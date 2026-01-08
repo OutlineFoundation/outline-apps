@@ -1,8 +1,8 @@
 # <img alt="Outline Client Logo" src="../docs/resources/logo_client.png" title="Outline Client" width="32">&nbsp;&nbsp;Outline Client
 
-![Build and Test](https://github.com/Jigsaw-Code/outline-apps/actions/workflows/build_and_test_debug_client.yml/badge.svg?branch=master) 
+![Build and Test](https://github.com/OutlineFoundation/outline-apps/actions/workflows/build_and_test_debug_client.yml/badge.svg?branch=master) 
 
-The Outline Client is a cross-platform VPN or proxy client for Windows, macOS, iOS, Android, and Debian-based Linux. The Outline Client is designed for use with the [Outline Server](https://github.com/Jigsaw-Code/outline-server) software, but it is fully compatible with any [Shadowsocks](https://shadowsocks.org/) server.
+The Outline Client is a cross-platform VPN or proxy client for Windows, macOS, iOS, Android, and Debian-based Linux. The Outline Client is designed for use with the [Outline Server](https://github.com/OutlineFoundation/outline-server) software, but it is fully compatible with any [Shadowsocks](https://shadowsocks.org/) server.
 
 The client's user interface is implemented in [Polymer](https://www.polymer-project.org/) 2.0. Platform support is provided by [Cordova](https://cordova.apache.org/) and [Electron](https://electronjs.org/), with additional native components in this repository.
 
