@@ -365,7 +365,7 @@ function start_watchtower() {
       -v /var/run/docker.sock:/var/run/docker.sock)
   # By itself, local messes up the return code.
   local STDERR_OUTPUT
-  STDERR_OUTPUT="$(docker run -d "${docker_watchtower_flags[@]}" containrrr/watchtower --cleanup --label-enable --tlsverify --interval "${WATCHTOWER_REFRESH_SECONDS}" 2>&1 >/dev/null)" && return
+  STDERR_OUTPUT="$(docker run -d "${docker_watchtower_flags[@]}" nickfedor/watchtower --cleanup --label-enable --tlsverify --interval "${WATCHTOWER_REFRESH_SECONDS}" 2>&1 >/dev/null)" && return
   readonly STDERR_OUTPUT
   log_error "FAILED"
   if docker_container_exists watchtower; then
