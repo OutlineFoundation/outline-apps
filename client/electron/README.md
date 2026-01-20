@@ -26,7 +26,7 @@ You can download the binary tarball, or [use a package manager](https://github.c
 brew install zig 
 ```
 
-On an M-series ARM Macs it is necessary to install Rosetta to allow the chip to run x86_64 commands.
+On an M-series ARM Macs it is necessary to install Rosetta to allow the chip to run x86_64 commands. (A code-signing step in our windows build uses an intel version of wine.)
 
 ```sh
 softwareupdate --install-rosetta --agree-to-license
