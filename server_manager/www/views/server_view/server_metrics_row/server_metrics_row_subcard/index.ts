@@ -17,9 +17,12 @@
 import {LitElement, html, css, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 
+import '../../icon_tooltip';
+
 @customElement('server-metrics-row-subcard')
 export class ServerMetricsRowSubcard extends LitElement {
   @property({type: String}) highlight?: string;
+  @property({type: String}) highlightTooltip?: string;
   @property({type: String}) title: string;
   @property({type: String}) subtitle?: string;
   @property({type: String}) icon?: string;
@@ -87,7 +90,14 @@ export class ServerMetricsRowSubcard extends LitElement {
     return html`
       <div>
         ${this.highlight
-          ? html`<mark class="highlight">${this.highlight}</mark>`
+          ? this.highlightTooltip
+            ? html`<icon-tooltip
+                text="${this.highlightTooltip}"
+                position="right"
+              >
+                <mark class="highlight">${this.highlight}</mark>
+              </icon-tooltip>`
+            : html`<mark class="highlight">${this.highlight}</mark>`
           : nothing}
         ${this.title ? html`<h4 class="title">${this.title}</h4>` : nothing}
         ${this.subtitle
