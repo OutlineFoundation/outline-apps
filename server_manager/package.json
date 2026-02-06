@@ -117,7 +117,7 @@
     "puppeteer": "^13.6.0",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.5.0",
-    "webpack": "^5.88.2",
+    "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1",
     "webpack-node-externals": "^3.0.0"
