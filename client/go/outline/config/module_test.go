@@ -206,12 +206,12 @@ udp:
 	failingNode, err := configyaml.ParseConfigYAML(failingConfig)
 	require.NoError(t, err)
 
-	transportPair, err := provider.Parse(ctx, failingNode)
+	failingTransportPair, err := provider.Parse(ctx, failingNode)
 	require.NoError(t, err)
-	require.NotNil(t, transportPair)
-	require.NotNil(t, transportPair.StreamDialer)
-	fmt.Println("Failing Node:", failingNode)
-	require.Empty(t, transportPair.StreamDialer.FirstHop)
+	require.NotNil(t, failingTransportPair)
+	require.NotNil(t, failingTransportPair.StreamDialer)
+	fmt.Printf("Parsed Failing Config - StreamDialer: %+v, PacketProxy: %+v\n", failingTransportPair.StreamDialer, failingTransportPair.PacketProxy)
+	require.Empty(t, failingTransportPair.StreamDialer.FirstHop)
 
 	// Test the working configuration from the bug report.
 	workingConfig := `
@@ -230,10 +230,10 @@ udp:
 	workingNode, err := configyaml.ParseConfigYAML(workingConfig)
 	require.NoError(t, err)
 
-	transportPair, err = provider.Parse(ctx, workingNode)
+	workingTransportPair, err := provider.Parse(ctx, workingNode)
 	require.NoError(t, err)
-	require.NotNil(t, transportPair)
-	require.NotNil(t, transportPair.StreamDialer)
-	fmt.Println("Working Node:", workingNode)
-	require.Equal(t, "sub.domain.com:443", transportPair.StreamDialer.FirstHop)
+	require.NotNil(t, workingTransportPair)
+	require.NotNil(t, workingTransportPair.StreamDialer)
+	fmt.Printf("Parsed Working Config - StreamDialer: %+v, PacketProxy: %+v\n", workingTransportPair.StreamDialer, workingTransportPair.PacketProxy)
+	require.Equal(t, "sub.domain.com:443", workingTransportPair.StreamDialer.FirstHop)
 }

@@ -39,9 +39,14 @@ func NewDialEndpointSubParser[ConnType any](parse configyaml.ParseFunc[*Dialer[C
 }
 
 func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config any, newDialer configyaml.ParseFunc[*Dialer[ConnType]]) (*Endpoint[ConnType], error) {
+
 	if config == nil {
+
 		return nil, errors.New("endpoint config cannot be nil")
+
 	}
+
+	fmt.Printf("Type in parseDirectDialerEndpoint for config: %T, Value: %+v\n", config, config)
 
 	dialParams, err := parseEndpointConfig(config)
 	if err != nil {
@@ -104,6 +109,7 @@ func parseEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, error
 }
 
 func toDialEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, error) {
+	fmt.Printf("Type in toDialEndpointConfig: %T, Value: %+v\n", node, node)
 	switch typed := node.(type) {
 	case string:
 		return &DialEndpointConfig{Address: typed}, nil
