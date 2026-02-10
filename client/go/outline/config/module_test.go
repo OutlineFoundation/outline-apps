@@ -177,3 +177,63 @@ udp: null`)
 		require.Equal(t, "blocked by config", err.Error())
 	})
 }
+
+func TestIPTableEndpointParsingBug(t *testing.T) {
+	provider := newTestTransportProvider()
+	ctx := context.Background()
+
+	// Test the failing configuration from the bug report.
+	failingConfig := `
+$type: tcpudp
+tcp:
+  $type: iptable
+  table:
+    - ips:
+        - 34.117.59.0/24
+      dialer:
+        $type: shadowsocks
+        endpoint: sub.domain.com:443
+        cipher: chacha20-ietf-poly1305
+        secret: xf0Wzuz5NyAUaCV95q4p9N
+  fallback:
+    $type: direct
+udp:
+  $type: shadowsocks
+  endpoint: sub.domain.com:443
+  cipher: chacha20-ietf-poly1305
+  secret: xf0Wzuz5NyAUaCV95q4p9N
+`
+	failingNode, err := configyaml.ParseConfigYAML(failingConfig)
+	require.NoError(t, err)
+
+	transportPair, err := provider.Parse(ctx, failingNode)
+	require.NoError(t, err)
+	require.NotNil(t, transportPair)
+	require.NotNil(t, transportPair.StreamDialer)
+	fmt.Println("Failing Node:", failingNode)
+	require.Empty(t, transportPair.StreamDialer.FirstHop)
+
+	// Test the working configuration from the bug report.
+	workingConfig := `
+$type: tcpudp
+tcp:
+  $type: shadowsocks
+  endpoint: sub.domain.com:443
+  cipher: chacha20-ietf-poly1305
+  secret: xf0Wzuz5NyAUaCV95q4p9N
+udp:
+  $type: shadowsocks
+  endpoint: sub.domain.com:443
+  cipher: chacha20-ietf-poly1305
+  secret: xf0Wzuz5NyAUaCV95q4p9N
+`
+	workingNode, err := configyaml.ParseConfigYAML(workingConfig)
+	require.NoError(t, err)
+
+	transportPair, err = provider.Parse(ctx, workingNode)
+	require.NoError(t, err)
+	require.NotNil(t, transportPair)
+	require.NotNil(t, transportPair.StreamDialer)
+	fmt.Println("Working Node:", workingNode)
+	require.Equal(t, "sub.domain.com:443", transportPair.StreamDialer.FirstHop)
+}
