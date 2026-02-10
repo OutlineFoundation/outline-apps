@@ -109,40 +109,52 @@ func toDialEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, erro
 		return &DialEndpointConfig{Address: typed}, nil
 
 	case map[string]any:
-		if host, hostOk := typed["host"].(string); hostOk {
-			var portStr string
-			switch port := typed["port"].(type) {
-			case int:
-				portStr = strconv.Itoa(port)
-			case float64:
-				portStr = strconv.FormatFloat(port, 'f', -1, 64)
-			}
-
-			if portStr != "" {
-				// We have a host and port, so we can construct the address.
-				// However, we still need to parse the rest of the config.
-				// To do that, we create a copy of the map, remove the host and port,
-				// and then use MapToAny to parse the rest.
-				remainingConfig := make(map[string]any)
-				for k, v := range typed {
-					if k != "host" && k != "port" {
-						remainingConfig[k] = v
-					}
-				}
-				config := &DialEndpointConfig{Address: net.JoinHostPort(host, portStr)}
-				if err := configyaml.MapToAny(remainingConfig, config); err != nil {
-					return nil, err
-				}
-				return config, nil
-			}
+		config, err := parseHostPortFromMap(typed)
+		if err == nil {
+			return config, nil
 		}
-		var config DialEndpointConfig
-		if err := configyaml.MapToAny(typed, &config); err != nil {
+		// If parsing host and port fails, try parsing the map directly.
+		var directConfig DialEndpointConfig
+		if err := configyaml.MapToAny(typed, &directConfig); err != nil {
 			return nil, err
 		}
-		return &config, nil
+		return &directConfig, nil
 
 	default:
 		return nil, fmt.Errorf("endpoint config of type %T is not supported", typed)
 	}
 }
+
+// parseHostPortFromMap attempts to parse a host and port from a map[string]any
+// and construct a DialEndpointConfig. It returns an error if host or port are not found or invalid.
+func parseHostPortFromMap(typed map[string]any) (*DialEndpointConfig, error) {
+	if host, hostOk := typed["host"].(string); hostOk {
+		var portStr string
+		switch port := typed["port"].(type) {
+		case int:
+			portStr = strconv.Itoa(port)
+		case float64:
+			portStr = strconv.FormatFloat(port, 'f', -1, 64)
+		}
+
+		if portStr != "" {
+			// We have a host and port, so we can construct the address.
+			// However, we still need to parse the rest of the config.
+			// To do that, we create a copy of the map, remove the host and port,
+			// and then use MapToAny to parse the rest.
+			remainingConfig := make(map[string]any)
+			for k, v := range typed {
+				if k != "host" && k != "port" {
+					remainingConfig[k] = v
+				}
+			}
+			config := &DialEndpointConfig{Address: net.JoinHostPort(host, portStr)}
+			if err := configyaml.MapToAny(remainingConfig, config); err != nil {
+				return nil, err
+			}
+			return config, nil
+		}
+	}
+	return nil, errors.New("host or port not found or invalid in map")
+}
+
