@@ -177,3 +177,14 @@ udp: null`)
 		require.Equal(t, "blocked by config", err.Error())
 	})
 }
+
+func TestParseEndpointConfig(t *testing.T) {
+	// Test for bug https://github.com/OutlineFoundation/outline-apps/issues/2686
+	config := map[string]any{
+		"host": "35.72.63.220",
+		"port": 80,
+	}
+	endpointConfig, err := parseEndpointConfig(config)
+	require.NoError(t, err)
+	require.Equal(t, "35.72.63.220:80", endpointConfig.Address)
+}
