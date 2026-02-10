@@ -182,7 +182,7 @@ func TestIPTableEndpointParsingBug(t *testing.T) {
 	provider := newTestTransportProvider()
 	ctx := context.Background()
 
-	// Test the failing configuration from the bug report.
+	// Test the formerly failing configuration from the bug report.
 	failingConfig := `
 $type: tcpudp
 tcp:
@@ -210,10 +210,9 @@ udp:
 	require.NoError(t, err)
 	require.NotNil(t, failingTransportPair)
 	require.NotNil(t, failingTransportPair.StreamDialer)
-	fmt.Printf("Parsed Failing Config - StreamDialer: %+v, PacketProxy: %+v\n", failingTransportPair.StreamDialer, failingTransportPair.PacketProxy)
-	require.Empty(t, failingTransportPair.StreamDialer.FirstHop)
+	require.Equal(t, "sub.domain.com:443", failingTransportPair.StreamDialer.FirstHop)
 
-	// Test the working configuration from the bug report.
+	// Test the working configuration from the bug report for contrast.
 	workingConfig := `
 $type: tcpudp
 tcp:
@@ -234,6 +233,5 @@ udp:
 	require.NoError(t, err)
 	require.NotNil(t, workingTransportPair)
 	require.NotNil(t, workingTransportPair.StreamDialer)
-	fmt.Printf("Parsed Working Config - StreamDialer: %+v, PacketProxy: %+v\n", workingTransportPair.StreamDialer, workingTransportPair.PacketProxy)
 	require.Equal(t, "sub.domain.com:443", workingTransportPair.StreamDialer.FirstHop)
 }

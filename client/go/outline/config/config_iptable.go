@@ -122,6 +122,35 @@ func parseIPTableStreamDialer(
 		return nil, fmt.Errorf("failed to create IPTableStreamDialer: %w", err)
 	}
 
+	var firstHop string
+	// The legacy Electron client needs the FirstHop to be propagated. We prioritize the FirstHop
+	// from the first tunneled sub-dialer in the table, or the fallback if no table entry is tunneled.
+	for _, entryCfg := range rootCfg.Table {
+		parsedSubDialer, err := parseSD(ctx, entryCfg.Dialer)
+		if err != nil {
+			// Error already handled above, but need to parse again to get the FirstHop.
+			continue
+		}
+		if parsedSubDialer.ConnType == ConnTypeTunneled && parsedSubDialer.FirstHop != "" {
+			firstHop = parsedSubDialer.FirstHop
+			break
+		}
+	}
+
+	if firstHop == "" && rootCfg.Fallback != nil {
+		parsedFallbackDialer, err := parseSD(ctx, rootCfg.Fallback)
+		if err != nil {
+			// Error already handled above.
+			// We explicitly check for parseSD error here to prevent the linter from complaining about `parseSD` being called twice without error handling on the second call
+			// It's already handled in the previous `if rootCfg.Fallback != nil` block
+			// TODO: Remove this once we refactor config to not call `parseSD` multiple times
+			return nil, fmt.Errorf("failed to parse nested stream dialer fallback: %w", err)
+		}
+		if parsedFallbackDialer.ConnType == ConnTypeTunneled && parsedFallbackDialer.FirstHop != "" {
+			firstHop = parsedFallbackDialer.FirstHop
+		}
+	}
+
 	var connType ConnType
 	if allConnBlocked {
 		connType = ConnTypeBlocked
@@ -140,6 +169,7 @@ func parseIPTableStreamDialer(
 		Dial: dialer.DialStream,
 		ConnectionProviderInfo: ConnectionProviderInfo{
 			ConnType: connType,
+			FirstHop: firstHop,
 		},
 	}, nil
 }
