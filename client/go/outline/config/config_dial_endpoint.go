@@ -109,11 +109,14 @@ func toDialEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, erro
 		return &DialEndpointConfig{Address: typed}, nil
 
 	case map[string]any:
+		// TODO: Make it type-based
 		var config DialEndpointConfig
 		if err := configyaml.MapToAny(typed, &config); err != nil {
 			return nil, err
 		}
 		// If Address is empty, check for an "endpoint" field as a fallback.
+		// This is needed because legacy electron code still needs the FirstHop field to be populated.
+		// https://github.com/OutlineFoundation/outline-apps/blob/f2704810a908966de14bcda02d4cd628d920a175/client/web/app/outline_server_repository/vpn.ts#L28
 		if config.Address == "" {
 			if endpoint, ok := typed["endpoint"].(string); ok {
 				config.Address = endpoint

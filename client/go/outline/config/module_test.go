@@ -21,8 +21,9 @@ import (
 	"testing"
 
 	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
+
 	"github.com/stretchr/testify/require"
+	"golang.getoutline.org/sdk/transport"
 )
 
 func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
@@ -178,11 +179,11 @@ udp: null`)
 	})
 }
 
-func TestIPTableEndpointParsingBug(t *testing.T) {
+func TestIPTableEndpointParsingBugFailing(t *testing.T) {
 	provider := newTestTransportProvider()
 	ctx := context.Background()
 
-	// Test the formerly failing configuration from the bug report.
+	// Test the failing configuration from the bug report.
 	failingConfig := `
 $type: tcpudp
 tcp:
@@ -206,13 +207,19 @@ udp:
 	failingNode, err := configyaml.ParseConfigYAML(failingConfig)
 	require.NoError(t, err)
 
-	failingTransportPair, err := provider.Parse(ctx, failingNode)
+	transportPair, err := provider.Parse(ctx, failingNode)
 	require.NoError(t, err)
-	require.NotNil(t, failingTransportPair)
-	require.NotNil(t, failingTransportPair.StreamDialer)
-	require.Equal(t, "sub.domain.com:443", failingTransportPair.StreamDialer.FirstHop)
+	require.NotNil(t, transportPair)
+	require.NotNil(t, transportPair.StreamDialer)
+	fmt.Printf("Parsed Failing Config StreamDialer: %+v\n", transportPair.StreamDialer)
+	require.Equal(t, "sub.domain.com:443", transportPair.StreamDialer.FirstHop)
+}
 
-	// Test the working configuration from the bug report for contrast.
+func TestIPTableEndpointParsingBugWorking(t *testing.T) {
+	provider := newTestTransportProvider()
+	ctx := context.Background()
+
+	// Test the working configuration from the bug report.
 	workingConfig := `
 $type: tcpudp
 tcp:
@@ -229,9 +236,40 @@ udp:
 	workingNode, err := configyaml.ParseConfigYAML(workingConfig)
 	require.NoError(t, err)
 
-	workingTransportPair, err := provider.Parse(ctx, workingNode)
+	transportPair, err := provider.Parse(ctx, workingNode)
 	require.NoError(t, err)
-	require.NotNil(t, workingTransportPair)
-	require.NotNil(t, workingTransportPair.StreamDialer)
-	require.Equal(t, "sub.domain.com:443", workingTransportPair.StreamDialer.FirstHop)
+	require.NotNil(t, transportPair)
+	require.NotNil(t, transportPair.StreamDialer)
+	fmt.Printf("Parsed Working Config StreamDialer: %+v\n", transportPair.StreamDialer)
+	require.Equal(t, "sub.domain.com:443", transportPair.StreamDialer.FirstHop)
+}
+
+func TestIPTableEndpointParsingBugFailing2(t *testing.T) {
+	provider := newTestTransportProvider()
+	ctx := context.Background()
+
+	// Test the working configuration from the bug report.
+	workingConfig := `
+transport:
+    $type: tcpudp
+    tcp:
+        $type: shadowsocks
+        endpoint: '140.245.119.11:80'
+        cipher: chacha20-ietf-poly1305
+        secret: abcd
+    udp:
+        $type: shadowsocks
+        endpoint: '140.245.119.11:443'
+        cipher: chacha20-ietf-poly1305
+        secret: abcd
+`
+	workingNode, err := configyaml.ParseConfigYAML(workingConfig)
+	require.NoError(t, err)
+
+	transportPair, err := provider.Parse(ctx, workingNode)
+	require.NoError(t, err)
+	require.NotNil(t, transportPair)
+	require.NotNil(t, transportPair.StreamDialer)
+	fmt.Printf("Parsed Working Config StreamDialer: %+v\n", transportPair.StreamDialer)
+	require.Equal(t, "140.245.119.11:443", transportPair.StreamDialer.FirstHop)
 }
