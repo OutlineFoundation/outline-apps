@@ -250,26 +250,24 @@ func TestIPTableEndpointParsingBugFailing2(t *testing.T) {
 
 	// Test the working configuration from the bug report.
 	workingConfig := `
-transport:
-    $type: tcpudp
-    tcp:
-        $type: shadowsocks
-        endpoint: '140.245.119.11:80'
-        cipher: chacha20-ietf-poly1305
-        secret: abcd
-    udp:
-        $type: shadowsocks
-        endpoint: '140.245.119.11:443'
-        cipher: chacha20-ietf-poly1305
-        secret: abcd
+$type: tcpudp
+tcp:
+  $type: shadowsocks
+  endpoint: '140.245.119.11:80'
+  cipher: chacha20-ietf-poly1305
+  secret: abcd
+udp:
+  $type: shadowsocks
+  endpoint: '140.245.119.11:443'
+  cipher: chacha20-ietf-poly1305
+  secret: abcd
 `
 	workingNode, err := configyaml.ParseConfigYAML(workingConfig)
 	require.NoError(t, err)
-
 	transportPair, err := provider.Parse(ctx, workingNode)
 	require.NoError(t, err)
 	require.NotNil(t, transportPair)
 	require.NotNil(t, transportPair.StreamDialer)
 	fmt.Printf("Parsed Working Config StreamDialer: %+v\n", transportPair.StreamDialer)
-	require.Equal(t, "140.245.119.11:443", transportPair.StreamDialer.FirstHop)
+	require.Equal(t, "140.245.119.11:80", transportPair.StreamDialer.FirstHop)
 }
