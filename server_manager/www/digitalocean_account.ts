@@ -113,7 +113,7 @@ export class DigitalOceanAccount implements digitalocean.Account {
     const dropletSpec = {
       installCommand,
       size: MACHINE_SIZE,
-      image: 'docker-20-04', // Despite the name, this image runs Ubuntu 22.04.
+      image: 'docker-20-04', // As of 2026-02-22, this image runs Ubuntu 22.04 despite the name.
       tags: [SHADOWBOX_TAG],
     };
     if (this.debugMode) {
