@@ -18,6 +18,21 @@ import {
   GeoLocation,
 } from '../model/location';
 
+function formatGeoId(geoId: string): string {
+  return geoId
+    .split('-')
+    .map(part => {
+      if (!part) {
+        return '';
+      }
+      if (part === part.toUpperCase()) {
+        return part;
+      }
+      return `${part[0].toUpperCase()}${part.slice(1)}`;
+    })
+    .join(' ');
+}
+
 /**
  * Returns the localized place name, or the data center ID if the location is
  * unknown.
@@ -32,7 +47,12 @@ export function getShortName(
   if (!cloudLocation.location) {
     return cloudLocation.id;
   }
-  return localize(`geo-${cloudLocation.location.id.toLowerCase()}`);
+  const msgId = `geo-${cloudLocation.location.id.toLowerCase()}`;
+  const localized = localize(msgId);
+  if (localized && localized !== msgId) {
+    return localized;
+  }
+  return formatGeoId(cloudLocation.location.id);
 }
 
 /**

@@ -47,6 +47,21 @@ describe('getShortName', () => {
     ).toEqual('fake-id');
   });
 
+  it('formats location when translation is missing', () => {
+    expect(
+      getShortName(
+        {
+          id: 'fake-id',
+          location: new location.GeoLocation('kuala-lumpur', 'MY'),
+        },
+        msgId => {
+          expect(msgId).toEqual('geo-kuala-lumpur');
+          return msgId;
+        }
+      )
+    ).toEqual('Kuala Lumpur');
+  });
+
   it('returns empty string when the location is null', () => {
     expect(
       getShortName(null, _msgId => {
