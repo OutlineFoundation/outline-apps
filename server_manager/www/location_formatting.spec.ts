@@ -16,6 +16,7 @@ import {
   filterOptions,
   getShortName,
   localizeCountry,
+  sortOptions,
 } from './location_formatting';
 import * as location from '../model/location';
 
@@ -175,5 +176,61 @@ describe('filterOptions', () => {
     };
     const filtered = filterOptions([unavailable, available]);
     expect(filtered).toEqual([available]);
+  });
+});
+
+describe('sortOptions', () => {
+  const localize = (msgId: string) => {
+    const map: {[msgId: string]: string} = {
+      'geo-montreal': 'Montreal',
+      'geo-salt-lake-city': 'Salt Lake City',
+      'geo-seoul': 'Seoul',
+    };
+    return map[msgId] ?? msgId;
+  };
+
+  it('sorts by availability, location, country, and city', () => {
+    const options: location.CloudLocationOption[] = [
+      {
+        cloudLocation: {id: 'unknown', location: null},
+        available: true,
+      },
+      {
+        cloudLocation: {id: 'seoul-zone', location: location.SEOUL},
+        available: false,
+      },
+      {
+        cloudLocation: {id: 'slc-zone', location: location.SALT_LAKE_CITY},
+        available: true,
+      },
+      {
+        cloudLocation: {id: 'montreal-zone', location: location.MONTREAL},
+        available: true,
+      },
+    ];
+
+    const sorted = sortOptions(options, localize, 'en');
+    expect(sorted.map(option => option.cloudLocation.id)).toEqual([
+      'montreal-zone',
+      'slc-zone',
+      'unknown',
+      'seoul-zone',
+    ]);
+  });
+
+  it('uses ID to break complete ties', () => {
+    const options = [
+      {
+        cloudLocation: {id: 'z2', location: location.SEOUL},
+        available: true,
+      },
+      {
+        cloudLocation: {id: 'z1', location: location.SEOUL},
+        available: true,
+      },
+    ];
+
+    const sorted = sortOptions(options, localize, 'en');
+    expect(sorted.map(option => option.cloudLocation.id)).toEqual(['z1', 'z2']);
   });
 });

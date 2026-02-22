@@ -25,7 +25,7 @@ import {customElement, property, state} from 'lit/decorators.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
 
 import {GcpAccount, isInFreeTier} from './gcp_account';
-import {filterOptions, getShortName} from './location_formatting';
+import {filterOptions, getShortName, sortOptions} from './location_formatting';
 import {AppRoot} from './ui_components/app-root';
 import {COMMON_STYLES} from './ui_components/cloud-install-styles';
 import {OutlineRegionPicker} from './ui_components/outline-region-picker-step';
@@ -429,10 +429,14 @@ export class GcpCreateServerApp extends LitElement {
     this.regionPicker = this.shadowRoot.querySelector(
       '#regionPicker'
     ) as OutlineRegionPicker;
-    this.regionPicker.options = filterOptions(zoneOptions).map(option => ({
-      markedBestValue: isInFreeTier(option.cloudLocation),
-      ...option,
-    }));
+    this.regionPicker.options = sortOptions(
+      filterOptions(zoneOptions).map(option => ({
+        markedBestValue: isInFreeTier(option.cloudLocation),
+        ...option,
+      })),
+      this.localize,
+      this.language
+    );
   }
 
   private onProjectIdChanged(event: CustomEvent) {

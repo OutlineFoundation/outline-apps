@@ -74,6 +74,76 @@ export function localizeCountry(
   return displayName.of(geoLocation.countryCode);
 }
 
+type SortKey = {
+  available: boolean;
+  hasKnownLocation: boolean;
+  country: string;
+  shortName: string;
+  id: string;
+};
+
+function getSortKey<T extends CloudLocationOption>(
+  option: T,
+  localize: (id: string) => string,
+  language: string
+): SortKey {
+  const geoLocation = option.cloudLocation.location;
+  let country = '';
+  if (geoLocation) {
+    try {
+      country = localizeCountry(geoLocation, language);
+    } catch (e) {
+      country = geoLocation.countryCode;
+    }
+  }
+
+  return {
+    available: option.available,
+    hasKnownLocation: !!geoLocation,
+    country,
+    shortName: getShortName(option.cloudLocation, localize),
+    id: option.cloudLocation.id,
+  };
+}
+
+/**
+ * Returns options sorted for display:
+ * - available locations first
+ * - known locations before unknown fallback IDs
+ * - then by localized country and city names
+ */
+export function sortOptions<T extends CloudLocationOption>(
+  options: readonly T[],
+  localize: (id: string) => string,
+  language: string
+): T[] {
+  const collator = new Intl.Collator([language], {
+    sensitivity: 'base',
+    numeric: true,
+  });
+
+  return [...options]
+    .map(option => ({option, key: getSortKey(option, localize, language)}))
+    .sort((a, b) => {
+      if (a.key.available !== b.key.available) {
+        return a.key.available ? -1 : 1;
+      }
+      if (a.key.hasKnownLocation !== b.key.hasKnownLocation) {
+        return a.key.hasKnownLocation ? -1 : 1;
+      }
+      const countryCmp = collator.compare(a.key.country, b.key.country);
+      if (countryCmp !== 0) {
+        return countryCmp;
+      }
+      const shortNameCmp = collator.compare(a.key.shortName, b.key.shortName);
+      if (shortNameCmp !== 0) {
+        return shortNameCmp;
+      }
+      return collator.compare(a.key.id, b.key.id);
+    })
+    .map(({option}) => option);
+}
+
 /**
  * Given an array of cloud location options, this function returns an array
  * containing one representative option for each GeoLocation.  Available
