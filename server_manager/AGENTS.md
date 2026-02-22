@@ -59,7 +59,7 @@ You can run an existing binary in debug mode by setting `OUTLINE_DEBUG=true`. Th
 To enable error reporting through [Sentry](https://sentry.io/) for local builds, run:
 
 ```bash
-export SENTRY_DSN=[Sentry DNS URL]
+export SENTRY_DSN=[Sentry DSN URL]
 npm run action server_manager/electron/start ${PLATFORM}
 ```
 
