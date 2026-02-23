@@ -98,7 +98,7 @@ function createMainWindow() {
       } else {
         console.warn(`Refusing to open URL with protocol "${parsed.protocol}"`);
       }
-    } catch (e) {
+    } catch {
       console.warn('Could not parse URL: ' + url);
     }
   };

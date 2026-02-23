@@ -43,7 +43,7 @@ export const localize: Localizer = (
     return String(
       new IntlMessageFormat(message, 'en').format(formatConfigObject)
     );
-  } catch (error) {
+  } catch {
     return message;
   }
 };

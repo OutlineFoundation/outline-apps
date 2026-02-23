@@ -143,7 +143,7 @@ export function runOauth(): OauthSession {
                 )
               );
             }
-          } catch (error) {
+          } catch {
             response.send(responseHtml('Authentication failed'));
             reject(
               new Error(

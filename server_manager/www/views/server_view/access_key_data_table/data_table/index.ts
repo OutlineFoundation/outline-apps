@@ -20,8 +20,6 @@ import {customElement, property} from 'lit/decorators.js';
 import '@material/mwc-icon';
 import '../../icon_tooltip';
 
-const INTERNAL_LIT_ENUM_HTML_RESULT = 1;
-
 /**
  * A function that compares two values of type T and returns a number indicating their relative order.
  *
@@ -105,10 +103,10 @@ export enum DataTableEvent {
  * @template T The type of data represented in the column.
  */
 export interface DataTableColumnProperties<T> {
-  displayName?: string | TemplateResult<typeof INTERNAL_LIT_ENUM_HTML_RESULT>;
+  displayName?: string | TemplateResult;
   comparator?: Comparator<T>;
   id: string;
-  render: (_value: T) => TemplateResult<typeof INTERNAL_LIT_ENUM_HTML_RESULT>;
+  render: (_value: T) => TemplateResult;
   tooltip?: string;
 }
 

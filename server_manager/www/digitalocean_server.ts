@@ -192,7 +192,7 @@ export class DigitalOceanServer
         makePathApiClient(apiAddress, certificateFingerprint)
       );
       return true;
-    } catch (e) {
+    } catch {
       // Install state not yet ready.
       return false;
     }
@@ -224,7 +224,7 @@ export class DigitalOceanServer
       const [key, hexValue] = keyValuePair.split(':', 2);
       try {
         ret.set(key.toLowerCase(), hexToString(hexValue));
-      } catch (e) {
+      } catch {
         console.error('error decoding hex string');
       }
     }

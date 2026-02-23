@@ -351,7 +351,7 @@ export class ShadowboxServer implements server.Server {
         this.serverConfig?.hostnameForAccessKeys ??
         new URL(this.api.base).hostname
       );
-    } catch (e) {
+    } catch {
       return '';
     }
   }
@@ -362,7 +362,7 @@ export class ShadowboxServer implements server.Server {
         return undefined;
       }
       return this.serverConfig.portForNewAccessKeys;
-    } catch (e) {
+    } catch {
       return undefined;
     }
   }

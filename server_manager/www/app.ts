@@ -286,7 +286,7 @@ export class App {
       let isValid = true;
       try {
         parseManualServerConfig(event.detail.userInput);
-      } catch (e) {
+      } catch {
         isValid = false;
       }
       const manualServerEntryEl = appRoot.getManualServerEntry();
@@ -1605,7 +1605,7 @@ export class App {
       await this.appRoot.setLanguage(languageCode, languageDir);
       document.documentElement.setAttribute('dir', languageDir);
       window.localStorage.setItem('overrideLanguage', languageCode);
-    } catch (error) {
+    } catch {
       this.appRoot.showError(this.appRoot.localize('error-unexpected'));
     }
   }

@@ -82,7 +82,7 @@ export class ManualServerRepository implements server.ManualServerRepository {
             return this.createServer(config);
           }
         );
-      } catch (e) {
+      } catch {
         console.error('Error creating manual servers from localStorage');
       }
     }

@@ -445,7 +445,7 @@ export class RestApiClient {
         this.GCP_HEADERS,
         parameters
       );
-    } catch (error) {
+    } catch {
       // TODO: Distinguish between 404 not found and other errors.
       return undefined;
     }

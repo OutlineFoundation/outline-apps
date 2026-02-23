@@ -366,7 +366,7 @@ export class GcpCreateServerApp extends LitElement {
   private async handleBillingVerificationNextTap(): Promise<void> {
     try {
       await this.refreshBillingAccounts();
-    } catch (e) {
+    } catch {
       this.showError(this.localize('gcp-billing-error'));
     }
     if (this.billingAccounts?.length > 0) {
