@@ -34,6 +34,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2.3.4
+        with:
+          fetch-depth: 0
 
       - name: Install Node
         uses: actions/setup-node@v3
@@ -55,7 +57,35 @@ jobs:
             **/*.cjs
             **/*.mjs
 
-      - name: Lint
+      - name: Set base and head commits
+        id: commits
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_commit="${{ github.event.pull_request.base.sha }}"
+          else
+            base_commit="${{ github.event.before }}"
+            # Handle edge cases where "before" is empty or all-zero (e.g. first push).
+            if [[ -z "$base_commit" || "$base_commit" =~ ^0+$ ]]; then
+              base_commit="$(git rev-list --max-parents=0 HEAD)"
+            fi
+          fi
+          echo "base_commit=$base_commit" >> "$GITHUB_OUTPUT"
+          echo "head_commit=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Lint changed files
         if: ${{ steps.changed-files.outputs.modified_files_count > 0 || steps.changed-files.outputs.added_file_count > 0 }}
-        run: npx gts lint ${{ steps.changed-files.outputs.modified_files }} ${{ steps.changed-files.outputs.added_files }}
+        run: |
+          npx eslint -f json -o lint-results.json \
+            ${{ steps.changed-files.outputs.modified_files }} \
+            ${{ steps.changed-files.outputs.added_files }} || true
+
+      - name: Fail on issues in changed lines
+        if: ${{ steps.changed-files.outputs.modified_files_count > 0 || steps.changed-files.outputs.added_file_count > 0 }}
+        env:
+          BASE_COMMIT: ${{ steps.commits.outputs.base_commit }}
+          HEAD_COMMIT: ${{ steps.commits.outputs.head_commit }}
+          MODIFIED_FILES: ${{ steps.changed-files.outputs.modified_files }}
+          ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
+          LINT_RESULTS_PATH: lint-results.json
+        run: node .github/scripts/fail_on_changed_line_lint.mjs
       
