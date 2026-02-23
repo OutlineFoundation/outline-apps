@@ -92,7 +92,7 @@ function getSortKey<T extends CloudLocationOption>(
   if (geoLocation) {
     try {
       country = localizeCountry(geoLocation, language);
-    } catch (e) {
+    } catch {
       country = geoLocation.countryCode;
     }
   }

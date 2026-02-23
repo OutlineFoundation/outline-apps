@@ -77,9 +77,7 @@ describe('Zone', () => {
   });
 
   it('maps asia-southeast3 to Kuala Lumpur', () => {
-    expect(new Zone('asia-southeast3-b').location).toBe(
-      location.KUALA_LUMPUR
-    );
+    expect(new Zone('asia-southeast3-b').location).toBe(location.KUALA_LUMPUR);
   });
 
   it('maps europe-west10 to Berlin', () => {
@@ -91,9 +89,7 @@ describe('Zone', () => {
   });
 
   it('maps northamerica-south1 to Queretaro', () => {
-    expect(new Zone('northamerica-south1-a').location).toBe(
-      location.QUERETARO
-    );
+    expect(new Zone('northamerica-south1-a').location).toBe(location.QUERETARO);
   });
 
   it('maps us-east5 to Columbus', () => {
