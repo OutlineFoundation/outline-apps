@@ -34,13 +34,26 @@ module.exports = {
         'manager',
         'manager/linux',
         'manager/macos',
-        'manager/windows'
+        'manager/windows',
       ],
     ],
     'type-enum': [
       2,
       'always',
-      ['build', 'chore', 'ci', 'docs', 'feat', 'fix', 'perf', 'proposal', 'refactor', 'revert', 'style', 'test'],
+      [
+        'build',
+        'chore',
+        'ci',
+        'docs',
+        'feat',
+        'fix',
+        'perf',
+        'proposal',
+        'refactor',
+        'revert',
+        'style',
+        'test',
+      ],
     ],
   },
 };

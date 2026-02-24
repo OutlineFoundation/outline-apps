@@ -57,10 +57,7 @@ const UNSUPPORTED_ISSUE_TYPE_HELPPAGES = new Map([
     IssueType.CANNOT_ADD_SERVER,
     'https://support.google.com/outline/answer/15331223',
   ],
-  [
-    IssueType.CONNECTION,
-    'https://support.google.com/outline/answer/15331126',
-  ],
+  [IssueType.CONNECTION, 'https://support.google.com/outline/answer/15331126'],
 ]);
 
 @customElement('outline-contact-us-dialog')

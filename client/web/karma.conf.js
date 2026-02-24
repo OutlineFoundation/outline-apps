@@ -14,7 +14,7 @@
 
 const path = require('path');
 
-module.exports = async function(config) {
+module.exports = async function (config) {
   const testConfig = await import('./webpack_test.mjs');
 
   config.set({

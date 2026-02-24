@@ -17,7 +17,11 @@ type FailureCallback = (error: Error) => void;
 
 interface CordovaPlugins {
   clipboard: {
-    copy(text: string, onSuccess: SuccessCallback, onFailure: FailureCallback): void;
+    copy(
+      text: string,
+      onSuccess: SuccessCallback,
+      onFailure: FailureCallback
+    ): void;
     paste(onSuccess: SuccessCallback, onFailure: FailureCallback): void;
   };
 }

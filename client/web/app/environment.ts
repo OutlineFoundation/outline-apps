@@ -20,17 +20,19 @@ export interface EnvironmentVariables {
 
 // According to http://caniuse.com/#feat=fetch fetch didn't land iOS Safari
 // until v10.3 released 3/26/17, so use XMLHttpRequest instead.
-export const onceEnvVars: Promise<EnvironmentVariables> = new Promise((resolve, reject) => {
-  const xhr = new XMLHttpRequest();
-  xhr.onload = () => {
-    try {
-      const json = JSON.parse(xhr.responseText);
-      console.debug('Resolving with envVars:', json);
-      resolve(json as EnvironmentVariables);
-    } catch (err) {
-      reject(err);
-    }
-  };
-  xhr.open('GET', 'environment.json', true);
-  xhr.send();
-});
+export const onceEnvVars: Promise<EnvironmentVariables> = new Promise(
+  (resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      try {
+        const json = JSON.parse(xhr.responseText);
+        console.debug('Resolving with envVars:', json);
+        resolve(json as EnvironmentVariables);
+      } catch (err) {
+        reject(err);
+      }
+    };
+    xhr.open('GET', 'environment.json', true);
+    xhr.send();
+  }
+);
