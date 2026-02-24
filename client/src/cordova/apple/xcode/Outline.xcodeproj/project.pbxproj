@@ -491,11 +491,6 @@
 				TargetAttributes = {
 					1D6058900D05DD3D006BFB54 = {
 						LastSwiftMigration = 1130;
-						SystemCapabilities = {
-							com.apple.ApplicationGroups.iOS = {
-								enabled = 1;
-							};
-						};
 					};
 					A246B7DC2B07AACF00ECACD5 = {
 						CreatedOnToolsVersion = 15.0.1;
