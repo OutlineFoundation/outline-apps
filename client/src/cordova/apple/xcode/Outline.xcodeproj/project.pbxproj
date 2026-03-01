@@ -805,7 +805,8 @@
 				CODE_SIGN_ENTITLEMENTS = Outline/Outline.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
-				DEVELOPMENT_TEAM = QT8Z3Q9V3A;
+				DEVELOPMENT_TEAM = WP4DKSWWZM;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = QT8Z3Q9V3A;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"Outline/Plugins/cordova-plugin-outline",
@@ -854,7 +855,8 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = YES;
-				DEVELOPMENT_TEAM = QT8Z3Q9V3A;
+				DEVELOPMENT_TEAM = WP4DKSWWZM;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = QT8Z3Q9V3A;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"Outline/Plugins/cordova-plugin-outline",

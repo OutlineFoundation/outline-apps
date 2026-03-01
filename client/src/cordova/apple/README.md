@@ -45,6 +45,15 @@ Apple is quite particular when it comes to making sure your app is properly sign
 
 ### External Contributors
 
+For **release builds via the command line**, set the `DEVELOPMENT_TEAM` environment variable to override the default team ID without editing any project files:
+
+```sh
+DEVELOPMENT_TEAM=<your_team_id> npm run action client/src/cordova/build ios -- --buildMode=release
+DEVELOPMENT_TEAM=<your_team_id> npm run action client/src/cordova/build macos -- --buildMode=release
+```
+
+For **development in Xcode**:
+
 1. Select the "Team" for your own account.
 1. Change the bundle identifier (e.g. `org.outline.ios.client`) to something unique.
 1. Remove the app group `group.org.getoutline.client`.

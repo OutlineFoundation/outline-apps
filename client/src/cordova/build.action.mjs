@@ -147,13 +147,18 @@ async function appleDebug(platform) {
 }
 
 async function appleRelease(platform) {
+  const teamIdArgs = process.env.DEVELOPMENT_TEAM
+    ? [`DEVELOPMENT_TEAM=${process.env.DEVELOPMENT_TEAM}`]
+    : [];
+
   return spawnStream(
     'xcodebuild',
     'clean',
     ...getXcodeBuildArgs(platform),
     'archive',
     '-configuration',
-    'Release'
+    'Release',
+    ...teamIdArgs
   );
 }
 

@@ -329,7 +329,8 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QT8Z3Q9V3A;
+				DEVELOPMENT_TEAM = WP4DKSWWZM;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = QT8Z3Q9V3A;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.getoutline.client.VpnExtensionTest;
@@ -348,7 +349,8 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QT8Z3Q9V3A;
+				DEVELOPMENT_TEAM = WP4DKSWWZM;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = QT8Z3Q9V3A;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.getoutline.client.VpnExtensionTest;
@@ -495,7 +497,8 @@
 				CODE_SIGN_ENTITLEMENTS = VpnExtension/VpnExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QT8Z3Q9V3A;
+				DEVELOPMENT_TEAM = WP4DKSWWZM;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = QT8Z3Q9V3A;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = VpnExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = VpnExtension;
@@ -532,7 +535,8 @@
 				CODE_SIGN_ENTITLEMENTS = VpnExtension/VpnExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QT8Z3Q9V3A;
+				DEVELOPMENT_TEAM = WP4DKSWWZM;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = QT8Z3Q9V3A;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = VpnExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = VpnExtension;
