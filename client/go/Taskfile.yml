@@ -38,7 +38,7 @@ tasks:
       - rm -rf "{{dir .OUTPUT}}" && mkdir -p "{{dir .OUTPUT}}"
       # C cross-compile (zig) targets:
       #   Linux (x64)   = x86_64-linux-gnu.2.27 (`x86_64-linux` defaults to `x86_64-linux-musl`, prefer `gnu` over `musl`)
-      #   Windows (x86) = x86-windows
+      #   Windows (x86) = x86-windows-gnu
       # Cross-compilation must always be enabled regardless of the native OS because:
       #   Windows: requires 32-bit
       #   Linux: requires older glibc for wider compatibility
@@ -65,7 +65,7 @@ tasks:
       CC_ARCH: '{{get (dict "amd64" "x86_64" "arm64" "aarch64" "386" "x86" ) .TARGET_ARCH | default .TARGET_ARCH}}'
     # 32bit Windows 10 still exists until October 14, 2025
     cmds:
-      - {task: electron, vars: {TARGET_OS: "windows", TARGET_ARCH: "{{.TARGET_ARCH}}", ZIG_TARGET: "{{.CC_ARCH}}-windows"}}
+      - {task: electron, vars: {TARGET_OS: "windows", TARGET_ARCH: "{{.TARGET_ARCH}}", ZIG_TARGET: "{{.CC_ARCH}}-windows-gnu"}}
 
   linux:
      deps: [linux:amd64]
