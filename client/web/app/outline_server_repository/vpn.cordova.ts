@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {StartRequestJson, VpnApi, TunnelStatus} from './vpn';
 import * as errors from '../../model/errors';
-import {OUTLINE_PLUGIN_NAME, pluginExec} from '../plugin.cordova';
+import {pluginExec, pluginRegisterListener} from '../plugin.cordova';
+import {StartRequestJson, TunnelStatus, VpnApi} from './vpn';
+
+type VpnStatusPayload = {id: string; status: TunnelStatus};
 
 export class CordovaVpnApi implements VpnApi {
   constructor() {}
@@ -44,10 +46,14 @@ export class CordovaVpnApi implements VpnApi {
     const onError = (err: unknown) => {
       console.warn('failed to execute status change listener', err);
     };
-    const callback = (data: {id: string; status: TunnelStatus}) => {
+    const callback = (data: VpnStatusPayload) => {
       listener(data.id, data.status);
     };
     console.debug('CordovaVpnApi: registering onStatusChange callback');
-    cordova.exec(callback, onError, OUTLINE_PLUGIN_NAME, 'onStatusChange', []);
+    pluginRegisterListener<VpnStatusPayload>(
+      'onStatusChange',
+      callback,
+      onError
+    );
   }
 }
