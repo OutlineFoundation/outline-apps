@@ -122,7 +122,7 @@
     "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.3.1",
     "url": "^0.11.0",
-    "webpack": "^5.16.0",
+    "webpack": "^5.104.1",
     "webpack-cli": "^4.4.0",
     "webpack-dev-server": "^4.5.0",
     "webpack-merge": "^5.8.0",
