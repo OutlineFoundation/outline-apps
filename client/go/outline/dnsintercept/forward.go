@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net"
 	"net/netip"
+	"sync"
 
 	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
@@ -49,9 +50,15 @@ type forwardPacketReqSender struct {
 	fpp *forwardPacketProxy
 }
 
+// forwardPacketRespReceiver intercepts incoming packets from the remote DNS resolver.
+// It remaps the source address from the remote resolver back to the local DNS address,
+// and closes the underlying session after delivering the first DNS response to free the
+// transport session immediately rather than waiting for the idle timeout.
 type forwardPacketRespReceiver struct {
 	network.PacketResponseReceiver
-	fpp *forwardPacketProxy
+	fpp    *forwardPacketProxy
+	once   sync.Once
+	sender network.PacketRequestSender
 }
 
 var _ network.PacketProxy = (*forwardPacketProxy)(nil)
@@ -71,10 +78,14 @@ func WrapForwardPacketProxy(base network.PacketProxy, localAddr, resolverAddr ne
 
 // NewSession implements PacketProxy.NewSession.
 func (fpp *forwardPacketProxy) NewSession(resp network.PacketResponseReceiver) (_ network.PacketRequestSender, err error) {
-	base, err := fpp.base.NewSession(&forwardPacketRespReceiver{resp, fpp})
+	wrapper := &forwardPacketRespReceiver{PacketResponseReceiver: resp, fpp: fpp}
+	base, err := fpp.base.NewSession(wrapper)
 	if err != nil {
 		return nil, err
 	}
+	// Safe to set after NewSession: the reader goroutine can only fire WriteFrom
+	// after a packet is sent, which requires the caller to have the sender first.
+	wrapper.sender = base
 	return &forwardPacketReqSender{base, fpp}, nil
 }
 
@@ -87,11 +98,18 @@ func (req *forwardPacketReqSender) WriteTo(p []byte, destination netip.AddrPort)
 	return req.PacketRequestSender.WriteTo(p, destination)
 }
 
-// ReadFrom intercepts incoming DNS response packets.
-// If a packet is received from the remote resolver, it remaps the source address to be the local resolver.
+// WriteFrom intercepts incoming DNS response packets.
+// If a packet is received from the remote resolver, it remaps the source address to the local
+// resolver and then closes the underlying session.  DNS is one-shot (one query, one response),
+// so closing immediately frees the transport session rather than holding it open until the 30-second
+// write-idle timeout, preventing resource exhaustion under sustained DNS load.
 func (resp *forwardPacketRespReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
 	if addr, ok := source.(*net.UDPAddr); ok && isEquivalentAddrPort(addr.AddrPort(), resp.fpp.resolv) {
 		source = net.UDPAddrFromAddrPort(resp.fpp.local)
+		n, err := resp.PacketResponseReceiver.WriteFrom(p, source)
+		resp.once.Do(func() { resp.sender.Close() })
+		return n, err
 	}
 	return resp.PacketResponseReceiver.WriteFrom(p, source)
 }
+
