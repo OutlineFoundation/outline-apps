@@ -57,7 +57,8 @@ type forwardPacketReqSender struct {
 type forwardPacketRespReceiver struct {
 	network.PacketResponseReceiver
 	fpp    *forwardPacketProxy
-	once   sync.Once                  // ensures the session is closed at most once
+	once   sync.Once                   // ensures the session is closed at most once
+	mu     sync.Mutex                  // protects sender
 	sender network.PacketRequestSender // the request sender to close after first DNS response
 }
 
@@ -83,9 +84,9 @@ func (fpp *forwardPacketProxy) NewSession(resp network.PacketResponseReceiver) (
 	if err != nil {
 		return nil, err
 	}
-	// Safe to set after NewSession: the reader goroutine can only fire WriteFrom
-	// after a packet is sent, which requires the caller to have the sender first.
+	wrapper.mu.Lock()
 	wrapper.sender = base
+	wrapper.mu.Unlock()
 	return &forwardPacketReqSender{base, fpp}, nil
 }
 
@@ -107,7 +108,14 @@ func (resp *forwardPacketRespReceiver) WriteFrom(p []byte, source net.Addr) (int
 	if addr, ok := source.(*net.UDPAddr); ok && isEquivalentAddrPort(addr.AddrPort(), resp.fpp.resolv) {
 		source = net.UDPAddrFromAddrPort(resp.fpp.local)
 		n, err := resp.PacketResponseReceiver.WriteFrom(p, source)
-		resp.once.Do(func() { resp.sender.Close() })
+		resp.once.Do(func() {
+			resp.mu.Lock()
+			s := resp.sender
+			resp.mu.Unlock()
+			if s != nil {
+				s.Close()
+			}
+		})
 		return n, err
 	}
 	return resp.PacketResponseReceiver.WriteFrom(p, source)

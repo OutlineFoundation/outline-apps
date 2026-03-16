@@ -110,6 +110,5 @@ func (req *truncatePacketReqSender) Close() (err error) {
 	if req.base != nil {
 		err = req.base.Close()
 	}
-	req.trunc.Close()
-	return
+	return errors.Join(err, req.trunc.Close())
 }
