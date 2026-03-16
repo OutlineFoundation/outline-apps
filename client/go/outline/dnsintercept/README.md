@@ -114,20 +114,15 @@ The two modes are wired together by the caller (`config.wrapTransportPairWithOut
 ```mermaid
 flowchart LR
     OS["OS (UDP traffic)"] --> ppMain
-
-    subgraph ppMain ["DelegatePacketProxy (ppMain)"]
-        direction TB
-        state{{"current mode"}}
-    end
-
-    ppMain -->|UDP available| ppForward["forwardPacketProxy\n(DNS → resolver via transport)"]
-    ppMain -->|UDP blocked| ppTrunc["truncatePacketProxy\n(DNS → TC response locally)"]
-
-    ppForward --> ppBase["base PacketProxy\n(transport)"]
-    ppTrunc --> ppBase
-
-    check["UDP connectivity check\n(on network change)"] -->|pass| ppMain
+    check["UDP connectivity check<br/>(on network change)"] -->|pass| ppMain
     check -->|fail| ppMain
+
+    ppMain{{"DelegatePacketProxy<br/>(ppMain)"}}
+    ppMain -->|UDP available| ppForward["forwardPacketProxy<br/>(DNS → resolver via transport)"]
+    ppMain -->|UDP blocked| ppTrunc["truncatePacketProxy<br/>(DNS → TC response locally)"]
+
+    ppForward --> ppBase["base PacketProxy<br/>(transport)"]
+    ppTrunc --> ppBase
 ```
 
 ## Package contents
