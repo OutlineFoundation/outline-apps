@@ -57,8 +57,8 @@ type forwardPacketReqSender struct {
 type forwardPacketRespReceiver struct {
 	network.PacketResponseReceiver
 	fpp    *forwardPacketProxy
-	once   sync.Once
-	sender network.PacketRequestSender
+	once   sync.Once                  // ensures the session is closed at most once
+	sender network.PacketRequestSender // the request sender to close after first DNS response
 }
 
 var _ network.PacketProxy = (*forwardPacketProxy)(nil)

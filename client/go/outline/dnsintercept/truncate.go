@@ -37,11 +37,11 @@ type truncatePacketProxy struct {
 // avoiding a wasted transport session for DNS-only flows.
 type truncatePacketReqSender struct {
 	mu        sync.Mutex
-	base      network.PacketRequestSender // nil until first non-DNS packet
-	baseProxy network.PacketProxy
-	resp      network.PacketResponseReceiver
-	trunc     network.PacketRequestSender
-	local     netip.AddrPort
+	base      network.PacketRequestSender  // nil until first non-DNS packet; guarded by mu
+	baseProxy network.PacketProxy          // used to lazily create base
+	resp      network.PacketResponseReceiver // passed to base when it is created
+	trunc     network.PacketRequestSender  // handles DNS packets locally without a transport session
+	local     netip.AddrPort               // the DNS address to intercept
 }
 
 // WrapTruncatePacketProxy creates a PacketProxy to intercept UDP-based DNS packets and force a TCP retry.
