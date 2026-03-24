@@ -217,11 +217,6 @@ export class RootNavigation extends LitElement {
             <md-icon slot="start">home</md-icon>
             ${this.localize('servers-menu-item')}
           </md-list-item>
-          <md-list-item @click=${() => this.changePage('contact')}>
-            <md-ripple></md-ripple>
-            <md-icon slot="start">feedback</md-icon>
-            ${this.localize('contact-page-title')}
-          </md-list-item>
           <md-list-item @click=${() => this.changePage('about')}>
             <md-ripple></md-ripple>
             <md-icon slot="start">info</md-icon>

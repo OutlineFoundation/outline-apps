@@ -43,8 +43,6 @@ import '@polymer/paper-toast/paper-toast.js';
 // eslint-disable-next-line n/no-missing-import
 import '../views/about_view';
 // eslint-disable-next-line n/no-missing-import
-import '../views/contact_view';
-// eslint-disable-next-line n/no-missing-import
 import '../views/language_view';
 // eslint-disable-next-line n/no-missing-import
 import '../views/licenses_view';
@@ -88,10 +86,6 @@ export class AppRoot extends mixinBehaviors(
           --app-toolbar-gutter: 0.5rem;
           --app-toolbar-button-gutter: 0.75rem;
           --app-header-height: 3.5rem;
-          --contact-view-gutter: calc(
-            var(--app-toolbar-gutter) + var(--app-toolbar-button-gutter)
-          );
-          --contact-view-max-width: 400px;
           --light-green: #2fbea5;
           --medium-green: #009688;
           --dark-green: #263238;
@@ -326,15 +320,6 @@ export class AppRoot extends mixinBehaviors(
             should-show-access-key-wiki-link="[[useAltAccessMessage]]"
             on-add-server="promptAddServer"
           ></servers-view>
-          <contact-view
-            name="contact"
-            id="contactView"
-            localize="[[localize]]"
-            language-code="[[_computeSupportSiteLanguageCode(LANGUAGES_AVAILABLE, language)]]"
-            error-reporter="[[errorReporter]]"
-            on-success="showContactSuccessToast"
-            on-error="showContactErrorToast"
-          ></contact-view>
           <about-view
             name="about"
             id="aboutView"
@@ -725,16 +710,6 @@ export class AppRoot extends mixinBehaviors(
     this.set('route.path', '/' + page);
 
     this.$.drawer.open = false;
-    this.$.contactView.reset();
-  }
-
-  showContactSuccessToast() {
-    this.changePage(this.DEFAULT_PAGE);
-    this.showToast(this.localize('feedback-thanks'));
-  }
-
-  showContactErrorToast() {
-    this.showToast(this.localize('error-feedback-submission'));
   }
 
   showErrorDetails(errorDetails) {
@@ -811,10 +786,6 @@ export class AppRoot extends mixinBehaviors(
   }
 
   _goBack() {
-    if (this.page === 'contact') {
-      this.$.contactView.reset();
-    }
-
     // If there is a navigation on the webview's history stack, pop it off to go back.
     if (globalThis.history.length > 1) {
       globalThis.history.back();

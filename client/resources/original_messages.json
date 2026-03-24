@@ -124,96 +124,6 @@
     "description": "The text for a checkbox to allow Outline to connect with limited protection.",
     "message": "Allow Outline to connect me to the internet with limited protection"
   },
-  "contact_page_title": {
-    "description": "The menu item text and title of a page for a user to contact the support team.",
-    "message": "Contact us"
-  },
-  "contact_view_exit_billing": {
-    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
-    "message": "The Outline team does not collect payment. Please contact the person who gave you the access key to address this issue."
-  },
-  "contact_view_exit_cannot_add_server": {
-    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
-    "message": "The Outline team is not able to assist with adding a server. Please try the troubleshooting steps listed $START_OF_LINK$here$END_OF_LINK$ and then contact the person who gave you the access key to troubleshoot this issue.",
-    "placeholders": {
-      "END_OF_LINK": {
-        "content": "{closeLink}"
-      },
-      "START_OF_LINK": {
-        "content": "{openLink}"
-      }
-    }
-  },
-  "contact_view_exit_connection": {
-    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
-    "meaning": "MsgID-20240319-UpdateWhenPlaceHolderChanged",
-    "message": "The Outline team is not able to assist with connecting to a server. Please try the troubleshooting steps listed $START_OF_LINK$here$END_OF_LINK$ and then contact the person who gave you the access key to troubleshoot this issue.",
-    "placeholders": {
-      "END_OF_LINK": {
-        "content": "{closeLink}"
-      },
-      "START_OF_LINK": {
-        "content": "{openLink}"
-      }
-    }
-  },
-  "contact_view_exit_no_server": {
-    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
-    "meaning": "MsgID-20240319-UpdateWhenPlaceHolderChanged",
-    "message": "The Outline team does not distribute free or paid access keys. $START_OF_LINK$Learn more about how to get an access key.$END_OF_LINK$",
-    "placeholders": {
-      "END_OF_LINK": {
-        "content": "{closeLink}"
-      },
-      "START_OF_LINK": {
-        "content": "{openLink}"
-      }
-    }
-  },
-  "contact_view_exit_open_ticket": {
-    "description": "Message shown to users who are trying to contact support again while having a pending support ticket open.",
-    "message": "We are currently experiencing high support volume and appreciate your patience. Please do not submit a new request for this concern. If you have additional information to provide, please reply to the initial email about this request."
-  },
-  "contact_view_intro": {
-    "description": "Introduction message to users who are looking to contact support.",
-    "message": "Tell us how we can help. Please explain your issue in detail and do not enter personal information that is not requested below."
-  },
-  "contact_view_issue": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Outline issue"
-  },
-  "contact_view_issue_billing": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I need assistance with a billing or subscription issue"
-  },
-  "contact_view_issue_cannot_add_server": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I am having trouble adding a server using my access key"
-  },
-  "contact_view_issue_connection": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I am having trouble connecting to my Outline VPN server"
-  },
-  "contact_view_issue_general": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "General feedback & suggestions"
-  },
-  "contact_view_issue_managing": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I need assistance managing my Outline VPN server or helping others connect to it"
-  },
-  "contact_view_issue_no_server": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I need an access key"
-  },
-  "contact_view_issue_performance": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "My internet access is slow while connected to my Outline VPN server"
-  },
-  "contact_view_open_ticket": {
-    "description": "Label for a Contact Support form asking if the user already has a pending ticket open with support.",
-    "message": "Do you have an open ticket for this issue?"
-  },
   "data_collection": {
     "description": "The text for a main menu item that takes the user to a webpage explaining the application's data collection policies.",
     "message": "Data collection"
@@ -249,10 +159,6 @@
   "dns_select_title": {
     "description": "The title for the DNS server selection dialog.",
     "message": "Select DNS Server"
-  },
-  "email_feedback_input": {
-    "description": "The hint text for a textbox for the user's email address when sending feedback. The email address is not a required field in the form.",
-    "message": "Email address (optional)"
   },
   "enable": {
     "description": "The text on a button to enable a feature.",
@@ -290,10 +196,6 @@
     "description": "The title of the dialog box that shows the details of an error.",
     "message": "Error Details"
   },
-  "error_feedback_submission": {
-    "description": "An error message shown when the user is trying to send feedback to the application developers but it is failing.",
-    "message": "Sorry, we were unable to submit your feedback. Please check that you are connected to the internet and try again."
-  },
   "error_invalid_access_key": {
     "description": "An error message that indicates the access key provided is not correct.",
     "message": "Invalid access key. Please try again, or submit feedback for help."
@@ -329,10 +231,6 @@
   "error_unexpected": {
     "description": "An error message shown when the cause is not really known.",
     "message": "Sorry, an unexpected error occurred. Quitting and restarting may help. If this happens again, please submit feedback."
-  },
-  "feedback_thanks": {
-    "description": "A message saying thank you after submitting user feedback.",
-    "message": "Thanks for helping us improve! We love hearing from you."
   },
   "fix_this": {
     "description": "A text button in a toast that appears when the application fails to connect due to an antivirus; links to a support article.",
@@ -702,34 +600,6 @@
   "submitting": {
     "description": "Status text showing that a form is progress of being submitted.",
     "message": "Submitting..."
-  },
-  "support_form_access_key_source": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Where did you get your access key?"
-  },
-  "support_form_description": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Description of the issue"
-  },
-  "support_form_email": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Email"
-  },
-  "support_form_email_invalid": {
-    "description": "Error message shown to a user supplying an invalid email address on the Contact Support form.",
-    "message": "You have entered an invalid format."
-  },
-  "support_form_outreach_consent": {
-    "description": "Label for a consent checkbox that opts users in to being contacted in the future.",
-    "message": "Yes, I'd like to sign up to be contacted about collaboration opportunities."
-  },
-  "support_form_required_field": {
-    "description": "Text on a Contact Support form indicating that a field is required.",
-    "message": "Required field"
-  },
-  "support_form_subject": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Subject"
   },
   "terms": {
     "description": "The text for a main menu item that takes the user to the applications Terms of Service.",

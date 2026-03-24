@@ -18,7 +18,7 @@ import type {LanguageView} from './index';
 
 export default {
   title: 'Client/Language View',
-  component: 'contact-view',
+  component: 'language-view',
   args: {
     selectedLanguageId: 'en',
     languages: [

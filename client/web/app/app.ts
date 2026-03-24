@@ -291,11 +291,6 @@ export class App {
         'https://s3.amazonaws.com/outline-vpn/index.html#/en/support/antivirusBlock';
     } else if (error instanceof errors.ConfigureSystemProxyFailure) {
       toastMessage = this.localize('outline-plugin-error-routing-tables');
-      buttonMessage = this.localize('contact-page-title');
-      buttonHandler = () => {
-        // TODO: Drop-down has no selected item, why not?
-        this.rootEl.changePage('contact');
-      };
     } else if (error instanceof errors.NoAdminPermissions) {
       toastMessage = this.localize('outline-plugin-error-admin-permissions');
     } else if (error instanceof errors.UnsupportedRoutingTable) {

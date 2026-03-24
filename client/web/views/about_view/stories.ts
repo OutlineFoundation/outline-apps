@@ -19,7 +19,7 @@ import {localize} from '../../testing/localize';
 
 export default {
   title: 'Client/About View',
-  component: 'contact-view',
+  component: 'about-view',
   args: {
     build: 123456,
     version: '0.0.0-dev',
