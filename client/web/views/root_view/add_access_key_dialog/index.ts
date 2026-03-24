@@ -134,7 +134,7 @@ export class AddAccessKeyDialog extends LitElement {
           .innerHTML=${this.localize(
             'add-access-key-dialog-help-text',
             'openLink',
-            '<a href=https://s3.amazonaws.com/outline-vpn/index.html>',
+            '<a href=https://getoutline.org/get-started/#step-1>',
             'closeLink',
             '</a>'
           )}

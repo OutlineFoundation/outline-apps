@@ -260,7 +260,7 @@ export class RootNavigation extends LitElement {
         <ul>
           <li>
             <a
-              href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Privacy-Policy.html"
+              href="https://getoutline.org/policies/privacy"
             >
               ${this.localize('privacy')}
               <md-icon id="open-in-new-icon">open_in_new</md-icon>
@@ -274,7 +274,7 @@ export class RootNavigation extends LitElement {
           </li>
           <li>
             <a
-              href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Terms-of-Service.html"
+              href="https://getoutline.org/policies/terms-of-service"
             >
               ${this.localize('terms')}
               <md-icon id="open-in-new-icon">open_in_new</md-icon>

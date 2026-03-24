@@ -447,7 +447,7 @@ export class ServerView extends DirMixin(PolymerElement) {
               >
               <a
                 class="privacy-statement-link"
-                href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
+                href="https://getoutline.org/policies/data-collection"
                 >[[localize('server-view-privacy-statement-link')]]</a
               >
             </p>
@@ -499,12 +499,12 @@ export class ServerView extends DirMixin(PolymerElement) {
               >
               <a
                 class="privacy-statement-link"
-                href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
+                href="https://getoutline.org/policies/data-collection"
                 >[[localize('server-view-privacy-statement-link')]]</a
               >
             </p>
 
-              <a class="advanced-metrics-link" href="https://developers.google.com/outline/docs/guides/service-providers/metrics">
+              <a class="advanced-metrics-link" href="https://developer.getoutline.org/vpn/management/metrics">
                 <span class="advanced-metrics-link-text"
                   >[[localize('server-view-server-metrics-advanced-metrics-link')]]</span
                 >

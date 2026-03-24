@@ -153,7 +153,7 @@ Polymer({
           on-value-changed="userFeedbackValueChanged"
         ></paper-textarea>
         <p
-          inner-h-t-m-l="[[localize('feedback-privacy', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html>', 'closeLink', '</a>')]]"
+          inner-h-t-m-l="[[localize('feedback-privacy', 'openLink', '<a href=https://getoutline.org/policies/data-collection>', 'closeLink', '</a>')]]"
         ></p>
       </div>
       <!-- end of #feedbackWrapper -->

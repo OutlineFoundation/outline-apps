@@ -54,7 +54,7 @@ Polymer({
     </div>
     <div id="tos">
       <span
-        inner-h-t-m-l="[[localize('terms-of-service', 'openLink', '<a href=https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Terms-of-Service.html>', 'closeLink', '</a>')]]"
+        inner-h-t-m-l="[[localize('terms-of-service', 'openLink', '<a href=https://getoutline.org/policies/terms-of-service>', 'closeLink', '</a>')]]"
       ></span>
       <paper-button on-tap="acceptTermsOfService"
         >[[localize('okay')]]</paper-button
