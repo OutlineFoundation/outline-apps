@@ -27,83 +27,87 @@ export async function pluginExec<T>(
     );
   }
 
-  return new Promise<T>(async (resolve, reject) => {
+  return new Promise<T>((resolve, reject) => {
     const wrappedReject = (e: unknown) => reject(deserializeError(e));
-
-    try {
-      switch (cmd) {
-        case 'invokeMethod': {
-          const [methodName, input] = args as [string, string];
-          const result = await CapacitorPluginOutline.invokeMethod({
-            method: methodName,
-            input: input || '',
-          });
-          resolve(result.value as T);
-          break;
+    const exec = async () => {
+      try {
+        switch (cmd) {
+          case 'invokeMethod': {
+            const [methodName, input] = args as [string, string];
+            const result = await CapacitorPluginOutline.invokeMethod({
+              method: methodName,
+              input: input || '',
+            });
+            resolve(result.value as T);
+            break;
+          }
+          case 'initializeErrorReporting': {
+            const [apiKey] = args as [string];
+            await CapacitorPluginOutline.initializeErrorReporting({
+              apiKey: apiKey || '',
+            });
+            resolve(undefined as T);
+            break;
+          }
+          case 'reportEvents': {
+            const [uuid] = args as [string];
+            await CapacitorPluginOutline.reportEvents({
+              uuid: uuid || '',
+            });
+            resolve(undefined as T);
+            break;
+          }
+          case 'quitApplication': {
+            await CapacitorPluginOutline.quitApplication();
+            resolve(undefined as T);
+            break;
+          }
+          case 'start': {
+            const [tunnelId, serverName, transportConfig] = args as [
+              string,
+              string,
+              string,
+            ];
+            await CapacitorPluginOutline.start({
+              tunnelId,
+              serverName,
+              transportConfig,
+            });
+            resolve(undefined as T);
+            break;
+          }
+          case 'stop': {
+            const [tunnelId] = args as [string];
+            await CapacitorPluginOutline.stop({
+              tunnelId,
+            });
+            resolve(undefined as T);
+            break;
+          }
+          case 'isRunning': {
+            const [tunnelId] = args as [string];
+            const result = await CapacitorPluginOutline.isRunning({
+              tunnelId,
+            });
+            resolve(result.isRunning as T);
+            break;
+          }
+          default: {
+            // For unknown commands, use invokeMethod to pass through
+            const input = args.length > 0 ? JSON.stringify(args) : '';
+            const result = await CapacitorPluginOutline.invokeMethod({
+              method: cmd,
+              input: input,
+            });
+            resolve(result.value as T);
+          }
         }
-        case 'initializeErrorReporting': {
-          const [apiKey] = args as [string];
-          await CapacitorPluginOutline.initializeErrorReporting({
-            apiKey: apiKey || '',
-          });
-          resolve(undefined as T);
-          break;
-        }
-        case 'reportEvents': {
-          const [uuid] = args as [string];
-          await CapacitorPluginOutline.reportEvents({
-            uuid: uuid || '',
-          });
-          resolve(undefined as T);
-          break;
-        }
-        case 'quitApplication': {
-          await CapacitorPluginOutline.quitApplication();
-          resolve(undefined as T);
-          break;
-        }
-        case 'start': {
-          const [tunnelId, serverName, transportConfig] = args as [
-            string,
-            string,
-            string,
-          ];
-          await CapacitorPluginOutline.start({
-            tunnelId,
-            serverName,
-            transportConfig,
-          });
-          resolve(undefined as T);
-          break;
-        }
-        case 'stop': {
-          const [tunnelId] = args as [string];
-          await CapacitorPluginOutline.stop({
-            tunnelId,
-          });
-          resolve(undefined as T);
-          break;
-        }
-        case 'isRunning': {
-          const [tunnelId] = args as [string];
-          const result = await CapacitorPluginOutline.isRunning({
-            tunnelId,
-          });
-          resolve(result.isRunning as T);
-          break;
-        }
-        default:
-          // For unknown commands, use invokeMethod to pass through
-          const input = args.length > 0 ? JSON.stringify(args) : '';
-          const result = await CapacitorPluginOutline.invokeMethod({
-            method: cmd,
-            input: input,
-          });
-          resolve(result.value as T);
+      } catch (e) {
+        wrappedReject(e);
       }
-    } catch (e) {
-      wrappedReject(e);
-    }
+    };
+
+    void exec();
   });
 }
 

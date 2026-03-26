@@ -58,7 +58,7 @@ if (typeof HTMLSlotElement !== 'undefined') {
     if (!options) {
       try {
         result = originalAssignedNodes.call(this);
-      } catch (e) {
+      } catch {
         result = Array.from(this.childNodes);
       }
     } else if (
@@ -68,7 +68,7 @@ if (typeof HTMLSlotElement !== 'undefined') {
     ) {
       try {
         result = originalAssignedNodes.call(this, {flatten: options.flatten});
-      } catch (e) {
+      } catch {
         result = Array.from(this.childNodes);
       }
     } else {

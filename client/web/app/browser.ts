@@ -59,7 +59,7 @@ export class CapacitorInAppBrowser implements Browser {
 
         await this.openInBrowser(url);
       }
-    } catch (e) {
+    } catch {
       console.debug('[Capacitor] Invalid URL for in-app browser:', href);
     }
   }

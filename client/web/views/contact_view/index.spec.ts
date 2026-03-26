@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import type { MdFilledSelect } from '@material/web/all.js';
+import type {MdFilledSelect} from '@material/web/all.js';
 
-import { fixture, html, nextFrame, oneEvent } from '@open-wc/testing';
+import {fixture, html, nextFrame, oneEvent} from '@open-wc/testing';
 
-import { ContactView } from './index';
-import { SupportForm } from './support_form';
+import {ContactView} from './index';
+import {SupportForm} from './support_form';
 import {
   OutlineErrorReporter,
   SentryErrorReporter,
 } from '../../shared/error_reporter';
-import { localize } from '../../testing/localize';
+import {localize} from '../../testing/localize';
 
 describe('ContactView', () => {
   let el: ContactView;
@@ -103,7 +103,9 @@ describe('ContactView', () => {
 
     it('shows the correct items in the selector', () => {
       const issueItemEls = issueSelector.querySelectorAll('md-select-option');
-      const issueTypes = Array.from(issueItemEls).map(el => (el as any).value);
+      const issueTypes = Array.from(issueItemEls).map(
+        el => (el as {value: string}).value
+      );
       expect(issueTypes).toEqual([
         'no-server',
         'cannot-add-server',
@@ -150,11 +152,11 @@ describe('ContactView', () => {
       },
     ];
 
-    for (const { testcaseName, value, expectedMsg } of conditions) {
+    for (const {testcaseName, value, expectedMsg} of conditions) {
       it(`'${testcaseName}' shows exit message`, async () => {
         // `ContactView` listens for `change` on the `<md-filled-select>`.
         // Setting `value` + dispatching the event triggers the handler.
-        (issueSelector as any).value = value;
+        issueSelector.value = value;
         issueSelector.dispatchEvent(new Event('change'));
         await nextFrame();
 
@@ -165,7 +167,7 @@ describe('ContactView', () => {
 
     describe('"General feedback & suggestions"', () => {
       beforeEach(async () => {
-        (issueSelector as any).value = 'general';
+        issueSelector.value = 'general';
         issueSelector.dispatchEvent(new Event('change'));
         await nextFrame();
       });
@@ -208,7 +210,7 @@ describe('ContactView', () => {
         supportForm.valid = true;
         supportForm.dispatchEvent(new CustomEvent('submit'));
 
-        const { detail } = await listener;
+        const {detail} = await listener;
         expect(detail).toBeNull();
       });
 
@@ -221,7 +223,7 @@ describe('ContactView', () => {
         supportForm.valid = true;
         supportForm.dispatchEvent(new CustomEvent('submit'));
 
-        const { detail } = await listener;
+        const {detail} = await listener;
         expect(detail).toBeNull();
       });
 

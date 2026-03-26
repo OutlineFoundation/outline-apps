@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as Sentry from '@sentry/browser';
+// eslint-disable-next-line n/no-extraneous-import
 import {Integration as SentryIntegration} from '@sentry/types';
 
 export type Tags = {[id: string]: string | boolean | number};

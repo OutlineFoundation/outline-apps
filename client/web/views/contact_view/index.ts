@@ -27,9 +27,9 @@ import {customElement, property, state} from 'lit/decorators.js';
 import {Ref, createRef, ref} from 'lit/directives/ref.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
 
-import {OutlineErrorReporter} from '../../shared/error_reporter';
 import './support_form';
 import {FormValues, SupportForm} from './support_form';
+import {OutlineErrorReporter} from '../../shared/error_reporter';
 
 /** The possible steps in the stepper. Only one step is shown at a time. */
 enum ProgressStep {
@@ -213,7 +213,9 @@ export class ContactView extends LitElement {
     const radio = e.target as Radio;
     const hasOpenTicket = radio.value;
     if (hasOpenTicket) {
-      this.exitTemplate = html`${this.localize('contact-view-exit-open-ticket')}`;
+      this.exitTemplate = html`${this.localize(
+        'contact-view-exit-open-ticket'
+      )}`;
       this.currentStep = ProgressStep.EXIT;
       return;
     }
@@ -369,7 +371,7 @@ export class ContactView extends LitElement {
           <md-filled-select
             .label=${this.localize('contact-view-issue')}
             ?hidden=${!this.showIssueSelector}
-            quick="true"
+            .quick=${true}
             @change=${this.selectIssue}
           >
             ${ContactView.ISSUES.map(value => {

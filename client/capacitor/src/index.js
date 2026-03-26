@@ -16,16 +16,15 @@
 
 // TODO(M3): Need to merge dependencies with parent package.json.
 
-
-import '@capacitor/core';
-import {
-  Device
-} from '@capacitor/device';
+/* eslint-env browser */
+// This entrypoint is bundled for Capacitor and resolved in that environment.
+// eslint-disable-next-line n/no-extraneous-import,n/no-missing-import
+import {Device} from '@capacitor/device';
 
 async function getDeviceInfo() {
-  let info = await Device.getInfo();
+  const info = await Device.getInfo();
   return info;
-};
+}
 
 window.onload = start;
 function start() {
