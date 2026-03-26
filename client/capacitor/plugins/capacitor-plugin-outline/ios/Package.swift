@@ -1,3 +1,4 @@
+// swift-tools-version: 5.9
 // Copyright 2026 The Outline Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// swift-tools-version: 5.9
 import PackageDescription
 
 let package = Package(
@@ -39,4 +39,3 @@ let package = Package(
         )
     ]
 )
-
