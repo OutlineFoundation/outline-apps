@@ -65,9 +65,14 @@ public class OutlineSentryLogger: DDAbstractLogger {
     
     // Reads VpnExtension logs and adds them to Sentry as breadcrumbs.
     public func addVpnExtensionLogsToSentry(maxBreadcrumbsToAdd: Int) {
+        guard let logsDirectory = self.logsDirectory else {
+            DDLogWarn("Logs directory is nil. Not sending VPN logs.")
+            return
+        }
+
         var logs: [String]
         do {
-            logs = try FileManager.default.contentsOfDirectory(atPath: self.logsDirectory)
+            logs = try FileManager.default.contentsOfDirectory(atPath: logsDirectory)
         } catch {
             DDLogError("Failed to list logs directory. Not sending VPN logs")
             return
@@ -78,7 +83,7 @@ public class OutlineSentryLogger: DDAbstractLogger {
         var numBreadcrumbsAdded: UInt = 0
         // Log files are named by date, get the most recent.
         for logFile in logs.sorted().reversed() {
-            let logFilePath = (self.logsDirectory as NSString).appendingPathComponent(logFile)
+            let logFilePath = (logsDirectory as NSString).appendingPathComponent(logFile)
             DDLogDebug("Reading log file: \(String(describing: logFilePath))")
             do {
                 let logContents = try String(contentsOf: NSURL.fileURL(withPath: logFilePath))
