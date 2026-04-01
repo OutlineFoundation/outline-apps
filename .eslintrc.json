@@ -1,5 +1,6 @@
 {
   "ignorePatterns": [
+    "client/capacitor/android/app/build/**",
     "client/capacitor/android/app/src/main/assets/public/**",
     "client/capacitor/ios/App/App/public/**"
   ],
