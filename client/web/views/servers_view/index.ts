@@ -145,7 +145,7 @@ export class ServerList extends LitElement {
         'breakLine',
         '<br/>',
         'openLink',
-        '<a href=https://getoutline.org/get-started/#step-1>',
+        '<a href=https://s3.amazonaws.com/outline-vpn/get-started/#step-1>',
         'openLink2',
         '<a href=https://www.reddit.com/r/outlinevpn/wiki/index/outline_vpn_access_keys/>',
         'closeLink',
@@ -157,7 +157,7 @@ export class ServerList extends LitElement {
         'breakLine',
         '<br/>',
         'openLink',
-        '<a href=https://getoutline.org/get-started/#step-1>',
+        '<a href=https://s3.amazonaws.com/outline-vpn/get-started/#step-1>',
         'closeLink',
         '</a>'
       );
