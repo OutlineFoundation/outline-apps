@@ -57,7 +57,7 @@ func NewDNSTruncatePacketProxy(base network.PacketProxy, resolverLinkLocalAddr n
 	// Returns truncated responses for *all* traffic on port 53.
 	truncate53PP, err := dnstruncate.NewPacketProxy()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create the underlying DNS truncate PacketProxy")
+		return nil, fmt.Errorf("failed to create the underlying DNS truncate PacketProxy: %w", err)
 	}
 	return &dnsTruncatePacketProxy{
 		PacketProxy:           base,
