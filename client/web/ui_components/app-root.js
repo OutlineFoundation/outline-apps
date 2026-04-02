@@ -371,7 +371,7 @@ export class AppRoot extends mixinBehaviors(
         localize="[[localize]]"
         id="drawer"
         show-quit="[[shouldShowQuitButton]]"
-        data-collection-page-url="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
+        data-collection-page-url="https://getoutline.org/policies/data-collection"
         show-appearance-view="[[showAppearanceView]]"
       ></root-navigation>
 
@@ -388,7 +388,7 @@ export class AppRoot extends mixinBehaviors(
       <privacy-acknowledgement-dialog
         id="privacyView"
         localize="[[localize]]"
-        privacy-page-url="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html"
+        privacy-page-url="https://getoutline.org/policies/data-collection"
       ></privacy-acknowledgement-dialog>
 
       <auto-connect-dialog

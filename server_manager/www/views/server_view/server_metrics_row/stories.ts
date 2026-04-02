@@ -100,7 +100,7 @@ export const BandwidthWarning = () => {
           'server-view-server-metrics-bandwidth-tooltip':
             'This shows the total amount of data transferred through the server over the last 30 days.',
           'server-view-server-metrics-bandwidth-limit-tooltip':
-            'High bandwidth usage detected over the last 30 days. Consider setting data limits to prevent overages and keep your service running smoothly. <a href="https://support.google.com/outline/answer/15331326" target="_blank">Learn more.</a>',
+            'High bandwidth usage detected over the last 30 days. Consider setting data limits to prevent overages and keep your service running smoothly. <a href="https://support.getoutline.org/manager/server-management/data-limits" target="_blank">Learn more.</a>',
           'server-view-server-metrics-bandwidth-usage':
             'Current bandwidth usage',
           'server-view-server-metrics-bandwidth-usage-max':

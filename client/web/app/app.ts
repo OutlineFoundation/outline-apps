@@ -288,7 +288,7 @@ export class App {
       toastMessage = this.localize('outline-plugin-error-antivirus');
       buttonMessage = this.localize('fix-this');
       buttonLink =
-        'https://s3.amazonaws.com/outline-vpn/index.html#/en/support/antivirusBlock';
+        'https://support.getoutline.org/client/troubleshooting/firewall-errors';
     } else if (error instanceof errors.ConfigureSystemProxyFailure) {
       toastMessage = this.localize('outline-plugin-error-routing-tables');
       buttonMessage = this.localize('contact-page-title');

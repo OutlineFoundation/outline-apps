@@ -400,7 +400,7 @@ export class AppRoot extends polymerElementWithLocalize {
               </a>
             </if-messages>
             <span on-tap="maybeCloseDrawer">
-              <a href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html">
+              <a href="https://getoutline.org/policies/data-collection">
                 <span>[[localize('nav-data-collection')]]</span>
                 <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
@@ -412,7 +412,7 @@ export class AppRoot extends polymerElementWithLocalize {
               <span on-tap="submitFeedbackTapped">[[localize('nav-feedback')]]</span>
             </template>
             <span on-tap="maybeCloseDrawer">
-              <a href="https://support.google.com/outline/">
+              <a href="https://support.getoutline.org">
                 <span>[[localize('nav-help')]]</span>
                 <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
@@ -424,11 +424,11 @@ export class AppRoot extends polymerElementWithLocalize {
                 <outline-language-picker id="language-dropdown" selected-language="{{language}}" languages="{{supportedLanguages}}"></outline-language-picker>
               </paper-icon-item>
               <div class="legal-links" on-tap="maybeCloseDrawer">
-                <a href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Privacy-Policy.html">
+                <a href="https://getoutline.org/policies/privacy">
                   <span>[[localize('nav-privacy')]]</span>
                   <iron-icon id="open-in-new-icon" icon="open-in-new" />
                 </a>
-                <a href="https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Terms-of-Service.html">
+                <a href="https://getoutline.org/policies/terms-of-service">
                   <span>[[localize('nav-terms')]]</span>
                   <iron-icon id="open-in-new-icon" icon="open-in-new" />
                 </a>

@@ -50,13 +50,19 @@ enum IssueType {
 
 /** A map of unsupported issue types to helppage URLs to redirect users to. */
 const UNSUPPORTED_ISSUE_TYPES = new Map([
-  [IssueType.NO_SERVER, 'https://support.google.com/outline/answer/15331628'],
+  [
+    IssueType.NO_SERVER,
+    'https://support.getoutline.org/client/getting-started/get-access-key',
+  ],
   [
     IssueType.CANNOT_ADD_SERVER,
-    'https://support.google.com/outline/answer/15331223',
+    'https://support.getoutline.org/client/troubleshooting/access-key-issues',
   ],
   [IssueType.BILLING, null],
-  [IssueType.CONNECTION, 'https://support.google.com/outline/answer/15331126'],
+  [
+    IssueType.CONNECTION,
+    'https://support.getoutline.org/client/troubleshooting/connection-issues',
+  ],
 ]);
 
 @customElement('contact-view')

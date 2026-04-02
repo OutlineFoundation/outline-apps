@@ -23,8 +23,7 @@ export default {
   component: 'root-navigation',
   args: {
     open: true,
-    dataCollectionPageUrl:
-      'https://s3.amazonaws.com/outline-vpn/static_downloads/Outline-Data-Collection-Policy.html',
+    dataCollectionPageUrl: 'https://getoutline.org/policies/data-collection',
   },
 };
 
