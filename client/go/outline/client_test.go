@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"localhost/client/go/configyaml"
-	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/reporting"
 	"github.com/stretchr/testify/require"
 )
@@ -245,8 +245,8 @@ transport:
 	result := (&ClientConfig{}).New("", configText)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.NotNil(t, result.Client)
-	require.Equal(t, config.ConnTypeDirect, result.Client.sd.ConnType)
-	require.Equal(t, config.ConnTypeDirect, result.Client.pp.ConnType)
+	require.Equal(t, configregistry.ConnTypeDirect, result.Client.sd.ConnType)
+	require.Equal(t, configregistry.ConnTypeDirect, result.Client.pp.ConnType)
 }
 
 func Test_NewClientFromJSON_Errors(t *testing.T) {

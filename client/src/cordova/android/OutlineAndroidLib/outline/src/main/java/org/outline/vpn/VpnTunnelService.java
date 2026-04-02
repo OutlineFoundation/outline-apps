@@ -236,7 +236,7 @@ public class VpnTunnelService extends VpnService {
       // Only establish the VPN if this is not a tunnel restart.
       try {
         // A "fake" local DNS resolver. Outline will intercept the real resolver at this address.
-        // Must align with: client/go/outline/config/outline_dns_intercept.go
+        // Must align with: client/go/outline/configregistry/outline_dns_intercept.go
         String dnsResolver = "169.254.113.53";
         VpnService.Builder builder =
                 new VpnService.Builder()

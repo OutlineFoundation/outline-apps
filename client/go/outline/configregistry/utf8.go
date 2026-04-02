@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // This packages provides helper functions to encode or decode UTF-8 strings
-package config
+package configregistry
 
 import "fmt"
 

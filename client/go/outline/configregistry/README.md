@@ -1,4 +1,4 @@
-# Outline Config
+# Outline Config Registry
 
 ## Overview
 
@@ -74,3 +74,28 @@ packetEndpoints.RegisterSubParser("websocket", NewWebsocketPacketEndpointSubPars
 
 Notice how the dependencies between the subparsers and the parsers they depend on are explicit
 and will cause compile-time errors if not provided.
+
+## Adding a New Strategy or Dialer
+
+To introduce a new network capability (e.g., custom proxy protocol, dialing strategy), follow these steps:
+
+1. **Create the Parser Function**:
+   Write a parser package or function (`SubParser`) that transforms the YAML block (`map[string]any`) into a native connection interface, such as `*Dialer[transport.StreamConn]`. If your dialer delegates downward to a nested endpoint, require that parser as an argument.
+
+   ```go
+   func NewMyStrategyDialerSubParser(parseEndpoint configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
+       return func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
+           // 1. Unmarshal `input` logic into your custom struct
+           // 2. Instantiate your streaming strategy
+           // 3. Return a `Dialer` conforming to the interface requirements
+       }
+   }
+   ```
+
+2. **Register the Strategy**:
+   Locate the `NewDefaultTransportProvider` function in [`registry.go`](registry.go).
+   Register your parsing function into the relevant parser category (`streamDialers` or `packetDialers`). The string key you provide will act as the native identifier for the matching `$type` field inside Outline configuration files.
+
+   ```go
+   streamDialers.RegisterSubParser("my_strategy", NewMyStrategyDialerSubParser(streamEndpoints.Parse))
+   ```

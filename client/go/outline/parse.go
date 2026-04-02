@@ -19,13 +19,13 @@ import (
 	"fmt"
 	"strings"
 
-	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 
 	"github.com/goccy/go-yaml"
 )
 
-// providerConfig is the config fetched from the provider. It may be either an error, or a tunnel config.
+// providerConfig is the config fetched from the provider. It may be either an error, or a tunnel configregistry.
 type providerConfig struct {
 	ProviderErrorConfig  `yaml:",inline"`
 	ProviderTunnelConfig `yaml:",inline"`
@@ -45,11 +45,11 @@ type ProviderTunnelConfig struct {
 	ProviderClientConfig `yaml:",inline"`
 }
 
-// firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in config.ts.
+// firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in configregistry.ts.
 type firstHopAndTunnelConfigJSON struct {
 	Client         string          `json:"client"`
 	FirstHop       string          `json:"firstHop"`
-	ConnectionType config.ConnType `json:"connectionType"`
+	ConnectionType configregistry.ConnType `json:"connectionType"`
 }
 
 func hasKey[K comparable, V any](m map[K]V, key K) bool {
@@ -57,12 +57,12 @@ func hasKey[K comparable, V any](m map[K]V, key K) bool {
 	return ok
 }
 
-func combinedConnectionType(streamConnType, packetConnType config.ConnType) config.ConnType {
+func combinedConnectionType(streamConnType, packetConnType configregistry.ConnType) configregistry.ConnType {
 	// When one connection is blocked is always the other connection type
-	if streamConnType == config.ConnTypeBlocked {
+	if streamConnType == configregistry.ConnTypeBlocked {
 		return packetConnType
 	}
-	if packetConnType == config.ConnTypeBlocked {
+	if packetConnType == configregistry.ConnTypeBlocked {
 		return streamConnType
 	}
 
@@ -72,7 +72,7 @@ func combinedConnectionType(streamConnType, packetConnType config.ConnType) conf
 	}
 
 	// Connections are non-matching and not blocked
-	return config.ConnTypePartial
+	return configregistry.ConnTypePartial
 }
 
 func doParseTunnelConfig(input string) *InvokeMethodResult {
@@ -84,7 +84,7 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	var stringValue string
 	var clientConfigMap map[string]any
 	if err := yaml.Unmarshal([]byte(input), &stringValue); err == nil {
-		// Legacy URL format. Input is the transport config.
+		// Legacy URL format. Input is the transport configregistry.
 		clientConfigMap = map[string]any{"transport": stringValue}
 	} else {
 		var yamlValue map[string]any
@@ -123,10 +123,10 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 				return &InvokeMethodResult{Error: platErr}
 			}
 
-			// Extract client config.
+			// Extract client configregistry.
 			clientConfigMap = yamlValue
 		} else {
-			// Legacy JSON format. Input is the transport config.
+			// Legacy JSON format. Input is the transport configregistry.
 			clientConfigMap = map[string]any{"transport": yamlValue}
 		}
 	}

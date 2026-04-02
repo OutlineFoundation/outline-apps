@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 
 	"github.com/goccy/go-yaml"
@@ -71,33 +71,33 @@ func matchTransportConfig(t *testing.T, transportConfigString string, firstHopAn
 func TestCombinedConnectionType(t *testing.T) {
 	testCases := []struct {
 		name           string
-		streamConnType config.ConnType
-		packetConnType config.ConnType
-		expected       config.ConnType
+		streamConnType configregistry.ConnType
+		packetConnType configregistry.ConnType
+		expected       configregistry.ConnType
 	}{
 		// Matching types
-		{"Direct-Direct", config.ConnTypeDirect, config.ConnTypeDirect, config.ConnTypeDirect},
-		{"Tunneled-Tunneled", config.ConnTypeTunneled, config.ConnTypeTunneled, config.ConnTypeTunneled},
-		{"Partial-Partial", config.ConnTypePartial, config.ConnTypePartial, config.ConnTypePartial},
-		{"Blocked-Blocked", config.ConnTypeBlocked, config.ConnTypeBlocked, config.ConnTypeBlocked},
+		{"Direct-Direct", configregistry.ConnTypeDirect, configregistry.ConnTypeDirect, configregistry.ConnTypeDirect},
+		{"Tunneled-Tunneled", configregistry.ConnTypeTunneled, configregistry.ConnTypeTunneled, configregistry.ConnTypeTunneled},
+		{"Partial-Partial", configregistry.ConnTypePartial, configregistry.ConnTypePartial, configregistry.ConnTypePartial},
+		{"Blocked-Blocked", configregistry.ConnTypeBlocked, configregistry.ConnTypeBlocked, configregistry.ConnTypeBlocked},
 
 		// One is Partial
-		{"Direct-Partial", config.ConnTypeDirect, config.ConnTypePartial, config.ConnTypePartial},
-		{"Partial-Direct", config.ConnTypePartial, config.ConnTypeDirect, config.ConnTypePartial},
-		{"Tunneled-Partial", config.ConnTypeTunneled, config.ConnTypePartial, config.ConnTypePartial},
-		{"Partial-Tunneled", config.ConnTypePartial, config.ConnTypeTunneled, config.ConnTypePartial},
-		{"Blocked-Partial", config.ConnTypeBlocked, config.ConnTypePartial, config.ConnTypePartial},
-		{"Partial-Blocked", config.ConnTypePartial, config.ConnTypeBlocked, config.ConnTypePartial},
+		{"Direct-Partial", configregistry.ConnTypeDirect, configregistry.ConnTypePartial, configregistry.ConnTypePartial},
+		{"Partial-Direct", configregistry.ConnTypePartial, configregistry.ConnTypeDirect, configregistry.ConnTypePartial},
+		{"Tunneled-Partial", configregistry.ConnTypeTunneled, configregistry.ConnTypePartial, configregistry.ConnTypePartial},
+		{"Partial-Tunneled", configregistry.ConnTypePartial, configregistry.ConnTypeTunneled, configregistry.ConnTypePartial},
+		{"Blocked-Partial", configregistry.ConnTypeBlocked, configregistry.ConnTypePartial, configregistry.ConnTypePartial},
+		{"Partial-Blocked", configregistry.ConnTypePartial, configregistry.ConnTypeBlocked, configregistry.ConnTypePartial},
 
 		// One is Blocked
-		{"Direct-Blocked", config.ConnTypeDirect, config.ConnTypeBlocked, config.ConnTypeDirect},
-		{"Blocked-Direct", config.ConnTypeBlocked, config.ConnTypeDirect, config.ConnTypeDirect},
-		{"Tunneled-Blocked", config.ConnTypeTunneled, config.ConnTypeBlocked, config.ConnTypeTunneled},
-		{"Blocked-Tunneled", config.ConnTypeBlocked, config.ConnTypeTunneled, config.ConnTypeTunneled},
+		{"Direct-Blocked", configregistry.ConnTypeDirect, configregistry.ConnTypeBlocked, configregistry.ConnTypeDirect},
+		{"Blocked-Direct", configregistry.ConnTypeBlocked, configregistry.ConnTypeDirect, configregistry.ConnTypeDirect},
+		{"Tunneled-Blocked", configregistry.ConnTypeTunneled, configregistry.ConnTypeBlocked, configregistry.ConnTypeTunneled},
+		{"Blocked-Tunneled", configregistry.ConnTypeBlocked, configregistry.ConnTypeTunneled, configregistry.ConnTypeTunneled},
 
 		// Split between transports
-		{"Direct-Tunneled", config.ConnTypeDirect, config.ConnTypeTunneled, config.ConnTypePartial},
-		{"Tunneled-Direct", config.ConnTypeTunneled, config.ConnTypeDirect, config.ConnTypePartial},
+		{"Direct-Tunneled", configregistry.ConnTypeDirect, configregistry.ConnTypeTunneled, configregistry.ConnTypePartial},
+		{"Tunneled-Direct", configregistry.ConnTypeTunneled, configregistry.ConnTypeDirect, configregistry.ConnTypePartial},
 	}
 
 	for _, tc := range testCases {
@@ -534,8 +534,8 @@ udp:
 	clientResult := (&ClientConfig{}).New("", parsedOutput.Client)
 	require.Nil(t, clientResult.Error, "NewClient failed with parsed client config: %v", clientResult.Error)
 	require.NotNil(t, clientResult.Client)
-	require.Equal(t, config.ConnTypeDirect, clientResult.Client.sd.ConnType)
-	require.Equal(t, config.ConnTypeTunneled, clientResult.Client.pp.ConnType)
+	require.Equal(t, configregistry.ConnTypeDirect, clientResult.Client.sd.ConnType)
+	require.Equal(t, configregistry.ConnTypeTunneled, clientResult.Client.pp.ConnType)
 
 	matchTransportConfig(t, userInputConfig, result.Value)
 }

@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"localhost/client/go/outline"
-	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/connectivity"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/vpn"
@@ -130,7 +130,7 @@ func main() {
 		if err != nil {
 			printErrorAndExit(err, exitCodeFailure)
 		}
-		clientConfig.TransportParser = config.NewDefaultTransportProvider(tcp, udp)
+		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcp, udp)
 	}
 	result := clientConfig.New(*args.keyID, *args.clientConfig)
 	if result.Error != nil {

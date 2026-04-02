@@ -24,7 +24,7 @@ import (
 	"runtime"
 
 	"localhost/client/go/configyaml"
-	"localhost/client/go/outline/config"
+	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
 	"golang.getoutline.org/sdk/network"
@@ -37,12 +37,12 @@ import (
 // It's used by the connectivity test and the tun2socks handlers.
 // TODO(fortuna):
 //   - Add connectivity test to StartSession()
-//   - Add NotifyNetworkChange() method. Needs to hold a network.PacketProxy instead of config.PacketListener
+//   - Add NotifyNetworkChange() method. Needs to hold a network.PacketProxy instead of configregistry.PacketListener
 //     to handle that.
 //   - Refactor so that StartSession returns a Client
 type Client struct {
-	sd            *config.Dialer[transport.StreamConn]
-	pp            *config.PacketProxy
+	sd            *configregistry.Dialer[transport.StreamConn]
+	pp            *configregistry.PacketProxy
 	reporter      reporting.Reporter
 	sessionCancel context.CancelFunc
 }
@@ -97,7 +97,7 @@ type NewClientResult struct {
 // ClientConfig is used to create a session Client.
 type ClientConfig struct {
 	DataDir         string
-	TransportParser *configyaml.TypeParser[*config.TransportPair]
+	TransportParser *configyaml.TypeParser[*configregistry.TransportPair]
 }
 
 // New creates a new session client. It's used by the native code, so it returns a NewClientResult.
@@ -116,7 +116,7 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 	if clientConfig.TransportParser == nil {
 		tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 		udpDialer := &transport.UDPDialer{}
-		clientConfig.TransportParser = config.NewDefaultTransportProvider(tcpDialer, udpDialer)
+		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcpDialer, udpDialer)
 	}
 	if clientConfig.DataDir == "" {
 		if runtime.GOOS != "android" && runtime.GOOS != "ios" {
@@ -183,7 +183,7 @@ func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDial
 	parser := configyaml.NewTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (reporting.Reporter, error) {
 		return nil, errors.New("parser not specified")
 	})
-	parser.RegisterSubParser("first-supported", config.NewFirstSupportedSubParser(parser.Parse))
+	parser.RegisterSubParser("first-supported", configregistry.NewFirstSupportedSubParser(parser.Parse))
 	parser.RegisterSubParser("http", reporting.NewHTTPReporterConfigParser(cookiesFilename, streamDialer))
 	return parser
 }

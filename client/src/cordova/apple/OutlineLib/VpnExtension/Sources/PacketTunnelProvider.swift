@@ -35,7 +35,7 @@ public class SwiftBridge: NSObject {
     settings.ipv4Settings = ipv4Settings
 
     // A "fake" local DNS resolver. Outline will intercept the real resolver at this address.
-    // Must align with: client/go/outline/config/outline_dns_intercept.go
+    // Must align with: client/go/outline/configregistry/outline_dns_intercept.go
     settings.dnsSettings = NEDNSSettings(servers: ["169.254.113.53"])
 
     return settings
