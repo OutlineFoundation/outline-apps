@@ -70,17 +70,17 @@ DNS queries are forwarded over UDP to a public resolver (Cloudflare, Quad9, or O
 ```mermaid
 sequenceDiagram
     participant OS
-    participant forwardPacketProxy
+    participant dnsRedirectPacketProxy
     participant Transport
     participant Resolver as Public DNS resolver
 
-    OS->>forwardPacketProxy: UDP query to 169.254.113.53:53
-    forwardPacketProxy->>Transport: UDP query to 1.1.1.1:53 (remapped)
+    OS->>dnsRedirectPacketProxy: UDP query to 169.254.113.53:53
+    dnsRedirectPacketProxy->>Transport: UDP query to 1.1.1.1:53 (remapped)
     Transport->>Resolver: query
     Resolver->>Transport: response
-    Transport->>forwardPacketProxy: UDP response from 1.1.1.1:53
-    forwardPacketProxy->>OS: response from 169.254.113.53:53 (remapped back)
-    Note over forwardPacketProxy: session closed immediately after response
+    Transport->>dnsRedirectPacketProxy: UDP response from 1.1.1.1:53
+    dnsRedirectPacketProxy->>OS: response from 169.254.113.53:53 (remapped back)
+    Note over dnsRedirectPacketProxy: session closed immediately after response
 ```
 
 Each DNS session (one query/response pair) opens a transport session for the duration of the exchange and closes it as soon as the response is delivered.  This keeps resource usage proportional to in-flight queries rather than to recent query rate.
@@ -92,12 +92,12 @@ If UDP is blocked, forwarding silently fails and DNS stops working.  To handle t
 ```mermaid
 sequenceDiagram
     participant OS
-    participant truncatePacketProxy
+    participant dnsTruncatePacketProxy
     participant StreamDialer
     participant Resolver as Public DNS resolver
 
-    OS->>truncatePacketProxy: UDP query to 169.254.113.53:53
-    truncatePacketProxy->>OS: truncated response (TC=1), no transport used
+    OS->>dnsTruncatePacketProxy: UDP query to 169.254.113.53:53
+    dnsTruncatePacketProxy->>OS: truncated response (TC=1), no transport used
     Note over OS: retries over TCP automatically
     OS->>StreamDialer: TCP query to 169.254.113.53:53
     StreamDialer->>Resolver: TCP query to 1.1.1.1:53 (remapped)
@@ -118,8 +118,8 @@ flowchart LR
     check -->|fail| ppMain
 
     ppMain{{"DelegatePacketProxy<br/>(ppMain)"}}
-    ppMain -->|UDP available| ppForward["forwardPacketProxy<br/>(DNS → resolver via transport)"]
-    ppMain -->|UDP blocked| ppTrunc["truncatePacketProxy<br/>(DNS → TC response locally)"]
+    ppMain -->|UDP available| ppForward["dnsRedirectPacketProxy<br/>(DNS → resolver via transport)"]
+    ppMain -->|UDP blocked| ppTrunc["dnsTruncatePacketProxy<br/>(DNS → TC response locally)"]
 
     ppForward --> ppBase["base PacketProxy<br/>(transport)"]
     ppTrunc --> ppBase
