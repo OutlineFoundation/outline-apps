@@ -49,25 +49,19 @@ export class SentryErrorReporter implements OutlineErrorReporter {
     tags?: Tags
   ): Promise<void> {
     const combinedTags = {...this.tags, ...tags};
-    Sentry.captureEvent({
+    const eventId = Sentry.captureEvent({
       message: userFeedback,
-      user: {email: userEmail},
       tags: {
         category: feedbackCategory,
         isFeedback: Boolean(userFeedback),
         ...combinedTags,
       },
     });
-    Sentry.configureScope(scope => {
-      scope.setUser({email: userEmail || ''});
-      if (combinedTags) {
-        scope.setTags(combinedTags);
-      }
-      scope.setTag('category', feedbackCategory);
-    });
-    Sentry.captureMessage(userFeedback);
-    Sentry.configureScope(scope => {
-      scope.clear(); // Reset the user context, don't cache the email
+    Sentry.captureUserFeedback({
+      event_id: eventId,
+      name: userEmail || 'Anonymous', // Sentry requires a name for user feedback, but since we don't collect one, we can default or use email
+      email: userEmail || '',
+      comments: userFeedback,
     });
   }
 
