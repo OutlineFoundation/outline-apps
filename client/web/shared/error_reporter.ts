@@ -57,11 +57,21 @@ export class SentryErrorReporter implements OutlineErrorReporter {
         ...combinedTags,
       },
     });
+    Sentry.configureScope(scope => {
+      scope.setUser({email: userEmail || ''});
+      if (combinedTags) {
+        scope.setTags(combinedTags);
+      }
+      scope.setTag('category', feedbackCategory);
+    });
     Sentry.captureUserFeedback({
       event_id: eventId,
       name: userEmail || 'Anonymous', // Sentry requires a name for user feedback, but since we don't collect one, we can default or use email
       email: userEmail || '',
       comments: userFeedback,
+    });
+    Sentry.configureScope(scope => {
+      scope.clear(); // Reset the user context, don't cache the email
     });
   }
 
