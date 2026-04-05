@@ -27,7 +27,6 @@ import {
   ipcRenderer,
   IpcRendererEvent,
 } from 'electron';
-import '@sentry/electron/preload';
 
 /**
  * The method channel for sending messages through electron's IPC.
