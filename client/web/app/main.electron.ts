@@ -114,9 +114,9 @@ class ElectronErrorReporter implements OutlineErrorReporter {
     // parameters are initialized in main process
     Sentry.init({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      integrations: (integrations: Integration[]) =>
+      integrations: (integrations: any) =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getSentryBrowserIntegrations(integrations) as Integration[],
+        getSentryBrowserIntegrations(integrations) as any,
     });
   }
 
