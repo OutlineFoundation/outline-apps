@@ -1,9 +1,4 @@
 {
-  "ignorePatterns": [
-    "client/capacitor/android/app/build/**",
-    "client/capacitor/android/app/src/main/assets/public/**",
-    "client/capacitor/ios/App/App/public/**"
-  ],
   "extends": "./node_modules/gts/",
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -15,7 +10,10 @@
       "./server_manager/tsconfig.json"
     ]
   },
-  "plugins": ["compat", "import"],
+  "plugins": [
+    "compat",
+    "import"
+  ],
   "rules": {
     "compat/compat": "error",
     "import/no-restricted-paths": [
@@ -28,7 +26,10 @@
           {
             "target": "./infrastructure",
             "from": ".",
-            "except": ["./infrastructure", "./node_modules"]
+            "except": [
+              "./infrastructure",
+              "./node_modules"
+            ]
           },
           // Similar to above but for web/model, but you can use files from both the
           // web/model and web/infrastructure paths.
@@ -72,7 +73,11 @@
     "import/order": [
       "error",
       {
-        "groups": ["builtin", "external", "internal"],
+        "groups": [
+          "builtin",
+          "external",
+          "internal"
+        ],
         "pathGroups": [
           {
             "pattern": "@material/**",
@@ -80,7 +85,9 @@
             "position": "before"
           }
         ],
-        "pathGroupsExcludedImportTypes": ["@material/**"],
+        "pathGroupsExcludedImportTypes": [
+          "@material/**"
+        ],
         "newlines-between": "always",
         "alphabetize": {
           "order": "asc",
@@ -114,14 +121,11 @@
       }
     ],
     "@typescript-eslint/no-floating-promises": [
-      "off",
+      "error",
       {
         "ignoreVoid": true
       }
     ],
-    "@typescript-eslint/no-empty-object-type": "off",
-    "@typescript-eslint/no-unsafe-function-type": "off",
-    "@typescript-eslint/no-explicit-any": "off",
     "no-unused-vars": [
       "error",
       {
@@ -147,13 +151,11 @@
         "server_manager/electron_main.webpack.mjs",
         "server_manager/electron_preload.webpack.mjs",
         ".prettierrc.js",
-        "client/web/karma.conf.js",
-        "client/capacitor/build.action.mjs",
-        "client/capacitor/start.action.mjs",
-        "client/capacitor/src/index.js",
-        "client/capacitor/webpack.config.js"
+        "client/web/karma.conf.js"
       ],
-      "extends": ["plugin:@typescript-eslint/disable-type-checked"],
+      "extends": [
+        "plugin:@typescript-eslint/disable-type-checked"
+      ],
       "parserOptions": {
         "project": null
       }

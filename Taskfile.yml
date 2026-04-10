@@ -35,4 +35,4 @@ tasks:
   addlicense:
     desc: Add missing license headers
     cmds:
-      - go tool addlicense {{.CLI_ARGS}} -c "The Outline Authors" -l apache -ignore 'output/**' -ignore '**/node_modules/**' -ignore 'third_party/**' -ignore 'client/www/**' -ignore 'client/capacitor/android/app/**' -ignore 'client/capacitor/android/build/**' -ignore 'client/capacitor/android/capacitor-cordova-android-plugins/**' -ignore 'client/capacitor/ios/App/**' -ignore 'client/capacitor/plugins/capacitor-plugin-outline/android/build/**' -ignore 'client/src/cordova/**/build/**' -v .
+      - go tool addlicense {{.CLI_ARGS}} -c "The Outline Authors" -l apache -ignore 'output/**' -ignore 'node_modules/**' -ignore 'third_party/**' -v .

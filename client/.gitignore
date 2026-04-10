@@ -16,11 +16,3 @@ tools/smartdnsblock/bin/*
 !tools/smartdnsblock/bin/*.exe
 universal.apk
 xcuserdata/
-.idea/
-**/node_modules/
-.vscode/
-*.map
-.DS_Store
-.sourcemaps
-**/output/
-**/icons/

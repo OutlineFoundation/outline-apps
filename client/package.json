@@ -60,13 +60,6 @@
     "@babel/core": "^7.12.10",
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.12.11",
-    "@capacitor/android": "^6.0.0",
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^7.4.2",
-    "@capacitor/core": "^6.2.1",
-    "@capacitor/ios": "^6.0.0",
-    "@capacitor/splash-screen": "^6.0.3",
-    "@capacitor/status-bar": "^6.0.2",
     "@commitlint/config-conventional": "^16.2.4",
     "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
     "@open-wc/testing": "^3.2.0",
@@ -153,7 +146,7 @@
     ]
   },
   "scripts": {
-    "clean": "rm -rf output node_modules www platforms plugins capacitor/android/app/src/main/res/mipmap-* capacitor/android/app/src/main/res/drawable/splash.png capacitor/android/app/src/main/res/drawable*  capacitor/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png capacitor/ios/App/App/Assets.xcassets/Splash.imageset/Default@*",
+    "clean": "rm -rf output node_modules www platforms plugins",
     "lint:lit": "lit-analyzer web/views"
   }
 }

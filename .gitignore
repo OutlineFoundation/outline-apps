@@ -16,12 +16,5 @@ node_modules
 
 
 
-# Capacitor generated assets (icons, splash screens)
-client/capacitor/android/app/src/main/res/drawable-*/
-client/capacitor/android/app/src/main/res/mipmap-*/
-client/capacitor/android/app/src/main/res/values/ic_launcher_background.xml
-client/capacitor/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-*.png
-client/capacitor/ios/App/App/Assets.xcassets/Splash.imageset/Default@*.png
-client/capacitor/android/app/src/main/res/drawable/
-# Capacitor plugin build outputs
-client/capacitor/plugins/capacitor-plugin-outline/android/build/
+# Capacitor web build output
+client/capacitor/www/

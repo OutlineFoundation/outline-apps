@@ -29,13 +29,13 @@ npm run action client/capacitor/start
 **Debug mode:**
 
 ```sh
-npm run action client/capacitor/build capacitor-ios
+npm run action client/capacitor/build ios
 ```
 
 **Release mode:**
 
 ```sh
-SENTRY_DSN=<your sentry dsn> npm run action client/capacitor/build capacitor-ios -- --buildMode=release --versionName=<your version name>
+SENTRY_DSN=<your sentry dsn> npm run action client/capacitor/build ios -- --buildMode=release --versionName=<your version name>
 ```
 
 **Note**: Release builds require:
@@ -48,7 +48,7 @@ SENTRY_DSN=<your sentry dsn> npm run action client/capacitor/build capacitor-ios
 **Debug mode:**
 
 ```sh
-npm run action client/capacitor/build capacitor-android
+npm run action client/capacitor/build android
 ```
 
 **Release mode:**
@@ -62,7 +62,7 @@ SENTRY_DSN=<your sentry dsn> \
 JAVA_HOME=<path to java 21> \
 ANDROID_KEY_STORE_PASSWORD=<keystore password> \
 ANDROID_KEY_STORE_CONTENTS=<base64 encoded keystore> \
-npm run action client/capacitor/build capacitor-android -- --buildMode=release --versionName=<your version name>
+npm run action client/capacitor/build android -- --buildMode=release --versionName=<your version name>
 ```
 
 **Option 2: Using a `.env` file**
@@ -79,7 +79,7 @@ ANDROID_KEY_STORE_CONTENTS=<base64 encoded keystore>
 Then run:
 
 ```sh
-npm run action client/capacitor/build capacitor-android -- --buildMode=release --versionName=<your version name>
+npm run action client/capacitor/build android -- --buildMode=release --versionName=<your version name>
 ```
 
 **Note**: Release builds require:
@@ -138,12 +138,12 @@ You can run the Capacitor app on both Android and iOS emulators at the same time
      - `--android`: `http://10.0.2.2:8080`
    - Restore the original `capacitor.config.json` when you stop the server (Ctrl+C)
 
-5. **Build and run on emulators**:
+4. **Build and run on emulators**:
 
    - **Android (debug build):**
 
      ```sh
-     npm run action client/capacitor/build capacitor-android
+     npm run action client/capacitor/build android
      ```
 
      Then run the app from Android Studio on your emulator.
@@ -151,17 +151,16 @@ You can run the Capacitor app on both Android and iOS emulators at the same time
    - **iOS (debug build):**
 
      ```sh
-     npm run action client/capacitor/build capacitor-ios
+     npm run action client/capacitor/build ios
      ```
 
      Then run the app from Xcode on your simulator.
 
-6. **Develop with hot reloading**:
+5. **Develop with hot reloading**:
 
    - Keep the dev server (`client/capacitor/start`) running
    - Make changes in the shared web app (`client/web/...`)
    - Both the Android emulator and iOS Simulator will automatically reload when you save changes
-
 
 ### Android - Chrome DevTools
 
