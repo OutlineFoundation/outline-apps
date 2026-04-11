@@ -12,12 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// In browser mode, certificate pinning is not supported. Instead, we delegate
+// to the standard fetch API. The nginx reverse proxy handles the connection
+// to the Shadowbox management API over the VPC connector.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).fetchWithPin = (
-  _request: HttpRequest,
+  request: HttpRequest,
   _fingerprint: string
 ) => {
-  return Promise.reject(new Error('Fingerprint pins are not supported'));
+  return fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+  });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
