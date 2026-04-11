@@ -23,9 +23,21 @@ on:
     types:
       - opened
       - synchronize
+    paths:
+      - "server_manager/**"
+      - "infrastructure/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/build_and_test_debug_manager.yml"
   push:
     branches:
       - master
+    paths:
+      - "server_manager/**"
+      - "infrastructure/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/build_and_test_debug_manager.yml"
   schedule:
     - cron: "0 13 * * *"  # Run daily at 1PM UTC.
 

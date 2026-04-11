@@ -28,8 +28,30 @@ name: "CodeQL Advanced"
 on:
   push:
     branches: [ "master" ]
+    paths:
+      - "**/*.ts"
+      - "**/*.js"
+      - "**/*.go"
+      - "**/*.java"
+      - "**/*.kt"
+      - "**/*.swift"
+      - "**/*.c"
+      - "**/*.cpp"
+      - "**/*.cs"
+      - ".github/workflows/codeql.yml"
   pull_request:
     branches: [ "master" ]
+    paths:
+      - "**/*.ts"
+      - "**/*.js"
+      - "**/*.go"
+      - "**/*.java"
+      - "**/*.kt"
+      - "**/*.swift"
+      - "**/*.c"
+      - "**/*.cpp"
+      - "**/*.cs"
+      - ".github/workflows/codeql.yml"
   schedule:
     - cron: '37 15 * * 2'
 

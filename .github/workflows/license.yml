@@ -23,9 +23,19 @@ on:
     types:
       - opened
       - synchronize
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/license.yml"
   push:
     branches:
       - master
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/license.yml"
 
 jobs:
   license-check:

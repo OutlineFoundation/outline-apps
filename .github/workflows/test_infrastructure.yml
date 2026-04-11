@@ -23,9 +23,19 @@ on:
     types:
       - opened
       - synchronize
+    paths:
+      - "infrastructure/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/test_infrastructure.yml"
   push:
     branches:
       - master
+    paths:
+      - "infrastructure/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/test_infrastructure.yml"
 
 jobs:
   test:

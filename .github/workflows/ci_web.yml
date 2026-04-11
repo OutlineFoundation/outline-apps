@@ -25,6 +25,12 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "server_manager/**"
+      - "infrastructure/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/ci_web.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}

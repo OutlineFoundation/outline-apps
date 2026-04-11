@@ -26,6 +26,12 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "**/*.ts"
+      - "**/*.js"
+      - "**/*.cjs"
+      - "**/*.mjs"
+      - ".github/workflows/lint.yml"
 
 jobs:
   lint:
