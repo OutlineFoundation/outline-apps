@@ -94,3 +94,4 @@ jobs:
           service: outline-manager
           image: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           region: ${{ env.GCP_REGION }}
+          flags: --service-account=outline-manager@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
