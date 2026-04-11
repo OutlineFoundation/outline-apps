@@ -20,6 +20,8 @@ import {electronToChromium} from 'electron-to-chromium';
 // TODO(update-to-esm): we can only use node-fetch@2 now because the latest node-fetch requires ESM
 import fetch from 'node-fetch';
 
+import {config} from './package.json';
+
 // Resolve electron from server_manager's own node_modules, since the client may have a different
 // version hoisted to the root node_modules. This test runs from the build output directory, so
 // Node's default resolution would find the wrong (client) version.
@@ -29,8 +31,6 @@ const serverManagerRequire = createRequire(
 const {version: electronVersion} = serverManagerRequire('electron/package.json') as {
   version: string;
 };
-
-import {config} from './package.json';
 
 describe('Karma', () => {
   it('uses the correct Chromium version', async () => {
