@@ -46,7 +46,7 @@ jobs:
           cache: npm
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Ensure Commitizen Format
         uses: JulienKode/pull-request-name-linter-action@98794a8b815ec05560813c42e55fd8d32d3fd248

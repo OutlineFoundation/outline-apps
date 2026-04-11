@@ -43,7 +43,7 @@ jobs:
           cache-dependency-path: ./infrastructure/package.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Infrastructure Test
         run: npm run action infrastructure/test

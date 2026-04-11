@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: ./server_manager/package.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Manager Web Test
         run: npm run action server_manager/test
@@ -68,7 +68,7 @@ jobs:
           cache-dependency-path: ./server_manager/package.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Linux Manager
         run: npm run action server_manager/electron/build linux
@@ -96,7 +96,7 @@ jobs:
           cache-dependency-path: ./server_manager/package.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Windows Manager
         run: npm run action server_manager/electron/build windows
@@ -119,7 +119,7 @@ jobs:
           cache-dependency-path: ./server_manager/package.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build MacOS Manager
         run: npm run action server_manager/electron/build macos

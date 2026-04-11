@@ -65,4 +65,27 @@
   console.info('Requested bringToFront');
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).runGcpOauth = () => {
+  let isCancelled = false;
+  const rejectWrapper = {reject: (_error: Error) => {}};
+  const result = new Promise((_resolve, reject) => {
+    rejectWrapper.reject = reject;
+    reject(new Error('GCP OAuth is not supported in browser mode'));
+  });
+  return {
+    result,
+    isCancelled() {
+      return isCancelled;
+    },
+    cancel() {
+      isCancelled = true;
+      rejectWrapper.reject(new Error('Authentication cancelled'));
+    },
+  };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).redactSentryBreadcrumbUrl = undefined;
+
 import './main';

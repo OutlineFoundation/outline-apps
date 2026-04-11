@@ -19,8 +19,20 @@ const path = require('path');
 
 const {makeConfig} = require('./base.webpack.js');
 
-module.exports = makeConfig({
+const config = makeConfig({
   main: path.resolve(__dirname, './www/browser_main.ts'),
   target: 'web',
   defaultMode: 'development',
 });
+
+// Stub out @sentry/electron which is not available in browser context
+config.resolve.alias['@sentry/electron/renderer'] = path.resolve(
+  __dirname,
+  './www/sentry_stub.ts'
+);
+config.resolve.alias['@sentry/electron'] = path.resolve(
+  __dirname,
+  './www/sentry_stub.ts'
+);
+
+module.exports = config;

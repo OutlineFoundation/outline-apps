@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: ./package-lock.json
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm install
       
       - name: Get changed files
         id: changed-files

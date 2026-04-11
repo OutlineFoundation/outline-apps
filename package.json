@@ -16,7 +16,7 @@
     "storybook": "storybook dev -p 6006"
   },
   "engines": {
-    "node": "22"
+    "node": ">=22"
   },
   "private": true,
   "workspaces": [
