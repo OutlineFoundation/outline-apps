@@ -16,15 +16,19 @@
 // to the standard fetch API. The nginx reverse proxy handles the connection
 // to the Shadowbox management API over the VPC connector.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).fetchWithPin = (
+(window as any).fetchWithPin = async (
   request: HttpRequest,
   _fingerprint: string
-) => {
-  return fetch(request.url, {
+): Promise<HttpResponse> => {
+  const response = await fetch(request.url, {
     method: request.method,
     headers: request.headers,
     body: request.body,
   });
+  return {
+    status: response.status,
+    body: await response.text(),
+  };
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
