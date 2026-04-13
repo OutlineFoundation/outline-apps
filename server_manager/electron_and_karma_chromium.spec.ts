@@ -24,9 +24,19 @@ import fetch from 'node-fetch';
 // version hoisted to the root node_modules. This test runs from the build output directory, so
 // Node's default resolution would find the wrong (client) version.
 const serverManagerRequire = createRequire(
-  path.resolve(__dirname, '..', '..', '..', '..', 'server_manager', 'package.json')
+  path.resolve(
+    __dirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    'server_manager',
+    'package.json'
+  )
 );
-const {version: electronVersion} = serverManagerRequire('electron/package.json') as {
+const {version: electronVersion} = serverManagerRequire(
+  'electron/package.json'
+) as {
   version: string;
 };
 
