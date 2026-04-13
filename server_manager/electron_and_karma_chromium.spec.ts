@@ -12,35 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {createRequire} from 'module';
-import * as path from 'path';
-
 import {electronToChromium} from 'electron-to-chromium';
 // Since we aren't in the electron process, process.versions.electron isn't defined.
 // TODO(update-to-esm): we can only use node-fetch@2 now because the latest node-fetch requires ESM
 import fetch from 'node-fetch';
 
-// Resolve electron from server_manager's own node_modules, since the client may have a different
-// version hoisted to the root node_modules. This test runs from the build output directory, so
-// Node's default resolution would find the wrong (client) version.
-const serverManagerRequire = createRequire(
-  path.resolve(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    '..',
-    'server_manager',
-    'package.json'
-  )
-);
-const {version: electronVersion} = serverManagerRequire(
-  'electron/package.json'
-) as {
-  version: string;
-};
+import {config, devDependencies} from './package.json';
 
-import {config} from './package.json';
+// Strip any potential version range prefixes like '^' or '~'
+const electronVersion = devDependencies.electron.replace(/^[^\d]+/, '');
 
 describe('Karma', () => {
   it('uses the correct Chromium version', async () => {
