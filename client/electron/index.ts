@@ -21,7 +21,6 @@ import * as url from 'url';
 
 import * as net from '@outline/infrastructure/net';
 import * as Sentry from '@sentry/electron/main';
-import autoLaunch = require('auto-launch'); // eslint-disable-line @typescript-eslint/no-require-imports
 import {
   app,
   BrowserWindow,
@@ -58,7 +57,7 @@ declare const APP_VERSION: string;
 const debugMode = process.env.OUTLINE_DEBUG === 'true';
 
 const IS_LINUX = os.platform() === 'linux';
-const USE_MODERN_ROUTING = IS_LINUX && !process.env.APPIMAGE;
+const USE_MODERN_ROUTING = IS_LINUX;
 
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
@@ -311,15 +310,7 @@ function interceptShadowsocksLink(argv: string[]) {
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
-    if (IS_LINUX) {
-      if (process.env.APPIMAGE) {
-        const outlineAutoLauncher = new autoLaunch({
-          name: 'OutlineClient',
-          path: process.env.APPIMAGE,
-        });
-        await outlineAutoLauncher.enable();
-      }
-    } else {
+    if (!IS_LINUX) {
       app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
     }
   } catch (e) {
@@ -329,12 +320,7 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
 
 async function tearDownAutoLaunch() {
   try {
-    if (IS_LINUX) {
-      const outlineAutoLauncher = new autoLaunch({
-        name: 'OutlineClient',
-      });
-      await outlineAutoLauncher.disable();
-    } else {
+    if (!IS_LINUX) {
       app.setLoginItemSettings({openAtLogin: false});
     }
     await tunnelStore.clear();

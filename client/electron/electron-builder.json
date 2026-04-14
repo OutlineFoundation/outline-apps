@@ -45,12 +45,6 @@
     "maintainer": "Outline Foundation",
     "target": [
       {
-        "arch": [
-          "x64"
-        ],
-        "target": "AppImage"
-      },
-      {
         "arch": "x64",
         "target": "deb"
       }

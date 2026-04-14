@@ -37,7 +37,7 @@ interface EstablishVpnRequestJson {
 
 export async function establishVpn(tsRequest: StartRequestJson) {
   const goRequest: EstablishVpnRequestJson = {
-    // The following VPN configuration ensures that the new routing can co-exist with any legacy Outline routings (e.g. AppImage).
+    // The following VPN configuration ensures that the new routing can co-exist with any legacy Outline routings.
     vpn: {
       id: tsRequest.id,
 

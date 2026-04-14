@@ -331,19 +331,12 @@ async function installLinuxRoutingServices(): Promise<void> {
     },
   ];
 
-  // These Linux service files are located in a mounted folder of the AppImage, typically
-  // located at /tmp/.mount_Outlinxxxxxx/resources/. These files can only be accessed by
-  // the user who launched Outline.AppImage, so even root cannot access the files or folders.
-  // Therefore we have to copy these files to a normal temporary folder, and execute them
-  // as root.
-  //
-  // Also, we are copying individual files instead of the entire folder because they are in
+  // We are copying individual files instead of the entire folder because they are in
   // electron's "asar" archive (which is returned by getAppPath). Electron tries to inject
   // some logic to node's fs API and make sure the caller can access files in the archive.
   // However directories are not supported.
   //
   // References:
-  // - https://github.com/AppImage/AppImageKit/issues/146
   // - https://xwartz.gitbooks.io/electron-gitbook/content/en/tutorial/application-packaging.html
   const tmp = await fsextra.mkdtemp('/tmp/');
   const srcFolderPath = pathToEmbeddedOutlineService();
@@ -370,7 +363,7 @@ async function installLinuxRoutingServices(): Promise<void> {
   // potential security breach. Therefore we need to make sure the files are the ones provided
   // by us:
   //   1. `chattr +i`, set the immutable flag, the flag can only be cleared by root
-  //   2. `shasum -c`, check them against our checksums calculated from the scripts in AppImage
+  //   2. `shasum -c`, check them against our checksums calculated from the scripts at build time
   //   3. Run the installation script
   //   4. `chattr -i`, always clear the immutable flag, so they can be deleted later
   let command = `trap "/usr/bin/chattr -R -i ${tmp}" EXIT`;
