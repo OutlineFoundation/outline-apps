@@ -11,15 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-/* eslint-disable import/order */
-import '@babel/polyfill';
-import 'web-animations-js/web-animations-next-lite.min.js';
-import '@webcomponents/webcomponentsjs/webcomponents-bundle.js';
-import {setRootPath} from '@polymer/polymer/lib/utils/settings.js';
-setRootPath(
-  location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1)
-);
-
 import {Browser} from '@capacitor/browser';
 import {Capacitor} from '@capacitor/core';
 import type {PluginListenerHandle} from '@capacitor/core';

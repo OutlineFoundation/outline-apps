@@ -25,6 +25,7 @@ const __dirname = path.dirname(__filename);
 
 export default {
   entry: [
+    path.resolve(__dirname, 'src/polyfills.ts'),
     path.resolve(__dirname, '../web/style.css'),
     path.resolve(__dirname, 'src/index.ts'),
   ],
