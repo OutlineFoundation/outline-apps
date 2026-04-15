@@ -62,11 +62,6 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
 	}
-	// Forwards DNS packets through ppBase and closes the session after the first response.
-	ppForward, err := dnsintercept.NewDNSForwardPacketProxy(ppBase)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DNS redirect PacketProxy: %w", err)
-	}
 	// Returns a truncated response for DNS packets to force a retry over TCP.
 	ppTrunc, err := dnstruncate.NewPacketProxy()
 	if err != nil {
@@ -88,7 +83,7 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 		go func() {
 			if err := connectivity.CheckUDPConnectivity(pl); err == nil {
 				slog.Info("remote device UDP is healthy")
-				ppDNS.SetProxy(ppForward)
+				ppDNS.SetProxy(ppBase)
 			} else {
 				slog.Warn("remote device UDP is not healthy", "err", err)
 				ppDNS.SetProxy(ppTrunc)

@@ -13,14 +13,29 @@
 // limitations under the License.
 
 package dnsintercept
-
 import (
+	"context"
 	"errors"
 	"net"
 	"net/netip"
 
 	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/transport"
 )
+
+// NewDNSRedirectStreamDialer creates a StreamDialer to intercept and redirect TCP based DNS connections.
+// It intercepts all TCP connection for `resolverLinkLocalAddr:53` and redirects them to `resolverRemoteAddr` via the `base` StreamDialer.
+func NewDNSRedirectStreamDialer(base transport.StreamDialer, resolverLinkLocalAddr, resolverRemoteAddr netip.AddrPort) (transport.StreamDialer, error) {
+	if base == nil {
+		return nil, errors.New("base StreamDialer must be provided")
+	}
+	return transport.FuncStreamDialer(func(ctx context.Context, targetAddr string) (transport.StreamConn, error) {
+		if dst, err := netip.ParseAddrPort(targetAddr); err == nil && isEquivalentAddrPort(dst, resolverLinkLocalAddr) {
+			targetAddr = resolverRemoteAddr.String()
+		}
+		return base.DialStream(ctx, targetAddr)
+	}), nil
+}
 
 type dnsInterceptor struct {
 	baseProxy             network.PacketProxy
@@ -62,6 +77,7 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 }
 
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
+	// TODO(fortuna): create these sessions on demand, on first write.
 	baseSender, err := i.baseProxy.NewSession(resp)
 	if err != nil {
 		return nil, err
@@ -85,6 +101,8 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 }
 
 func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPort) (int, error) {
+	// TODO(fortuna): use something like s.getDNSSession().WriteTo() and s.getForwardSession().WriteTo()
+	// to create the session on demand.
 	if isEquivalentAddrPort(destination, s.resolverLinkLocalAddr) {
 		return s.dnsSender.WriteTo(p, s.resolverRemoteAddr)
 	}

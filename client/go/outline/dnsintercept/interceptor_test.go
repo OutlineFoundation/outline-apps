@@ -15,12 +15,92 @@
 package dnsintercept
 
 import (
+	"context"
+	"errors"
 	"net"
 	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/transport"
 )
+
+// ----- StreamDialer tests -----
+
+type lastAddrStreamDialer struct {
+	transport.StreamDialer
+	dialedAddr string
+}
+
+func (d *lastAddrStreamDialer) DialStream(ctx context.Context, addr string) (transport.StreamConn, error) {
+	d.dialedAddr = addr
+	return nil, errors.New("not used in test")
+}
+
+func TestWrapForwardStreamDialer(t *testing.T) {
+	sd := &lastAddrStreamDialer{}
+	resolverLinkLocalAddr := netip.MustParseAddrPort("192.0.2.1:53")
+	resolverRemoteAddr := netip.MustParseAddrPort("8.8.8.8:53")
+
+	_, err := NewDNSRedirectStreamDialer(nil, resolverLinkLocalAddr, resolverRemoteAddr)
+	require.Error(t, err)
+
+	dialer, err := NewDNSRedirectStreamDialer(sd, resolverLinkLocalAddr, resolverRemoteAddr)
+	require.NoError(t, err)
+
+	_, err = dialer.DialStream(context.TODO(), "192.0.2.1:53")
+	require.Error(t, err)
+	require.Equal(t, "8.8.8.8:53", sd.dialedAddr)
+
+	_, err = dialer.DialStream(context.TODO(), "198.51.100.1:443")
+	require.Error(t, err)
+	require.Equal(t, "198.51.100.1:443", sd.dialedAddr)
+}
+
+// ----- PacketProxy tests -----
+
+type packetProxyWithGivenRequestSender struct {
+	network.PacketProxy
+	req  *lastDestPacketRequestSender
+	resp network.PacketResponseReceiver
+}
+
+func (p *packetProxyWithGivenRequestSender) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
+	p.resp = resp
+	return p.req, nil
+}
+
+type lastDestPacketRequestSender struct {
+	lastDst netip.AddrPort
+	closed  bool
+}
+
+func (s *lastDestPacketRequestSender) WriteTo(p []byte, destination netip.AddrPort) (int, error) {
+	s.lastDst = destination
+	return len(p), nil
+}
+
+func (s *lastDestPacketRequestSender) Close() error {
+	s.closed = true
+	return nil
+}
+
+type lastSourcePacketResponseReceiver struct {
+	lastSrc    net.Addr
+	lastPacket []byte
+}
+
+func (r *lastSourcePacketResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
+	r.lastSrc = source
+	r.lastPacket = make([]byte, len(p))
+	copy(r.lastPacket, p)
+	return len(p), nil
+}
+
+func (r *lastSourcePacketResponseReceiver) Close() error {
+	return nil
+}
 
 func TestDNSInterceptor(t *testing.T) {
 	basePP := &packetProxyWithGivenRequestSender{req: &lastDestPacketRequestSender{}}

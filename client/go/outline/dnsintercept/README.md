@@ -70,20 +70,18 @@ The two modes are wired together by the caller (`configregistry.wrapTransportPai
 ```mermaid
 flowchart TD
     OS["OS (UDP traffic)"] --> ppMain
-    ppMain["DNSInterceptor<br/>(Address remapping)"]
+    ppMain["DNSInterceptor<br/>(Address remapping and lazy dispatching)"]
     ppMain -->|Non-DNS| ppBase["base PacketProxy<br/>(transport)"]
     ppMain -->|DNS| ppDNS["DelegatePacketProxy<br/>(DNS traffic only)"]
 
     check["UDP connectivity check<br/>(on network change)"] -->|pass| ppDNS
     check -->|fail| ppDNS
 
-    ppDNS -->|UDP available| ppForward["DNSForwardPacketProxy<br/>(Session lifecycle)"]
+    ppDNS -->|UDP available| ppBase
     ppDNS -->|UDP blocked| ppTrunc["dnstruncate.PacketProxy<br/>(TC response locally)"]
-
-    ppForward --> ppBase
 ```
 
-The `DNSInterceptor` acts as the primary dispatcher. It routes non-DNS traffic directly to the transport and DNS traffic to a dedicated delegate proxy. This delegate proxy switches between forwarding and truncation based on the result of a periodic UDP connectivity check.
+The `DNSInterceptor` acts as the primary dispatcher. It routes non-DNS traffic directly to the transport and DNS traffic to a dedicated delegate proxy. This delegate proxy switches between forwarding and truncation based on the result of a periodic UDP connectivity check. Transport sessions are opened lazily upon receiving the first packet, ensuring resources are only used when needed.
 
 
 ### Forward mode (UDP available)
@@ -94,22 +92,18 @@ DNS queries are forwarded over UDP to a public resolver (Cloudflare, Quad9, or O
 sequenceDiagram
     participant OS
     participant Interceptor as DNSInterceptor
-    participant Forward as DNSForwardPacketProxy
     participant Transport
     participant Resolver as Public DNS resolver
 
     OS->>Interceptor: UDP query to 169.254.113.53:53
-    Interceptor->>Forward: UDP query to 1.1.1.1:53 (remapped)
-    Forward->>Transport: UDP query to 1.1.1.1:53
+    Interceptor->>Transport: UDP query to 1.1.1.1:53 (remapped)
     Transport->>Resolver: query
     Resolver->>Transport: response
-    Transport->>Forward: UDP response from 1.1.1.1:53
-    Forward->>Interceptor: UDP response from 1.1.1.1:53
+    Transport->>Interceptor: UDP response from 1.1.1.1:53
     Interceptor->>OS: response from 169.254.113.53:53 (remapped back)
-    Note over Forward: session closed immediately after response
 ```
 
-Each DNS session (one query/response pair) closes the transport session as soon as the first response is delivered. This keeps resource usage proportional to in-flight queries rather than to recent query rate.
+Each DNS session uses a standard transport session. The transport handles the lifecycle, usually timing out after standard UDP idle timeouts.
 
 ### Truncate mode (UDP unavailable)
 
@@ -138,7 +132,6 @@ In truncate mode, no transport session is opened for DNS at all — the truncate
 
 | File | Description |
 |------|-------------|
-| `interceptor.go` | `NewDNSInterceptor` — Dispatches DNS traffic and handles address translation |
-| `forward.go` | `NewDNSForwardPacketProxy` — Closes UDP sessions after the first response (ideal for DNS) |
-| `forward.go` | `NewDNSRedirectStreamDialer` — Redirects TCP DNS to a real resolver |
+| `interceptor.go` | `NewDNSInterceptor` — Dispatches DNS traffic, handles address translation, and creates sessions lazily |
+| `interceptor.go` | `NewDNSRedirectStreamDialer` — Redirects TCP DNS to a real resolver |
 | `helpers.go` | `isEquivalentAddrPort` — Address comparison ignoring IPv4-in-IPv6 mapping |
