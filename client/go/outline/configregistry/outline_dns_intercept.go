@@ -24,6 +24,7 @@ import (
 	"localhost/client/go/outline/dnsintercept"
 
 	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/dnstruncate"
 	"golang.getoutline.org/sdk/transport"
 )
 
@@ -61,29 +62,36 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
 	}
-	// Forwards everything including DNS. For DNS it translates between the link-local and remote addresses for the DNS resolver.
-	ppForward, err := dnsintercept.NewDNSRedirectPacketProxy(ppBase, linkLocalDNS, remoteDNS)
+	// Forwards DNS packets through ppBase and closes the session after the first response.
+	ppForward, err := dnsintercept.NewDNSForwardPacketProxy(ppBase)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS redirect PacketProxy: %w", err)
 	}
-	// Forwards everything except DNS. For DNS it returns a truncated response.
-	ppTrunc, err := dnsintercept.NewDNSTruncatePacketProxy(ppBase, linkLocalDNS)
+	// Returns a truncated response for DNS packets to force a retry over TCP.
+	ppTrunc, err := dnstruncate.NewPacketProxy()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create always-truncate DNS PacketProxy: %w", err)
 	}
-	ppMain, err := network.NewDelegatePacketProxy(ppTrunc)
+	// Delegate for DNS traffic: selects between forwarding and truncation based on connectivity.
+	ppDNS, err := network.NewDelegatePacketProxy(ppTrunc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create indirect PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create indirect DNS PacketProxy: %w", err)
+	}
+	// Interceptor: Forwards everything except DNS to ppBase. DNS is redirected to ppDNS and
+	// translated between the link-local and remote addresses.
+	ppMain, err := dnsintercept.NewDNSInterceptor(ppBase, ppDNS, linkLocalDNS, remoteDNS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DNS interceptor PacketProxy: %w", err)
 	}
 
 	onNetworkChanged := func() {
 		go func() {
 			if err := connectivity.CheckUDPConnectivity(pl); err == nil {
 				slog.Info("remote device UDP is healthy")
-				ppMain.SetProxy(ppForward)
+				ppDNS.SetProxy(ppForward)
 			} else {
 				slog.Warn("remote device UDP is not healthy", "err", err)
-				ppMain.SetProxy(ppTrunc)
+				ppDNS.SetProxy(ppTrunc)
 			}
 		}()
 	}

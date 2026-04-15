@@ -40,13 +40,13 @@ func (d *lastAddrStreamDialer) DialStream(ctx context.Context, addr string) (tra
 
 func TestWrapForwardStreamDialer(t *testing.T) {
 	sd := &lastAddrStreamDialer{}
-	local := netip.MustParseAddrPort("192.0.2.1:53")
-	resolver := netip.MustParseAddrPort("8.8.8.8:53")
+	resolverLinkLocalAddr := netip.MustParseAddrPort("192.0.2.1:53")
+	resolverRemoteAddr := netip.MustParseAddrPort("8.8.8.8:53")
 
-	_, err := NewDNSRedirectStreamDialer(nil, local, resolver)
+	_, err := NewDNSRedirectStreamDialer(nil, resolverLinkLocalAddr, resolverRemoteAddr)
 	require.Error(t, err)
 
-	dialer, err := NewDNSRedirectStreamDialer(sd, local, resolver)
+	dialer, err := NewDNSRedirectStreamDialer(sd, resolverLinkLocalAddr, resolverRemoteAddr)
 	require.NoError(t, err)
 
 	_, err = dialer.DialStream(context.TODO(), "192.0.2.1:53")
@@ -106,73 +106,37 @@ func TestWrapForwardPacketProxy(t *testing.T) {
 	pp := &packetProxyWithGivenRequestSender{req: &lastDestPacketRequestSender{}}
 	resp := &lastSourcePacketResponseReceiver{}
 
-	local := netip.MustParseAddrPort("192.0.2.2:53")
-	resolver := netip.MustParseAddrPort("8.8.4.4:53")
-	resolverUDPAddr := net.UDPAddrFromAddrPort(resolver)
-	nonResolver := netip.MustParseAddrPort("203.0.113.10:123")
-	nonResolverUDPAddr := net.UDPAddrFromAddrPort(nonResolver)
+	resolverLinkLocalAddr := netip.MustParseAddrPort("192.0.2.2:53")
+	resolverRemoteAddr := netip.MustParseAddrPort("8.8.4.4:53")
+	resolverRemoteUDPAddr := net.UDPAddrFromAddrPort(resolverRemoteAddr)
 
-	_, err := NewDNSRedirectPacketProxy(nil, local, resolver)
+	_, err := NewDNSForwardPacketProxy(nil)
 	require.Error(t, err)
 
-	fpp, err := NewDNSRedirectPacketProxy(pp, local, resolver)
+	fpp, err := NewDNSForwardPacketProxy(pp)
 	require.NoError(t, err)
 
-	req, err := fpp.NewSession(resp)
+	// We use an interceptor to handle the remapping
+	interceptor, err := NewDNSInterceptor(pp, fpp, resolverLinkLocalAddr, resolverRemoteAddr)
 	require.NoError(t, err)
 
-	n, err := req.WriteTo([]byte("request"), local)
+	req, err := interceptor.NewSession(resp)
+	require.NoError(t, err)
+
+	n, err := req.WriteTo([]byte("request"), resolverLinkLocalAddr)
 	require.NoError(t, err)
 	require.Equal(t, 7, n)
-	require.Equal(t, resolver, pp.req.lastDst)
+	require.Equal(t, resolverRemoteAddr, pp.req.lastDst)
 
-	n, err = req.WriteTo([]byte("request"), nonResolver)
-	require.NoError(t, err)
-	require.Equal(t, 7, n)
-	require.Equal(t, nonResolver, pp.req.lastDst)
-
-	require.NotNil(t, pp.resp)
-	n, err = pp.resp.WriteFrom([]byte("response"), resolverUDPAddr)
+	require.NotNil(t, fpp.(*dnsForwardPacketProxy).baseProxy.(*packetProxyWithGivenRequestSender).resp)
+	fppResp := fpp.(*dnsForwardPacketProxy).baseProxy.(*packetProxyWithGivenRequestSender).resp
+	n, err = fppResp.WriteFrom([]byte("response"), resolverRemoteUDPAddr)
 	require.NoError(t, err)
 	require.Equal(t, 8, n)
-	require.Equal(t, net.UDPAddrFromAddrPort(local), resp.lastSrc)
+	require.Equal(t, net.UDPAddrFromAddrPort(resolverLinkLocalAddr), resp.lastSrc)
 
-	// After the first DNS response, the underlying session must be closed immediately
-	// to free the transport session instead of waiting for the write-idle timeout.
-	require.True(t, pp.req.closed, "session must be closed after first DNS response")
-
-	n, err = pp.resp.WriteFrom([]byte("response"), nonResolverUDPAddr)
-	require.NoError(t, err)
-	require.Equal(t, 8, n)
-	require.Equal(t, nonResolverUDPAddr, resp.lastSrc)
-
-	// Explicit Close must be safe even though the session was already closed.
-	require.NoError(t, req.Close())
-}
-
-// TestWrapForwardPacketProxy_NonDNSResponseDoesNotClose verifies that a non-DNS
-// response (not from the resolver) does not trigger an early session close.
-func TestWrapForwardPacketProxy_NonDNSResponseDoesNotClose(t *testing.T) {
-	pp := &packetProxyWithGivenRequestSender{req: &lastDestPacketRequestSender{}}
-	resp := &lastSourcePacketResponseReceiver{}
-
-	local := netip.MustParseAddrPort("192.0.2.2:53")
-	resolver := netip.MustParseAddrPort("8.8.4.4:53")
-	nonResolver := netip.MustParseAddrPort("203.0.113.10:123")
-	nonResolverUDPAddr := net.UDPAddrFromAddrPort(nonResolver)
-
-	fpp, err := NewDNSRedirectPacketProxy(pp, local, resolver)
-	require.NoError(t, err)
-
-	req, err := fpp.NewSession(resp)
-	require.NoError(t, err)
-
-	n, err := pp.resp.WriteFrom([]byte("response"), nonResolverUDPAddr)
-	require.NoError(t, err)
-	require.Equal(t, 8, n)
-
-	require.False(t, pp.req.closed, "session must not be closed for non-DNS responses")
+	// After the first response, the underlying session must be closed immediately.
+	require.True(t, pp.req.closed, "session must be closed after first response")
 
 	require.NoError(t, req.Close())
-	require.True(t, pp.req.closed)
 }
