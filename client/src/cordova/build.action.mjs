@@ -141,6 +141,7 @@ async function appleDebug(platform) {
     'build',
     '-configuration',
     'Debug',
+    '-allowProvisioningUpdates',
     'CODE_SIGN_IDENTITY=""',
     'CODE_SIGNING_ALLOWED="NO"'
   );
@@ -158,6 +159,7 @@ async function appleRelease(platform) {
     'archive',
     '-configuration',
     'Release',
+    '-allowProvisioningUpdates',
     ...teamIdArgs
   );
 }
