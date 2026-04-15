@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package dnsintercept
+
 import (
 	"context"
 	"errors"
@@ -22,6 +23,10 @@ import (
 	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
 )
+
+func isEquivalentAddrPort(addr1, addr2 netip.AddrPort) bool {
+	return addr1.Addr().Unmap() == addr2.Addr().Unmap() && addr1.Port() == addr2.Port()
+}
 
 // NewDNSRedirectStreamDialer creates a StreamDialer to intercept and redirect TCP based DNS connections.
 // It intercepts all TCP connection for `resolverLinkLocalAddr:53` and redirects them to `resolverRemoteAddr` via the `base` StreamDialer.
