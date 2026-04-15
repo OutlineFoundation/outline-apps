@@ -1,30 +1,52 @@
-# Welcome to the Outline Monorepo!
+# Outline Apps Monorepo
 
-This document provides a guide for AI and human agents working with the Outline codebase.
+Outline is an open-source censorship circumvention ecosystem initially developed by Jigsaw, and owned by the Outline Foundation. 
 
 ## Repository Structure
 
-The Outline monorepo is organized into three main components:
+Three main components:
 
-*   `/client`: The Outline Client application, available on all major platforms. See [`client/AGENTS.md`](client/AGENTS.md).
+*   `/client`: The Outline Client application, available on all major platforms. See @client/AGENTS.md.
 *   `/server_manager`: A graphical application to create and manage Outline Servers. See [`server_manager/AGENTS.md`](server_manager/AGENTS.md).
 *   `/infrastructure`: The build system and shared TypeScript utilities. See [`infrastructure/AGENTS.md`](infrastructure/AGENTS.md).
 
-## The `npm run action` Command
-
-The primary entry point for all development tasks is `npm run action <path>`, which resolves to `.action.sh` or `.action.mjs` files in the repo. Run `npm run action list` to see all available actions. Pass flags after `--`:
+Clean up and install dependencies to get started:
 
 ```sh
-npm run action client/src/cordova/setup macos -- --buildMode=release
+npm run clean && npm ci
 ```
 
-### Common Actions
+## The `npm run action` Command
 
-*   `npm run action list`: Lists all available actions.
-*   `npm run action client/web/start`: Starts a dev server for the shared web UI.
-*   `npm run action server_manager/www/start`: Starts a dev server for the Manager UI.
-*   `npm run action <component>/test`: Runs tests (e.g. `npm run action client/web/test`).
-*   `npm run action <component>/build`: Builds a component (e.g. `npm run action client/electron/build linux`).
+The primary entry point for all development tasks is `npm run action <path>`, which resolves to `.action.sh` or `.action.mjs` files in the repo.
+
+Examples:
+
+```sh
+# Lists all available actions
+npm run action
+
+# Build the Cordova client (android, ios, macos)
+npm run action client/src/cordova/build android
+
+# Build the Electron clients (linux, windows)
+npm run action client/electron/build linux
+
+# Build the macOS Manager:
+npm run action server_manager/electron/build macos
+
+# Starts a dev server for the shared client web UI
+npm run action client/web/start
+
+# Starts a dev server for the shared manager web UI
+npm run action server_manager/www/start
+
+# Runs web client tests
+npm run action client/web/test
+
+# Run manager tests
+npm run action server_manager/test
+```
 
 ### Other useful commands
 
@@ -39,12 +61,10 @@ npm run action client/src/cordova/setup macos -- --buildMode=release
 
 ## Requirements
 
-| Component | Version |
-|-----------|---------|
-| Node.js   | 22 — run `nvm use` if you have nvm |
-| Go        | 1.22+   |
+* Node.js. See [.nvmrc](.nvmrc) for version.
+* Go. See [go.mod](go.mod) for version.
 
-Platform-specific requirements (Android SDK, Xcode, zig for cross-compilation) are documented in the relevant subdirectory AGENTS.md files.
+Platform-specific requirements (Android SDK, Xcode, zig for cross-compilation) are documented in the relevant subdirectory `AGENTS.md` files.
 
 ## Common Concepts
 
