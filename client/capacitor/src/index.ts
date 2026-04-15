@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+/* eslint-disable import/order */
 import '@babel/polyfill';
 import 'web-animations-js/web-animations-next-lite.min.js';
 import '@webcomponents/webcomponentsjs/webcomponents-bundle.js';
@@ -25,6 +25,7 @@ import {Capacitor} from '@capacitor/core';
 import type {PluginListenerHandle} from '@capacitor/core';
 import * as Sentry from '@sentry/browser';
 
+import {CapacitorBrowserMethodChannel} from './browser_method_channel';
 import {AbstractClipboard} from '../../web/app/clipboard';
 import type {EnvironmentVariables} from '../../web/app/environment';
 import {main} from '../../web/app/main';
@@ -43,7 +44,6 @@ import * as interceptors from '../../web/app/url_interceptor';
 import {NoOpVpnInstaller, type VpnInstaller} from '../../web/app/vpn_installer';
 import {SentryErrorReporter, type Tags} from '../../web/shared/error_reporter';
 import {CapacitorPluginOutline} from '../plugins/capacitor-plugin-outline/src';
-import {CapacitorBrowserMethodChannel} from './browser_method_channel';
 
 const hasDeviceSupport = Capacitor.isNativePlatform();
 

@@ -6,6 +6,7 @@
     "sourceType": "module",
     "project": [
       "./client/tsconfig.json",
+      "./client/capacitor/tsconfig.json",
       "./infrastructure/tsconfig.json",
       "./server_manager/tsconfig.json"
     ]
@@ -151,7 +152,10 @@
         "server_manager/electron_main.webpack.mjs",
         "server_manager/electron_preload.webpack.mjs",
         ".prettierrc.js",
-        "client/web/karma.conf.js"
+        "client/web/karma.conf.js",
+        "client/capacitor/build.action.mjs",
+        "client/capacitor/start.action.mjs",
+        "client/capacitor/webpack.config.js"
       ],
       "extends": [
         "plugin:@typescript-eslint/disable-type-checked"
