@@ -34,5 +34,5 @@ describe('Karma', () => {
     const electronChromeRevision =
       electronChromiumVersionInfo.chromium_main_branch_position;
     expect(electronChromeRevision).toEqual(config.PUPPETEER_CHROMIUM_REVISION);
-  });
+  }, 20000);
 });

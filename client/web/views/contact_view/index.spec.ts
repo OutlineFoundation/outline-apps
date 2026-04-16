@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import {ListItemBase} from '@material/mwc-list/mwc-list-item-base';
-import {Select} from '@material/mwc-select';
+import type {MdFilledSelect} from '@material/web/all.js';
 
 import {fixture, html, nextFrame, oneEvent} from '@open-wc/testing';
 
@@ -42,6 +41,7 @@ describe('ContactView', () => {
         .errorReporter=${mockErrorReporter}
       ></contact-view>
     `);
+    await nextFrame();
   });
 
   it('is defined', async () => {
@@ -49,8 +49,9 @@ describe('ContactView', () => {
   });
 
   it('hides issue selector by default', async () => {
-    const issueSelector = el.shadowRoot?.querySelector('mwc-select');
-    expect(issueSelector?.hasAttribute('hidden')).toBeTrue();
+    const issueSelector = el.shadowRoot?.querySelector('md-filled-select');
+    expect(issueSelector).not.toBeNull();
+    expect(issueSelector!.hasAttribute('hidden')).toBeTrue();
   });
 
   it('hides support form by default', async () => {
@@ -84,7 +85,7 @@ describe('ContactView', () => {
   });
 
   describe('when the user selects that they have no open tickets', () => {
-    let issueSelector: Select;
+    let issueSelector: MdFilledSelect;
 
     beforeEach(async () => {
       const radioButton = el.shadowRoot!.querySelectorAll(
@@ -93,7 +94,7 @@ describe('ContactView', () => {
       radioButton.click();
       await nextFrame();
 
-      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
+      issueSelector = el.shadowRoot!.querySelector('md-filled-select')!;
     });
 
     it('shows the issue selector', () => {
@@ -101,9 +102,9 @@ describe('ContactView', () => {
     });
 
     it('shows the correct items in the selector', () => {
-      const issueItemEls = issueSelector.querySelectorAll('mwc-list-item');
+      const issueItemEls = issueSelector.querySelectorAll('md-select-option');
       const issueTypes = Array.from(issueItemEls).map(
-        (el: ListItemBase) => el.value
+        el => (el as {value: string}).value
       );
       expect(issueTypes).toEqual([
         'no-server',
@@ -117,10 +118,10 @@ describe('ContactView', () => {
   });
 
   describe('when the user selects issue', () => {
-    let issueSelector: Select;
+    let issueSelector: MdFilledSelect;
 
     beforeEach(async () => {
-      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
+      issueSelector = el.shadowRoot!.querySelector('md-filled-select')!;
       const radioButton = el.shadowRoot!.querySelectorAll(
         'mwc-formfield mwc-radio'
       )[1] as HTMLElement;
@@ -153,10 +154,10 @@ describe('ContactView', () => {
 
     for (const {testcaseName, value, expectedMsg} of conditions) {
       it(`'${testcaseName}' shows exit message`, async () => {
-        const issue: HTMLElement = issueSelector.querySelector(
-          `mwc-list-item[value="${value}"]`
-        )!;
-        issue.click();
+        // `ContactView` listens for `change` on the `<md-filled-select>`.
+        // Setting `value` + dispatching the event triggers the handler.
+        issueSelector.value = value;
+        issueSelector.dispatchEvent(new Event('change'));
         await nextFrame();
 
         const exitCard = el.shadowRoot!.querySelector('.exit')!;
@@ -166,10 +167,8 @@ describe('ContactView', () => {
 
     describe('"General feedback & suggestions"', () => {
       beforeEach(async () => {
-        const issue: HTMLElement = issueSelector.querySelector(
-          'mwc-list-item[value="general"]'
-        )!;
-        issue.click();
+        issueSelector.value = 'general';
+        issueSelector.dispatchEvent(new Event('change'));
         await nextFrame();
       });
 

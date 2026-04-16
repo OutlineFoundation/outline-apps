@@ -14,18 +14,15 @@
   limitations under the License.
 */
 
-import 'element-internals-polyfill';
 import '@material/web/all.js';
-import '@polymer/polymer/polymer-legacy.js';
-import '@polymer/polymer/lib/legacy/polymer.dom.js';
 import '@polymer/app-layout/app-drawer/app-drawer.js';
-import '@polymer/app-layout/app-header/app-header.js';
 import '@polymer/app-layout/app-header-layout/app-header-layout.js';
+import '@polymer/app-layout/app-header/app-header.js';
 import '@polymer/app-layout/app-toolbar/app-toolbar.js';
 import '@polymer/app-route/app-location.js';
 import '@polymer/app-route/app-route.js';
-import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-icons/communication-icons.js';
+import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/paper-button/paper-button.js';
 import '@polymer/paper-card/paper-card.js';
@@ -34,10 +31,13 @@ import '@polymer/paper-dropdown-menu/paper-dropdown-menu.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
 import '@polymer/paper-input/paper-input.js';
 import '@polymer/paper-input/paper-textarea.js';
-import '@polymer/paper-item/paper-item.js';
 import '@polymer/paper-item/paper-icon-item.js';
+import '@polymer/paper-item/paper-item.js';
 import '@polymer/paper-listbox/paper-listbox.js';
 import '@polymer/paper-toast/paper-toast.js';
+import '@polymer/polymer/lib/legacy/polymer.dom.js';
+import '@polymer/polymer/polymer-legacy.js';
+import 'element-internals-polyfill';
 
 // TODO(daniellacosse): figure out how to import this without disabling the rule
 // eslint-disable-next-line n/no-missing-import
@@ -66,6 +66,8 @@ import '../views/root_view/root_navigation';
 import '../views/appearance_view';
 // eslint-disable-next-line n/no-missing-import
 import * as i18n from '@outline/infrastructure/i18n';
+// eslint-disable-next-line n/no-missing-import
+import {isCapacitorPlatform} from '@outline/infrastructure/platforms';
 import {AppLocalizeBehavior} from '@polymer/app-localize-behavior/app-localize-behavior.js';
 import {PaperMenuButton} from '@polymer/paper-menu-button/paper-menu-button.js';
 import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
@@ -607,8 +609,11 @@ export class AppRoot extends mixinBehaviors(
 
   ready() {
     super.ready();
-    this.setLanguage(this.language);
+    if (isCapacitorPlatform()) {
+      this.rootPath = './';
+    }
 
+    this.setLanguage(this.language);
     // Workaround for paper-behaviors' craptastic keyboard focus detection:
     // https://github.com/PolymerElements/paper-behaviors/issues/80
     // Monkeypatch the faulty Polymer.IronButtonStateImpl._detectKeyboardFocus implementation
