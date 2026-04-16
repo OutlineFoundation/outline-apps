@@ -40,13 +40,16 @@ const isLinux = window.electron.os.platform === 'linux';
 const isOsSupported = isWindows || isLinux;
 
 const interceptor = new UrlInterceptor();
-window.electron.methodChannel.on('add-server', (_: Event, url: string) => {
-  interceptor.executeListeners(url);
-});
+window.electron.methodChannel.on(
+  'add-server',
+  (_: Electron.IpcRendererEvent, url: string) => {
+    interceptor.executeListeners(url);
+  }
+);
 
 window.electron.methodChannel.on(
   'localization-request',
-  (_: Event, localizationKeys: string[]) => {
+  (_: Electron.IpcRendererEvent, localizationKeys: string[]) => {
     const localize = getLocalizationFunction();
     if (!localize) {
       console.error('Localization function not available.');
@@ -109,19 +112,22 @@ class ElectronErrorReporter implements OutlineErrorReporter {
   constructor() {
     // parameters are initialized in main process
     Sentry.init({
-      integrations: getSentryBrowserIntegrations,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      integrations: (integrations: any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        getSentryBrowserIntegrations(integrations) as any,
     });
   }
 
-  report(
-    userFeedback: string,
+  sendFeedback(
+    message: string,
     feedbackCategory: string,
     userEmail?: string,
     tags?: Tags
   ): Promise<void> {
-    Sentry.captureEvent({
-      message: userFeedback,
-      user: {email: userEmail},
+    Sentry.captureFeedback({
+      message: message,
+      email: userEmail,
       tags: {...tags, category: feedbackCategory},
     });
     return Promise.resolve();
@@ -156,4 +162,4 @@ main({
   getUpdater: () => new ElectronUpdater(),
   getVpnServiceInstaller: () => new ElectronVpnInstaller(),
   quitApplication: () => window.electron.methodChannel.send('quit-app'),
-});
+}).catch(console.error);

@@ -145,6 +145,12 @@ function setupWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      // Before Electron 20, renderers that specified a preload script defaulted to being unsandboxed.
+      // This meant that by default, preload scripts had access to Node.js.
+      // Beginning in Electron 20, renderers are sandboxed by default.
+      // https://www.electronjs.org/docs/latest/breaking-changes#default-changed-renderers-without-nodeintegration-true-are-sandboxed-by-default
+      // TODO: Move all Node.js-dependent logic to the main process and enable sandboxing.
+      sandbox: false,
       preload: path.join(__dirname, 'preload.js'),
     },
   });
@@ -224,19 +230,24 @@ function setupWindow(): void {
   // The client is a single page app - loading any other page means the
   // user clicked on one of the Privacy, Terms, etc., links. These should
   // open in the user's browser.
-  mainWindow.webContents.on('will-navigate', (event: Event, url: string) => {
-    try {
-      const parsed: URL = new URL(url);
-      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-        shell.openExternal(url);
-      } else {
-        console.warn(`Refusing to open URL with protocol "${parsed.protocol}"`);
+  mainWindow.webContents.on(
+    'will-navigate',
+    (event: Electron.Event, url: string) => {
+      try {
+        const parsed: URL = new URL(url);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          shell.openExternal(url);
+        } else {
+          console.warn(
+            `Refusing to open URL with protocol "${parsed.protocol}"`
+          );
+        }
+      } catch (e) {
+        console.warn(`Could not parse URL ${url}:`, e);
       }
-    } catch (e) {
-      console.warn(`Could not parse URL ${url}:`, e);
+      event.preventDefault();
     }
-    event.preventDefault();
-  });
+  );
 }
 
 function updateTray(status: TunnelStatus) {

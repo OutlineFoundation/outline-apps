@@ -232,12 +232,11 @@ export class OutlineContactUsDialog
 
     const {description, email, ...tags} = this.formValues as FormValues;
     try {
-      Sentry.captureEvent({
+      Sentry.captureFeedback({
         message: description,
-        user: {email},
+        email: email,
         tags: {
-          category: this.selectedIssueType?.toString() ?? 'unknown',
-          isFeedback: true,
+          category: this.selectedIssueType?.toString(),
           formVersion: 2,
           ...tags,
         },

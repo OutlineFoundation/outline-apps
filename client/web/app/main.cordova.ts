@@ -58,12 +58,12 @@ class CordovaErrorReporter extends SentryErrorReporter {
     pluginExec<void>('initializeErrorReporting', dsn).catch(console.error);
   }
 
-  async report(
-    userFeedback: string,
+  async sendFeedback(
+    message: string,
     feedbackCategory: string,
     userEmail?: string
   ): Promise<void> {
-    await super.report(userFeedback, feedbackCategory, userEmail);
+    await super.sendFeedback(message, feedbackCategory, userEmail);
     // Sends previously captured logs and events to the error reporting framework.
     // Associates the report to the provided unique identifier.
     await pluginExec<void>('reportEvents', Sentry.lastEventId() || '');
