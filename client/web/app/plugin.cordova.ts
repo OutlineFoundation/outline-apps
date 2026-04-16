@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/// <reference types='cordova'/>
+
 import {deserializeError} from '../model/platform_error';
 
 export const OUTLINE_PLUGIN_NAME = 'OutlinePlugin';
@@ -21,8 +23,38 @@ export async function pluginExec<T>(
   cmd: string,
   ...args: unknown[]
 ): Promise<T> {
+  if (typeof cordova === 'undefined' || typeof cordova.exec !== 'function') {
+    throw deserializeError(
+      new Error('Cordova is not available on this platform')
+    );
+  }
+
   return new Promise<T>((resolve, reject) => {
     const wrappedReject = (e: unknown) => reject(deserializeError(e));
     cordova.exec(resolve, wrappedReject, OUTLINE_PLUGIN_NAME, cmd, args);
   });
+}
+
+export function pluginRegisterListener<TPayload = unknown>(
+  eventName: string,
+  listener: (payload: TPayload) => void,
+  onError?: (err: unknown) => void
+): void {
+  if (typeof cordova === 'undefined' || typeof cordova.exec !== 'function') {
+    const error = new Error('Cordova is not available on this platform');
+    if (onError) {
+      onError(deserializeError(error));
+    } else {
+      console.warn(error.message);
+    }
+    return;
+  }
+
+  cordova.exec(
+    listener,
+    onError ? (err: unknown) => onError(deserializeError(err)) : console.warn,
+    OUTLINE_PLUGIN_NAME,
+    eventName,
+    []
+  );
 }

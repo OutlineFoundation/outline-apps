@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import capacitorConfig from './webpack_capacitor.mjs';
 import cordovaConfig from './webpack_cordova.mjs';
 import electronConfig from './webpack_electron.mjs';
 import {getWebpackBuildMode} from '../build/get_webpack_build_mode.mjs';
@@ -30,6 +31,11 @@ export const getBrowserWebpackConfig = (platform, buildMode) => {
     case 'linux':
     case 'windows':
       webpackConfig = electronConfig;
+      break;
+    case 'capacitor-browser':
+    case 'capacitor-ios':
+    case 'capacitor-android':
+      webpackConfig = capacitorConfig;
       break;
     case 'android':
     case 'browser':
