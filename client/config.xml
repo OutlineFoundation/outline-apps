@@ -72,7 +72,7 @@
 
     <!-- iOS -->
     <platform name="ios">
-        <preference name="deployment-target" value="11.0" />
+        <preference name="deployment-target" value="13.1" />
         <preference name="scheme" value="app" />
         <preference name="hostname" value="localhost" />
         <preference name="DisallowOverscroll" value="true" />
