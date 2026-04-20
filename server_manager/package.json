@@ -96,7 +96,7 @@
     "@types/semver": "^5.5.0",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.8.1",
-    "electron": "19.1.9",
+    "electron": "35.7.5",
     "electron-builder": "^24.9.1",
     "electron-notarize": "^1.2.1",
     "electron-to-chromium": "^1.4.328",
