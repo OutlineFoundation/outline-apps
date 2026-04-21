@@ -3,6 +3,12 @@
   "compilerOptions": {
     "lib": ["es2022", "dom", "dom.iterable"]
   },
-  "include": ["src", "plugins/capacitor-plugin-outline/src", "webpack.config.js"],
-  "exclude": ["node_modules", "www", "*.cjs", "*.mjs"]
+  "include": [
+    "src",
+    "plugins/capacitor-plugin-outline/src",
+    "webpack.config.js",
+    "build.action.mjs",
+    "start.action.mjs"
+  ],
+  "exclude": ["node_modules", "www", "*.cjs"]
 }
