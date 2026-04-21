@@ -22,6 +22,7 @@ import (
 
 	"localhost/client/go/outline/connectivity"
 	"localhost/client/go/outline/dnsintercept"
+
 	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
 )
@@ -50,7 +51,7 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	remoteDNS := outlineDNSResolvers[rand.IntN(len(outlineDNSResolvers))]
 
 	// Intercept DNS for StreamDialer
-	sdForward, err := dnsintercept.WrapForwardStreamDialer(transport.FuncStreamDialer(sd.Dial), linkLocalDNS, remoteDNS)
+	sdForward, err := dnsintercept.NewDNSRedirectStreamDialer(transport.FuncStreamDialer(sd.Dial), linkLocalDNS, remoteDNS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS redirect StreamDialer: %w", err)
 	}
@@ -60,11 +61,13 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
 	}
-	ppForward, err := dnsintercept.WrapForwardPacketProxy(ppBase, linkLocalDNS, remoteDNS)
+	// Forwards everything including DNS. For DNS it translates between the link-local and remote addresses for the DNS resolver.
+	ppForward, err := dnsintercept.NewDNSRedirectPacketProxy(ppBase, linkLocalDNS, remoteDNS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS redirect PacketProxy: %w", err)
 	}
-	ppTrunc, err := dnsintercept.WrapTruncatePacketProxy(ppBase, linkLocalDNS)
+	// Forwards everything except DNS. For DNS it returns a truncated response.
+	ppTrunc, err := dnsintercept.NewDNSTruncatePacketProxy(ppBase, linkLocalDNS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create always-truncate DNS PacketProxy: %w", err)
 	}

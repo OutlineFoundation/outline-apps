@@ -30,10 +30,10 @@ func TestWrapTruncatePacketProxy(t *testing.T) {
 	local := netip.MustParseAddrPort("192.0.2.2:53")
 	udpAddr := netip.MustParseAddrPort("203.0.113.10:123")
 
-	_, err := WrapTruncatePacketProxy(nil, local)
+	_, err := NewDNSTruncatePacketProxy(nil, local)
 	require.Error(t, err)
 
-	tpp, err := WrapTruncatePacketProxy(pp, local)
+	tpp, err := NewDNSTruncatePacketProxy(pp, local)
 	require.NoError(t, err)
 
 	req, err := tpp.NewSession(resp)
@@ -66,4 +66,44 @@ func TestWrapTruncatePacketProxy(t *testing.T) {
 
 	require.NoError(t, req.Close())
 	require.True(t, pp.req.closed)
+}
+
+// TestWrapTruncatePacketProxy_DNSOnlyDoesNotCreateBaseSession verifies that a session
+// that only sends DNS packets never allocates a base transport session, which
+// prevents resource exhaustion under sustained DNS load.
+func TestWrapTruncatePacketProxy_DNSOnlyDoesNotCreateBaseSession(t *testing.T) {
+	pp := &packetProxyWithGivenRequestSender{req: &lastDestPacketRequestSender{}}
+	resp := &lastSourcePacketResponseReceiver{}
+
+	local := netip.MustParseAddrPort("192.0.2.2:53")
+
+	tpp, err := NewDNSTruncatePacketProxy(pp, local)
+	require.NoError(t, err)
+
+	req, err := tpp.NewSession(resp)
+	require.NoError(t, err)
+
+	// NewSession must not have called pp.NewSession
+	require.Nil(t, pp.resp, "base session must not be created at NewSession time")
+
+	msg := dnsmessage.Message{
+		Header: dnsmessage.Header{ID: 42},
+		Questions: []dnsmessage.Question{{
+			Name:  dnsmessage.MustNewName("example.com."),
+			Type:  dnsmessage.TypeA,
+			Class: dnsmessage.ClassINET,
+		}},
+	}
+	query, err := msg.Pack()
+	require.NoError(t, err)
+
+	_, err = req.WriteTo(query, local)
+	require.NoError(t, err)
+
+	// After a DNS-only send, still no base session
+	require.Nil(t, pp.resp, "base session must not be created for DNS-only traffic")
+
+	// Close should succeed without creating a base session
+	require.NoError(t, req.Close())
+	require.False(t, pp.req.closed, "base session Close must not be called if session was never created")
 }
