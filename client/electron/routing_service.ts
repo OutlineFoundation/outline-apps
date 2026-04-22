@@ -13,11 +13,9 @@
 // limitations under the License.
 
 import {createConnection, Socket} from 'net';
-import {createHash} from 'node:crypto';
-import {platform, userInfo} from 'os';
+import {platform} from 'os';
 import * as path from 'path';
 
-import * as fsextra from 'fs-extra';
 import * as sudo from 'sudo-prompt';
 
 import {pathToEmbeddedOutlineService} from './app_paths';
@@ -25,11 +23,8 @@ import {TunnelStatus} from '../web/app/outline_server_repository/vpn';
 import {ErrorCode} from '../web/model/errors';
 import {PlatformError, GoErrorCode} from '../web/model/platform_error';
 
-const isLinux = platform() === 'linux';
 const isWindows = platform() === 'win32';
-const SERVICE_NAME = isWindows
-  ? '\\\\.\\pipe\\OutlineServicePipe'
-  : '/var/run/outline_controller';
+const SERVICE_NAME = '\\\\.\\pipe\\OutlineServicePipe';
 
 interface RoutingServiceRequest {
   action: string;
@@ -68,7 +63,6 @@ enum RoutingServiceStatusCode {
 // on Windows where only one client may be connected to the service at any given time.
 //
 // To test:
-//  - Linux: systemctl start|stop outline_proxy_controller.service
 //  - Windows: net start|stop OutlineService
 export class RoutingDaemon {
   private socket: Socket | null | undefined;
@@ -315,87 +309,12 @@ function installWindowsRoutingServices(): Promise<void> {
   return executeCommandAsRoot(script);
 }
 
-async function installLinuxRoutingServices(): Promise<void> {
-  const LINUX_INSTALLER_FILENAME = 'install_linux_service.sh';
-  const installationFileDescriptors: Array<{
-    filename: string;
-    executable: boolean;
-    sha256: string;
-  }> = [
-    {filename: LINUX_INSTALLER_FILENAME, executable: true, sha256: ''},
-    {filename: 'OutlineProxyController', executable: true, sha256: ''},
-    {
-      filename: 'outline_proxy_controller.service',
-      executable: false,
-      sha256: '',
-    },
-  ];
-
-  // We are copying individual files instead of the entire folder because they are in
-  // electron's "asar" archive (which is returned by getAppPath). Electron tries to inject
-  // some logic to node's fs API and make sure the caller can access files in the archive.
-  // However directories are not supported.
-  //
-  // References:
-  // - https://xwartz.gitbooks.io/electron-gitbook/content/en/tutorial/application-packaging.html
-  const tmp = await fsextra.mkdtemp('/tmp/');
-  const srcFolderPath = pathToEmbeddedOutlineService();
-
-  console.log(`copying service installation files to ${tmp}`);
-  for (const descriptor of installationFileDescriptors) {
-    const src = path.join(srcFolderPath, descriptor.filename);
-
-    const srcContent = await fsextra.readFile(src);
-    descriptor.sha256 = createHash('sha256').update(srcContent).digest('hex');
-
-    const dest = path.join(tmp, descriptor.filename);
-    await fsextra.copy(src, dest, {overwrite: true});
-
-    if (descriptor.executable) {
-      await fsextra.chmod(dest, 0o700);
-    }
-  }
-  console.log(`all service installation files copied to ${tmp} successfully`);
-
-  // At this time, the user running Outline (who is not root) could replace these installation
-  // files in "/tmp/xxx" folder with any arbitrary scripts (because "/tmp/xxx" folder and its
-  // contents are writable by this user). Our system will then run it using root and cause a
-  // potential security breach. Therefore we need to make sure the files are the ones provided
-  // by us:
-  //   1. `chattr +i`, set the immutable flag, the flag can only be cleared by root
-  //   2. `shasum -c`, check them against our checksums calculated from the scripts at build time
-  //   3. Run the installation script
-  //   4. `chattr -i`, always clear the immutable flag, so they can be deleted later
-  let command = `trap "/usr/bin/chattr -R -i ${tmp}" EXIT`;
-  command += `; /usr/bin/chattr -R +i ${tmp}`;
-  command +=
-    ' && ' +
-    installationFileDescriptors
-      .map(
-        ({filename, sha256}) =>
-          `/usr/bin/echo "${sha256}  ${path.join(
-            tmp,
-            filename
-          )}" | /usr/bin/shasum -a 256 -c`
-      )
-      .join(' && ');
-  command += ` && "${path.join(tmp, LINUX_INSTALLER_FILENAME)}" "${
-    userInfo().username
-  }"`;
-
-  console.log('trying to run command as root: ', command);
-  await executeCommandAsRoot(command);
-}
-
 export async function installRoutingServices(): Promise<void> {
   console.info('installing outline routing service...');
-  if (isWindows) {
-    await installWindowsRoutingServices();
-  } else if (isLinux) {
-    await installLinuxRoutingServices();
-  } else {
+  if (!isWindows) {
     throw new Error('unsupported os');
   }
+  await installWindowsRoutingServices();
   console.info('outline routing service installed successfully');
 }
 

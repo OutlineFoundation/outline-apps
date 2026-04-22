@@ -57,7 +57,7 @@ declare const APP_VERSION: string;
 const debugMode = process.env.OUTLINE_DEBUG === 'true';
 
 const IS_LINUX = os.platform() === 'linux';
-const USE_MODERN_ROUTING = IS_LINUX;
+const IS_WINDOWS = os.platform() === 'win32';
 
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
@@ -310,7 +310,7 @@ function interceptShadowsocksLink(argv: string[]) {
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
-    if (!IS_LINUX) {
+    if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
     }
   } catch (e) {
@@ -320,7 +320,7 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
 
 async function tearDownAutoLaunch() {
   try {
-    if (!IS_LINUX) {
+    if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: false});
     }
     await tunnelStore.clear();
@@ -354,7 +354,7 @@ async function createVpnTunnel(
 async function startVpn(request: StartRequestJson, isAutoConnect: boolean) {
   console.debug('startVpn called with request ', JSON.stringify(request));
 
-  if (USE_MODERN_ROUTING) {
+  if (IS_LINUX) {
     await establishVpn(request);
     return;
   }
@@ -397,7 +397,7 @@ async function startVpn(request: StartRequestJson, isAutoConnect: boolean) {
 
 // Invoked by both the stop-proxying event and quit handler.
 async function stopVpn() {
-  if (USE_MODERN_ROUTING) {
+  if (IS_LINUX) {
     await Promise.all([closeVpn(), tearDownAutoLaunch()]);
     return;
   }
@@ -452,7 +452,7 @@ function main() {
     // TODO(fortuna): Start the app with the window hidden on auto-start?
     setupWindow();
 
-    if (USE_MODERN_ROUTING) {
+    if (IS_LINUX) {
       await onVpnStateChanged(setUiTunnelStatus);
     }
 
