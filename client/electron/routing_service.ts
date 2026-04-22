@@ -51,16 +51,15 @@ enum RoutingServiceStatusCode {
   UNSUPPORTED_ROUTING_TABLE = 2,
 }
 
-// Communicates with the Outline routing daemon via a Unix socket.
+// Communicates with the Outline routing daemon via a Windows named pipe.
 //
 // A minimal life-cycle is supported:
 //  - CONFIGURE_ROUTING is *always* the first message sent on the pipe.
 //  - The only subsequent supported operation is RESET_ROUTING.
 //  - In the meantime, the client may receive zero or more STATUS_CHANGED events.
 //
-// That's it! This helps us connect to the service for *as short a time as possible* which is
-// important when trying to implement a Promise-like interface over what is essentially a pipe *and*
-// on Windows where only one client may be connected to the service at any given time.
+// That's it! This helps us connect to the service for *as short a time as possible*, which is
+// important since only one client may be connected to the Windows service at any given time.
 //
 // To test:
 //  - Windows: net start|stop OutlineService
