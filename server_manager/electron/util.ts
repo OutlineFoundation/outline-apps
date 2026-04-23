@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {URL} from 'url';
-
 // Returns a URL's pathname stripped of its first directory name, which may be the empty string if
 // there are fewer than two "directories" in the URL's pathname.
 // Throws if s cannot be parsed as a URL.
