@@ -26,9 +26,6 @@ const {join} = require('node:path');
  * directory.
  * So we need to add the absolute path of the install directory to RPATH.
  *
- * For AppImage, the relative RPATH `$ORIGIN` works, and it doesn't hurt to add
- * additional absolute paths.
- *
  * We also need to patch the RPATH at build time because the user's system
  * might not have a compatible `patchelf` at runtime.
  *
