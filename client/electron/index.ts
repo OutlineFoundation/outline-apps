@@ -313,6 +313,9 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
     if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
     }
+    // TODO(linux): support auto-launch on Debian. First check whether the Go
+    // backend service already restores the tunnel on reboot — if so, no
+    // Electron-side auto-launch hook is needed.
   } catch (e) {
     console.error(`Failed to set up auto-launch: ${e.message}`);
   }
