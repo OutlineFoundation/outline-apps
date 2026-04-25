@@ -103,13 +103,17 @@ class CapacitorVpnApi implements VpnApi {
     return result.isRunning;
   }
 
-  onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
-    void this.statusListener?.remove();
-    void CapacitorPluginOutline.addListener('vpnStatus', data => {
+  async onStatusChange(listener: (id: string, status: TunnelStatus) => void): Promise<void> {
+    if (this.statusListener) {
+      await this.statusListener.remove();
+      this.statusListener = undefined;
+    }
+
+    const handle = await CapacitorPluginOutline.addListener('vpnStatus', data => {
       listener(data.id, data.status as TunnelStatus);
-    }).then(handle => {
-      this.statusListener = handle;
     });
+
+    this.statusListener = handle;
   }
 }
 
