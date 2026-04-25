@@ -15,29 +15,31 @@
     "build": "node ./build.action.mjs"
   },
   "devDependencies": {
-    "@outline/infrastructure": "file:../../infrastructure",
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.2",
     "@capacitor/cli": "^6.0.0",
+    "@outline/infrastructure": "file:../../infrastructure",
     "babel-loader": "^10.1.1",
-    "copy-webpack-plugin": "^13.0.1",
+    "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^7.1.4",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.6.6",
     "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.7",
     "url-loader": "^4.1.1",
     "webpack": "^5.106.0",
     "webpack-cli": "^7.0.2",
     "webpack-dev-server": "^5.2.3"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.12.1",
     "@capacitor/browser": "^6.0.6",
     "@capacitor/core": "^6.2.1",
     "@polymer/polymer": "^3.5.1",
     "@sentry/browser": "^7.31.1",
     "@webcomponents/webcomponentsjs": "^2.4.4",
     "capacitor-plugin-outline": "file:./plugins/capacitor-plugin-outline",
+    "core-js": "^3.49.0",
+    "regenerator-runtime": "^0.14.1",
     "web-animations-js": "^2.3.2"
   }
 }

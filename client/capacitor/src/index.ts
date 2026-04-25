@@ -14,27 +14,27 @@
 import {Browser} from '@capacitor/browser';
 import {Capacitor} from '@capacitor/core';
 import type {PluginListenerHandle} from '@capacitor/core';
+import {CapacitorPluginOutline} from '@capacitor-plugin-outline';
 import * as Sentry from '@sentry/browser';
-
-import {CapacitorBrowserMethodChannel} from './browser_method_channel';
-import {AbstractClipboard} from '../../web/app/clipboard';
-import type {EnvironmentVariables} from '../../web/app/environment';
-import {main} from '../../web/app/main';
+import {AbstractClipboard} from '@web/app/clipboard';
+import type {EnvironmentVariables} from '@web/app/environment';
+import {main} from '@web/app/main';
 import {
   installDefaultMethodChannel,
   type MethodChannel,
-} from '../../web/app/method_channel';
+} from '@web/app/method_channel';
 import type {
   VpnApi,
   StartRequestJson,
   TunnelStatus,
-} from '../../web/app/outline_server_repository/vpn';
-import type {OutlinePlatform} from '../../web/app/platform';
-import {AbstractUpdater} from '../../web/app/updater';
-import * as interceptors from '../../web/app/url_interceptor';
-import {NoOpVpnInstaller, type VpnInstaller} from '../../web/app/vpn_installer';
-import {SentryErrorReporter, type Tags} from '../../web/shared/error_reporter';
-import {CapacitorPluginOutline} from '../plugins/capacitor-plugin-outline/src';
+} from '@web/app/outline_server_repository/vpn';
+import type {OutlinePlatform} from '@web/app/platform';
+import {AbstractUpdater} from '@web/app/updater';
+import * as interceptors from '@web/app/url_interceptor';
+import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
+import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
+
+import {CapacitorBrowserMethodChannel} from './browser_method_channel';
 
 const hasDeviceSupport = Capacitor.isNativePlatform();
 
@@ -103,15 +103,20 @@ class CapacitorVpnApi implements VpnApi {
     return result.isRunning;
   }
 
-  async onStatusChange(listener: (id: string, status: TunnelStatus) => void): Promise<void> {
+  async onStatusChange(
+    listener: (id: string, status: TunnelStatus) => void
+  ): Promise<void> {
     if (this.statusListener) {
       await this.statusListener.remove();
       this.statusListener = undefined;
     }
 
-    const handle = await CapacitorPluginOutline.addListener('vpnStatus', data => {
-      listener(data.id, data.status as TunnelStatus);
-    });
+    const handle = await CapacitorPluginOutline.addListener(
+      'vpnStatus',
+      data => {
+        listener(data.id, data.status as TunnelStatus);
+      }
+    );
 
     this.statusListener = handle;
   }

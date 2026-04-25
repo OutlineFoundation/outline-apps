@@ -52,7 +52,7 @@ export default {
         use: {
           loader: 'ts-loader',
           options: {
-            configFile: path.resolve(__dirname, '../web/tsconfig.json'),
+            configFile: path.resolve(__dirname, 'tsconfig.json'),
             transpileOnly: true,
           },
         },
@@ -105,7 +105,11 @@ export default {
   resolve: {
     extensions: ['.ts', '.js', '.json'],
     alias: {
-      '@': path.resolve(__dirname, '../web'),
+      '@web': path.resolve(__dirname, '../web'),
+      '@capacitor-plugin-outline': path.resolve(
+        __dirname,
+        'plugins/capacitor-plugin-outline/src'
+      ),
     },
   },
   devtool: 'source-map',

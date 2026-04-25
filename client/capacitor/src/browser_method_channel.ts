@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {MethodChannel} from '../../web/app/method_channel';
+import type {MethodChannel} from '@web/app/method_channel';
 
 /**
  * MethodChannel for Capacitor when running in the browser (webpack dev server).
