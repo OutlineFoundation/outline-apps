@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import type {MdFilledSelect} from '@material/web/all.js';
-
 import {fixture, html, nextFrame, oneEvent} from '@open-wc/testing';
 
 import {ContactView} from './index';
@@ -27,6 +25,15 @@ import {
 import {localize} from '../../testing/localize';
 
 describe('ContactView', () => {
+  const ISSUE_TYPES = [
+    'no-server',
+    'cannot-add-server',
+    'billing',
+    'connection',
+    'performance',
+    'general',
+  ];
+
   let el: ContactView;
   let mockErrorReporter: jasmine.SpyObj<OutlineErrorReporter>;
 
@@ -49,7 +56,7 @@ describe('ContactView', () => {
   });
 
   it('hides issue selector by default', async () => {
-    const issueSelector = el.shadowRoot?.querySelector('md-filled-select');
+    const issueSelector = el.shadowRoot?.querySelector('mwc-select');
     expect(issueSelector).not.toBeNull();
     expect(issueSelector!.hasAttribute('hidden')).toBeTrue();
   });
@@ -85,7 +92,7 @@ describe('ContactView', () => {
   });
 
   describe('when the user selects that they have no open tickets', () => {
-    let issueSelector: MdFilledSelect;
+    let issueSelector: Element;
 
     beforeEach(async () => {
       const radioButton = el.shadowRoot!.querySelectorAll(
@@ -94,7 +101,7 @@ describe('ContactView', () => {
       radioButton.click();
       await nextFrame();
 
-      issueSelector = el.shadowRoot!.querySelector('md-filled-select')!;
+      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
     });
 
     it('shows the issue selector', () => {
@@ -102,26 +109,19 @@ describe('ContactView', () => {
     });
 
     it('shows the correct items in the selector', () => {
-      const issueItemEls = issueSelector.querySelectorAll('md-select-option');
+      const issueItemEls = issueSelector.querySelectorAll('mwc-list-item');
       const issueTypes = Array.from(issueItemEls).map(
         el => (el as {value: string}).value
       );
-      expect(issueTypes).toEqual([
-        'no-server',
-        'cannot-add-server',
-        'billing',
-        'connection',
-        'performance',
-        'general',
-      ]);
+      expect(issueTypes).toEqual(ISSUE_TYPES);
     });
   });
 
   describe('when the user selects issue', () => {
-    let issueSelector: MdFilledSelect;
+    let issueSelector: Element;
 
     beforeEach(async () => {
-      issueSelector = el.shadowRoot!.querySelector('md-filled-select')!;
+      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
       const radioButton = el.shadowRoot!.querySelectorAll(
         'mwc-formfield mwc-radio'
       )[1] as HTMLElement;
@@ -154,10 +154,10 @@ describe('ContactView', () => {
 
     for (const {testcaseName, value, expectedMsg} of conditions) {
       it(`'${testcaseName}' shows exit message`, async () => {
-        // `ContactView` listens for `change` on the `<md-filled-select>`.
-        // Setting `value` + dispatching the event triggers the handler.
-        issueSelector.value = value;
-        issueSelector.dispatchEvent(new Event('change'));
+        const selectedIndex = ISSUE_TYPES.indexOf(value);
+        issueSelector.dispatchEvent(
+          new CustomEvent('selected', {detail: {index: selectedIndex}})
+        );
         await nextFrame();
 
         const exitCard = el.shadowRoot!.querySelector('.exit')!;
@@ -167,8 +167,9 @@ describe('ContactView', () => {
 
     describe('"General feedback & suggestions"', () => {
       beforeEach(async () => {
-        issueSelector.value = 'general';
-        issueSelector.dispatchEvent(new Event('change'));
+        issueSelector.dispatchEvent(
+          new CustomEvent('selected', {detail: {index: ISSUE_TYPES.length - 1}})
+        );
         await nextFrame();
       });
 
