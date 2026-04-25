@@ -113,7 +113,8 @@ function legacyJsonTunnelToFirstHopJson(jsonStr: string): string {
   transport.server = obj.server;
   transport.server_port = obj.server_port;
   const clientInner = JSON.stringify({transport});
-  const firstHop = `${obj.server}:${obj.server_port}`;
+  const host = obj.server.includes(':') ? `[${obj.server}]` : obj.server;
+  const firstHop = `${host}:${obj.server_port}`;
   return JSON.stringify({
     client: clientInner,
     firstHop,
