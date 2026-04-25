@@ -36,6 +36,12 @@ import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
 
 import {CapacitorBrowserMethodChannel} from './browser_method_channel';
 
+interface AsyncVpnApi extends VpnApi {
+  onStatusChange(
+    listener: (id: string, status: TunnelStatus) => void
+  ): Promise<void>;
+}
+
 const hasDeviceSupport = Capacitor.isNativePlatform();
 
 class CapacitorClipboard extends AbstractClipboard {
@@ -83,7 +89,7 @@ class CapacitorMethodChannel implements MethodChannel {
   }
 }
 
-class CapacitorVpnApi implements VpnApi {
+class CapacitorVpnApi implements AsyncVpnApi {
   private statusListener?: PluginListenerHandle;
 
   async start(request: StartRequestJson): Promise<void> {
@@ -112,7 +118,7 @@ class CapacitorVpnApi implements VpnApi {
     }
 
     const handle = await CapacitorPluginOutline.addListener(
-      'vpnStatus',
+      'onStatusChange',
       data => {
         listener(data.id, data.status as TunnelStatus);
       }
@@ -123,7 +129,7 @@ class CapacitorVpnApi implements VpnApi {
 }
 
 class CapacitorPlatform implements OutlinePlatform {
-  getVpnApi(): VpnApi | undefined {
+  getVpnApi(): AsyncVpnApi | undefined {
     return hasDeviceSupport ? new CapacitorVpnApi() : undefined;
   }
 

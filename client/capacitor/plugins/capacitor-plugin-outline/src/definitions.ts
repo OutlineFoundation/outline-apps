@@ -32,7 +32,7 @@ export interface CapacitorPluginOutline {
   reportEvents(options: {uuid: string}): Promise<void>;
   quitApplication(): Promise<void>;
   addListener(
-    eventName: 'vpnStatus',
+    eventName: string,
     listenerFunc: (data: {id: string; status: number}) => void
   ): Promise<PluginListenerHandle>;
 }
