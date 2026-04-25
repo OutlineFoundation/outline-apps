@@ -2,10 +2,6 @@
   "appId": "org.outline.client",
   "appName": "Outline",
   "webDir": "www",
-  "server": {
-    "cleartext": true,
-    "allowNavigation": ["*"]
-  },
   "plugins": {
     "CapacitorPluginOutline": {}
   }
