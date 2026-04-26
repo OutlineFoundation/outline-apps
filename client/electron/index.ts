@@ -255,7 +255,7 @@ function updateTray(status: TunnelStatus) {
       label: localizedStrings['disconnect-button-label'],
       enabled: isConnected,
       visible: isConnected,
-      click: () => stopVpn(),
+      click: () => void stopVpn(),
     },
     {type: 'separator', visible: isConnected},
     {label: localizedStrings['quit'], click: quitApp},
