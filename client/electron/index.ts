@@ -74,6 +74,7 @@ let localizedStrings: {[key: string]: string} = {
   'tray-open-window': 'Open',
   'connected-server-state': 'Connected',
   'disconnected-server-state': 'Disconnected',
+  'disconnect-button-label': 'Disconnect',
   quit: 'Quit',
 };
 
@@ -247,9 +248,16 @@ function updateTray(status: TunnelStatus) {
   const statusString = isConnected
     ? localizedStrings['connected-server-state']
     : localizedStrings['disconnected-server-state'];
-  let menuTemplate = [
+  let menuTemplate: MenuItemConstructorOptions[] = [
     {label: statusString, enabled: false},
-    {type: 'separator'} as MenuItemConstructorOptions,
+    {type: 'separator'},
+    {
+      label: localizedStrings['disconnect-button-label'],
+      enabled: isConnected,
+      visible: isConnected,
+      click: () => stopVpn(),
+    },
+    {type: 'separator', visible: isConnected},
     {label: localizedStrings['quit'], click: quitApp},
   ];
   if (IS_LINUX) {
