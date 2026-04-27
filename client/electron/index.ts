@@ -61,7 +61,11 @@ const IS_WINDOWS = os.platform() === 'win32';
 
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
-const tunnelStore = new TunnelStore(app.getPath('userData'));
+const autoConnectTunnelStore = new TunnelStore(app.getPath('userData'));
+const configuredTunnelStore = new TunnelStore(
+  app.getPath('userData'),
+  'configured_connection_store'
+);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -69,11 +73,11 @@ let mainWindow: Electron.BrowserWindow | null;
 let tray: Tray;
 
 let isAppQuitting = false;
+let trayStatus = TunnelStatus.DISCONNECTED;
 // Default to English strings in case we fail to retrieve them from the renderer process.
 let localizedStrings: {[key: string]: string} = {
   'tray-open-window': 'Open',
-  'connected-server-state': 'Connected',
-  'disconnected-server-state': 'Disconnected',
+  'connect-button-label': 'Connect',
   'disconnect-button-label': 'Disconnect',
   quit: 'Quit',
 };
@@ -130,10 +134,10 @@ function setupTray(): void {
   tray = new Tray(TRAY_ICON_IMAGES.disconnected);
   // On Linux, the click event is never fired: https://github.com/electron/electron/issues/14941
   tray.on('click', () => {
-    mainWindow?.show();
+    openApplication();
   });
   tray.setToolTip('Outline');
-  updateTray(TunnelStatus.DISCONNECTED);
+  setTrayStatus(TunnelStatus.DISCONNECTED);
 }
 
 function setupWindow(): void {
@@ -239,37 +243,36 @@ function setupWindow(): void {
   });
 }
 
-function updateTray(status: TunnelStatus) {
-  const isConnected = status === TunnelStatus.CONNECTED;
+function isTrayConnected(status = trayStatus) {
+  return status !== TunnelStatus.DISCONNECTED;
+}
+
+function getTrayConnectDisconnectLabel(status = trayStatus) {
+  return isTrayConnected(status)
+    ? localizedStrings['disconnect-button-label']
+    : localizedStrings['connect-button-label'];
+}
+
+function setTrayStatus(status: TunnelStatus) {
+  trayStatus = status;
+  const isConnected = isTrayConnected(status);
   tray.setImage(
     isConnected ? TRAY_ICON_IMAGES.connected : TRAY_ICON_IMAGES.disconnected
   );
-  // Retrieve localized strings, falling back to the pre-populated English default.
-  const statusString = isConnected
-    ? localizedStrings['connected-server-state']
-    : localizedStrings['disconnected-server-state'];
-  let menuTemplate: MenuItemConstructorOptions[] = [
-    {label: statusString, enabled: false},
+
+  const menuTemplate: MenuItemConstructorOptions[] = [
+    {
+      label: localizedStrings['tray-open-window'],
+      click: openApplication,
+    },
     {type: 'separator'},
     {
-      label: localizedStrings['disconnect-button-label'],
-      enabled: isConnected,
-      visible: isConnected,
-      click: () => void stopVpn(),
+      label: getTrayConnectDisconnectLabel(status),
+      click: menuItem => void toggleTrayVpnConnection(menuItem.label),
     },
-    {type: 'separator', visible: isConnected},
+    {type: 'separator'},
     {label: localizedStrings['quit'], click: quitApp},
   ];
-  if (IS_LINUX) {
-    // Because the click event is never fired on Linux, we need an explicit open option.
-    menuTemplate = [
-      {
-        label: localizedStrings['tray-open-window'],
-        click: () => mainWindow.show(),
-      },
-      ...menuTemplate,
-    ];
-  }
   tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
 }
 
@@ -289,6 +292,10 @@ async function quitApp() {
   isAppQuitting = true;
   await stopVpn();
   app.quit();
+}
+
+function openApplication() {
+  mainWindow?.show();
 }
 
 function interceptShadowsocksLink(argv: string[]) {
@@ -317,7 +324,7 @@ function interceptShadowsocksLink(argv: string[]) {
 // proxying.
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
-    await tunnelStore.save(request);
+    await autoConnectTunnelStore.save(request);
     if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
     }
@@ -334,9 +341,55 @@ async function tearDownAutoLaunch() {
     if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: false});
     }
-    await tunnelStore.clear();
+    await autoConnectTunnelStore.clear();
   } catch (e) {
     console.error(`Failed to tear down auto-launch: ${e.message}`);
+  }
+}
+
+async function saveConfiguredTunnel(request: StartRequestJson): Promise<void> {
+  try {
+    await configuredTunnelStore.save(request);
+  } catch (e) {
+    console.error(`failed to save configured tunnel: ${e.message}`);
+  }
+}
+
+async function loadConfiguredTunnel(): Promise<StartRequestJson | undefined> {
+  try {
+    return await configuredTunnelStore.load();
+  } catch (e) {
+    console.warn('could not load configured tunnel:', e);
+    return undefined;
+  }
+}
+
+async function toggleTrayVpnConnection(menuItemLabel: string) {
+  console.log('toggling tray vpn connection');
+  const isConnectAction =
+    menuItemLabel === localizedStrings['connect-button-label'];
+
+  if (!isConnectAction) {
+    await stopVpn();
+    return;
+  }
+
+  const request = await loadConfiguredTunnel();
+  if (!request) {
+    openApplication();
+    return;
+  }
+
+  console.log(`connecting to ${request.name} (${request.id}) from tray...`);
+  try {
+    await startVpn(request, false);
+    console.log(`connected to ${request.name} (${request.id})`);
+    await setupAutoLaunch(request);
+    await saveConfiguredTunnel(request);
+  } catch (e) {
+    console.error('could not connect from tray:', e);
+    void stopVpn();
+    openApplication();
   }
 }
 
@@ -431,7 +484,7 @@ function setUiTunnelStatus(status: TunnelStatus, tunnelId: string) {
   } else {
     console.warn(`received ${event} event but no mainWindow to notify`);
   }
-  updateTray(status);
+  setTrayStatus(status);
 }
 
 function checkForUpdates() {
@@ -469,12 +522,12 @@ function main() {
 
     let requestAtShutdown: StartRequestJson | undefined;
     try {
-      requestAtShutdown = await tunnelStore.load();
+      requestAtShutdown = await autoConnectTunnelStore.load();
     } catch (e) {
       // No tunnel at shutdown, or failure - either way, no need to start.
       // TODO: Instead of quitting, how about creating the system tray icon?
       console.warn('Could not load active tunnel: ', e);
-      await tunnelStore.clear();
+      await autoConnectTunnelStore.clear();
     }
     if (requestAtShutdown) {
       console.info(
@@ -484,6 +537,7 @@ function main() {
       try {
         await startVpn(requestAtShutdown, true);
         console.log(`reconnected to ${requestAtShutdown.id}`);
+        await saveConfiguredTunnel(requestAtShutdown);
       } catch (e) {
         console.error(`could not reconnect: ${e.name} (${e.message})`);
       }
@@ -499,13 +553,13 @@ function main() {
   app.on('second-instance', (event: Event, argv: string[]) => {
     interceptShadowsocksLink(argv);
     // Someone tried to run a second instance, we should focus our window.
-    mainWindow?.show();
+    openApplication();
   });
 
   app.on('activate', () => {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    mainWindow?.show();
+    openApplication();
   });
 
   // This event fires whenever the app's window receives focus.
@@ -553,10 +607,7 @@ function main() {
             await startVpn(request, false);
             console.log(`connected to ${request.name} (${request.id})`);
             await setupAutoLaunch(request);
-            // Auto-connect requires IPs; the hostname in here has already been resolved (see above).
-            tunnelStore.save(request).catch(() => {
-              console.error('Failed to store tunnel.');
-            });
+            await saveConfiguredTunnel(request);
           } catch (e) {
             console.error('could not connect:', e);
             // clean up the state, no need to await because stopVpn might throw another error which can be ignored
@@ -604,7 +655,7 @@ function main() {
       if (localizationResult) {
         localizedStrings = localizationResult;
       }
-      updateTray(TunnelStatus.DISCONNECTED);
+      setTrayStatus(trayStatus);
     }
   );
 
