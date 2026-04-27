@@ -37,11 +37,11 @@ interface EstablishVpnRequestJson {
 
 export async function establishVpn(tsRequest: StartRequestJson) {
   const goRequest: EstablishVpnRequestJson = {
-    // The following VPN configuration ensures that the new routing can co-exist with any legacy Outline routings (e.g. AppImage).
     vpn: {
       id: tsRequest.id,
 
-      // TUN device name, use 'outline-tun1' to avoid conflict with old 'outline-tun0':
+      // TUN device name, use 'outline-tun1' to avoid conflict with old 'outline-tun0'
+      // left behind on machines that previously ran the AppImage build:
       // https://github.com/OutlineFoundation/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L203
       interfaceName: 'outline-tun1',
 
@@ -49,7 +49,8 @@ export async function establishVpn(tsRequest: StartRequestJson) {
       // because Network Manager has a dedicated "VPN Connection" concept that we did not implement
       connectionName: 'Outline TUN Connection',
 
-      // TUN IP, use '10.0.85.5' to avoid conflict with old '10.0.85.1':
+      // TUN IP, use '10.0.85.5' to avoid conflict with old '10.0.85.1'
+      // left behind on machines that previously ran the AppImage build:
       // https://github.com/OutlineFoundation/outline-apps/blob/client/linux/v1.14.0/client/electron/linux_proxy_controller/outline_proxy_controller.h#L204
       ipAddress: '10.0.85.5',
 

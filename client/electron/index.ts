@@ -21,7 +21,6 @@ import * as url from 'url';
 
 import * as net from '@outline/infrastructure/net';
 import * as Sentry from '@sentry/electron/main';
-import autoLaunch = require('auto-launch'); // eslint-disable-line @typescript-eslint/no-require-imports
 import {
   app,
   BrowserWindow,
@@ -58,7 +57,7 @@ declare const APP_VERSION: string;
 const debugMode = process.env.OUTLINE_DEBUG === 'true';
 
 const IS_LINUX = os.platform() === 'linux';
-const USE_MODERN_ROUTING = IS_LINUX && !process.env.APPIMAGE;
+const IS_WINDOWS = os.platform() === 'win32';
 
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
@@ -311,17 +310,12 @@ function interceptShadowsocksLink(argv: string[]) {
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
-    if (IS_LINUX) {
-      if (process.env.APPIMAGE) {
-        const outlineAutoLauncher = new autoLaunch({
-          name: 'OutlineClient',
-          path: process.env.APPIMAGE,
-        });
-        await outlineAutoLauncher.enable();
-      }
-    } else {
+    if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
     }
+    // TODO(linux): support auto-launch on Debian. First check whether the Go
+    // backend service already restores the tunnel on reboot — if so, no
+    // Electron-side auto-launch hook is needed.
   } catch (e) {
     console.error(`Failed to set up auto-launch: ${e.message}`);
   }
@@ -329,12 +323,7 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
 
 async function tearDownAutoLaunch() {
   try {
-    if (IS_LINUX) {
-      const outlineAutoLauncher = new autoLaunch({
-        name: 'OutlineClient',
-      });
-      await outlineAutoLauncher.disable();
-    } else {
+    if (IS_WINDOWS) {
       app.setLoginItemSettings({openAtLogin: false});
     }
     await tunnelStore.clear();
@@ -368,7 +357,7 @@ async function createVpnTunnel(
 async function startVpn(request: StartRequestJson, isAutoConnect: boolean) {
   console.debug('startVpn called with request ', JSON.stringify(request));
 
-  if (USE_MODERN_ROUTING) {
+  if (IS_LINUX) {
     await establishVpn(request);
     return;
   }
@@ -411,7 +400,7 @@ async function startVpn(request: StartRequestJson, isAutoConnect: boolean) {
 
 // Invoked by both the stop-proxying event and quit handler.
 async function stopVpn() {
-  if (USE_MODERN_ROUTING) {
+  if (IS_LINUX) {
     await Promise.all([closeVpn(), tearDownAutoLaunch()]);
     return;
   }
@@ -466,7 +455,7 @@ function main() {
     // TODO(fortuna): Start the app with the window hidden on auto-start?
     setupWindow();
 
-    if (USE_MODERN_ROUTING) {
+    if (IS_LINUX) {
       await onVpnStateChanged(setUiTunnelStatus);
     }
 

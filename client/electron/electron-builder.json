@@ -2,7 +2,6 @@
   "productName": "Outline",
   "artifactName": "Outline-Client.${ext}",
   "asarUnpack": [
-    "client/electron/linux_proxy_controller/dist",
     "output/client/linux-amd64/libbackend.so",
     "output/client/linux-amd64/tun2socks",
     "output/client/windows-386/backend.dll",
@@ -36,7 +35,6 @@
     "category": "Network",
     "executableName": "Outline",
     "files": [
-      "client/electron/linux_proxy_controller/dist",
       "client/electron/icons/png",
       "output/client/linux-amd64",
       "!output/client/linux-amd64/*.h"
@@ -44,12 +42,6 @@
     "icon": "client/electron/icons/png",
     "maintainer": "Outline Foundation",
     "target": [
-      {
-        "arch": [
-          "x64"
-        ],
-        "target": "AppImage"
-      },
       {
         "arch": "x64",
         "target": "deb"

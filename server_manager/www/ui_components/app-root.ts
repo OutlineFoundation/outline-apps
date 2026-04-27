@@ -28,7 +28,6 @@ import '@polymer/paper-listbox/paper-listbox';
 import '@polymer/paper-menu-button/paper-menu-button';
 import './cloud-install-styles';
 import './outline-about-dialog';
-import './outline-contact-us-dialog';
 import './outline-do-oauth-step';
 import './outline-gcp-oauth-step';
 import '../outline-gcp-create-server-app';
@@ -405,12 +404,7 @@ export class AppRoot extends polymerElementWithLocalize {
                 <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
             </span>
-            <template is="dom-if" if="{{featureFlags.contactView}}">
-              <span on-tap="submitFeedbackTapped">[[localize('nav-contact-us')]]</span>
-            </template>
-            <template is="dom-if" if="{{!featureFlags.contactView}}">
-              <span on-tap="submitFeedbackTapped">[[localize('nav-feedback')]]</span>
-            </template>
+            <span on-tap="submitFeedbackTapped">[[localize('nav-feedback')]]</span>
             <span on-tap="maybeCloseDrawer">
               <a href="https://support.getoutline.org">
                 <span>[[localize('nav-help')]]</span>
@@ -476,17 +470,7 @@ export class AppRoot extends polymerElementWithLocalize {
 
       <!-- Modal dialogs must be outside the app container; otherwise the backdrop covers them.  -->
       <outline-survey-dialog id="surveyDialog" localize="[[localize]]"></outline-survey-dialog>
-      <template is="dom-if" if="{{featureFlags.contactView}}">
-        <outline-contact-us-dialog
-          id="feedbackDialog"
-          localize="[[localize]]"
-          on-success="showContactSuccessToast"
-          on-error="showContactErrorToast"
-        ></outline-contact-us-dialog>
-      </template>
-      <template is="dom-if" if="{{!featureFlags.contactView}}">
-        <outline-feedback-dialog id="feedbackDialog" localize="[[localize]]"></outline-feedback-dialog>
-      </template>
+      <outline-feedback-dialog id="feedbackDialog" localize="[[localize]]"></outline-feedback-dialog>
       <outline-about-dialog id="aboutDialog" outline-version="[[outlineVersion]]" localize="[[localize]]"></outline-about-dialog>
       <outline-modal-dialog id="modalDialog"></outline-modal-dialog>
       <outline-share-dialog id="shareDialog" localize="[[localize]]"></outline-share-dialog>
@@ -749,7 +733,6 @@ export class AppRoot extends polymerElementWithLocalize {
       featureFlags: {
         type: Object,
         value: {
-          contactView: true,
           serverMetricsTab: false,
         },
       },
@@ -1142,14 +1125,6 @@ export class AppRoot extends polymerElementWithLocalize {
     };
     xhr.open('GET', '/ui_components/licenses/licenses.txt', true);
     xhr.send();
-  }
-
-  showContactSuccessToast() {
-    this.showNotification(this.localize('notification-feedback-thanks'));
-  }
-
-  showContactErrorToast() {
-    this.showError(this.localize('error-feedback'));
   }
 
   _computeShouldShowSideBar() {

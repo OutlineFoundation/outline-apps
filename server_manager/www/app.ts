@@ -26,6 +26,7 @@ import {FeedbackDetail} from './ui_components/outline-feedback-dialog';
 import type {ServerView} from './ui_components/outline-server-view';
 import * as digitalocean_api from '../cloud/digitalocean_api';
 import {HttpError} from '../cloud/gcp_api';
+import {redactManagerUrl} from '../electron/util';
 import * as accounts from '../model/accounts';
 import * as digitalocean from '../model/digitalocean';
 import * as gcp from '../model/gcp';
@@ -53,10 +54,22 @@ export const LAST_DISPLAYED_SERVER_STORAGE_KEY = 'lastDisplayedServer';
 //               (uses `@sentry/browser`).
 // For all other Sentry config see the main process.
 Sentry.init({
-  beforeBreadcrumb:
-    typeof redactSentryBreadcrumbUrl === 'function'
-      ? redactSentryBreadcrumbUrl
-      : null,
+  // Redact PII from the renderer process requests.
+  beforeBreadcrumb: (breadcrumb: Sentry.Breadcrumb) => {
+    if (
+      breadcrumb.category === 'fetch' &&
+      breadcrumb.data &&
+      breadcrumb.data.url
+    ) {
+      try {
+        breadcrumb.data.url = `(redacted)/${redactManagerUrl(breadcrumb.data.url)}`;
+      } catch {
+        // NOTE: cannot log this failure to console if console breadcrumbs are enabled
+        breadcrumb.data.url = '(error redacting)';
+      }
+    }
+    return breadcrumb;
+  },
 });
 
 function displayDataAmountToDataLimit(
@@ -336,9 +349,9 @@ export class App {
     appRoot.addEventListener('SubmitFeedback', (event: CustomEvent) => {
       const detail: FeedbackDetail = event.detail;
       try {
-        Sentry.captureEvent({
+        Sentry.captureFeedback({
           message: detail.userFeedback,
-          user: {email: detail.userEmail},
+          email: detail.userEmail,
           tags: {
             category: detail.feedbackCategory,
             cloudProvider: detail.cloudProvider,
