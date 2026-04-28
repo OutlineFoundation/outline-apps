@@ -89,6 +89,13 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 	// - On first read, if it's DNS, set deadline to Now() to end session.
 	// - On timeout, close everything. Consider returning EOF the first time.
 	//
+	// Open Questions:
+	// - should the timeout be in the underlying proxies instead? NewPacketProxyFromPacketListener
+	//   uses PacketListenerProxy with a 30s idle timeout already. That way this dispatcher doesn't need to know
+	//   the values.
+	// - What happens if the association has a mix of dns and non dns writes?
+	// - What error does the caller expects to close the association? Timeout? EOF? ErrClosed?
+	//
 	// Closing behavior
 	//
 	// On session end, we should close the PacketResponseReceiver, so the caller knows the session is over an can clean up.
