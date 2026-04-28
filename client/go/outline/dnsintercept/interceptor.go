@@ -83,16 +83,11 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
 	// Desired logic:
-	// - If this is a single request DNS session, it should send the one request, and immediately close on response.
-	//   timeout should be short.
-	// - If this is a multiple DNS session (not usual, and against best practices), it should close immediately when
-	//   all requests return or timeout. This is a generalization of the previous case.
-	// - If this is a regular tunnel session, it should use regular timeout, set on each write.
-	//
-	// The session type can be determined on the first packet, based on the target endpoint. The assumption here is that
-	// the link local enpoint will be used solely for dns, and that DNS won't reuse other sockets.
-	//
-	// The session should be created on first packet, to avoid creating two sockets when we just need one.
+	// - Timeouts are always set on Writes. Set ReadDeadline to max(currentDeadline, Now() + timeout).
+	// - The default timeout is 5m. for DNS, it's 17s.
+	// - On sender WriteTo, call getSender(isDNS) to lazily create the session.
+	// - On first read, if it's DNS, set deadline to Now() to end session.
+	// - On timeout, close everything. Consider returning EOF the first time.
 	//
 	// Closing behavior
 	//
@@ -103,7 +98,9 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 	// We should react to closing signal from the caller too. Meaning, if our sender gets a close, we should close
 	// the inner sender we created too. The response receiver should return ErrClosed on incoming packets after close.
 	//
-	// TODO(fortuna): create these sessions on demand, on first write.
+	// Timeouts (as used in https://github.com/OutlineFoundation/tunnel-server/blob/master/service/udp.go):
+	// - default: 5m - A UDP NAT timeout of at least 5 minutes is recommended in RFC 4787 Section 4.3.
+	// - DNS: 17s - shortest timeout, as required by RFC 5452 Section 10.
 	baseSender, err := i.baseProxy.NewSession(resp)
 	if err != nil {
 		return nil, err
