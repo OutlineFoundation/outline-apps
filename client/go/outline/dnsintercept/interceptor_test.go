@@ -131,13 +131,27 @@ func TestDNSInterceptor(t *testing.T) {
 	require.Equal(t, 12, n)
 	require.Equal(t, net.UDPAddrFromAddrPort(resolverLinkLocalAddr), resp.lastSrc)
 
+	// Since it's a DNS session, it should close immediately after receiving the response.
+	require.True(t, dnsPP.req.closed)
+
+	// Try to write again to the closed DNS session
+	_, err = req.WriteTo([]byte("another dns query"), resolverLinkLocalAddr)
+	require.Error(t, err)
+	require.ErrorIs(t, err, net.ErrClosed)
+
+	// --- Test Regular Session ---
+	resp2 := &lastSourcePacketResponseReceiver{}
+	basePP.req = &lastDestPacketRequestSender{}
+
+	req2, err := interceptor.NewSession(resp2)
+	require.NoError(t, err)
+
 	// Send to other address -> should go to base and NOT be remapped
-	n, err = req.WriteTo([]byte("http request"), otherAddr)
+	n, err = req2.WriteTo([]byte("http request"), otherAddr)
 	require.NoError(t, err)
 	require.Equal(t, 12, n)
 	require.Equal(t, otherAddr, basePP.req.lastDst)
 
-	require.NoError(t, req.Close())
+	require.NoError(t, req2.Close())
 	require.True(t, basePP.req.closed)
-	require.True(t, dnsPP.req.closed)
 }

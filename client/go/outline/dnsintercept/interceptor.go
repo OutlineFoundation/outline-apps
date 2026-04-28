@@ -19,6 +19,8 @@ import (
 	"errors"
 	"net"
 	"net/netip"
+	"sync"
+	"time"
 
 	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
@@ -49,19 +51,6 @@ type dnsInterceptor struct {
 	resolverRemoteAddr    netip.AddrPort
 }
 
-type dnsInterceptorRequestSender struct {
-	baseSender            network.PacketRequestSender
-	dnsSender             network.PacketRequestSender
-	resolverLinkLocalAddr netip.AddrPort
-	resolverRemoteAddr    netip.AddrPort
-}
-
-type dnsInterceptorResponseReceiver struct {
-	network.PacketResponseReceiver
-	resolverLinkLocalAddr netip.AddrPort
-	resolverRemoteAddr    netip.AddrPort
-}
-
 // NewDNSInterceptor creates a PacketProxy that intercepts packets destined for resolverLinkLocalAddr
 // and routes them to dnsProxy, remapping the destination to resolverRemoteAddr.
 // All other packets are routed to baseProxy.
@@ -81,67 +70,179 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 	}, nil
 }
 
+const (
+	// Shorten timeout as required by RFC 5452 Section 10.
+	dnsTimeout = 17 * time.Second
+	// A UDP NAT timeout of at least 5 minutes is recommended in RFC 4787 Section 4.3.
+	udpTimeout = 5 * time.Minute
+)
+
+type dnsInterceptorRequestSender struct {
+	mu                    sync.Mutex
+	interceptor           *dnsInterceptor
+	respReceiver          *dnsInterceptorResponseReceiver
+	activeSender          network.PacketRequestSender
+	isDNS                 bool
+	timer                 *time.Timer
+	closed                bool
+}
+
+type dnsInterceptorResponseReceiver struct {
+	network.PacketResponseReceiver
+	mu                    sync.Mutex
+	reqSender             *dnsInterceptorRequestSender
+	resolverLinkLocalAddr netip.AddrPort
+	resolverRemoteAddr    netip.AddrPort
+	reqCount              int
+	respCount             int
+	closed                bool
+}
+
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
-	// Desired logic:
-	// - If this is a single request DNS session, it should send the one request, and immediately close on response.
-	//   timeout should be short.
-	// - If this is a multiple DNS session (not usual, and against best practices), it should close immediately when
-	//   all requests return or timeout. This is a generalization of the previous case.
-	// - If this is a regular tunnel session, it should use regular timeout, set on each write.
-	//
-	// The session type can be determined on the first packet, based on the target endpoint. The assumption here is that
-	// the link local enpoint will be used solely for dns, and that DNS won't reuse other sockets.
-	//
-	// The session should be created on first packet, to avoid creating two sockets when we just need one.
-	//
-	// Closing behavior
-	//
-	// On session end, we should close the PacketResponseReceiver, so the caller knows the session is over an can clean up.
-	// In that case, we shouldn't receive any more writes, except due to race conditions. It should be enough to return ErrClosed.
-	// The caller should start a new session if they want to use the same address again after close.
-	//
-	// We should react to closing signal from the caller too. Meaning, if our sender gets a close, we should close
-	// the inner sender we created too. The response receiver should return ErrClosed on incoming packets after close.
-	//
-	// TODO(fortuna): create these sessions on demand, on first write.
-	baseSender, err := i.baseProxy.NewSession(resp)
-	if err != nil {
-		return nil, err
+	reqSender := &dnsInterceptorRequestSender{
+		interceptor: i,
 	}
 	dnsResp := &dnsInterceptorResponseReceiver{
 		PacketResponseReceiver: resp,
+		reqSender:              reqSender,
 		resolverLinkLocalAddr:  i.resolverLinkLocalAddr,
 		resolverRemoteAddr:     i.resolverRemoteAddr,
 	}
-	dnsSender, err := i.dnsProxy.NewSession(dnsResp)
+	reqSender.respReceiver = dnsResp
+	return reqSender, nil
+}
+
+func (s *dnsInterceptorRequestSender) getOrCreateSenderLocked(destination netip.AddrPort) (network.PacketRequestSender, error) {
+	if s.closed {
+		return nil, net.ErrClosed
+	}
+
+	if s.activeSender != nil {
+		return s.activeSender, nil
+	}
+
+	s.isDNS = isEquivalentAddrPort(destination, s.interceptor.resolverLinkLocalAddr)
+
+	var err error
+	if s.isDNS {
+		s.activeSender, err = s.interceptor.dnsProxy.NewSession(s.respReceiver)
+	} else {
+		s.activeSender, err = s.interceptor.baseProxy.NewSession(s.respReceiver)
+	}
+
 	if err != nil {
-		baseSender.Close()
 		return nil, err
 	}
-	return &dnsInterceptorRequestSender{
-		baseSender:            baseSender,
-		dnsSender:             dnsSender,
-		resolverLinkLocalAddr: i.resolverLinkLocalAddr,
-		resolverRemoteAddr:    i.resolverRemoteAddr,
-	}, nil
+
+	timeout := udpTimeout
+	if s.isDNS {
+		timeout = dnsTimeout
+	}
+	
+	s.timer = time.AfterFunc(timeout, func() {
+		s.Close()
+	})
+
+	return s.activeSender, nil
+}
+
+func (s *dnsInterceptorRequestSender) resetTimerLocked() {
+	if s.timer != nil {
+		timeout := udpTimeout
+		if s.isDNS {
+			timeout = dnsTimeout
+		}
+		s.timer.Reset(timeout)
+	}
 }
 
 func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPort) (int, error) {
-	// TODO(fortuna): use something like s.getDNSSession().WriteTo() and s.getForwardSession().WriteTo()
-	// to create the session on demand.
-	if isEquivalentAddrPort(destination, s.resolverLinkLocalAddr) {
-		return s.dnsSender.WriteTo(p, s.resolverRemoteAddr)
+	s.mu.Lock()
+	sender, err := s.getOrCreateSenderLocked(destination)
+	if err != nil {
+		s.mu.Unlock()
+		return 0, err
 	}
-	return s.baseSender.WriteTo(p, destination)
+	s.resetTimerLocked()
+	isDNS := s.isDNS
+	s.mu.Unlock()
+
+	s.respReceiver.incrementReqCount()
+
+	if isDNS {
+		return sender.WriteTo(p, s.interceptor.resolverRemoteAddr)
+	}
+	return sender.WriteTo(p, destination)
 }
 
 func (s *dnsInterceptorRequestSender) Close() error {
-	return errors.Join(s.baseSender.Close(), s.dnsSender.Close())
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return net.ErrClosed
+	}
+	s.closed = true
+	sender := s.activeSender
+	if s.timer != nil {
+		s.timer.Stop()
+	}
+	s.mu.Unlock()
+
+	// Notify caller that the session is closed via the response receiver
+	s.respReceiver.Close()
+
+	if sender != nil {
+		return sender.Close()
+	}
+	return nil
+}
+
+func (r *dnsInterceptorResponseReceiver) incrementReqCount() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.reqCount++
 }
 
 func (r *dnsInterceptorResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
+	r.mu.Lock()
+	if r.closed {
+		r.mu.Unlock()
+		return 0, net.ErrClosed
+	}
+
+	r.reqSender.mu.Lock()
+	r.reqSender.resetTimerLocked()
+	isDNS := r.reqSender.isDNS
+	r.reqSender.mu.Unlock()
+
+	r.respCount++
+	shouldClose := false
+	if isDNS && r.respCount >= r.reqCount {
+		shouldClose = true
+	}
+	r.mu.Unlock()
+
 	if addr, ok := source.(*net.UDPAddr); ok && isEquivalentAddrPort(addr.AddrPort(), r.resolverRemoteAddr) {
 		source = net.UDPAddrFromAddrPort(r.resolverLinkLocalAddr)
 	}
-	return r.PacketResponseReceiver.WriteFrom(p, source)
+
+	n, err := r.PacketResponseReceiver.WriteFrom(p, source)
+
+	if shouldClose {
+		r.reqSender.Close()
+	}
+
+	return n, err
+}
+
+func (r *dnsInterceptorResponseReceiver) Close() error {
+	r.mu.Lock()
+	if r.closed {
+		r.mu.Unlock()
+		return net.ErrClosed
+	}
+	r.closed = true
+	r.mu.Unlock()
+
+	return r.PacketResponseReceiver.Close()
 }
