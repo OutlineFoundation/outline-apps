@@ -82,6 +82,27 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 }
 
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
+	// Desired logic:
+	// - If this is a single request DNS session, it should send the one request, and immediately close on response.
+	//   timeout should be short.
+	// - If this is a multiple DNS session (not usual, and against best practices), it should close immediately when
+	//   all requests return or timeout. This is a generalization of the previous case.
+	// - If this is a regular tunnel session, it should use regular timeout, set on each write.
+	//
+	// The session type can be determined on the first packet, based on the target endpoint. The assumption here is that
+	// the link local enpoint will be used solely for dns, and that DNS won't reuse other sockets.
+	//
+	// The session should be created on first packet, to avoid creating two sockets when we just need one.
+	//
+	// Closing behavior
+	//
+	// On session end, we should close the PacketResponseReceiver, so the caller knows the session is over an can clean up.
+	// In that case, we shouldn't receive any more writes, except due to race conditions. It should be enough to return ErrClosed.
+	// The caller should start a new session if they want to use the same address again after close.
+	//
+	// We should react to closing signal from the caller too. Meaning, if our sender gets a close, we should close
+	// the inner sender we created too. The response receiver should return ErrClosed on incoming packets after close.
+	//
 	// TODO(fortuna): create these sessions on demand, on first write.
 	baseSender, err := i.baseProxy.NewSession(resp)
 	if err != nil {
