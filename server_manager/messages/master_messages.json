@@ -75,67 +75,6 @@
     "message": "Cancel",
     "description": "This string appears across the application as a button. Clicking it aborts the current flow."
   },
-  "contact_view_exit_cannot_add_server": {
-    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
-    "message": "The Outline team is not able to assist with adding a server. Please try the troubleshooting steps listed $START_OF_LINK$here$END_OF_LINK$ and then contact the person who gave you the access key to troubleshoot this issue.",
-    "placeholders": {
-      "END_OF_LINK": {
-        "content": "{closeLink}"
-      },
-      "START_OF_LINK": {
-        "content": "{openLink}"
-      }
-    }
-  },
-  "contact_view_exit_connection": {
-    "description": "Message shown to users who are trying to contact support about an unsupported issue.",
-    "meaning": "MsgID-20240319-UpdateWhenPlaceHolderChanged",
-    "message": "The Outline team is not able to assist with connecting to a server. Please try the troubleshooting steps listed $START_OF_LINK$here$END_OF_LINK$ and then contact the person who gave you the access key to troubleshoot this issue.",
-    "placeholders": {
-      "END_OF_LINK": {
-        "content": "{closeLink}"
-      },
-      "START_OF_LINK": {
-        "content": "{openLink}"
-      }
-    }
-  },
-  "contact_view_exit_open_ticket": {
-    "description": "Message shown to users who are trying to contact support again while having a pending support ticket open.",
-    "message": "We are currently experiencing high support volume and appreciate your patience. Please do not submit a new request for this concern. If you have additional information to provide, please reply to the initial email about this request."
-  },
-  "contact_view_intro": {
-    "description": "Introduction message to users who are looking to contact support.",
-    "message": "Tell us how we can help. Please explain your issue in detail and do not enter personal information that is not requested below."
-  },
-  "contact_view_issue_cannot_add_server": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I am having trouble adding a server using my access key"
-  },
-  "contact_view_issue_connection": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I am having trouble connecting to my Outline VPN server"
-  },
-  "contact_view_issue_general": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "General feedback & suggestions"
-  },
-  "contact_view_issue_managing": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I need assistance managing my Outline VPN server or helping others connect to it"
-  },
-  "contact_view_issue_performance": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "My internet access is slow while connected to my Outline VPN server"
-  },
-  "contact_view_issue": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Outline issue"
-  },
-  "contact_view_open_ticket": {
-    "description": "Label for a Contact Support form asking if the user already has a pending ticket open with support.",
-    "message": "Do you have an open ticket for this issue?"
-  },
   "geo_amsterdam": {
     "message": "Amsterdam",
     "description": "Name of the city in the Netherlands."
@@ -950,10 +889,6 @@
   "no_data_limit": {
     "message": "None",
     "description": "This string appears alongside each access key in the data transfer stats section if it is under no data limit.  Example: 450 MB / None"
-  },
-  "nav_contact_us": {
-    "message": "Contact us",
-    "description": "This string appears in an application drawer as a navigation link. Clicking it opens a dialog that allows the user to contact us."
   },
   "nav_data_collection": {
     "message": "Data collection",
