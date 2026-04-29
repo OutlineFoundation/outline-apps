@@ -94,7 +94,8 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 	//   uses PacketListenerProxy with a 30s idle timeout already. That way this dispatcher doesn't need to know
 	//   the values.
 	// - What happens if the association has a mix of dns and non dns writes?
-	// - What error does the caller expects to close the association? Timeout? EOF? ErrClosed?
+	// - What error does the caller expects to close the association? Timeout? EOF? ErrClosed? I think we just need to
+	//   close the receiver.
 	//
 	// Closing behavior
 	//
