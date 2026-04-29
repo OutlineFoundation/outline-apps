@@ -71,8 +71,8 @@ export default merge(baseConfig, browserConfig, {
     ],
   },
   plugins: [
-    new CopyPlugin(
-      [
+    new CopyPlugin({
+      patterns: [
         {
           from: require.resolve(
             '@webcomponents/webcomponentsjs/custom-elements-es5-adapter.js'
@@ -80,8 +80,7 @@ export default merge(baseConfig, browserConfig, {
           to: 'webcomponentsjs',
         },
       ],
-      {context: __dirname}
-    ),
+    }),
     new webpack.DefinePlugin({
       // Statically link the Roboto font, rather than link to fonts.googleapis.com
       'window.polymerSkipLoadingFontRoboto': JSON.stringify(true),
