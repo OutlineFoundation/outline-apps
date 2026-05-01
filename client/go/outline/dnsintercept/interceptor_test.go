@@ -141,3 +141,35 @@ func TestDNSInterceptor(t *testing.T) {
 	require.True(t, basePP.req.closed)
 	require.True(t, dnsPP.req.closed)
 }
+
+// ----- natResponseReceiver tests -----
+
+func TestNatResponseReceiver(t *testing.T) {
+	innerResp := &lastSourcePacketResponseReceiver{}
+	localAddr := netip.MustParseAddrPort("192.0.2.1:53")
+	remoteAddr := netip.MustParseAddrPort("8.8.8.8:53")
+	otherAddr := netip.MustParseAddrPort("1.1.1.1:443")
+	packet := []byte("response")
+
+	receiver := &natResponseReceiver{
+		PacketResponseReceiver: innerResp,
+		localAddr:              localAddr,
+		remoteAddr:             remoteAddr,
+	}
+
+	// Packet from remoteAddr should be translated to localAddr
+	n, err := receiver.WriteFrom(packet, net.UDPAddrFromAddrPort(remoteAddr))
+	require.NoError(t, err)
+	require.Equal(t, len(packet), n)
+	require.Equal(t, net.UDPAddrFromAddrPort(localAddr), innerResp.lastSrc)
+	require.Equal(t, packet, innerResp.lastPacket)
+
+	// Packet from another address should be passed through
+	n, err = receiver.WriteFrom(packet, net.UDPAddrFromAddrPort(otherAddr))
+	require.NoError(t, err)
+	require.Equal(t, len(packet), n)
+	require.Equal(t, net.UDPAddrFromAddrPort(otherAddr), innerResp.lastSrc)
+	require.Equal(t, packet, innerResp.lastPacket)
+}
+
+

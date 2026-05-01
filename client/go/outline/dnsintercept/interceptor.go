@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net"
 	"net/netip"
+	"sync"
 
 	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
@@ -49,19 +50,6 @@ type dnsInterceptor struct {
 	resolverRemoteAddr    netip.AddrPort
 }
 
-type dnsInterceptorRequestSender struct {
-	baseSender            network.PacketRequestSender
-	dnsSender             network.PacketRequestSender
-	resolverLinkLocalAddr netip.AddrPort
-	resolverRemoteAddr    netip.AddrPort
-}
-
-type dnsInterceptorResponseReceiver struct {
-	network.PacketResponseReceiver
-	resolverLinkLocalAddr netip.AddrPort
-	resolverRemoteAddr    netip.AddrPort
-}
-
 // NewDNSInterceptor creates a PacketProxy that intercepts packets destined for resolverLinkLocalAddr
 // and routes them to dnsProxy, remapping the destination to resolverRemoteAddr.
 // All other packets are routed to baseProxy.
@@ -74,25 +62,16 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 		return nil, errors.New("dns PacketProxy must be provided")
 	}
 	return &dnsInterceptor{
-		baseProxy:             base,
-		dnsProxy:              dns,
+		// We use lazy proxies, so that we only create target sockets when needed.
+		baseProxy:             &lazyPacketProxy{baseProxy: base},
+		dnsProxy:              &lazyPacketProxy{baseProxy: dns},
 		resolverLinkLocalAddr: resolverLinkLocalAddr,
 		resolverRemoteAddr:    resolverRemoteAddr,
 	}, nil
 }
 
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
-	// Desired logic:
-	// - Timeouts are always set on Writes. Set ReadDeadline to max(currentDeadline, Now() + timeout).
-	// - The default timeout is 5m. for DNS, it's 17s.
-	// - On sender WriteTo, call getSender(isDNS) to lazily create the session.
-	// - On first read, if it's DNS, set deadline to Now() to end session.
-	// - On timeout, close everything. Consider returning EOF the first time.
-	//
 	// Open Questions:
-	// - should the timeout be in the underlying proxies instead? NewPacketProxyFromPacketListener
-	//   uses PacketListenerProxy with a 30s idle timeout already. That way this dispatcher doesn't need to know
-	//   the values.
 	// - What happens if the association has a mix of dns and non dns writes?
 	// - What error does the caller expects to close the association? Timeout? EOF? ErrClosed? I think we just need to
 	//   close the receiver.
@@ -105,24 +84,22 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 	//
 	// We should react to closing signal from the caller too. Meaning, if our sender gets a close, we should close
 	// the inner sender we created too. The response receiver should return ErrClosed on incoming packets after close.
-	//
-	// Timeouts (as used in https://github.com/OutlineFoundation/tunnel-server/blob/master/service/udp.go):
-	// - default: 5m - A UDP NAT timeout of at least 5 minutes is recommended in RFC 4787 Section 4.3.
-	// - DNS: 17s - shortest timeout, as required by RFC 5452 Section 10.
 	baseSender, err := i.baseProxy.NewSession(resp)
 	if err != nil {
 		return nil, err
 	}
-	dnsResp := &dnsInterceptorResponseReceiver{
+
+	dnsResp := &natResponseReceiver{
 		PacketResponseReceiver: resp,
-		resolverLinkLocalAddr:  i.resolverLinkLocalAddr,
-		resolverRemoteAddr:     i.resolverRemoteAddr,
+		localAddr:              i.resolverLinkLocalAddr,
+		remoteAddr:             i.resolverRemoteAddr,
 	}
 	dnsSender, err := i.dnsProxy.NewSession(dnsResp)
 	if err != nil {
 		baseSender.Close()
 		return nil, err
 	}
+
 	return &dnsInterceptorRequestSender{
 		baseSender:            baseSender,
 		dnsSender:             dnsSender,
@@ -131,9 +108,23 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 	}, nil
 }
 
+type dnsInterceptorRequestSender struct {
+	closeMu               sync.Mutex
+	isClosed              bool
+	baseSender            network.PacketRequestSender
+	dnsSender             network.PacketRequestSender
+	resolverLinkLocalAddr netip.AddrPort
+	resolverRemoteAddr    netip.AddrPort
+}
+
 func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPort) (int, error) {
-	// TODO(fortuna): use something like s.getDNSSession().WriteTo() and s.getForwardSession().WriteTo()
-	// to create the session on demand.
+	s.closeMu.Lock()
+	defer s.closeMu.Unlock()
+
+	if s.isClosed {
+		return 0, net.ErrClosed
+	}
+
 	if isEquivalentAddrPort(destination, s.resolverLinkLocalAddr) {
 		return s.dnsSender.WriteTo(p, s.resolverRemoteAddr)
 	}
@@ -141,12 +132,41 @@ func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPo
 }
 
 func (s *dnsInterceptorRequestSender) Close() error {
-	return errors.Join(s.baseSender.Close(), s.dnsSender.Close())
+	s.closeMu.Lock()
+	if s.isClosed {
+		s.closeMu.Unlock()
+		return net.ErrClosed
+	}
+	s.isClosed = true
+
+	baseSender := s.baseSender
+	s.baseSender = nil
+	dnsSender := s.dnsSender
+	s.dnsSender = nil
+
+	s.closeMu.Unlock()
+
+	// We close the underlying senders outside the lock, in case they are slow or try to write somehow.
+	var joinError error
+	if baseSender != nil {
+		joinError = baseSender.Close()
+	}
+	if dnsSender != nil {
+		joinError = errors.Join(joinError, dnsSender.Close())
+	}
+	return joinError
 }
 
-func (r *dnsInterceptorResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
-	if addr, ok := source.(*net.UDPAddr); ok && isEquivalentAddrPort(addr.AddrPort(), r.resolverRemoteAddr) {
-		source = net.UDPAddrFromAddrPort(r.resolverLinkLocalAddr)
+// natResponseReceiver is a simple PacketResponseReceiver that translates an external address to an internal one.
+type natResponseReceiver struct {
+	network.PacketResponseReceiver
+	remoteAddr netip.AddrPort
+	localAddr  netip.AddrPort
+}
+
+func (r *natResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
+	if addr, ok := source.(*net.UDPAddr); ok && isEquivalentAddrPort(addr.AddrPort(), r.remoteAddr) {
+		source = net.UDPAddrFromAddrPort(r.localAddr)
 	}
 	return r.PacketResponseReceiver.WriteFrom(p, source)
 }
