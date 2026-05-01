@@ -64,12 +64,12 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	// Uses the 5m timeout as recommended in https://www.rfc-editor.org/rfc/rfc4787.html#section-4.3
 	ppBase, err := network.NewPacketProxyFromPacketListener(pl, network.WithPacketListenerWriteIdleTimeout(5 * time.Minute))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create base PacketProxy: %w", err)
 	}
 	// PacketProxy for DNS. Uses a shorter timeout, as recommended in https://www.rfc-editor.org/rfc/rfc5452.html#section-10.
 	ppDNSBase, err := network.NewPacketProxyFromPacketListener(pl, network.WithPacketListenerWriteIdleTimeout(10 * time.Second))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create DNS PacketProxy: %w", err)
 	}
 	// Returns a truncated response for DNS packets to force a retry over TCP.
 	ppDNSTrunc, err := dnstruncate.NewPacketProxy()
