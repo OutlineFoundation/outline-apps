@@ -143,6 +143,12 @@ func (r *lastSourcePacketResponseReceiver) Close() error {
 	return nil
 }
 
+func (r *lastSourcePacketResponseReceiver) IsClosed() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.closed
+}
+
 // TestWrapTransportPairWithOutlineDNS verifies that DNS queries are intercepted and remapped.
 func TestWrapTransportPairWithOutlineDNS(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
@@ -239,7 +245,7 @@ func TestWrapTransportPairWithOutlineDNS(t *testing.T) {
 		require.Equal(t, dnsResponse, resp.lastPacket)
 
 		// Verify that the receiver was closed (auto-close feature)
-		require.True(t, resp.closed, "receiver should be closed after response")
+		require.True(t, resp.IsClosed(), "receiver should be closed after response")
 
 		// Clean up all connections to stop read loops
 		pl.mu.Lock()
@@ -322,7 +328,7 @@ func TestWrapTransportPairWithOutlineDNS_Timeout(t *testing.T) {
 		// Wait for 15 seconds (longer than 10s timeout) to verify auto-close.
 		time.Sleep(15 * time.Second)
 
-		t.Logf("Receiver closed after 15s: %v", resp.closed)
+		t.Logf("Receiver closed after 15s: %v", resp.IsClosed())
 		
 		pl.mu.Lock()
 		for _, c := range pl.conns {
@@ -452,13 +458,13 @@ func TestWrapTransportPairWithOutlineDNS_NonDNS(t *testing.T) {
 		time.Sleep(15 * time.Second)
 
 		// Receiver should still be OPEN! (5m timeout not reached)
-		require.False(t, resp.closed, "receiver should not be closed after 15s for non-DNS traffic")
+		require.False(t, resp.IsClosed(), "receiver should not be closed after 15s for non-DNS traffic")
 
 		// Wait for 5 minutes (300 seconds)
 		time.Sleep(300 * time.Second)
 
 		// Receiver should now be CLOSED! (5m timeout reached)
-		require.True(t, resp.closed, "receiver should be closed after 5m for non-DNS traffic")
+		require.True(t, resp.IsClosed(), "receiver should be closed after 5m for non-DNS traffic")
 		
 		// Clean up
 		pl.mu.Lock()
