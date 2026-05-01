@@ -71,7 +71,11 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 	}, nil
 }
 
+// NewSession implements PacketProxy.NewSession.
+// It creates sessions on both the base proxy and the DNS proxy, and returns a sender
+// that dispatches packets to the appropriate session based on destination.
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
+	// Create session for base (non-DNS) traffic.
 	baseSender, err := i.baseProxy.NewSession(resp)
 	if err != nil {
 		return nil, err
@@ -79,17 +83,20 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 
 	sentCount := new(int32)
 
+	// Wrap the response receiver for DNS traffic to remap source addresses.
 	dnsResp := &natResponseReceiver{
 		PacketResponseReceiver: resp,
 		localAddr:              i.resolverLinkLocalAddr,
 		remoteAddr:             i.resolverRemoteAddr,
 	}
 
+	// Further wrap it to auto-close the session after the first response (if single-write).
 	singleResp := &singleResponseReceiver{
 		PacketResponseReceiver: dnsResp,
 		sentCount:              sentCount,
 	}
 
+	// Create session for DNS traffic.
 	dnsSender, err := i.dnsProxy.NewSession(singleResp)
 	if err != nil {
 		baseSender.Close()
@@ -105,6 +112,7 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 	}, nil
 }
 
+// dnsInterceptorRequestSender handles dispatching of outgoing packets.
 type dnsInterceptorRequestSender struct {
 	closeMu               sync.Mutex
 	isClosed              bool
@@ -112,9 +120,13 @@ type dnsInterceptorRequestSender struct {
 	dnsSender             network.PacketRequestSender
 	resolverLinkLocalAddr netip.AddrPort
 	resolverRemoteAddr    netip.AddrPort
-	sentCount             *int32
+	sentCount             *int32 // tracked to determine if we can auto-close on response
 }
 
+// WriteTo intercepts outgoing packets.
+// If the destination is the link-local DNS address, it routes the packet to the DNS session
+// and remaps the destination to the remote resolver address.
+// All other packets are routed to the base session without modification.
 func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPort) (int, error) {
 	s.closeMu.Lock()
 	defer s.closeMu.Unlock()
