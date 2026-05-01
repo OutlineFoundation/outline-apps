@@ -16,6 +16,7 @@ package configregistry
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"net/netip"
@@ -35,6 +36,7 @@ type mockPacketConn struct {
 	readChan                chan readPacket
 	closed                  chan struct{}
 	autoRespondConnectivity bool
+	deadline                time.Time
 }
 
 type writtenPacket struct {
@@ -55,12 +57,27 @@ func newMockPacketConn() *mockPacketConn {
 }
 
 func (c *mockPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
+	c.mu.Lock()
+	deadline := c.deadline
+	c.mu.Unlock()
+
+	var timeoutChan <-chan time.Time
+	if !deadline.IsZero() {
+		duration := time.Until(deadline)
+		if duration <= 0 {
+			return 0, nil, errors.New("i/o timeout")
+		}
+		timeoutChan = time.After(duration)
+	}
+
 	select {
 	case rp := <-c.readChan:
 		copy(p, rp.p)
 		return len(rp.p), rp.addr, nil
 	case <-c.closed:
 		return 0, nil, io.EOF
+	case <-timeoutChan:
+		return 0, nil, errors.New("i/o timeout")
 	}
 }
 
@@ -94,9 +111,15 @@ func (c *mockPacketConn) LocalAddr() net.Addr {
 	return &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 0}
 }
 
-func (c *mockPacketConn) SetDeadline(t time.Time) error      { return nil }
-func (c *mockPacketConn) SetReadDeadline(t time.Time) error  { return nil }
-func (c *mockPacketConn) SetWriteDeadline(t time.Time) error { return nil }
+func (c *mockPacketConn) SetDeadline(t time.Time) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.deadline = t
+	return nil
+}
+
+func (c *mockPacketConn) SetReadDeadline(t time.Time) error  { return c.SetDeadline(t) }
+func (c *mockPacketConn) SetWriteDeadline(t time.Time) error { return c.SetDeadline(t) }
 
 // mockPacketListener tracks created connections and returns mocks.
 type mockPacketListener struct {
