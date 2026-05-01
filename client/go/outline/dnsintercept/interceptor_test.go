@@ -89,6 +89,7 @@ func (s *lastDestPacketRequestSender) Close() error {
 type lastSourcePacketResponseReceiver struct {
 	lastSrc    net.Addr
 	lastPacket []byte
+	closed     bool
 }
 
 func (r *lastSourcePacketResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
@@ -99,6 +100,7 @@ func (r *lastSourcePacketResponseReceiver) WriteFrom(p []byte, source net.Addr) 
 }
 
 func (r *lastSourcePacketResponseReceiver) Close() error {
+	r.closed = true
 	return nil
 }
 
@@ -140,6 +142,34 @@ func TestDNSInterceptor(t *testing.T) {
 	require.NoError(t, req.Close())
 	require.True(t, basePP.req.closed)
 	require.True(t, dnsPP.req.closed)
+}
+
+func TestDNSInterceptor_AutoClose(t *testing.T) {
+	basePP := &packetProxyWithGivenRequestSender{req: &lastDestPacketRequestSender{}}
+	dnsPP := &packetProxyWithGivenRequestSender{req: &lastDestPacketRequestSender{}}
+	resp := &lastSourcePacketResponseReceiver{}
+
+	resolverLinkLocalAddr := netip.MustParseAddrPort("192.0.2.1:53")
+	resolverRemoteAddr := netip.MustParseAddrPort("8.8.8.8:53")
+
+	interceptor, err := NewDNSInterceptor(basePP, dnsPP, resolverLinkLocalAddr, resolverRemoteAddr)
+	require.NoError(t, err)
+
+	req, err := interceptor.NewSession(resp)
+	require.NoError(t, err)
+
+	// Send to local DNS address -> should be remapped to remote DNS
+	n, err := req.WriteTo([]byte("dns query"), resolverLinkLocalAddr)
+	require.NoError(t, err)
+	require.Equal(t, 9, n)
+
+	// Receive from remote DNS -> should be remapped to local DNS and trigger close
+	require.NotNil(t, dnsPP.resp)
+	n, err = dnsPP.resp.WriteFrom([]byte("dns response"), net.UDPAddrFromAddrPort(resolverRemoteAddr))
+	require.NoError(t, err)
+	require.Equal(t, 12, n)
+
+	require.True(t, resp.closed, "receiver should be closed after response when there was only one write")
 }
 
 // ----- natResponseReceiver tests -----

@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/netip"
 	"sync"
+	"sync/atomic"
 
 	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
@@ -76,13 +77,20 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 		return nil, err
 	}
 
-	// TODO: implement receiver that will close the session when the response is received and there was one write.
+	sentCount := new(int32)
+
 	dnsResp := &natResponseReceiver{
 		PacketResponseReceiver: resp,
 		localAddr:              i.resolverLinkLocalAddr,
 		remoteAddr:             i.resolverRemoteAddr,
 	}
-	dnsSender, err := i.dnsProxy.NewSession(dnsResp)
+
+	singleResp := &singleResponseReceiver{
+		PacketResponseReceiver: dnsResp,
+		sentCount:              sentCount,
+	}
+
+	dnsSender, err := i.dnsProxy.NewSession(singleResp)
 	if err != nil {
 		baseSender.Close()
 		return nil, err
@@ -93,6 +101,7 @@ func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (networ
 		dnsSender:             dnsSender,
 		resolverLinkLocalAddr: i.resolverLinkLocalAddr,
 		resolverRemoteAddr:    i.resolverRemoteAddr,
+		sentCount:             sentCount,
 	}, nil
 }
 
@@ -103,6 +112,7 @@ type dnsInterceptorRequestSender struct {
 	dnsSender             network.PacketRequestSender
 	resolverLinkLocalAddr netip.AddrPort
 	resolverRemoteAddr    netip.AddrPort
+	sentCount             *int32
 }
 
 func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPort) (int, error) {
@@ -114,6 +124,7 @@ func (s *dnsInterceptorRequestSender) WriteTo(p []byte, destination netip.AddrPo
 	}
 
 	if isEquivalentAddrPort(destination, s.resolverLinkLocalAddr) {
+		atomic.AddInt32(s.sentCount, 1)
 		return s.dnsSender.WriteTo(p, s.resolverRemoteAddr)
 	}
 	return s.baseSender.WriteTo(p, destination)
@@ -157,4 +168,18 @@ func (r *natResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) 
 		source = net.UDPAddrFromAddrPort(r.localAddr)
 	}
 	return r.PacketResponseReceiver.WriteFrom(p, source)
+}
+
+// singleResponseReceiver closes the inner receiver when a response is received and there was only one write.
+type singleResponseReceiver struct {
+	network.PacketResponseReceiver
+	sentCount *int32
+}
+
+func (r *singleResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
+	n, err := r.PacketResponseReceiver.WriteFrom(p, source)
+	if atomic.LoadInt32(r.sentCount) == 1 {
+		r.PacketResponseReceiver.Close()
+	}
+	return n, err
 }
