@@ -172,6 +172,23 @@ func (r *lastSourcePacketResponseReceiver) IsClosed() bool {
 	return r.closed
 }
 
+func (r *lastSourcePacketResponseReceiver) GetLastPacket() []byte {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.lastPacket == nil {
+		return nil
+	}
+	p := make([]byte, len(r.lastPacket))
+	copy(p, r.lastPacket)
+	return p
+}
+
+func (r *lastSourcePacketResponseReceiver) GetLastSrc() net.Addr {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.lastSrc
+}
+
 // TestWrapTransportPairWithOutlineDNS verifies that DNS queries are intercepted and remapped.
 func TestWrapTransportPairWithOutlineDNS(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
@@ -264,8 +281,8 @@ func TestWrapTransportPairWithOutlineDNS(t *testing.T) {
 			t.Fatal("timeout waiting for DNS response")
 		}
 
-		require.Equal(t, net.UDPAddrFromAddrPort(linkLocalDNS), resp.lastSrc)
-		require.Equal(t, dnsResponse, resp.lastPacket)
+		require.Equal(t, net.UDPAddrFromAddrPort(linkLocalDNS), resp.GetLastSrc())
+		require.Equal(t, dnsResponse, resp.GetLastPacket())
 
 		// Verify that the receiver was closed (auto-close feature)
 		require.True(t, resp.IsClosed(), "receiver should be closed after response")
@@ -407,7 +424,7 @@ func TestWrapTransportPairWithOutlineDNS_Truncation(t *testing.T) {
 		}
 
 		// Verify that the response was received
-		require.NotEmpty(t, resp.lastPacket)
+		require.NotEmpty(t, resp.GetLastPacket())
 		
 		// Verify that NO packet was written to the transport for this query!
 		// All connections should only contain connectivity check packets to 1.1.1.1:53.
