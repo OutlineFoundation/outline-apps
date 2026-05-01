@@ -71,13 +71,13 @@ The two modes are wired together by the caller (`configregistry.wrapTransportPai
 flowchart TD
     OS["OS (UDP traffic)"] --> ppMain
     ppMain["DNSInterceptor<br/>(Address remapping and lazy dispatching)"]
-    ppMain -->|Non-DNS| ppBase["base PacketProxy<br/>(transport)"]
+    ppMain -->|Non-DNS| ppBase["base PacketProxy<br/>(5m timeout)"]
     ppMain -->|DNS| ppDNS["DelegatePacketProxy<br/>(DNS traffic only)"]
 
     check["UDP connectivity check<br/>(on network change)"] -->|pass| ppDNS
     check -->|fail| ppDNS
 
-    ppDNS -->|UDP available| ppBase
+    ppDNS -->|UDP available| ppDNSBase["DNS PacketProxy<br/>(10s timeout)"]
     ppDNS -->|UDP blocked| ppTrunc["dnstruncate.PacketProxy<br/>(TC response locally)"]
 ```
 
@@ -132,6 +132,5 @@ In truncate mode, no transport session is opened for DNS at all — the truncate
 
 | File | Description |
 |------|-------------|
-| `interceptor.go` | `NewDNSInterceptor` — Dispatches DNS traffic, handles address translation, and creates sessions lazily |
-| `interceptor.go` | `NewDNSRedirectStreamDialer` — Redirects TCP DNS to a real resolver |
-| `helpers.go` | `isEquivalentAddrPort` — Address comparison ignoring IPv4-in-IPv6 mapping |
+| `interceptor.go` | Contains `NewDNSInterceptor` for dispatching/remapping DNS packets, and `NewDNSRedirectStreamDialer` for TCP DNS. |
+| `lazy_packet_proxy.go` | Implements `lazyPacketProxy` to defer session creation until the first write. |
