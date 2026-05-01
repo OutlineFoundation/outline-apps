@@ -351,7 +351,7 @@ func TestWrapTransportPairWithOutlineDNS_Timeout(t *testing.T) {
 		// Wait for 15 seconds (longer than 10s timeout) to verify auto-close.
 		time.Sleep(15 * time.Second)
 
-		t.Logf("Receiver closed after 15s: %v", resp.IsClosed())
+		require.True(t, resp.IsClosed(), "receiver should be closed after timeout")
 		
 		pl.mu.Lock()
 		for _, c := range pl.conns {
