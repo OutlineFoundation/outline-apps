@@ -71,24 +71,12 @@ func NewDNSInterceptor(base network.PacketProxy, dns network.PacketProxy, resolv
 }
 
 func (i *dnsInterceptor) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
-	// Open Questions:
-	// - What happens if the association has a mix of dns and non dns writes?
-	// - What error does the caller expects to close the association? Timeout? EOF? ErrClosed? I think we just need to
-	//   close the receiver.
-	//
-	// Closing behavior
-	//
-	// On session end, we should close the PacketResponseReceiver, so the caller knows the session is over an can clean up.
-	// In that case, we shouldn't receive any more writes, except due to race conditions. It should be enough to return ErrClosed.
-	// The caller should start a new session if they want to use the same address again after close.
-	//
-	// We should react to closing signal from the caller too. Meaning, if our sender gets a close, we should close
-	// the inner sender we created too. The response receiver should return ErrClosed on incoming packets after close.
 	baseSender, err := i.baseProxy.NewSession(resp)
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO: implement receiver that will close the session when the response is received and there was one write.
 	dnsResp := &natResponseReceiver{
 		PacketResponseReceiver: resp,
 		localAddr:              i.resolverLinkLocalAddr,
