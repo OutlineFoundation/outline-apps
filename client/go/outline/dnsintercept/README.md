@@ -63,27 +63,47 @@ DNS can travel over both TCP and UDP:
 
 UDP connectivity is not guaranteed, so the package uses two strategies and switches between them dynamically.
 
+### Dynamic switching
+
+The two modes are wired together by the caller (`configregistry.wrapTransportPairWithOutlineDNS`) using a `DelegatePacketProxy` and a `DNSInterceptor`.
+
+```mermaid
+flowchart TD
+    OS["OS (UDP traffic)"] --> ppMain
+    ppMain["DNSInterceptor<br/>(Address remapping and lazy dispatching)"]
+    ppMain -->|Non-DNS| ppBase["base PacketProxy<br/>(5m timeout)"]
+    ppMain -->|DNS| ppDNS["DelegatePacketProxy<br/>(DNS traffic only)"]
+
+    check["UDP connectivity check<br/>(on network change)"] -->|pass| ppDNS
+    check -->|fail| ppDNS
+
+    ppDNS -->|UDP available| ppDNSBase["DNS PacketProxy<br/>(10s timeout)"]
+    ppDNS -->|UDP blocked| ppTrunc["dnstruncate.PacketProxy<br/>(TC response locally)"]
+```
+
+The `DNSInterceptor` acts as the primary dispatcher. It routes non-DNS traffic directly to the transport and DNS traffic to a dedicated delegate proxy. This delegate proxy switches between forwarding and truncation based on the result of a periodic UDP connectivity check. Transport sessions are opened lazily upon receiving the first packet, ensuring resources are only used when needed.
+
+
 ### Forward mode (UDP available)
 
-DNS queries are forwarded over UDP to a public resolver (Cloudflare, Quad9, or OpenDNS, chosen randomly per session) through the proxy transport.  Responses are rewritten to appear to come from the original fake address.
+DNS queries are forwarded over UDP to a public resolver (Cloudflare, Quad9, or OpenDNS, chosen randomly per session) through the proxy transport.  Addresses are rewritten between the fake link-local address and the real resolver address.
 
 ```mermaid
 sequenceDiagram
     participant OS
-    participant dnsRedirectPacketProxy
+    participant Interceptor as DNSInterceptor
     participant Transport
     participant Resolver as Public DNS resolver
 
-    OS->>dnsRedirectPacketProxy: UDP query to 169.254.113.53:53
-    dnsRedirectPacketProxy->>Transport: UDP query to 1.1.1.1:53 (remapped)
+    OS->>Interceptor: UDP query to 169.254.113.53:53
+    Interceptor->>Transport: UDP query to 1.1.1.1:53 (remapped)
     Transport->>Resolver: query
     Resolver->>Transport: response
-    Transport->>dnsRedirectPacketProxy: UDP response from 1.1.1.1:53
-    dnsRedirectPacketProxy->>OS: response from 169.254.113.53:53 (remapped back)
-    Note over dnsRedirectPacketProxy: session closed immediately after response
+    Transport->>Interceptor: UDP response from 1.1.1.1:53
+    Interceptor->>OS: response from 169.254.113.53:53 (remapped back)
 ```
 
-Each DNS session (one query/response pair) opens a transport session for the duration of the exchange and closes it as soon as the response is delivered.  This keeps resource usage proportional to in-flight queries rather than to recent query rate.
+Each DNS session uses a standard transport session. The transport handles the lifecycle, usually timing out after standard UDP idle timeouts.
 
 ### Truncate mode (UDP unavailable)
 
@@ -92,12 +112,12 @@ If UDP is blocked, forwarding silently fails and DNS stops working.  To handle t
 ```mermaid
 sequenceDiagram
     participant OS
-    participant dnsTruncatePacketProxy
+    participant Trunc as dnstruncate.PacketProxy
     participant StreamDialer
     participant Resolver as Public DNS resolver
 
-    OS->>dnsTruncatePacketProxy: UDP query to 169.254.113.53:53
-    dnsTruncatePacketProxy->>OS: truncated response (TC=1), no transport used
+    OS->>Trunc: UDP query to 169.254.113.53:53
+    Trunc->>OS: truncated response (TC=1), no transport used
     Note over OS: retries over TCP automatically
     OS->>StreamDialer: TCP query to 169.254.113.53:53
     StreamDialer->>Resolver: TCP query to 1.1.1.1:53 (remapped)
@@ -105,30 +125,12 @@ sequenceDiagram
     StreamDialer->>OS: TCP response
 ```
 
-In truncate mode, no transport session is opened for DNS at all — the truncated response is generated locally.  Non-DNS UDP traffic still flows through the transport normally (a base transport session is opened lazily on the first non-DNS packet).
+In truncate mode, no transport session is opened for DNS at all — the truncated response is generated locally.
 
-## Dynamic switching
-
-The two modes are wired together by the caller (`configregistry.wrapTransportPairWithOutlineDNS`) using a `DelegatePacketProxy`.  The VPN starts in truncate mode (safe default) and switches to forward mode once UDP connectivity is confirmed.  It switches back to truncate mode if connectivity is lost.
-
-```mermaid
-flowchart LR
-    OS["OS (UDP traffic)"] --> ppMain
-    check["UDP connectivity check<br/>(on network change)"] -->|pass| ppMain
-    check -->|fail| ppMain
-
-    ppMain{{"DelegatePacketProxy<br/>(ppMain)"}}
-    ppMain -->|UDP available| ppForward["dnsRedirectPacketProxy<br/>(DNS → resolver via transport)"]
-    ppMain -->|UDP blocked| ppTrunc["dnsTruncatePacketProxy<br/>(DNS → TC response locally)"]
-
-    ppForward --> ppBase["base PacketProxy<br/>(transport)"]
-    ppTrunc --> ppBase
-```
 
 ## Package contents
 
 | File | Description |
 |------|-------------|
-| `forward.go` | `NewDNSRedirectStreamDialer` and `NewDNSRedirectPacketProxy` — redirect DNS to a real resolver |
-| `truncate.go` | `NewDNSTruncatePacketProxy` — respond with TC=1 to force TCP retry |
-| `helpers.go` | `isEquivalentAddrPort` — address comparison ignoring IPv4-in-IPv6 mapping |
+| `interceptor.go` | Contains `NewDNSInterceptor` for dispatching/remapping DNS packets, and `NewDNSRedirectStreamDialer` for TCP DNS. |
+| `lazy_packet_proxy.go` | Implements `lazyPacketProxy` to defer session creation until the first write. |

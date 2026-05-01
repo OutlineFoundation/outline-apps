@@ -19,11 +19,13 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"net/netip"
+	"time"
 
 	"localhost/client/go/outline/connectivity"
 	"localhost/client/go/outline/dnsintercept"
 
 	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/dnstruncate"
 	"golang.getoutline.org/sdk/transport"
 )
 
@@ -57,33 +59,43 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	}
 
 	// Intercept DNS for PacketProxy
-	ppBase, err := network.NewPacketProxyFromPacketListener(pl)
+
+	// PacketProxy for connecting to remote servers.
+	// Uses the 5m timeout as recommended in https://www.rfc-editor.org/rfc/rfc4787.html#section-4.3
+	ppBase, err := network.NewPacketProxyFromPacketListener(pl, network.WithPacketListenerWriteIdleTimeout(5 * time.Minute))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create base PacketProxy: %w", err)
 	}
-	// Forwards everything including DNS. For DNS it translates between the link-local and remote addresses for the DNS resolver.
-	ppForward, err := dnsintercept.NewDNSRedirectPacketProxy(ppBase, linkLocalDNS, remoteDNS)
+	// PacketProxy for DNS. Uses a shorter timeout, as recommended in https://www.rfc-editor.org/rfc/rfc5452.html#section-10.
+	ppDNSBase, err := network.NewPacketProxyFromPacketListener(pl, network.WithPacketListenerWriteIdleTimeout(10 * time.Second))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create DNS redirect PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create DNS PacketProxy: %w", err)
 	}
-	// Forwards everything except DNS. For DNS it returns a truncated response.
-	ppTrunc, err := dnsintercept.NewDNSTruncatePacketProxy(ppBase, linkLocalDNS)
+	// Returns a truncated response for DNS packets to force a retry over TCP.
+	ppDNSTrunc, err := dnstruncate.NewPacketProxy()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create always-truncate DNS PacketProxy: %w", err)
 	}
-	ppMain, err := network.NewDelegatePacketProxy(ppTrunc)
+	// Delegate for DNS traffic: selects between forwarding and truncation based on connectivity.
+	ppDNSDelegate, err := network.NewDelegatePacketProxy(ppDNSTrunc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create indirect PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create indirect DNS PacketProxy: %w", err)
+	}
+	// Interceptor: Forwards everything except DNS to ppBase. DNS is redirected to ppDNS and
+	// translated between the link-local and remote addresses.
+	ppMain, err := dnsintercept.NewDNSInterceptor(ppBase, ppDNSDelegate, linkLocalDNS, remoteDNS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DNS interceptor PacketProxy: %w", err)
 	}
 
 	onNetworkChanged := func() {
 		go func() {
 			if err := connectivity.CheckUDPConnectivity(pl); err == nil {
 				slog.Info("remote device UDP is healthy")
-				ppMain.SetProxy(ppForward)
+				ppDNSDelegate.SetProxy(ppDNSBase)
 			} else {
 				slog.Warn("remote device UDP is not healthy", "err", err)
-				ppMain.SetProxy(ppTrunc)
+				ppDNSDelegate.SetProxy(ppDNSTrunc)
 			}
 		}()
 	}
