@@ -186,12 +186,15 @@ func (r *natResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) 
 type singleResponseReceiver struct {
 	network.PacketResponseReceiver
 	sentCount *int32
+	closeOnce sync.Once
 }
 
 func (r *singleResponseReceiver) WriteFrom(p []byte, source net.Addr) (int, error) {
 	n, err := r.PacketResponseReceiver.WriteFrom(p, source)
 	if atomic.LoadInt32(r.sentCount) == 1 {
-		r.PacketResponseReceiver.Close()
+		r.closeOnce.Do(func() {
+			r.PacketResponseReceiver.Close()
+		})
 	}
 	return n, err
 }
