@@ -11,14 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import {Browser} from '@capacitor/browser';
-import {Capacitor} from '@capacitor/core';
-import type {PluginListenerHandle} from '@capacitor/core';
-import {CapacitorPluginOutline} from '@capacitor-plugin-outline';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
+import type { PluginListenerHandle } from '@capacitor/core';
+import { Actions, CapacitorPluginOutline } from '@capacitor-plugin-outline';
 import * as Sentry from '@sentry/browser';
-import {AbstractClipboard} from '@web/app/clipboard';
-import type {EnvironmentVariables} from '@web/app/environment';
-import {main} from '@web/app/main';
+import { AbstractClipboard } from '@web/app/clipboard';
+import type { EnvironmentVariables } from '@web/app/environment';
+import { main } from '@web/app/main';
 import {
   installDefaultMethodChannel,
   type MethodChannel,
@@ -28,13 +28,13 @@ import type {
   StartRequestJson,
   TunnelStatus,
 } from '@web/app/outline_server_repository/vpn';
-import type {OutlinePlatform} from '@web/app/platform';
-import {AbstractUpdater} from '@web/app/updater';
+import type { OutlinePlatform } from '@web/app/platform';
+import { AbstractUpdater } from '@web/app/updater';
 import * as interceptors from '@web/app/url_interceptor';
-import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
-import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
+import { NoOpVpnInstaller, type VpnInstaller } from '@web/app/vpn_installer';
+import { SentryErrorReporter, type Tags } from '@web/shared/error_reporter';
 
-import {CapacitorBrowserMethodChannel} from './browser_method_channel';
+import { CapacitorBrowserMethodChannel } from './browser_method_channel';
 
 interface AsyncVpnApi extends VpnApi {
   onStatusChange(
@@ -61,7 +61,7 @@ class CapacitorErrorReporter extends SentryErrorReporter {
   constructor(appVersion: string, dsn: string, tags: Tags) {
     super(appVersion, dsn, tags);
     if (dsn) {
-      CapacitorPluginOutline.initializeErrorReporting({apiKey: dsn}).catch(
+      CapacitorPluginOutline.execute({ action: Actions.INIT_ERROR_REPORTING, apiKey: dsn }).catch(
         console.error
       );
     }
@@ -73,7 +73,8 @@ class CapacitorErrorReporter extends SentryErrorReporter {
     userEmail?: string
   ): Promise<void> {
     await super.report(userFeedback, feedbackCategory, userEmail);
-    await CapacitorPluginOutline.reportEvents({
+    await CapacitorPluginOutline.execute({
+      action: Actions.REPORT_EVENTS,
       uuid: Sentry.lastEventId() || '',
     });
   }
@@ -81,7 +82,8 @@ class CapacitorErrorReporter extends SentryErrorReporter {
 
 class CapacitorMethodChannel implements MethodChannel {
   async invokeMethod(methodName: string, params: string): Promise<string> {
-    const response = await CapacitorPluginOutline.invokeMethod({
+    const response = await CapacitorPluginOutline.execute({
+      action: Actions.INVOKE_METHOD,
       method: methodName,
       input: params,
     });
@@ -93,7 +95,8 @@ class CapacitorVpnApi implements AsyncVpnApi {
   private statusListener?: PluginListenerHandle;
 
   async start(request: StartRequestJson): Promise<void> {
-    await CapacitorPluginOutline.start({
+    await CapacitorPluginOutline.execute({
+      action: Actions.START,
       tunnelId: request.id,
       serverName: request.name,
       transportConfig: request.client,
@@ -101,11 +104,11 @@ class CapacitorVpnApi implements AsyncVpnApi {
   }
 
   async stop(id: string): Promise<void> {
-    await CapacitorPluginOutline.stop({tunnelId: id});
+    await CapacitorPluginOutline.execute({ action: Actions.STOP, tunnelId: id });
   }
 
   async isRunning(id: string): Promise<boolean> {
-    const result = await CapacitorPluginOutline.isRunning({tunnelId: id});
+    const result = await CapacitorPluginOutline.execute({ action: Actions.IS_RUNNING, tunnelId: id });
     return result.isRunning;
   }
 
@@ -145,18 +148,18 @@ class CapacitorPlatform implements OutlinePlatform {
   }
 
   getErrorReporter(env: EnvironmentVariables) {
-    const sharedTags = {'build.number': env.APP_BUILD_NUMBER};
+    const sharedTags = { 'build.number': env.APP_BUILD_NUMBER };
     return hasDeviceSupport
       ? new CapacitorErrorReporter(
-          env.APP_VERSION,
-          env.SENTRY_DSN || '',
-          sharedTags
-        )
+        env.APP_VERSION,
+        env.SENTRY_DSN || '',
+        sharedTags
+      )
       : new SentryErrorReporter(
-          env.APP_VERSION,
-          env.SENTRY_DSN || '',
-          sharedTags
-        );
+        env.APP_VERSION,
+        env.SENTRY_DSN || '',
+        sharedTags
+      );
   }
 
   getUpdater() {
@@ -171,7 +174,7 @@ class CapacitorPlatform implements OutlinePlatform {
     if (!hasDeviceSupport) {
       return;
     }
-    CapacitorPluginOutline.quitApplication().catch((err: unknown) => {
+    CapacitorPluginOutline.execute({ action: Actions.QUIT }).catch((err: unknown) => {
       console.warn('Failed to quit application', err);
     });
   }
@@ -180,7 +183,7 @@ class CapacitorPlatform implements OutlinePlatform {
 function wireExternalLinkHandling() {
   const getExternalHttpUrlFromClick = (event: Event): URL | null => {
     const composedPath =
-      (event as {composedPath?: () => EventTarget[]}).composedPath?.() || [];
+      (event as { composedPath?: () => EventTarget[] }).composedPath?.() || [];
     const pathAnchor = composedPath.find(
       node =>
         node instanceof HTMLAnchorElement && Boolean(node.getAttribute('href'))
@@ -213,7 +216,7 @@ function wireExternalLinkHandling() {
       const url = getExternalHttpUrlFromClick(event);
       if (!url) return;
       event.preventDefault();
-      void Browser.open({url: url.toString()});
+      void Browser.open({ url: url.toString() });
     },
     true
   );

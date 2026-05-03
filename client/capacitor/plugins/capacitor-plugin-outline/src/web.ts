@@ -14,46 +14,21 @@
  * limitations under the License.
  */
 
-import {WebPlugin} from '@capacitor/core';
+import { WebPlugin } from '@capacitor/core';
 
-import type {CapacitorPluginOutline} from './definitions';
+import type { CapacitorPluginOutline, ExecuteOptions, ExecuteResult, VpnStatusData } from './definitions';
 
 export class CapacitorPluginOutlineWeb
   extends WebPlugin
-  implements CapacitorPluginOutline
-{
-  async invokeMethod(_options: {
-    method: string;
-    input: string;
-  }): Promise<{value: string}> {
+  implements CapacitorPluginOutline {
+  async execute(_options: ExecuteOptions): Promise<ExecuteResult> {
     throw this.unimplemented('Not implemented on web.');
   }
 
-  async start(_options: {
-    tunnelId: string;
-    serverName: string;
-    transportConfig: string;
-  }): Promise<void> {
-    throw this.unimplemented('Not implemented on web.');
-  }
-
-  async stop(_options: {tunnelId: string}): Promise<void> {
-    throw this.unimplemented('Not implemented on web.');
-  }
-
-  async isRunning(_options: {tunnelId: string}): Promise<{isRunning: boolean}> {
-    throw this.unimplemented('Not implemented on web.');
-  }
-
-  async initializeErrorReporting(_options: {apiKey: string}): Promise<void> {
-    throw this.unimplemented('Not implemented on web.');
-  }
-
-  async reportEvents(_options: {uuid: string}): Promise<void> {
-    throw this.unimplemented('Not implemented on web.');
-  }
-
-  async quitApplication(): Promise<void> {
+  async addListener(
+    _eventName: string,
+    _listenerFunc: (data: VpnStatusData) => void
+  ): Promise<any> {
     throw this.unimplemented('Not implemented on web.');
   }
 }

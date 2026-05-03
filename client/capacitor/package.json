@@ -15,7 +15,6 @@
     "build": "node ./build.action.mjs"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.0.0",
     "@outline/infrastructure": "file:../../infrastructure",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^7.1.4",
@@ -27,8 +26,10 @@
     "webpack-dev-server": "^4.5.0"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
     "@capacitor/browser": "^6.0.6",
-    "@capacitor/core": "^6.2.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
     "@polymer/polymer": "^3.5.1",
     "@sentry/browser": "^7.31.1",
     "@webcomponents/webcomponentsjs": "^2.4.4",
