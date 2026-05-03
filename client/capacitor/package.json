@@ -15,6 +15,7 @@
     "build": "node ./build.action.mjs"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@outline/infrastructure": "file:../../infrastructure",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^7.1.4",
