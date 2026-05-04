@@ -78,13 +78,19 @@ class CapacitorPluginOutline : Plugin() {
 
   private var vpnTunnelService: IVpnTunnelService? = null
   private var errorReportingApiKey: String? = null
-  private var pendingStartRequest: StartVpnRequest? = null
+  private var pendingVpnPermissionRequest: StartVpnRequest? = null
+  private var pendingServiceBindRequest: StartVpnRequest? = null
   private val statusCallbacks = ConcurrentHashMap<String, PluginCall>()
   private val executor = Executors.newCachedThreadPool()
 
   private val vpnServiceConnection = object : ServiceConnection {
     override fun onServiceConnected(name: ComponentName, service: IBinder) {
       vpnTunnelService = IVpnTunnelService.Stub.asInterface(service)
+      val pending = pendingServiceBindRequest
+      if (pending != null) {
+        pendingServiceBindRequest = null
+        executeStartTunnel(pending.call, pending.args)
+      }
     }
 
     override fun onServiceDisconnected(name: ComponentName) {
@@ -185,14 +191,6 @@ class CapacitorPluginOutline : Plugin() {
     val currentActivity = activity ?: run {
       call.reject("No active activity to close")
       return
-    }
-    
-    executor.execute {
-      try {
-        vpnTunnelService?.stopAllTunnels()
-      } catch (e: Exception) {
-        // Ignore errors during shutdown
-      }
     }
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -322,7 +320,7 @@ class CapacitorPluginOutline : Plugin() {
 
     if (requestCode != REQUEST_CODE_PREPARE_VPN) return
 
-    val startRequest = pendingStartRequest ?: return
+    val startRequest = pendingVpnPermissionRequest ?: return
     val call = startRequest.call
 
     if (resultCode != Activity.RESULT_OK) {
@@ -331,18 +329,17 @@ class CapacitorPluginOutline : Plugin() {
           vpnPermissionDeniedError(),
       )
       bridge.releaseCall(call)
-      pendingStartRequest = null
+      pendingVpnPermissionRequest = null
       return
     }
 
+    pendingVpnPermissionRequest = null
     executeStartTunnel(call, startRequest.args)
-    bridge.releaseCall(call)
-    pendingStartRequest = null
   }
 
   private fun executeStartTunnel(call: PluginCall, args: StartArgs) {
     if (vpnTunnelService == null) {
-      pendingStartRequest = StartVpnRequest(args, call)
+      pendingServiceBindRequest = StartVpnRequest(args, call)
       call.setKeepAlive(true)
       saveCall(call)
       return
@@ -366,7 +363,7 @@ class CapacitorPluginOutline : Plugin() {
       return false
     }
 
-    pendingStartRequest = StartVpnRequest(args, call)
+    pendingVpnPermissionRequest = StartVpnRequest(args, call)
     call.setKeepAlive(true)
     saveCall(call)
     currentActivity.startActivityForResult(prepareIntent, REQUEST_CODE_PREPARE_VPN)

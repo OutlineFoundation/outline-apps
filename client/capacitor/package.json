@@ -12,7 +12,8 @@
   "scripts": {
     "clean": "rm -rf node_modules www",
     "start": "node ./start.action.mjs",
-    "build": "node ./build.action.mjs"
+    "build": "node ./build.action.mjs",
+    "capacitor:sync:before": "npm run build && cd ../.. && go tool task -v client:tun2socks:android && go tool task -v client:android:configure"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
@@ -28,7 +29,8 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
-    "@capacitor/browser": "^6.0.6",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
     "@polymer/polymer": "^3.5.1",

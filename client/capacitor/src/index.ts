@@ -35,12 +35,7 @@ import { NoOpVpnInstaller, type VpnInstaller } from '@web/app/vpn_installer';
 import { SentryErrorReporter, type Tags } from '@web/shared/error_reporter';
 
 import { CapacitorBrowserMethodChannel } from './browser_method_channel';
-
-interface AsyncVpnApi extends VpnApi {
-  onStatusChange(
-    listener: (id: string, status: TunnelStatus) => void
-  ): Promise<void>;
-}
+import { CapacitorAndroidUrlInterceptor } from './capacitor_android_url_interceptor';
 
 const hasDeviceSupport = Capacitor.isNativePlatform();
 
@@ -91,7 +86,7 @@ class CapacitorMethodChannel implements MethodChannel {
   }
 }
 
-class CapacitorVpnApi implements AsyncVpnApi {
+class CapacitorVpnApi implements VpnApi {
   private statusListener?: PluginListenerHandle;
 
   async start(request: StartRequestJson): Promise<void> {
@@ -112,7 +107,13 @@ class CapacitorVpnApi implements AsyncVpnApi {
     return result.isRunning;
   }
 
-  async onStatusChange(
+  onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
+    void this.attachStatusListener(listener).catch((err: unknown) => {
+      console.error('Failed to register VPN status listener', err);
+    });
+  }
+
+  private async attachStatusListener(
     listener: (id: string, status: TunnelStatus) => void
   ): Promise<void> {
     if (this.statusListener) {
@@ -132,13 +133,13 @@ class CapacitorVpnApi implements AsyncVpnApi {
 }
 
 class CapacitorPlatform implements OutlinePlatform {
-  getVpnApi(): AsyncVpnApi | undefined {
+  getVpnApi(): VpnApi | undefined {
     return hasDeviceSupport ? new CapacitorVpnApi() : undefined;
   }
 
   getUrlInterceptor() {
     if (Capacitor.getPlatform() === 'android') {
-      return new interceptors.AndroidUrlInterceptor();
+      return new CapacitorAndroidUrlInterceptor();
     }
     return new interceptors.UrlInterceptor();
   }
