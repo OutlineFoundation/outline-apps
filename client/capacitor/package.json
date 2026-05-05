@@ -1,0 +1,40 @@
+{
+  "name": "@outline/client-capacitor",
+  "productName": "Outline Capacitor Client",
+  "version": "0.0.0-debug",
+  "description": "Outline Capacitor Client",
+  "private": true,
+  "type": "module",
+  "keywords": [
+    "capacitor",
+    "mobile"
+  ],
+  "scripts": {
+    "clean": "rm -rf node_modules www",
+    "start": "node ./start.action.mjs",
+    "build": "node ./build.action.mjs"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@outline/infrastructure": "file:../../infrastructure",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.4",
+    "html-webpack-plugin": "^5.6.6",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.7",
+    "webpack": "^5.16.0",
+    "webpack-cli": "^4.4.0",
+    "webpack-dev-server": "^4.5.0"
+  },
+  "dependencies": {
+    "@capacitor/browser": "^6.0.6",
+    "@capacitor/core": "^6.2.1",
+    "@polymer/polymer": "^3.5.1",
+    "@sentry/browser": "^7.31.1",
+    "@webcomponents/webcomponentsjs": "^2.4.4",
+    "capacitor-plugin-outline": "file:./plugins/capacitor-plugin-outline",
+    "core-js": "^3.49.0",
+    "regenerator-runtime": "^0.14.1",
+    "web-animations-js": "^2.3.2"
+  }
+}

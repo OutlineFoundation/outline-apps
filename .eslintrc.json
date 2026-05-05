@@ -6,6 +6,7 @@
     "sourceType": "module",
     "project": [
       "./client/tsconfig.json",
+      "./client/capacitor/tsconfig.json",
       "./infrastructure/tsconfig.json",
       "./server_manager/tsconfig.json"
     ]
