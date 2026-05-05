@@ -93,8 +93,8 @@ export const browserConfig = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        {from: 'assets', to: 'assets'},
-        {from: 'messages', to: 'messages'},
+        {from: 'assets', to: 'assets', context: __dirname},
+        {from: 'messages', to: 'messages', context: __dirname},
       ],
     }),
   ],

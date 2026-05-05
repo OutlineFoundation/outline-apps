@@ -78,6 +78,7 @@ export default merge(baseConfig, browserConfig, {
             '@webcomponents/webcomponentsjs/custom-elements-es5-adapter.js'
           ),
           to: 'webcomponentsjs',
+          context: __dirname,
         },
       ],
     }),
