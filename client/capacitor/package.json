@@ -17,7 +17,7 @@
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
     "@outline/infrastructure": "file:../../infrastructure",
-    "copy-webpack-plugin": "^5.1.1",
+    "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.4",
     "html-webpack-plugin": "^5.6.6",
     "style-loader": "^4.0.0",
