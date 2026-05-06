@@ -149,9 +149,13 @@ export class RestApiSession implements DigitalOceanSession {
           user_data: dropletSpec.installCommand,
           tags: dropletSpec.tags,
           ipv6: true,
-          // We install metrics and droplet agents in the user_data script in order to not delay the droplet readiness.
+          // We install the metrics agent in the user_data script in order to not delay the droplet readiness.
           monitoring: false,
-          with_droplet_agent: false,
+          // Use DigitalOcean's documented default of installing the droplet
+          // agent at create time. Installing it later from the user_data
+          // script (the previous approach) stopped giving working web console
+          // access on droplets created after 2026-03-26 (#2761).
+          with_droplet_agent: true,
         })
           .then(fulfill)
           .catch(e => {
