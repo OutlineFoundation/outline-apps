@@ -151,10 +151,11 @@ export class RestApiSession implements DigitalOceanSession {
           ipv6: true,
           // We install the metrics agent in the user_data script in order to not delay the droplet readiness.
           monitoring: false,
-          // Use DigitalOcean's documented default of installing the droplet
-          // agent at create time. Installing it later from the user_data
-          // script (the previous approach) stopped giving working web console
-          // access on droplets created after 2026-03-26 (#2761).
+          // TODO(laplante): revert
+          // https://github.com/OutlineFoundation/outline-apps/pull/2763
+          // and move agent installation back after droplet creation
+          // once we have a fix for
+          // https://github.com/digitalocean/droplet-agent/issues/224
           with_droplet_agent: true,
         })
           .then(fulfill)

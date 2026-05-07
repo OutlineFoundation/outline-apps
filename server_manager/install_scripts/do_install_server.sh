@@ -199,11 +199,6 @@ wait "${install_pid}"
 # over a minute of delay to the droplet readiness. Instead, we do it here.
 # Since the server manager looks only for the tags created in the previous
 # step, this does not slow down server creation.
-#
-# Note: the droplet agent used to be installed here too, but that path stopped
-# producing working web-console access on droplets created after 2026-03-26
-# (#2761). It is now installed by DigitalOcean at create time via
-# with_droplet_agent, which is their documented default.
 
 # Install the DigitalOcean Metrics Agent, for improved monitoring:
 # https://docs.digitalocean.com/products/monitoring/how-to/install-agent/
