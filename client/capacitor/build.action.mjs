@@ -16,6 +16,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import url from 'url';
 
+import rmfr from 'rmfr';
+
 import webpackConfig from './webpack.config.js';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
@@ -50,6 +52,10 @@ export async function main(...parameters) {
 }
 
 async function buildWebBundle({versionName, buildNumber}) {
+  const outputDir = path.resolve(capacitorDir, 'www');
+  await rmfr(outputDir);
+  await fs.mkdir(outputDir, {recursive: true});
+
   await writeEnvironmentJson(versionName, buildNumber);
   await runWebpack({...webpackConfig, mode: 'development'});
 }

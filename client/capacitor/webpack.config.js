@@ -1,38 +1,24 @@
-/**
- * Copyright 2026 The Outline Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import path from 'path';
 import {fileURLToPath} from 'url';
 
 import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import {merge} from 'webpack-merge';
+
+import {baseConfig, __dirname as webDir} from '../web/webpack_base.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default {
+export default merge(baseConfig, {
   entry: [
     path.resolve(__dirname, 'src/polyfills.ts'),
-    path.resolve(__dirname, '../web/style.css'),
+    path.resolve(webDir, 'style.css'),
     path.resolve(__dirname, 'src/index.ts'),
   ],
   output: {
     path: path.resolve(__dirname, 'www'),
     filename: 'bundle.js',
-    clean: true,
   },
   devServer: {
     static: {
@@ -80,12 +66,12 @@ export default {
     ],
   },
   plugins: [
-    new CopyPlugin(
-      [
-        {from: path.resolve(__dirname, '../web/assets'), to: 'assets'},
-        {from: path.resolve(__dirname, '../web/messages'), to: 'messages'},
+    new CopyPlugin({
+      patterns: [
+        {from: path.resolve(webDir, 'assets'), to: 'assets'},
+        {from: path.resolve(webDir, 'messages'), to: 'messages'},
         {
-          from: path.resolve(__dirname, '../web/favicon.ico'),
+          from: path.resolve(webDir, 'favicon.ico'),
           to: 'favicon.ico',
           noErrorOnMissing: true,
         },
@@ -94,8 +80,7 @@ export default {
           to: 'environment.json',
         },
       ],
-      {context: __dirname}
-    ),
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src/index.html'),
       filename: 'index.html',
@@ -103,9 +88,8 @@ export default {
     }),
   ],
   resolve: {
-    extensions: ['.ts', '.js', '.json'],
     alias: {
-      '@web': path.resolve(__dirname, '../web'),
+      '@web': webDir,
       '@capacitor-plugin-outline': path.resolve(
         __dirname,
         'plugins/capacitor-plugin-outline/src'
@@ -113,4 +97,4 @@ export default {
     },
   },
   devtool: 'source-map',
-};
+});
