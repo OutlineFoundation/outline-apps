@@ -76,6 +76,8 @@ export default merge(baseConfig, {
           noErrorOnMissing: true,
         },
         {
+          // Self-copy: pulls www/environment.json (written by action scripts)
+          // into webpack's in-memory filesystem so the dev server serves it.
           from: path.resolve(__dirname, 'www/environment.json'),
           to: 'environment.json',
         },

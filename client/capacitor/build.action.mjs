@@ -21,6 +21,7 @@ import rmfr from 'rmfr';
 import webpackConfig from './webpack.config.js';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
+import {writeEnvironmentJson} from './write_environment.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
@@ -45,40 +46,12 @@ export async function main(...parameters) {
     );
   }
 
-  await buildWebBundle({
-    versionName,
-    buildNumber,
-  });
-}
-
-async function buildWebBundle({versionName, buildNumber}) {
   const outputDir = path.resolve(capacitorDir, 'www');
   await rmfr(outputDir);
   await fs.mkdir(outputDir, {recursive: true});
 
-  await writeEnvironmentJson(versionName, buildNumber);
+  await writeEnvironmentJson(capacitorDir, versionName, buildNumber);
   await runWebpack({...webpackConfig, mode: 'development'});
-}
-
-async function writeEnvironmentJson(versionName, buildNumber) {
-  process.env.APP_VERSION = versionName;
-  process.env.APP_BUILD_NUMBER = String(buildNumber);
-
-  const environmentJson = JSON.stringify(
-    {
-      APP_VERSION: process.env.APP_VERSION,
-      APP_BUILD_NUMBER: process.env.APP_BUILD_NUMBER,
-    },
-    null,
-    2
-  );
-  const outputEnvironmentPath = path.resolve(
-    capacitorDir,
-    'www',
-    'environment.json'
-  );
-  await fs.mkdir(path.dirname(outputEnvironmentPath), {recursive: true});
-  await fs.writeFile(outputEnvironmentPath, environmentJson);
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
