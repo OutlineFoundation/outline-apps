@@ -177,6 +177,7 @@ class OutlineServerRepository implements ServerRepository {
     await methodChannel
       .getDefaultMethodChannel()
       .invokeMethod('EraseServiceStorage', serverId);
+    await this.vpnApi.clearLastConnectedTunnel?.(serverId);
     this.eventQueue.enqueue(new events.ServerForgotten(entry.server));
   }
 

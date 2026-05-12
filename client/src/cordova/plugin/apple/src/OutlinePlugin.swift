@@ -131,6 +131,13 @@ class OutlinePlugin: CDVPlugin {
           named: name,
           withTransport: transportConfig
         )
+        OutlineVpnControlStore.saveLastConnectedTunnel(
+          OutlineVpnControlConfiguration(
+            tunnelId: tunnelId,
+            serverName: name,
+            transportConfig: transportConfig
+          )
+        )
         #if os(macOS) || targetEnvironment(macCatalyst)
           NotificationCenter.default.post(
             name: .kVpnConnected,
@@ -172,6 +179,17 @@ class OutlinePlugin: CDVPlugin {
       #endif
     }
 
+  }
+
+  func clearLastConnectedTunnel(_ command: CDVInvokedUrlCommand) {
+    guard let tunnelId = command.argument(at: 0) as? String else {
+      return sendError(
+        "Missing tunnel ID",
+        callbackId: command.callbackId
+      )
+    }
+    OutlineVpnControlStore.clearLastConnectedTunnel(matching: tunnelId)
+    sendSuccess(callbackId: command.callbackId)
   }
 
   func isRunning(_ command: CDVInvokedUrlCommand) {

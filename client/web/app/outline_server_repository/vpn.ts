@@ -45,6 +45,9 @@ export interface VpnApi {
   /** Returns whether the tunnel instance is active. */
   isRunning(id: string): Promise<boolean>;
 
+  /** Clears any native quick-control state associated with the tunnel. */
+  clearLastConnectedTunnel?(id: string): Promise<void>;
+
   /** Sets a listener, to be called when the tunnel status changes. */
   onStatusChange(listener: (id: string, status: TunnelStatus) => void): void;
 }
