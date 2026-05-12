@@ -71,6 +71,8 @@ public class VpnTunnelService extends VpnService {
   private static final String TUNNEL_SERVER_NAME = "serverName";
 
   public static final String STATUS_BROADCAST_KEY = "onStatusChange";
+  public static final String START_LAST_TUNNEL_EXTRA = "startLastTunnel";
+  public static final String STOP_ACTIVE_TUNNEL_EXTRA = "stopActiveTunnel";
 
   public enum TunnelStatus {
     INVALID(-1), // Internal use only.
@@ -159,6 +161,19 @@ public class VpnTunnelService extends VpnService {
     LOG.info(String.format(Locale.ROOT, "Starting VPN service: %s", intent));
     int superOnStartReturnValue = super.onStartCommand(intent, flags, startId);
     if (intent != null) {
+      if (intent.getBooleanExtra(STOP_ACTIVE_TUNNEL_EXTRA, false)) {
+        QuickSettingsTileService.setVpnRunningState(this, false);
+        broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
+        tearDownActiveTunnel();
+        QuickSettingsTileService.requestTileUpdate(this);
+        stopSelf();
+        return START_NOT_STICKY;
+      }
+      if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
+        startLastSuccessfulTunnel();
+        QuickSettingsTileService.requestTileUpdate(this);
+        return superOnStartReturnValue;
+      }
       // VpnServiceStarter puts AUTOSTART_EXTRA in the intent when the service starts automatically.
       boolean startedByVpnStarter =
           intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false);
@@ -175,12 +190,15 @@ public class VpnTunnelService extends VpnService {
     LOG.info("VPN revoked.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
+    QuickSettingsTileService.requestTileUpdate(this);
   }
 
   @Override
   public void onDestroy() {
     LOG.info("Destroying VPN service.");
+    broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
+    QuickSettingsTileService.requestTileUpdate(this);
   }
 
   // Tunnel API
@@ -434,6 +452,8 @@ public class VpnTunnelService extends VpnService {
 
   /* Broadcast change in the VPN connectivity. */
   private void broadcastVpnConnectivityChange(TunnelStatus status) {
+    QuickSettingsTileService.setVpnRunningState(this, status != TunnelStatus.DISCONNECTED);
+    QuickSettingsTileService.requestTileUpdate(this);
     if (tunnelConfig == null) {
       LOG.warning("Tunnel disconnected, not sending VPN connectivity broadcast");
       return;
