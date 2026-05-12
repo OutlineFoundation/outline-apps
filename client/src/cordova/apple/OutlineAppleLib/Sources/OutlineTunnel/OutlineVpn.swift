@@ -20,7 +20,6 @@ import OutlineError
 @objcMembers
 public class OutlineVpn: NSObject {
   public static let shared = OutlineVpn()
-  private static let kVpnExtensionBundleId = "\(Bundle.main.bundleIdentifier!).VpnExtension"
 
   public typealias VpnStatusObserver = (NEVPNStatus, String) -> Void
 
@@ -50,7 +49,12 @@ public class OutlineVpn: NSObject {
   // MARK: - Interface
 
   /** Starts a VPN tunnel as specified in the OutlineTunnel object. */
-  public func start(_ tunnelId: String, named name: String?, withTransport transportConfig: String) async throws {
+  public func start(
+    _ tunnelId: String,
+    named name: String?,
+    withTransport transportConfig: String,
+    providerBundleIdentifier: String = OutlineVpnControlStore.vpnExtensionBundleIdentifier()
+  ) async throws {
     if let manager = await getTunnelManager(), isActiveSession(manager.connection) {
       DDLogDebug("Stoppping active session before starting new one")
       await stopSession(manager)
@@ -58,7 +62,12 @@ public class OutlineVpn: NSObject {
 
     let manager: NETunnelProviderManager
     do {
-      manager = try await setupVpn(withId: tunnelId, named: name ?? "Outline Server", withTransport: transportConfig)
+      manager = try await setupVpn(
+        withId: tunnelId,
+        named: name ?? "Outline Server",
+        withTransport: transportConfig,
+        providerBundleIdentifier: providerBundleIdentifier
+      )
     } catch {
       DDLogError("Failed to setup VPN: \(error.localizedDescription)")
       throw OutlineError.vpnPermissionNotGranted(cause: error)
@@ -169,9 +178,18 @@ public class OutlineVpn: NSObject {
     }
   }
 
+  public func isLastConnectedTunnelActive() async -> Bool {
+    await isActive(OutlineVpnControlStore.loadLastConnectedTunnel()?.tunnelId)
+  }
+
   // Adds a VPN configuration to the user preferences if no Outline profile is present. Otherwise
   // enables the existing configuration.
-  private func setupVpn(withId id:String, named name:String, withTransport transportConfig: String) async throws -> NETunnelProviderManager {
+  private func setupVpn(
+    withId id:String,
+    named name:String,
+    withTransport transportConfig: String,
+    providerBundleIdentifier: String
+  ) async throws -> NETunnelProviderManager {
     let managers = try await NETunnelProviderManager.loadAllFromPreferences()
     var manager: NETunnelProviderManager!
     if managers.count > 0 {
@@ -188,7 +206,7 @@ public class OutlineVpn: NSObject {
     let config = NETunnelProviderProtocol()
     // TODO(fortuna): set to something meaningful if we can.
     config.serverAddress = "Outline"
-    config.providerBundleIdentifier = OutlineVpn.kVpnExtensionBundleId
+    config.providerBundleIdentifier = providerBundleIdentifier
     config.providerConfiguration = [
       ConfigKey.tunnelId: id,
       ConfigKey.transport: transportConfig
