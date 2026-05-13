@@ -66,7 +66,7 @@ export async function main(...parameters) {
     '-destination',
     outlinePlatform === 'macos'
       ? `platform=macOS,variant=Mac Catalyst,arch=${os.machine()}`
-      : 'platform=iOS Simulator,OS=17.0.1,name=iPhone 15',
+      : 'platform=iOS Simulator,OS=latest,name=iPhone 16',
     '-project',
     path.join(APPLE_ROOT, 'OutlineLib', 'OutlineLib.xcodeproj'),
     '-enableCodeCoverage',
