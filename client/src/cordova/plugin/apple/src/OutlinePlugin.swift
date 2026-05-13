@@ -21,6 +21,9 @@ import OutlineSentryLogger
 import OutlineTunnel
 import Sentry
 import Tun2socks
+#if os(iOS) && !targetEnvironment(macCatalyst)
+  import WidgetKit
+#endif
 
 public enum TunnelStatus: Int {
   case connected = 0
@@ -49,6 +52,14 @@ class OutlinePlugin: CDVPlugin {
     private static let kPlatform = "iOS"
   #endif
   private static let kAppGroup = "group.org.getoutline.client"
+
+  private func reloadOutlineControls() {
+    #if os(iOS) && !targetEnvironment(macCatalyst)
+      if #available(iOS 18.0, *) {
+        ControlCenter.shared.reloadAllControls()
+      }
+    #endif
+  }
 
   override func pluginInitialize() {
     #if DEBUG
@@ -189,6 +200,7 @@ class OutlinePlugin: CDVPlugin {
       )
     }
     OutlineVpnControlStore.clearLastConnectedTunnel(matching: tunnelId)
+    reloadOutlineControls()
     sendSuccess(callbackId: command.callbackId)
   }
 

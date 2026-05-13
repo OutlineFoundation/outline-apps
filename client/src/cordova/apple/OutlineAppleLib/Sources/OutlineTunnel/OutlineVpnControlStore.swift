@@ -29,6 +29,7 @@ public struct OutlineVpnControlConfiguration: Codable, Equatable {
 public enum OutlineVpnControlStore {
   public static let appGroup = "group.org.getoutline.client"
 
+  // Keep these keys in sync with the self-contained store in OutlineControls.swift.
   private static let lastConnectedTunnelKey = "org.outline.lastConnectedTunnel"
   private static let controlExtensionBundleSuffix = ".OutlineControls"
 
