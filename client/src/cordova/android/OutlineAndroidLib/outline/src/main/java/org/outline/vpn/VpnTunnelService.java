@@ -328,6 +328,7 @@ public class VpnTunnelService extends VpnService {
           Platerrors.InternalError,
           "VPN profile is not active"));
     }
+    broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
     return null;
   }
