@@ -149,6 +149,7 @@ class OutlinePlugin: CDVPlugin {
             transportConfig: transportConfig
           )
         )
+        reloadOutlineControls()
         #if os(macOS) || targetEnvironment(macCatalyst)
           NotificationCenter.default.post(
             name: .kVpnConnected,
@@ -181,6 +182,7 @@ class OutlinePlugin: CDVPlugin {
     DDLogInfo("\(Action.stop) \(tunnelId)")
     Task {
       await OutlineVpn.shared.stop(tunnelId)
+      reloadOutlineControls()
       sendSuccess(callbackId: command.callbackId)
       #if os(macOS) || targetEnvironment(macCatalyst)
         NotificationCenter.default.post(
