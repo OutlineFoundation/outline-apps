@@ -20,8 +20,8 @@ import webpack from 'webpack';
 import WebpackServer from 'webpack-dev-server';
 
 import webpackConfig from './webpack.config.js';
-import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {writeEnvironmentJson} from './write_environment.mjs';
+import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 

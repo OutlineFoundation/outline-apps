@@ -16,12 +16,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import url from 'url';
 
-import rmfr from 'rmfr';
-
 import webpackConfig from './webpack.config.js';
+import {writeEnvironmentJson} from './write_environment.mjs';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
-import {writeEnvironmentJson} from './write_environment.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
@@ -47,7 +45,7 @@ export async function main(...parameters) {
   }
 
   const outputDir = path.resolve(capacitorDir, 'www');
-  await rmfr(outputDir);
+  await fs.rm(outputDir, {recursive: true, force: true});
   await fs.mkdir(outputDir, {recursive: true});
 
   await writeEnvironmentJson(capacitorDir, versionName, buildNumber);
