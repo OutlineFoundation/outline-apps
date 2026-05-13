@@ -162,10 +162,8 @@ public class VpnTunnelService extends VpnService {
     int superOnStartReturnValue = super.onStartCommand(intent, flags, startId);
     if (intent != null) {
       if (intent.getBooleanExtra(STOP_ACTIVE_TUNNEL_EXTRA, false)) {
-        QuickSettingsTileService.setVpnRunningState(this, false);
         broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
         tearDownActiveTunnel();
-        QuickSettingsTileService.requestTileUpdate(this);
         stopSelf();
         return START_NOT_STICKY;
       }
@@ -190,7 +188,6 @@ public class VpnTunnelService extends VpnService {
     LOG.info("VPN revoked.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
-    QuickSettingsTileService.requestTileUpdate(this);
   }
 
   @Override
@@ -198,7 +195,6 @@ public class VpnTunnelService extends VpnService {
     LOG.info("Destroying VPN service.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
-    QuickSettingsTileService.requestTileUpdate(this);
   }
 
   // Tunnel API

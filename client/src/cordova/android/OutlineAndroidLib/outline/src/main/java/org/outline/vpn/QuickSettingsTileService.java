@@ -27,7 +27,6 @@ import android.net.VpnService;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Process;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
@@ -159,16 +158,17 @@ public class QuickSettingsTileService extends TileService {
     if (connectivityManager == null) {
       return false;
     }
+    // Before Android 12, VPN network owner UID is unavailable, so a foreign VPN cannot be
+    // distinguished from Outline. In that case, rely only on the persisted Outline VPN state.
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+      return false;
+    }
     for (Network network : connectivityManager.getAllNetworks()) {
       NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
       if (capabilities == null || !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
         continue;
       }
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-        return true;
-      }
-      int ownerUid = capabilities.getOwnerUid();
-      if (ownerUid == Process.INVALID_UID || ownerUid == getApplicationInfo().uid) {
+      if (capabilities.getOwnerUid() == getApplicationInfo().uid) {
         return true;
       }
     }
@@ -182,7 +182,11 @@ public class QuickSettingsTileService extends TileService {
             ? VpnTunnelService.START_LAST_TUNNEL_EXTRA
             : VpnTunnelService.STOP_ACTIVE_TUNNEL_EXTRA,
         true);
-    startService(intent);
+    if (running && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      startForegroundService(intent);
+    } else {
+      startService(intent);
+    }
   }
 
   private void openApp() {
