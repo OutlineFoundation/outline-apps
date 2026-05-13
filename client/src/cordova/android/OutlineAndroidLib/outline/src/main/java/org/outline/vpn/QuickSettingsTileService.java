@@ -85,7 +85,8 @@ public class QuickSettingsTileService extends TileService {
   public void onClick() {
     super.onClick();
 
-    boolean vpnRunning = isTileActive() || isOutlineVpnRunning();
+    // SystemUI can briefly cache stale tile state; use Outline state as the source of truth.
+    boolean vpnRunning = isOutlineVpnRunning();
     VpnTunnelStore tunnelStore = new VpnTunnelStore(this);
     if (!vpnRunning && (tunnelStore.load() == null || VpnService.prepare(this) != null)) {
       openApp();
@@ -128,11 +129,6 @@ public class QuickSettingsTileService extends TileService {
     setTileState(isOutlineVpnRunning() ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
   }
 
-  private boolean isTileActive() {
-    Tile tile = getQsTile();
-    return tile != null && tile.getState() == Tile.STATE_ACTIVE;
-  }
-
   private void setTileState(int state) {
     Tile tile = getQsTile();
     if (tile == null) {
@@ -148,19 +144,16 @@ public class QuickSettingsTileService extends TileService {
   }
 
   private boolean isOutlineVpnRunning() {
-    if (getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-        .getBoolean(VPN_RUNNING_KEY, false)) {
-      return true;
+    // Before Android 12, VPN network owner UID is unavailable, so a foreign VPN cannot be
+    // distinguished from Outline. In that case, rely only on the persisted Outline VPN state.
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+      return getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+          .getBoolean(VPN_RUNNING_KEY, false);
     }
 
     ConnectivityManager connectivityManager =
         (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
     if (connectivityManager == null) {
-      return false;
-    }
-    // Before Android 12, VPN network owner UID is unavailable, so a foreign VPN cannot be
-    // distinguished from Outline. In that case, rely only on the persisted Outline VPN state.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
       return false;
     }
     for (Network network : connectivityManager.getAllNetworks()) {
