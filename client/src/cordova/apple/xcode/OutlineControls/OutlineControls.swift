@@ -24,6 +24,8 @@ private struct LastConnectedTunnel: Codable {
   let transportConfig: String
 }
 
+// Keep this schema and these keys in sync with OutlineVpnControlStore.swift.
+// The control extension stays self-contained so it does not have to link OutlineAppleLib.
 private enum OutlineVpnControlStore {
   static let appGroup = "group.org.getoutline.client"
 
@@ -130,7 +132,48 @@ private enum OutlineVpnControlBridge {
     } catch {
       // Stop the session even if preference updates fail.
     }
-    manager.connection.stopVPNTunnel()
+    await stopTunnel(manager.connection)
+  }
+
+  private static func stopTunnel(_ connection: NEVPNConnection) async {
+    guard !isStoppedSession(connection) else {
+      return
+    }
+
+    class TokenHolder {
+      var token: NSObjectProtocol?
+    }
+    let tokenHolder = TokenHolder()
+
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      var didResume = false
+
+      func resumeIfStopped() {
+        guard isStoppedSession(connection), !didResume else {
+          return
+        }
+        didResume = true
+        if let token = tokenHolder.token {
+          NotificationCenter.default.removeObserver(
+            token,
+            name: .NEVPNStatusDidChange,
+            object: connection
+          )
+        }
+        continuation.resume()
+      }
+
+      tokenHolder.token = NotificationCenter.default.addObserver(
+        forName: .NEVPNStatusDidChange,
+        object: connection,
+        queue: nil
+      ) { _ in
+        resumeIfStopped()
+      }
+
+      connection.stopVPNTunnel()
+      resumeIfStopped()
+    }
   }
 
   private static func getTunnelManager() async -> NETunnelProviderManager? {
@@ -148,7 +191,13 @@ private enum OutlineVpnControlBridge {
 
   private static func isActiveSession(_ session: NEVPNConnection?) -> Bool {
     let status = session?.status
-    return status == .connected || status == .connecting || status == .reasserting
+    return status == .connected || status == .connecting ||
+      status == .disconnecting || status == .reasserting
+  }
+
+  private static func isStoppedSession(_ session: NEVPNConnection?) -> Bool {
+    let status = session?.status
+    return status == .disconnected || status == .invalid
   }
 }
 

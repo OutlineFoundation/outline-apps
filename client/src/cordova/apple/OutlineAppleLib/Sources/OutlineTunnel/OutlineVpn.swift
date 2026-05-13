@@ -178,10 +178,6 @@ public class OutlineVpn: NSObject {
     }
   }
 
-  public func isLastConnectedTunnelActive() async -> Bool {
-    await isActive(OutlineVpnControlStore.loadLastConnectedTunnel()?.tunnelId)
-  }
-
   // Adds a VPN configuration to the user preferences if no Outline profile is present. Otherwise
   // enables the existing configuration.
   private func setupVpn(
@@ -272,7 +268,8 @@ private func getTunnelId(forManager manager:NETunnelProviderManager?) -> String?
 
 private func isActiveSession(_ session: NEVPNConnection?) -> Bool {
   let vpnStatus = session?.status
-  return vpnStatus == .connected || vpnStatus == .connecting || vpnStatus == .reasserting
+  return vpnStatus == .connected || vpnStatus == .connecting ||
+    vpnStatus == .disconnecting || vpnStatus == .reasserting
 }
 
 private func stopSession(_ manager:NETunnelProviderManager) async {
