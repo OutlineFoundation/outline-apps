@@ -371,6 +371,8 @@ public class VpnTunnelService extends VpnService {
 
     // Save state indicating it's disconnected.
     this.tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
+    QuickSettingsTileService.setVpnRunningState(this, false);
+    QuickSettingsTileService.requestTileUpdate(this);
 
     // Clear config that is no longer needed.
     this.tunnelConfig = null;
