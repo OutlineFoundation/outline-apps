@@ -59,25 +59,6 @@ public class QuickSettingsTileStateTest {
     assertTrue(QuickSettingsTileState.shouldShowOn(SDK_POST_S, true, true));
   }
 
-  // ---- isOutlineVpnRunning ----
-
-  @Test
-  public void isOutlineVpnRunning_preS_returnsStoredFlag() {
-    assertTrue(QuickSettingsTileState.isOutlineVpnRunning(SDK_PRE_S, true, false));
-    assertTrue(QuickSettingsTileState.isOutlineVpnRunning(SDK_PRE_S, true, true));
-    assertFalse(QuickSettingsTileState.isOutlineVpnRunning(SDK_PRE_S, false, false));
-    assertFalse(QuickSettingsTileState.isOutlineVpnRunning(SDK_PRE_S, false, true));
-  }
-
-  @Test
-  public void isOutlineVpnRunning_sPlus_returnsNetworkPresence() {
-    // Stored flag is ignored on Android 12+ in favor of actual ConnectivityManager state.
-    assertTrue(QuickSettingsTileState.isOutlineVpnRunning(SDK_S, false, true));
-    assertTrue(QuickSettingsTileState.isOutlineVpnRunning(SDK_POST_S, true, true));
-    assertFalse(QuickSettingsTileState.isOutlineVpnRunning(SDK_S, true, false));
-    assertFalse(QuickSettingsTileState.isOutlineVpnRunning(SDK_POST_S, false, false));
-  }
-
   // ---- resolveClick ----
 
   @Test
@@ -85,7 +66,7 @@ public class QuickSettingsTileStateTest {
     assertEquals(ClickAction.OPEN_APP,
         QuickSettingsTileState.resolveClick(/*hasSavedTunnel*/ false,
                                             /*vpnConsentGranted*/ true,
-                                            /*outlineVpnRunning*/ false));
+                                            /*userRequestedRunning*/ false));
   }
 
   @Test
@@ -102,9 +83,9 @@ public class QuickSettingsTileStateTest {
   }
 
   @Test
-  public void resolveClick_runningAlwaysStops() {
-    // Even if the saved tunnel was cleared or consent was revoked, when the VPN is actually
-    // running the click should stop it — never open the app and leave the tunnel up.
+  public void resolveClick_userRequestedOn_alwaysStops() {
+    // Once the user has tapped to start, every subsequent click stops — never opens the app,
+    // even if the saved tunnel was cleared or consent was revoked since.
     assertEquals(ClickAction.STOP_VPN,
         QuickSettingsTileState.resolveClick(true, true, true));
     assertEquals(ClickAction.STOP_VPN,
@@ -113,5 +94,18 @@ public class QuickSettingsTileStateTest {
         QuickSettingsTileState.resolveClick(true, false, true));
     assertEquals(ClickAction.STOP_VPN,
         QuickSettingsTileState.resolveClick(false, false, true));
+  }
+
+  @Test
+  public void resolveClick_duringStartupWindow_doesNotDoubleStart() {
+    // Regression: the user-intent flag is set true the instant the first tap starts the
+    // VPN service. A second tap during the ~seconds-long startup window — before
+    // ConnectivityManager surfaces the VPN network — must NOT send a second START intent,
+    // because VpnTunnelService's "alreadyRunning" path will tear down and reconnect the
+    // live tunnel, causing a mid-session blip. The click handler should treat this as STOP.
+    assertEquals(ClickAction.STOP_VPN,
+        QuickSettingsTileState.resolveClick(/*hasSavedTunnel*/ true,
+                                            /*vpnConsentGranted*/ true,
+                                            /*userRequestedRunning*/ true));
   }
 }

@@ -85,18 +85,20 @@ public class QuickSettingsTileService extends TileService {
   public void onClick() {
     super.onClick();
 
-    // SystemUI can briefly cache stale tile state; use Outline state as the source of truth.
-    boolean vpnRunning = isOutlineVpnRunning();
+    // Use the persisted user-intent flag, not the live network state — see
+    // QuickSettingsTileState.resolveClick for why this avoids a duplicate-start race.
+    boolean userRequestedRunning = getStoredVpnRunningState();
     boolean hasSavedTunnel = new VpnTunnelStore(this).load() != null;
     boolean vpnConsentGranted = VpnService.prepare(this) == null;
-    switch (QuickSettingsTileState.resolveClick(hasSavedTunnel, vpnConsentGranted, vpnRunning)) {
+    switch (QuickSettingsTileState.resolveClick(
+        hasSavedTunnel, vpnConsentGranted, userRequestedRunning)) {
       case OPEN_APP:
         openApp();
         return;
       case START_VPN:
       case STOP_VPN:
-        setTileState(vpnRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
-        setVpnRunning(!vpnRunning);
+        setTileState(userRequestedRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
+        setVpnRunning(!userRequestedRunning);
         new Handler(Looper.getMainLooper()).postDelayed(
             () -> {
               updateTile();
@@ -145,11 +147,6 @@ public class QuickSettingsTileService extends TileService {
           : R.string.quick_settings_tile_state_off));
     }
     tile.updateTile();
-  }
-
-  private boolean isOutlineVpnRunning() {
-    return QuickSettingsTileState.isOutlineVpnRunning(
-        Build.VERSION.SDK_INT, getStoredVpnRunningState(), hasOutlineVpnNetwork());
   }
 
   private boolean shouldShowVpnRunning() {

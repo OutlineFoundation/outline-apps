@@ -370,9 +370,10 @@ public class VpnTunnelService extends VpnService {
     stopForeground();
 
     // Save state indicating it's disconnected.
+    // The Quick Settings tile is intentionally not touched here: every stop path
+    // (onRevoke, onDestroy, STOP_ACTIVE_TUNNEL_EXTRA, IPC stopTunnel) calls
+    // broadcastVpnConnectivityChange first, which is the canonical signal.
     this.tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
-    QuickSettingsTileService.setVpnRunningState(this, false);
-    QuickSettingsTileService.requestTileUpdate(this);
 
     // Clear config that is no longer needed.
     this.tunnelConfig = null;

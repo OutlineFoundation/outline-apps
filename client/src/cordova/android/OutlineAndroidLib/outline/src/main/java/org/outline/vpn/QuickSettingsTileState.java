@@ -54,34 +54,26 @@ final class QuickSettingsTileState {
   }
 
   /**
-   * Whether Outline's VPN is actually running right now, used to decide what the click handler
-   * does. Differs from {@link #shouldShowOn} in that on Android 12+ it ignores the stored flag
-   * — the click handler reacts to ground truth, even if our stored state has drifted.
-   */
-  static boolean isOutlineVpnRunning(int sdkInt,
-                                     boolean storedRunningFlag,
-                                     boolean outlineVpnNetworkPresent) {
-    if (sdkInt < Build.VERSION_CODES.S) {
-      return storedRunningFlag;
-    }
-    return outlineVpnNetworkPresent;
-  }
-
-  /**
    * Decide what the tile should do on click.
+   *
+   * <p>The "is the VPN running" gate uses the persisted user-intent flag, not the live network
+   * state. During the startup window after the first tap, ConnectivityManager hasn't yet
+   * surfaced our VPN network — a second tap that read live state would treat it as "still off"
+   * and send a duplicate start intent, which trips the {@code alreadyRunning} path in
+   * VpnTunnelService and disconnects/reconnects the active tunnel mid-session.
    *
    * @param hasSavedTunnel       true if the tunnel store has a previously-configured server.
    * @param vpnConsentGranted    true if {@code VpnService.prepare} returned null
    *                             (no system consent dialog needed).
-   * @param outlineVpnRunning    the result of {@link #isOutlineVpnRunning}.
+   * @param userRequestedRunning the persisted "user turned Outline on" flag.
    */
   static ClickAction resolveClick(boolean hasSavedTunnel,
                                   boolean vpnConsentGranted,
-                                  boolean outlineVpnRunning) {
-    if (!outlineVpnRunning && (!hasSavedTunnel || !vpnConsentGranted)) {
+                                  boolean userRequestedRunning) {
+    if (!userRequestedRunning && (!hasSavedTunnel || !vpnConsentGranted)) {
       return ClickAction.OPEN_APP;
     }
-    return outlineVpnRunning ? ClickAction.STOP_VPN : ClickAction.START_VPN;
+    return userRequestedRunning ? ClickAction.STOP_VPN : ClickAction.START_VPN;
   }
 
   private QuickSettingsTileState() {}
