@@ -373,6 +373,12 @@ class OutlinePlugin: CDVPlugin {
     DDLogDebug(
       "OutlinePlugin received onStatusChange (\(String(describing: vpnStatus))) for tunnel \(tunnelId)"
     )
+    switch vpnStatus {
+    case .connected, .disconnected, .disconnecting, .reasserting, .connecting:
+      reloadOutlineControls()
+    default:
+      break
+    }
     guard let callbackId = self.statusCallbackId else {
       // No status change callback registered.
       return

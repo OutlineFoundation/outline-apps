@@ -201,6 +201,13 @@ private enum OutlineVpnControlBridge {
   }
 }
 
+enum OutlineVpnControlError: Error {
+  case noLastConnectedTunnel
+  case invalidTunnelSession
+}
+
+#if compiler(>=6.0)
+
 @available(iOS 18.0, *)
 struct OutlineVpnControlValue {
   let isConnected: Bool
@@ -269,11 +276,6 @@ struct ToggleOutlineVpnIntent: SetValueIntent {
   }
 }
 
-enum OutlineVpnControlError: Error {
-  case noLastConnectedTunnel
-  case invalidTunnelSession
-}
-
 @available(iOS 18.0, *)
 @main
 struct OutlineControlsBundle: WidgetBundle {
@@ -281,3 +283,51 @@ struct OutlineControlsBundle: WidgetBundle {
     OutlineVpnToggleControl()
   }
 }
+
+#else
+
+private struct OutlineControlsUnavailableEntry: TimelineEntry {
+  let date: Date
+}
+
+private struct OutlineControlsUnavailableProvider: TimelineProvider {
+  func placeholder(in context: Context) -> OutlineControlsUnavailableEntry {
+    OutlineControlsUnavailableEntry(date: Date())
+  }
+
+  func getSnapshot(
+    in context: Context,
+    completion: @escaping (OutlineControlsUnavailableEntry) -> Void
+  ) {
+    completion(OutlineControlsUnavailableEntry(date: Date()))
+  }
+
+  func getTimeline(
+    in context: Context,
+    completion: @escaping (Timeline<OutlineControlsUnavailableEntry>) -> Void
+  ) {
+    let entry = OutlineControlsUnavailableEntry(date: Date())
+    completion(Timeline(entries: [entry], policy: .never))
+  }
+}
+
+private struct OutlineControlsUnavailableWidget: Widget {
+  private let kind = "org.outline.ios.client.OutlineVpnToggleControl"
+
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: kind, provider: OutlineControlsUnavailableProvider()) { _ in
+      EmptyView()
+    }
+    .configurationDisplayName("Outline VPN")
+    .description("Requires Xcode 16 to build the iOS 18 Control Center control.")
+  }
+}
+
+@main
+struct OutlineControlsBundle: WidgetBundle {
+  var body: some Widget {
+    OutlineControlsUnavailableWidget()
+  }
+}
+
+#endif
