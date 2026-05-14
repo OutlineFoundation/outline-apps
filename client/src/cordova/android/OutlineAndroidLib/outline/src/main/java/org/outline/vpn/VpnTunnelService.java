@@ -473,11 +473,15 @@ public class VpnTunnelService extends VpnService {
     JSONObject tunnel = tunnelStore.load();
     if (tunnel == null) {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
+      QuickSettingsTileService.setVpnRunningState(this, false);
+      QuickSettingsTileService.requestTileUpdate(this);
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
       // We cannot prepare the VPN when running as a background service, as it requires UI.
       LOG.warning("VPN not prepared, aborting auto-connect.");
+      QuickSettingsTileService.setVpnRunningState(this, false);
+      QuickSettingsTileService.requestTileUpdate(this);
       return;
     }
     try {
@@ -492,6 +496,8 @@ public class VpnTunnelService extends VpnService {
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
+      QuickSettingsTileService.setVpnRunningState(this, false);
+      QuickSettingsTileService.requestTileUpdate(this);
     }
   }
 
@@ -506,6 +512,8 @@ public class VpnTunnelService extends VpnService {
       LOG.log(Level.SEVERE, "Failed to store JSON tunnel data", e);
     }
     tunnelStore.setTunnelStatus(TunnelStatus.CONNECTED);
+    QuickSettingsTileService.setVpnRunningState(this, true);
+    QuickSettingsTileService.requestTileUpdate(this);
   }
 
   // Error reporting

@@ -20,9 +20,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Handler;
@@ -85,20 +82,25 @@ public class QuickSettingsTileService extends TileService {
   public void onClick() {
     super.onClick();
 
-    // SystemUI can briefly cache stale tile state; use Outline state as the source of truth.
-    boolean vpnRunning = isOutlineVpnRunning();
-    VpnTunnelStore tunnelStore = new VpnTunnelStore(this);
-    if (!vpnRunning && (tunnelStore.load() == null || VpnService.prepare(this) != null)) {
-      openApp();
-    } else {
-      setTileState(vpnRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
-      setVpnRunning(!vpnRunning);
-      new Handler(Looper.getMainLooper()).postDelayed(
-          () -> {
-            updateTile();
-            requestTileUpdate(this);
-          },
-          1000);
+    boolean userRequestedRunning = getStoredVpnRunningState();
+    QuickSettingsTileState.ClickAction action = QuickSettingsTileState.resolveClick(
+        new VpnTunnelStore(this).load() != null,
+        VpnService.prepare(this) == null,
+        userRequestedRunning);
+    switch (action) {
+      case OPEN_APP:
+        openApp();
+        return;
+      case START_VPN:
+      case STOP_VPN:
+        setTileState(userRequestedRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
+        setVpnRunning(!userRequestedRunning);
+        new Handler(Looper.getMainLooper()).postDelayed(
+            () -> {
+              updateTile();
+              requestTileUpdate(this);
+            },
+            1000);
     }
   }
 
@@ -126,7 +128,9 @@ public class QuickSettingsTileService extends TileService {
   }
 
   private void updateTile() {
-    setTileState(shouldShowVpnRunning() ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE);
+    setTileState(QuickSettingsTileState.shouldShowOn(getStoredVpnRunningState())
+        ? Tile.STATE_ACTIVE
+        : Tile.STATE_INACTIVE);
   }
 
   private void setTileState(int state) {
@@ -143,43 +147,9 @@ public class QuickSettingsTileService extends TileService {
     tile.updateTile();
   }
 
-  private boolean isOutlineVpnRunning() {
-    // Before Android 12, VPN network owner UID is unavailable, so a foreign VPN cannot be
-    // distinguished from Outline. In that case, rely only on the persisted Outline VPN state.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-      return getStoredVpnRunningState();
-    }
-    return hasOutlineVpnNetwork();
-  }
-
-  private boolean shouldShowVpnRunning() {
-    if (!getStoredVpnRunningState()) {
-      return false;
-    }
-    return isOutlineVpnRunning();
-  }
-
   private boolean getStoredVpnRunningState() {
     return getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
         .getBoolean(VPN_RUNNING_KEY, false);
-  }
-
-  private boolean hasOutlineVpnNetwork() {
-    ConnectivityManager connectivityManager =
-        (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-    if (connectivityManager == null) {
-      return false;
-    }
-    for (Network network : connectivityManager.getAllNetworks()) {
-      NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-      if (capabilities == null || !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-        continue;
-      }
-      if (capabilities.getOwnerUid() == getApplicationInfo().uid) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void setVpnRunning(boolean running) {
