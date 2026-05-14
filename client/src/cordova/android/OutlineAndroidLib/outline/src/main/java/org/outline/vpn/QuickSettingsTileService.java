@@ -87,18 +87,22 @@ public class QuickSettingsTileService extends TileService {
 
     // SystemUI can briefly cache stale tile state; use Outline state as the source of truth.
     boolean vpnRunning = isOutlineVpnRunning();
-    VpnTunnelStore tunnelStore = new VpnTunnelStore(this);
-    if (!vpnRunning && (tunnelStore.load() == null || VpnService.prepare(this) != null)) {
-      openApp();
-    } else {
-      setTileState(vpnRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
-      setVpnRunning(!vpnRunning);
-      new Handler(Looper.getMainLooper()).postDelayed(
-          () -> {
-            updateTile();
-            requestTileUpdate(this);
-          },
-          1000);
+    boolean hasSavedTunnel = new VpnTunnelStore(this).load() != null;
+    boolean vpnConsentGranted = VpnService.prepare(this) == null;
+    switch (QuickSettingsTileState.resolveClick(hasSavedTunnel, vpnConsentGranted, vpnRunning)) {
+      case OPEN_APP:
+        openApp();
+        return;
+      case START_VPN:
+      case STOP_VPN:
+        setTileState(vpnRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
+        setVpnRunning(!vpnRunning);
+        new Handler(Looper.getMainLooper()).postDelayed(
+            () -> {
+              updateTile();
+              requestTileUpdate(this);
+            },
+            1000);
     }
   }
 
@@ -144,19 +148,13 @@ public class QuickSettingsTileService extends TileService {
   }
 
   private boolean isOutlineVpnRunning() {
-    // Before Android 12, VPN network owner UID is unavailable, so a foreign VPN cannot be
-    // distinguished from Outline. In that case, rely only on the persisted Outline VPN state.
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-      return getStoredVpnRunningState();
-    }
-    return hasOutlineVpnNetwork();
+    return QuickSettingsTileState.isOutlineVpnRunning(
+        Build.VERSION.SDK_INT, getStoredVpnRunningState(), hasOutlineVpnNetwork());
   }
 
   private boolean shouldShowVpnRunning() {
-    if (!getStoredVpnRunningState()) {
-      return false;
-    }
-    return isOutlineVpnRunning();
+    return QuickSettingsTileState.shouldShowOn(
+        Build.VERSION.SDK_INT, getStoredVpnRunningState(), hasOutlineVpnNetwork());
   }
 
   private boolean getStoredVpnRunningState() {
