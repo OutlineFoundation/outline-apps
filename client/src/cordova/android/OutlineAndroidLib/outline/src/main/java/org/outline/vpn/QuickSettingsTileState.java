@@ -14,43 +14,27 @@
 
 package org.outline.vpn;
 
-import android.os.Build;
-
 /**
  * Pure state-resolution logic for the Quick Settings tile, factored out of
  * {@link QuickSettingsTileService} so the precedence rules can be unit-tested without the
  * TileService lifecycle.
  *
- * <p>Two signals drive the tile:
- * <ul>
- *   <li>The persisted "did the user turn Outline on" flag (a SharedPreferences boolean managed
- *       by the tile and the VPN service).
- *   <li>Whether the system reports an active VPN network whose owner UID matches this app
- *       (Android 12+; older OSes can't distinguish a foreign VPN from Outline's).
- * </ul>
+ * <p>The persisted "did the user turn Outline on" flag is the single source of truth. We
+ * intentionally do not consult {@code ConnectivityManager.getAllNetworks()} as a secondary
+ * check: an Outline VPN excludes its own UID from its routing set, so on Android 12+ that API
+ * — scoped to the caller's UID context — does not return our own VPN network, making the
+ * "is my VPN actually up?" check always return false even on the happy path. The stored flag,
+ * updated synchronously by {@link VpnTunnelService#broadcastVpnConnectivityChange}, is
+ * already authoritative as long as every disconnect path goes through that broadcast (which
+ * onRevoke, onDestroy, STOP_ACTIVE_TUNNEL_EXTRA, and IPC stopTunnel all do).
  */
 final class QuickSettingsTileState {
   /** What the click handler should do given the current state. */
   enum ClickAction { OPEN_APP, START_VPN, STOP_VPN }
 
-  /**
-   * Whether the tile should render as ACTIVE.
-   *
-   * <p>The user must have asked Outline to turn on AND, on Android 12+, the system must
-   * actually report an Outline-owned VPN network. This keeps the tile in sync when the system
-   * tears Outline's tunnel down without our cooperation, or when a foreign VPN owns the only
-   * active VPN network.
-   */
-  static boolean shouldShowOn(int sdkInt,
-                              boolean storedRunningFlag,
-                              boolean outlineVpnNetworkPresent) {
-    if (!storedRunningFlag) {
-      return false;
-    }
-    if (sdkInt < Build.VERSION_CODES.S) {
-      return true;
-    }
-    return outlineVpnNetworkPresent;
+  /** Whether the tile should render as ACTIVE. */
+  static boolean shouldShowOn(boolean storedRunningFlag) {
+    return storedRunningFlag;
   }
 
   /**

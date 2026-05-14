@@ -20,9 +20,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Handler;
@@ -150,31 +147,12 @@ public class QuickSettingsTileService extends TileService {
   }
 
   private boolean shouldShowVpnRunning() {
-    return QuickSettingsTileState.shouldShowOn(
-        Build.VERSION.SDK_INT, getStoredVpnRunningState(), hasOutlineVpnNetwork());
+    return QuickSettingsTileState.shouldShowOn(getStoredVpnRunningState());
   }
 
   private boolean getStoredVpnRunningState() {
     return getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
         .getBoolean(VPN_RUNNING_KEY, false);
-  }
-
-  private boolean hasOutlineVpnNetwork() {
-    ConnectivityManager connectivityManager =
-        (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-    if (connectivityManager == null) {
-      return false;
-    }
-    for (Network network : connectivityManager.getAllNetworks()) {
-      NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-      if (capabilities == null || !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-        continue;
-      }
-      if (capabilities.getOwnerUid() == getApplicationInfo().uid) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void setVpnRunning(boolean running) {

@@ -18,45 +18,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.os.Build;
-
 import org.junit.Test;
 import org.outline.vpn.QuickSettingsTileState.ClickAction;
 
 public class QuickSettingsTileStateTest {
 
-  private static final int SDK_PRE_S = Build.VERSION_CODES.R;   // Android 11
-  private static final int SDK_S = Build.VERSION_CODES.S;       // Android 12
-  private static final int SDK_POST_S = Build.VERSION_CODES.UPSIDE_DOWN_CAKE; // Android 14
-
   // ---- shouldShowOn ----
 
   @Test
-  public void shouldShowOn_storedFalse_alwaysOff() {
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_PRE_S, false, false));
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_PRE_S, false, true));
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_S, false, false));
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_S, false, true));
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_POST_S, false, false));
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_POST_S, false, true));
-  }
-
-  @Test
-  public void shouldShowOn_preS_trustsStoredFlag() {
-    // Pre-Android 12 cannot distinguish foreign VPN from Outline, so the stored flag wins.
-    assertTrue(QuickSettingsTileState.shouldShowOn(SDK_PRE_S, true, false));
-    assertTrue(QuickSettingsTileState.shouldShowOn(SDK_PRE_S, true, true));
-  }
-
-  @Test
-  public void shouldShowOn_sPlus_requiresOutlineNetwork() {
-    // System torn the tunnel down or a foreign VPN owns the active network: tile must be OFF.
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_S, true, false));
-    assertFalse(QuickSettingsTileState.shouldShowOn(SDK_POST_S, true, false));
-
-    // Outline-owned VPN network confirmed: tile ON.
-    assertTrue(QuickSettingsTileState.shouldShowOn(SDK_S, true, true));
-    assertTrue(QuickSettingsTileState.shouldShowOn(SDK_POST_S, true, true));
+  public void shouldShowOn_followsStoredFlag() {
+    assertFalse(QuickSettingsTileState.shouldShowOn(false));
+    assertTrue(QuickSettingsTileState.shouldShowOn(true));
   }
 
   // ---- resolveClick ----
