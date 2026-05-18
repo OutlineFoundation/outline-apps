@@ -18,79 +18,40 @@ import NetworkExtension
 import SwiftUI
 import WidgetKit
 
-private struct LastConnectedTunnel: Codable {
-  let tunnelId: String
-  let serverName: String
-  let transportConfig: String
-}
-
-// Keep this schema and these keys in sync with OutlineVpnControlStore.swift.
-// The control extension stays self-contained so it does not have to link OutlineAppleLib.
-private enum OutlineVpnControlStore {
-  static let appGroup = "group.org.getoutline.client"
-
-  private static let lastConnectedTunnelKey = "org.outline.lastConnectedTunnel"
-  private static let controlExtensionBundleSuffix = ".OutlineControls"
-
-  static func loadLastConnectedTunnel() -> LastConnectedTunnel? {
-    guard
-      let data = UserDefaults(suiteName: appGroup)?.data(forKey: lastConnectedTunnelKey)
-    else {
-      return nil
-    }
-    return try? JSONDecoder().decode(LastConnectedTunnel.self, from: data)
-  }
-
-  static func vpnExtensionBundleIdentifier(
-    bundleIdentifier: String = Bundle.main.bundleIdentifier ?? ""
-  ) -> String {
-    var containingAppBundleId = bundleIdentifier
-    if containingAppBundleId.hasSuffix(controlExtensionBundleSuffix) {
-      containingAppBundleId = String(
-        containingAppBundleId.dropLast(controlExtensionBundleSuffix.count)
-      )
-    }
-    return "\(containingAppBundleId).VpnExtension"
-  }
-}
-
 private enum OutlineVpnControlBridge {
   private enum ConfigKey {
     static let tunnelId = "id"
     static let transport = "transport"
   }
 
-  static func isLastConnectedTunnelActive() async -> Bool {
-    guard let lastTunnel = OutlineVpnControlStore.loadLastConnectedTunnel(),
-          let manager = await getTunnelManager(),
-          tunnelId(for: manager) == lastTunnel.tunnelId
-    else {
-      return false
+  static func currentState() async -> (isConnected: Bool, serverName: String?) {
+    guard let manager = await getTunnelManager() else {
+      return (false, nil)
     }
-    return isActiveSession(manager.connection)
+    return (isActiveSession(manager.connection), serverName(for: manager))
   }
 
-  static func startLastConnectedTunnel() async throws {
-    guard let lastTunnel = OutlineVpnControlStore.loadLastConnectedTunnel() else {
-      throw OutlineVpnControlError.noLastConnectedTunnel
-    }
-    if let activeManager = await getTunnelManager(), isActiveSession(activeManager.connection) {
-      await stop(activeManager)
+  static func startConfiguredTunnel() async throws {
+    guard let manager = await getTunnelManager() else {
+      throw OutlineVpnControlError.noConfiguredTunnel
     }
 
-    let manager = try await setupVpn(with: lastTunnel)
+    if isActiveSession(manager.connection) {
+      await stop(manager)
+    }
+
+    try await manager.loadFromPreferences()
+    manager.isEnabled = true
+    try await manager.saveToPreferences()
+    try await manager.loadFromPreferences()
+
     guard let session = manager.connection as? NETunnelProviderSession else {
       throw OutlineVpnControlError.invalidTunnelSession
     }
     try session.startTunnel(options: [:])
 
     do {
-      try await manager.loadFromPreferences()
-      let connectRule = NEOnDemandRuleConnect()
-      connectRule.interfaceTypeMatch = .any
-      manager.onDemandRules = [connectRule]
-      manager.isOnDemandEnabled = true
-      try await manager.saveToPreferences()
+      try await setConnectVpnOnDemand(manager, true)
     } catch {
       // The VPN is already starting; failing to save on-demand should not flip the control back.
     }
@@ -103,32 +64,9 @@ private enum OutlineVpnControlBridge {
     await stop(manager)
   }
 
-  private static func setupVpn(with tunnel: LastConnectedTunnel) async throws -> NETunnelProviderManager {
-    let managers = try await NETunnelProviderManager.loadAllFromPreferences()
-    let manager = managers.first ?? NETunnelProviderManager()
-    manager.localizedDescription = tunnel.serverName
-    manager.onDemandRules = nil
-
-    let config = NETunnelProviderProtocol()
-    config.serverAddress = "Outline"
-    config.providerBundleIdentifier = OutlineVpnControlStore.vpnExtensionBundleIdentifier()
-    config.providerConfiguration = [
-      ConfigKey.tunnelId: tunnel.tunnelId,
-      ConfigKey.transport: tunnel.transportConfig
-    ]
-    manager.protocolConfiguration = config
-    manager.isEnabled = true
-
-    try await manager.saveToPreferences()
-    try await manager.loadFromPreferences()
-    return manager
-  }
-
   private static func stop(_ manager: NETunnelProviderManager) async {
     do {
-      try await manager.loadFromPreferences()
-      manager.isOnDemandEnabled = false
-      try await manager.saveToPreferences()
+      try await setConnectVpnOnDemand(manager, false)
     } catch {
       // Stop the session even if preference updates fail.
     }
@@ -178,15 +116,38 @@ private enum OutlineVpnControlBridge {
 
   private static func getTunnelManager() async -> NETunnelProviderManager? {
     do {
-      return try await NETunnelProviderManager.loadAllFromPreferences().first
+      let managers = try await NETunnelProviderManager.loadAllFromPreferences()
+      return managers.first { isOutlineTunnel($0) } ?? managers.first
     } catch {
       return nil
     }
   }
 
-  private static func tunnelId(for manager: NETunnelProviderManager?) -> String? {
-    let protoConfig = manager?.protocolConfiguration as? NETunnelProviderProtocol
-    return protoConfig?.providerConfiguration?[ConfigKey.tunnelId] as? String
+  private static func isOutlineTunnel(_ manager: NETunnelProviderManager) -> Bool {
+    let protoConfig = manager.protocolConfiguration as? NETunnelProviderProtocol
+    return protoConfig?.providerConfiguration?[ConfigKey.tunnelId] as? String != nil &&
+      protoConfig?.providerConfiguration?[ConfigKey.transport] as? String != nil
+  }
+
+  private static func serverName(for manager: NETunnelProviderManager) -> String? {
+    guard let name = manager.localizedDescription, !name.isEmpty else {
+      return nil
+    }
+    return name
+  }
+
+  private static func setConnectVpnOnDemand(
+    _ manager: NETunnelProviderManager,
+    _ enabled: Bool
+  ) async throws {
+    try await manager.loadFromPreferences()
+    if enabled {
+      let connectRule = NEOnDemandRuleConnect()
+      connectRule.interfaceTypeMatch = .any
+      manager.onDemandRules = [connectRule]
+    }
+    manager.isOnDemandEnabled = enabled
+    try await manager.saveToPreferences()
   }
 
   private static func isActiveSession(_ session: NEVPNConnection?) -> Bool {
@@ -202,7 +163,7 @@ private enum OutlineVpnControlBridge {
 }
 
 enum OutlineVpnControlError: Error {
-  case noLastConnectedTunnel
+  case noConfiguredTunnel
   case invalidTunnelSession
 }
 
@@ -247,11 +208,10 @@ extension OutlineVpnToggleControl {
     let previewValue = OutlineVpnControlValue(isConnected: false, serverName: "Outline")
 
     func currentValue() async throws -> OutlineVpnControlValue {
-      let configuration = OutlineVpnControlStore.loadLastConnectedTunnel()
-      let isConnected = await OutlineVpnControlBridge.isLastConnectedTunnelActive()
+      let state = await OutlineVpnControlBridge.currentState()
       return OutlineVpnControlValue(
-        isConnected: isConnected,
-        serverName: configuration?.serverName
+        isConnected: state.isConnected,
+        serverName: state.serverName
       )
     }
   }
@@ -268,7 +228,7 @@ struct ToggleOutlineVpnIntent: SetValueIntent {
 
   func perform() async throws -> some IntentResult {
     if value {
-      try await OutlineVpnControlBridge.startLastConnectedTunnel()
+      try await OutlineVpnControlBridge.startConfiguredTunnel()
     } else {
       await OutlineVpnControlBridge.stopActiveTunnel()
     }
