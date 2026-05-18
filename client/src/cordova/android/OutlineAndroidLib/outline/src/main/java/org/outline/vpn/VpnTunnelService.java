@@ -351,9 +351,6 @@ public class VpnTunnelService extends VpnService {
       // Ignore, monitor not installed if the connectivity checks failed.
     }
 
-    // Stop traffic exchange with remote.
-    this.stopRemoteDevice();
-
     // Restore routing.
     if (this.tunFd != null) {
       try {
@@ -366,12 +363,15 @@ public class VpnTunnelService extends VpnService {
       }
     }
 
+    // Stop traffic exchange with remote after closing the TUN device, so the relay unblocks
+    // promptly and Android can tear down the VPN network.
+    this.stopRemoteDevice();
+
     // Clear VPN notification.
     stopForeground();
 
     // Save state indicating it's disconnected.
     this.tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
-    QuickSettingsTileService.setVpnRunningState(this, false);
     QuickSettingsTileService.requestTileUpdate(this);
 
     // Clear config that is no longer needed.
@@ -451,7 +451,7 @@ public class VpnTunnelService extends VpnService {
 
   /* Broadcast change in the VPN connectivity. */
   private void broadcastVpnConnectivityChange(TunnelStatus status) {
-    QuickSettingsTileService.setVpnRunningState(this, status != TunnelStatus.DISCONNECTED);
+    this.tunnelStore.setTunnelStatus(status);
     QuickSettingsTileService.requestTileUpdate(this);
     if (tunnelConfig == null) {
       LOG.warning("Tunnel disconnected, not sending VPN connectivity broadcast");
@@ -473,14 +473,14 @@ public class VpnTunnelService extends VpnService {
     JSONObject tunnel = tunnelStore.load();
     if (tunnel == null) {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
-      QuickSettingsTileService.setVpnRunningState(this, false);
+      tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
       // We cannot prepare the VPN when running as a background service, as it requires UI.
       LOG.warning("VPN not prepared, aborting auto-connect.");
-      QuickSettingsTileService.setVpnRunningState(this, false);
+      tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
       return;
     }
@@ -496,7 +496,7 @@ public class VpnTunnelService extends VpnService {
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
-      QuickSettingsTileService.setVpnRunningState(this, false);
+      tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
     }
   }
@@ -512,7 +512,6 @@ public class VpnTunnelService extends VpnService {
       LOG.log(Level.SEVERE, "Failed to store JSON tunnel data", e);
     }
     tunnelStore.setTunnelStatus(TunnelStatus.CONNECTED);
-    QuickSettingsTileService.setVpnRunningState(this, true);
     QuickSettingsTileService.requestTileUpdate(this);
   }
 

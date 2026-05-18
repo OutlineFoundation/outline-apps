@@ -64,6 +64,7 @@
           </intent-filter>
       </receiver>
 
+      <!-- Allows Android SystemUI to bind and show Outline as a Quick Settings tile. -->
       <service
         android:name="org.outline.vpn.QuickSettingsTileService"
         android:exported="true"

@@ -15,19 +15,14 @@
 package org.outline.vpn;
 
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.VpnService;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.IBinder;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-
-import org.outline.R;
 
 import java.util.logging.Logger;
 
@@ -36,8 +31,6 @@ import java.util.logging.Logger;
  */
 public class QuickSettingsTileService extends TileService {
   private static final Logger LOG = Logger.getLogger(QuickSettingsTileService.class.getName());
-  private static final String PREFERENCES_NAME = "quickSettingsTile";
-  private static final String VPN_RUNNING_KEY = "vpnRunning";
 
   public static void requestTileUpdate(Context context) {
     TileService.requestListeningState(
@@ -45,90 +38,42 @@ public class QuickSettingsTileService extends TileService {
         new ComponentName(context, QuickSettingsTileService.class));
   }
 
-  public static void setVpnRunningState(Context context, boolean running) {
-    context
-        .getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putBoolean(VPN_RUNNING_KEY, running)
-        .apply();
-  }
-
-  private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      updateTile();
-    }
-  };
-
-  private boolean statusReceiverRegistered;
-
-  @Override
-  public void onTileAdded() {
-    updateTile();
-  }
-
   @Override
   public void onStartListening() {
-    registerStatusReceiver();
     updateTile();
   }
 
   @Override
-  public void onStopListening() {
-    unregisterStatusReceiver();
+  public IBinder onBind(Intent intent) {
+    requestTileUpdate(this);
+    return super.onBind(intent);
   }
 
   @Override
   public void onClick() {
     super.onClick();
 
-    boolean userRequestedRunning = getStoredVpnRunningState();
-    QuickSettingsTileState.ClickAction action = QuickSettingsTileState.resolveClick(
-        new VpnTunnelStore(this).load() != null,
-        VpnService.prepare(this) == null,
-        userRequestedRunning);
-    switch (action) {
-      case OPEN_APP:
-        openApp();
-        return;
-      case START_VPN:
-      case STOP_VPN:
-        setTileState(userRequestedRunning ? Tile.STATE_INACTIVE : Tile.STATE_ACTIVE);
-        setVpnRunning(!userRequestedRunning);
-        new Handler(Looper.getMainLooper()).postDelayed(
-            () -> {
-              updateTile();
-              requestTileUpdate(this);
-            },
-            1000);
-    }
-  }
-
-  private void registerStatusReceiver() {
-    if (statusReceiverRegistered) {
+    VpnTunnelStore tunnelStore = new VpnTunnelStore(this);
+    boolean activationRequested = isActivationRequested(tunnelStore.getTunnelStatus());
+    if (activationRequested) {
+      tunnelStore.setTunnelStatus(VpnTunnelService.TunnelStatus.DISCONNECTED);
+      setTileState(Tile.STATE_INACTIVE);
+      setVpnRunning(false);
       return;
     }
-    IntentFilter filter = new IntentFilter();
-    filter.addAction(VpnTunnelService.STATUS_BROADCAST_KEY);
-    filter.addCategory(getPackageName());
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-    } else {
-      registerReceiver(statusReceiver, filter);
-    }
-    statusReceiverRegistered = true;
-  }
 
-  private void unregisterStatusReceiver() {
-    if (!statusReceiverRegistered) {
+    if (tunnelStore.load() == null || VpnService.prepare(this) != null) {
+      openApp();
       return;
     }
-    unregisterReceiver(statusReceiver);
-    statusReceiverRegistered = false;
+
+    tunnelStore.setTunnelStatus(VpnTunnelService.TunnelStatus.RECONNECTING);
+    setTileState(Tile.STATE_ACTIVE);
+    setVpnRunning(true);
   }
 
   private void updateTile() {
-    setTileState(QuickSettingsTileState.shouldShowOn(getStoredVpnRunningState())
+    setTileState(isActivationRequested(new VpnTunnelStore(this).getTunnelStatus())
         ? Tile.STATE_ACTIVE
         : Tile.STATE_INACTIVE);
   }
@@ -139,32 +84,22 @@ public class QuickSettingsTileService extends TileService {
       return;
     }
     tile.setState(state);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      tile.setSubtitle(getString(state == Tile.STATE_ACTIVE
-          ? R.string.quick_settings_tile_state_on
-          : R.string.quick_settings_tile_state_off));
-    }
     tile.updateTile();
   }
 
-  private boolean getStoredVpnRunningState() {
-    return getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-        .getBoolean(VPN_RUNNING_KEY, false);
+  private boolean isActivationRequested(VpnTunnelService.TunnelStatus status) {
+    return status == VpnTunnelService.TunnelStatus.CONNECTED
+        || status == VpnTunnelService.TunnelStatus.RECONNECTING;
   }
 
   private void setVpnRunning(boolean running) {
-    setVpnRunningState(this, running);
     Intent intent = new Intent(this, VpnTunnelService.class);
     intent.putExtra(
         running
             ? VpnTunnelService.START_LAST_TUNNEL_EXTRA
             : VpnTunnelService.STOP_ACTIVE_TUNNEL_EXTRA,
         true);
-    if (running && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      startForegroundService(intent);
-    } else {
-      startService(intent);
-    }
+    startService(intent);
   }
 
   private void openApp() {
