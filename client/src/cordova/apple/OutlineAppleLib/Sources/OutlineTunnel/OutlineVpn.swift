@@ -20,6 +20,7 @@ import OutlineError
 @objcMembers
 public class OutlineVpn: NSObject {
   public static let shared = OutlineVpn()
+  private static let kVpnExtensionBundleId = "\(Bundle.main.bundleIdentifier!).VpnExtension"
 
   public typealias VpnStatusObserver = (NEVPNStatus, String) -> Void
 
@@ -52,8 +53,7 @@ public class OutlineVpn: NSObject {
   public func start(
     _ tunnelId: String,
     named name: String?,
-    withTransport transportConfig: String,
-    providerBundleIdentifier: String = OutlineVpnControlStore.vpnExtensionBundleIdentifier()
+    withTransport transportConfig: String
   ) async throws {
     if let manager = await getTunnelManager(), isActiveSession(manager.connection) {
       DDLogDebug("Stoppping active session before starting new one")
@@ -65,8 +65,7 @@ public class OutlineVpn: NSObject {
       manager = try await setupVpn(
         withId: tunnelId,
         named: name ?? "Outline Server",
-        withTransport: transportConfig,
-        providerBundleIdentifier: providerBundleIdentifier
+        withTransport: transportConfig
       )
     } catch {
       DDLogError("Failed to setup VPN: \(error.localizedDescription)")
@@ -183,8 +182,7 @@ public class OutlineVpn: NSObject {
   private func setupVpn(
     withId id:String,
     named name:String,
-    withTransport transportConfig: String,
-    providerBundleIdentifier: String
+    withTransport transportConfig: String
   ) async throws -> NETunnelProviderManager {
     let managers = try await NETunnelProviderManager.loadAllFromPreferences()
     var manager: NETunnelProviderManager!
@@ -202,7 +200,7 @@ public class OutlineVpn: NSObject {
     let config = NETunnelProviderProtocol()
     // TODO(fortuna): set to something meaningful if we can.
     config.serverAddress = "Outline"
-    config.providerBundleIdentifier = providerBundleIdentifier
+    config.providerBundleIdentifier = OutlineVpn.kVpnExtensionBundleId
     config.providerConfiguration = [
       ConfigKey.tunnelId: id,
       ConfigKey.transport: transportConfig
