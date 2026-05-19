@@ -511,8 +511,7 @@ public class VpnTunnelService extends VpnService {
     } catch (JSONException e) {
       LOG.log(Level.SEVERE, "Failed to store JSON tunnel data", e);
     }
-    tunnelStore.setTunnelStatus(TunnelStatus.CONNECTED);
-    QuickSettingsTileService.requestTileUpdate(this);
+    broadcastVpnConnectivityChange(TunnelStatus.CONNECTED);
   }
 
   // Error reporting

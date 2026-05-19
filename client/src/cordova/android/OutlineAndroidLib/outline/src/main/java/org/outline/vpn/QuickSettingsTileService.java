@@ -15,9 +15,11 @@
 package org.outline.vpn;
 
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.IBinder;
@@ -32,6 +34,14 @@ import java.util.logging.Logger;
 public class QuickSettingsTileService extends TileService {
   private static final Logger LOG = Logger.getLogger(QuickSettingsTileService.class.getName());
 
+  private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      updateTile();
+    }
+  };
+  private boolean statusReceiverRegistered;
+
   public static void requestTileUpdate(Context context) {
     TileService.requestListeningState(
         context,
@@ -40,7 +50,13 @@ public class QuickSettingsTileService extends TileService {
 
   @Override
   public void onStartListening() {
+    registerStatusReceiver();
     updateTile();
+  }
+
+  @Override
+  public void onStopListening() {
+    unregisterStatusReceiver();
   }
 
   @Override
@@ -100,6 +116,28 @@ public class QuickSettingsTileService extends TileService {
             : VpnTunnelService.STOP_ACTIVE_TUNNEL_EXTRA,
         true);
     startService(intent);
+  }
+
+  private void registerStatusReceiver() {
+    if (statusReceiverRegistered) {
+      return;
+    }
+    IntentFilter filter = new IntentFilter(VpnTunnelService.STATUS_BROADCAST_KEY);
+    filter.addCategory(getPackageName());
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      registerReceiver(statusReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+      registerReceiver(statusReceiver, filter);
+    }
+    statusReceiverRegistered = true;
+  }
+
+  private void unregisterStatusReceiver() {
+    if (!statusReceiverRegistered) {
+      return;
+    }
+    unregisterReceiver(statusReceiver);
+    statusReceiverRegistered = false;
   }
 
   private void openApp() {
