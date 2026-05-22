@@ -12,6 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Polyfills required by the Capacitor web bundle.
+ *
+ * These are loaded as the first webpack entry point (see webpack.config.js)
+ * so they run before any application code.
+ *
+ * - core-js/stable & regenerator-runtime: ES2015+ built-in and async/await
+ *   support for older WebView engines on Android and iOS.
+ * - web-animations-js: Web Animations API polyfill used by Lit/Material
+ *   component transitions.
+ * - @webcomponents/webcomponentsjs: Web Components v1 (Custom Elements,
+ *   Shadow DOM) polyfill needed by the legacy Polymer components still used
+ *   in the app shell (client/web/ui_components/app-root.js).
+ * - setRootPath: tells Polymer where to resolve relative asset URLs from,
+ *   required because the app may be served from a sub-path (e.g. Capacitor
+ *   file:// origin on iOS/Android).
+ */
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import 'web-animations-js/web-animations-next-lite.min.js';
