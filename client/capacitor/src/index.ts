@@ -177,6 +177,10 @@ class CapacitorPlatform implements OutlinePlatform {
   }
 }
 
+/**
+ * Opens external HTTP(S) links in the system browser instead of the
+ * Capacitor WebView, by intercepting click events on anchor elements.
+ */
 function wireExternalLinkHandling() {
   const getExternalHttpUrlFromClick = (event: Event): URL | null => {
     const composedPath =
@@ -219,32 +223,15 @@ function wireExternalLinkHandling() {
   );
 }
 
-function resolveBody() {
-  document.body.removeAttribute('unresolved');
-}
+// Bootstrap: install the method channel, wire external links, then hand off
+// to the shared main() — mirroring the Cordova and Electron entry points.
+installDefaultMethodChannel(
+  hasDeviceSupport
+    ? new CapacitorMethodChannel()
+    : new CapacitorBrowserMethodChannel()
+);
+wireExternalLinkHandling();
 
-async function bootstrapCapacitor() {
-  document.addEventListener('app-localize-resources-loaded', resolveBody, {
-    once: true,
-  });
-  window.addEventListener('WebComponentsReady', () => {
-    setTimeout(resolveBody, 2000);
-  });
-
-  installDefaultMethodChannel(
-    hasDeviceSupport
-      ? new CapacitorMethodChannel()
-      : new CapacitorBrowserMethodChannel()
-  );
-  wireExternalLinkHandling();
-
-  try {
-    await window.customElements.whenDefined('app-root');
-    await main(new CapacitorPlatform());
-  } catch (e) {
-    console.error('main() failed: ', e);
-    resolveBody();
-  }
-}
-
-void bootstrapCapacitor();
+main(new CapacitorPlatform()).catch(e => {
+  console.error('main() failed: ', e);
+});
