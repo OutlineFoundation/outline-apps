@@ -310,17 +310,23 @@ function interceptShadowsocksLink(argv: string[]) {
   }
 }
 
-// Set the app to launch at startup to connect automatically in case of a shutdown while
+function updateAutoStartOnLoginRegistration() {
+  if (!IS_WINDOWS) {
+    return;
+  }
+
+  app.setLoginItemSettings({
+    openAtLogin: autoStartOnLoginEnabled,
+    args: autoStartOnLoginEnabled ? [Options.AUTOSTART] : [],
+  });
+}
+
+// Store the active tunnel so the app can reconnect automatically in case of a shutdown while
 // proxying.
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
-    if (IS_WINDOWS) {
-      app.setLoginItemSettings({
-        openAtLogin: autoStartOnLoginEnabled,
-        args: autoStartOnLoginEnabled ? [Options.AUTOSTART] : [],
-      });
-    }
+    updateAutoStartOnLoginRegistration();
     // TODO(linux): support auto-launch on Debian. First check whether the Go
     // backend service already restores the tunnel on reboot — if so, no
     // Electron-side auto-launch hook is needed.
@@ -332,30 +338,13 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
 async function setAutoStartOnLoginEnabled(enabled: boolean): Promise<void> {
   autoStartOnLoginEnabled = enabled;
   await autoStartOnLoginStore.save(enabled);
-
-  if (!IS_WINDOWS) {
-    return;
-  }
-
-  if (!enabled) {
-    app.setLoginItemSettings({openAtLogin: false});
-    return;
-  }
-
-  try {
-    await tunnelStore.load();
-    app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
-  } catch {
-    app.setLoginItemSettings({openAtLogin: false});
-  }
+  updateAutoStartOnLoginRegistration();
 }
 
 async function tearDownAutoLaunch() {
   try {
-    if (IS_WINDOWS) {
-      app.setLoginItemSettings({openAtLogin: false});
-    }
     await tunnelStore.clear();
+    updateAutoStartOnLoginRegistration();
   } catch (e) {
     console.error(`Failed to tear down auto-launch: ${e.message}`);
   }
@@ -484,9 +473,7 @@ function main() {
     // TODO(fortuna): Start the app with the window hidden on auto-start?
     setupWindow();
     autoStartOnLoginEnabled = await autoStartOnLoginStore.load();
-    if (IS_WINDOWS && !autoStartOnLoginEnabled) {
-      app.setLoginItemSettings({openAtLogin: false});
-    }
+    updateAutoStartOnLoginRegistration();
 
     if (IS_LINUX) {
       await onVpnStateChanged(setUiTunnelStatus);
