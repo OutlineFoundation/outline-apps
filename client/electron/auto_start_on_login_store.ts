@@ -23,9 +23,7 @@ export class AutoStartOnLoginStore {
   private storagePath: string;
 
   constructor(storagePath: string) {
-    if (!fs.existsSync(storagePath)) {
-      fs.mkdirSync(storagePath);
-    }
+    fs.mkdirSync(storagePath, {recursive: true});
     this.storagePath = path.join(storagePath, 'auto_start_on_login_store');
   }
 

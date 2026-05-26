@@ -609,6 +609,12 @@ function main() {
   ipcMain.handle(
     'outline-ipc-set-auto-start-on-login-enabled',
     async (_, enabled: boolean) => {
+      if (typeof enabled !== 'boolean') {
+        console.error(
+          `outline-ipc-set-auto-start-on-login-enabled: expected boolean, got ${typeof enabled}`
+        );
+        return;
+      }
       await setAutoStartOnLoginEnabled(enabled);
     }
   );
