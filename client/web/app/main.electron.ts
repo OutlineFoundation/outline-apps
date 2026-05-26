@@ -24,6 +24,7 @@ import {getLocalizationFunction, main} from './main';
 import {installDefaultMethodChannel, MethodChannel} from './method_channel';
 import {VpnApi} from './outline_server_repository/vpn';
 import {ElectronVpnApi} from './outline_server_repository/vpn.electron';
+import {AutoStartOnLoginSettings} from './platform';
 import {AbstractUpdater} from './updater';
 import {UrlInterceptor} from './url_interceptor';
 import {VpnInstaller} from './vpn_installer';
@@ -105,6 +106,15 @@ class ElectronVpnInstaller implements VpnInstaller {
   }
 }
 
+class ElectronAutoStartOnLoginSettings implements AutoStartOnLoginSettings {
+  async setEnabled(enabled: boolean): Promise<void> {
+    await window.electron.methodChannel.invoke(
+      'set-auto-start-on-login-enabled',
+      enabled
+    );
+  }
+}
+
 class ElectronErrorReporter implements OutlineErrorReporter {
   constructor() {
     // parameters are initialized in main process
@@ -155,5 +165,7 @@ main({
   getErrorReporter: _ => new ElectronErrorReporter(),
   getUpdater: () => new ElectronUpdater(),
   getVpnServiceInstaller: () => new ElectronVpnInstaller(),
+  getAutoStartOnLoginSettings: () =>
+    isWindows ? new ElectronAutoStartOnLoginSettings() : undefined,
   quitApplication: () => window.electron.methodChannel.send('quit-app'),
 });

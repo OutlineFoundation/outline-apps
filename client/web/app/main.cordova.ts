@@ -127,6 +127,10 @@ class CordovaPlatform implements OutlinePlatform {
     return new NoOpVpnInstaller();
   }
 
+  getAutoStartOnLoginSettings(): undefined {
+    return undefined;
+  }
+
   quitApplication() {
     // Only used in macOS because menu bar apps provide no alternative way of quitting.
     cordova.exec(

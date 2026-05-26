@@ -18,6 +18,7 @@ import {OperationTimedOut} from '@outline/infrastructure/timeout_promise';
 import {Clipboard} from './clipboard';
 import {EnvironmentVariables} from './environment';
 import * as config from './outline_server_repository/config';
+import {AutoStartOnLoginSettings} from './platform';
 import {Settings, SettingsKey, Appearance} from './settings';
 import {Updater} from './updater';
 import {UrlInterceptor} from './url_interceptor';
@@ -104,6 +105,7 @@ export class App {
     environmentVars: EnvironmentVariables,
     private updater: Updater,
     private installer: VpnInstaller,
+    private autoStartOnLoginSettings: AutoStartOnLoginSettings | undefined,
     private quitApplication: () => void,
     document = window.document
   ) {
@@ -201,6 +203,16 @@ export class App {
           this.settings.set(SettingsKey.APPEARANCE, event.detail.appearance);
           this.setAppearance(event.detail.appearance);
         }
+      );
+    }
+
+    if (this.autoStartOnLoginSettings) {
+      this.rootEl.showSettingsView = true;
+      this.rootEl.autoStartOnLoginEnabled = this.isAutoStartOnLoginEnabled();
+      this.syncAutoStartOnLoginSetting();
+      this.rootEl.addEventListener(
+        'SetAutoStartOnLoginRequested',
+        this.setAutoStartOnLogin.bind(this)
       );
     }
 
@@ -605,6 +617,10 @@ export class App {
   }
 
   private maybeShowAutoConnectDialog() {
+    if (!this.isAutoStartOnLoginEnabled()) {
+      return;
+    }
+
     let dismissed = false;
     try {
       dismissed =
@@ -617,6 +633,26 @@ export class App {
     if (!dismissed) {
       this.rootEl.$.autoConnectDialog.open = true;
     }
+  }
+
+  private isAutoStartOnLoginEnabled() {
+    return this.settings.get(SettingsKey.AUTO_START_ON_LOGIN) !== 'false';
+  }
+
+  private setAutoStartOnLogin(event: CustomEvent) {
+    const enabled = event.detail.enabled;
+    this.settings.set(SettingsKey.AUTO_START_ON_LOGIN, String(enabled));
+    this.rootEl.autoStartOnLoginEnabled = enabled;
+    this.syncAutoStartOnLoginSetting();
+  }
+
+  private syncAutoStartOnLoginSetting() {
+    this.autoStartOnLoginSettings
+      ?.setEnabled(this.isAutoStartOnLoginEnabled())
+      .catch(e => {
+        console.error('failed to update auto-start setting', e);
+        this.showLocalizedError(e);
+      });
   }
 
   private autoConnectDialogDismissed() {

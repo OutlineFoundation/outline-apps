@@ -20,6 +20,10 @@ import {UrlInterceptor} from './url_interceptor';
 import {VpnInstaller} from './vpn_installer';
 import {OutlineErrorReporter} from '../shared/error_reporter';
 
+export interface AutoStartOnLoginSettings {
+  setEnabled(enabled: boolean): Promise<void>;
+}
+
 // Provides platform-specific dependencies.
 // TODO(fortuna): pick platform-specific implementations at build time instead.
 export interface OutlinePlatform {
@@ -34,6 +38,8 @@ export interface OutlinePlatform {
   getUpdater(): Updater;
 
   getVpnServiceInstaller(): VpnInstaller;
+
+  getAutoStartOnLoginSettings(): AutoStartOnLoginSettings | undefined;
 
   quitApplication(): void;
 }

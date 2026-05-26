@@ -34,6 +34,7 @@ import {
 import {autoUpdater} from 'electron-updater';
 
 import {lookupIp} from './connectivity';
+import {AutoStartOnLoginStore} from './auto_start_on_login_store';
 import {invokeGoMethod} from './go_plugin';
 import {GoVpnTunnel} from './go_vpn_tunnel';
 import {installRoutingServices, RoutingDaemon} from './routing_service';
@@ -62,6 +63,9 @@ const IS_WINDOWS = os.platform() === 'win32';
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
 const tunnelStore = new TunnelStore(app.getPath('userData'));
+const autoStartOnLoginStore = new AutoStartOnLoginStore(
+  app.getPath('userData')
+);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -87,6 +91,7 @@ const enum Options {
 }
 
 let currentTunnel: VpnTunnel | undefined;
+let autoStartOnLoginEnabled = true;
 
 /**
  * Sentry must be initialized before electron app is ready:
@@ -311,13 +316,37 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
     if (IS_WINDOWS) {
-      app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
+      app.setLoginItemSettings({
+        openAtLogin: autoStartOnLoginEnabled,
+        args: autoStartOnLoginEnabled ? [Options.AUTOSTART] : [],
+      });
     }
     // TODO(linux): support auto-launch on Debian. First check whether the Go
     // backend service already restores the tunnel on reboot — if so, no
     // Electron-side auto-launch hook is needed.
   } catch (e) {
     console.error(`Failed to set up auto-launch: ${e.message}`);
+  }
+}
+
+async function setAutoStartOnLoginEnabled(enabled: boolean): Promise<void> {
+  autoStartOnLoginEnabled = enabled;
+  await autoStartOnLoginStore.save(enabled);
+
+  if (!IS_WINDOWS) {
+    return;
+  }
+
+  if (!enabled) {
+    app.setLoginItemSettings({openAtLogin: false});
+    return;
+  }
+
+  try {
+    await tunnelStore.load();
+    app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
+  } catch {
+    app.setLoginItemSettings({openAtLogin: false});
   }
 }
 
@@ -454,6 +483,10 @@ function main() {
     setupTray();
     // TODO(fortuna): Start the app with the window hidden on auto-start?
     setupWindow();
+    autoStartOnLoginEnabled = await autoStartOnLoginStore.load();
+    if (IS_WINDOWS && !autoStartOnLoginEnabled) {
+      app.setLoginItemSettings({openAtLogin: false});
+    }
 
     if (IS_LINUX) {
       await onVpnStateChanged(setUiTunnelStatus);
@@ -585,6 +618,13 @@ function main() {
       return errors.ErrorCode.UNEXPECTED;
     }
   });
+
+  ipcMain.handle(
+    'outline-ipc-set-auto-start-on-login-enabled',
+    async (_, enabled: boolean) => {
+      await setAutoStartOnLoginEnabled(enabled);
+    }
+  );
 
   // TODO: refactor channel name and namespace to a constant
   ipcMain.on('outline-ipc-quit-app', quitApp);

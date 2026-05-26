@@ -687,6 +687,14 @@
     "description": "The title of the main page of the application, showing the application's title (Outline). Outline is the product name and can be found in the translation glossary.",
     "message": "Outline"
   },
+  "settings_auto_start_on_login": {
+    "description": "The label for a setting that controls whether the Outline Client automatically starts when the user logs in.",
+    "message": "Run Outline on startup"
+  },
+  "settings_page_title": {
+    "description": "The title of a page for changing application settings.",
+    "message": "Settings"
+  },
   "split_confirm_dialog_content": {
     "description": "The body text of a dialog box asking the user to confirm connecting with limited protection (split tunneling).",
     "message": "This key offers limited protection when connecting to the open internet. Outline will bypass the VPN (proxy) server in certain cases.<ul><li>For some connections, Outline will connect directly to the internet.</li><li>For some connections, Outline will use an alternative method to make it hard for others to see what you connect to.</li></ul>This key may help you connect to the open internet if your VPN access key is not successfully connecting.<br><br>To learn more, contact the person who gave you this access key."
