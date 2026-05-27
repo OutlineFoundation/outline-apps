@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import fs from 'fs/promises';
 import path from 'path';
 import url from 'url';
 
@@ -21,6 +22,18 @@ import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import electron from 'electron';
 
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
+
+// Runtime assets that the main process loads via `app.getAppPath()` and that
+// `electron-builder` bundles into packaged builds (see `electron-builder.json`
+// `files`). The `start` action launches Electron directly against
+// `output/client/electron`, bypassing electron-builder, so we mirror these
+// directories into the launched app path ourselves. Without this, code such as
+// the tray icon loader throws `cannot find <name>.png tray icon image`.
+const RUNTIME_ASSET_DIRS = [
+  path.join('client', 'resources', 'tray'),
+  path.join('client', 'www'),
+  path.join('client', 'electron', 'icons'),
+];
 
 /**
  * @description Builds and starts the electron application.
@@ -38,12 +51,28 @@ export async function main(...parameters) {
     `--buildMode=${buildMode}`
   );
 
+  const appPath = path.join(getRootDir(), 'output', 'client', 'electron');
+  await stageRuntimeAssets(appPath);
+
   process.env.OUTLINE_DEBUG = buildMode === 'debug';
 
-  await spawnStream(
-    electron,
-    path.join(getRootDir(), 'output', 'client', 'electron')
-  );
+  await spawnStream(electron, appPath);
+}
+
+/**
+ * Mirrors directories listed in {@link RUNTIME_ASSET_DIRS} from the repo root
+ * into the launched Electron app path so `app.getAppPath()`-relative lookups
+ * resolve the same way they would in a packaged build.
+ *
+ * @param {string} appPath Absolute path to the directory passed to Electron.
+ */
+async function stageRuntimeAssets(appPath) {
+  for (const relativeDir of RUNTIME_ASSET_DIRS) {
+    const source = path.join(getRootDir(), relativeDir);
+    const destination = path.join(appPath, relativeDir);
+    await fs.mkdir(path.dirname(destination), {recursive: true});
+    await fs.cp(source, destination, {recursive: true});
+  }
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
