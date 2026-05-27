@@ -117,9 +117,16 @@ export class ServerMetricsRow extends LitElement {
 
                 <div class="subcards-container">
                   ${this.subcards.map(
-                    ({highlight, title, subtitle, icon}) => html`
+                    ({
+                      highlight,
+                      highlightTooltip,
+                      title,
+                      subtitle,
+                      icon,
+                    }) => html`
                       <server-metrics-row-subcard
                         highlight=${ifDefined(highlight)}
+                        highlightTooltip=${ifDefined(highlightTooltip)}
                         title=${ifDefined(title)}
                         subtitle=${ifDefined(subtitle)}
                         icon=${ifDefined(icon)}
