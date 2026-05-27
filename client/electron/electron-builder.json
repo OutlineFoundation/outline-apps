@@ -64,7 +64,7 @@
     ],
     "target": [
       {
-        "arch": "ia32",
+        "arch": "x64",
         "target": "nsis"
       }
     ]
