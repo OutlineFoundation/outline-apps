@@ -33,8 +33,8 @@ import {
 } from 'electron';
 import {autoUpdater} from 'electron-updater';
 
-import {lookupIp} from './connectivity';
 import {AutoStartOnLoginStore} from './auto_start_on_login_store';
+import {lookupIp} from './connectivity';
 import {invokeGoMethod} from './go_plugin';
 import {GoVpnTunnel} from './go_vpn_tunnel';
 import {installRoutingServices, RoutingDaemon} from './routing_service';
@@ -337,8 +337,8 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
 
 async function setAutoStartOnLoginEnabled(enabled: boolean): Promise<void> {
   autoStartOnLoginEnabled = enabled;
-  await autoStartOnLoginStore.save(enabled);
   updateAutoStartOnLoginRegistration();
+  await autoStartOnLoginStore.save(enabled);
 }
 
 async function tearDownAutoLaunch() {

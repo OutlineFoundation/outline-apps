@@ -647,8 +647,12 @@ export class App {
   }
 
   private syncAutoStartOnLoginSetting() {
-    this.autoStartOnLoginSettings
-      ?.setEnabled(this.isAutoStartOnLoginEnabled())
+    if (!this.autoStartOnLoginSettings) {
+      return;
+    }
+
+    void this.autoStartOnLoginSettings
+      .setEnabled(this.isAutoStartOnLoginEnabled())
       .catch(e => {
         console.error('failed to update auto-start setting', e);
         this.showLocalizedError(e);
