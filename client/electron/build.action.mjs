@@ -34,7 +34,8 @@ const GO_ARCH_TO_ELECTRON_ARCH = {
 };
 
 export async function main(...parameters) {
-  const {platform, buildMode, versionName, arch} = getBuildParameters(parameters);
+  const {platform, buildMode, versionName, arch} =
+    getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
   if (!ELECTRON_PLATFORMS.includes(platform)) {

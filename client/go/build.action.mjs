@@ -29,7 +29,13 @@ export async function main(...parameters) {
   const targetName = targetArch
     ? `${targetPlatform}:${targetArch}`
     : targetPlatform;
-  await spawnStream('go', 'tool', 'task', '-v', `client:tun2socks:${targetName}`);
+  await spawnStream(
+    'go',
+    'tool',
+    'task',
+    '-v',
+    `client:tun2socks:${targetName}`
+  );
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
