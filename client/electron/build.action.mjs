@@ -81,11 +81,6 @@ export async function main(...parameters) {
   const goArch = arch || 'amd64';
   if (platform === 'linux') {
     const electronArch = GO_ARCH_TO_ELECTRON_ARCH[goArch];
-    if (!electronArch) {
-      throw new TypeError(
-        `Architecture "${goArch}" is not a valid target for Outline Client. Must be one of ${Object.keys(GO_ARCH_TO_ELECTRON_ARCH).join(', ')}`
-      );
-    }
     if (goArch !== 'amd64') {
       const remap = value =>
         typeof value === 'string'
