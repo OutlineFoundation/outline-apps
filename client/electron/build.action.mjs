@@ -26,8 +26,16 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 const ELECTRON_BUILD_DIR = 'output';
 const ELECTRON_PLATFORMS = ['linux', 'windows'];
 
+// Maps the Go-style architecture names used throughout the build to the
+// architecture names that electron-builder expects in target.arch.
+const GO_ARCH_TO_ELECTRON_ARCH = {
+  amd64: 'x64',
+  arm64: 'arm64',
+};
+
 export async function main(...parameters) {
-  const {platform, buildMode, versionName} = getBuildParameters(parameters);
+  const {platform, buildMode, versionName, arch} =
+    getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
   if (!ELECTRON_PLATFORMS.includes(platform)) {
@@ -65,6 +73,27 @@ export async function main(...parameters) {
       path.resolve(getRootDir(), 'client', 'electron', 'electron-builder.json')
     )
   );
+
+  // For Linux, retarget the bundled binaries to the requested architecture.
+  // The default config references linux-amd64; remap to linux-<arch> when
+  // building for a different arch (e.g. arm64). Also rewrite the linux
+  // target arch so electron-builder packages the matching .deb.
+  const goArch = arch || 'amd64';
+  if (platform === 'linux') {
+    const electronArch = GO_ARCH_TO_ELECTRON_ARCH[goArch];
+    if (goArch !== 'amd64') {
+      const remap = value =>
+        typeof value === 'string'
+          ? value.replace('linux-amd64', `linux-${goArch}`)
+          : value;
+      electronConfig.asarUnpack = electronConfig.asarUnpack.map(remap);
+      electronConfig.linux.files = electronConfig.linux.files.map(remap);
+    }
+    electronConfig.linux.target = electronConfig.linux.target.map(t => ({
+      ...t,
+      arch: electronArch,
+    }));
+  }
 
   // build electron binary
   await electron.build({

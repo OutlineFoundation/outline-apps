@@ -23,6 +23,7 @@ const VALID_PLATFORMS = [
   'browser',
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
+const VALID_ARCHITECTURES = ['amd64', 'arm64'];
 
 const MS_PER_HOUR = 1000 * 60 * 60;
 
@@ -40,7 +41,14 @@ export function getBuildParameters(cliArguments) {
     verbose = false,
     versionName = '0.0.0',
     sentryDsn = process.env.SENTRY_DSN,
+    arch = '',
   } = minimist(cliArguments);
+
+  if (arch && !VALID_ARCHITECTURES.includes(arch)) {
+    throw new TypeError(
+      `Architecture "${arch}" is not a valid target for Outline Client. Must be one of ${VALID_ARCHITECTURES.join(', ')}`
+    );
+  }
 
   if (platform && !VALID_PLATFORMS.includes(platform)) {
     throw new TypeError(
@@ -64,5 +72,6 @@ export function getBuildParameters(cliArguments) {
       buildMode === 'release' ? versionName : `${versionName}-${buildMode}`,
     sentryDsn,
     buildNumber: Math.floor(Date.now() / MS_PER_HOUR),
+    arch,
   };
 }
