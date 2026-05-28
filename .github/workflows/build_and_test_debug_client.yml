@@ -125,6 +125,8 @@ jobs:
           cache-dependency-path: ./package-lock.json
 
       - name: Install NPM Dependencies
+        # puppeteer 13's bundled chromium has no arm64 build; install
+        # system chromium so its postinstall can resolve a working browser.
         run: |
           sudo apt update && sudo apt install chromium-browser
           npm ci
