@@ -24,12 +24,13 @@ const VALID_PLATFORMS = [
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
 
-// --arch values accepted per platform. linux uses Go arch names (matches our
-// output/client/linux-<arch> directories); windows uses electron-builder's
-// names (ia32, arm64) — they map back to Go names downstream where needed.
-// Platforms not in this map don't accept --arch.
+// --arch values accepted per platform. Uses electron-builder's arch
+// vocabulary; downstream (the Taskfile, our output/client/<platform>-<arch>
+// directories) uses Go arch names — translated where needed via
+// ELECTRON_ARCH_TO_GO_ARCH in build.action.mjs. Platforms not in this map
+// don't accept --arch.
 const VALID_ARCHITECTURES_BY_PLATFORM = {
-  linux: ['amd64', 'arm64'],
+  linux: ['x64', 'arm64'],
   windows: ['ia32', 'arm64'],
 };
 

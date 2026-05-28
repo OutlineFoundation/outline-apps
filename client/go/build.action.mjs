@@ -18,9 +18,8 @@ import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
-// electron-builder uses 'ia32' for the 32-bit x86 target; the Go toolchain
-// and our Taskfile call the same arch '386'. Translate at the build boundary.
-const ELECTRON_ARCH_TO_GO_ARCH = {ia32: '386'};
+// --arch uses electron-builder arch names; the Taskfile uses Go arch names.
+const ELECTRON_ARCH_TO_GO_ARCH = {x64: 'amd64', arm64: 'arm64', ia32: '386'};
 
 /**
  * @description Builds the tun2socks library for the specified platform.
