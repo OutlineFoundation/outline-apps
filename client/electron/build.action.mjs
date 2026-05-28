@@ -74,12 +74,13 @@ export async function main(...parameters) {
     )
   );
 
-  // For Linux, retarget the bundled binaries to the requested architecture.
-  // The default config references linux-amd64; remap to linux-<arch> when
-  // building for a different arch (e.g. arm64). Also rewrite the linux
-  // target arch so electron-builder packages the matching .deb.
-  const goArch = arch || 'amd64';
+  // Retarget the bundled binaries to the requested architecture. The default
+  // config references linux-amd64 / windows-386; remap to <platform>-<arch>
+  // when building for a different arch (e.g. arm64). Also rewrite the target
+  // arch in the platform-specific config so electron-builder packages the
+  // matching artifact.
   if (platform === 'linux') {
+    const goArch = arch || 'amd64';
     const electronArch = GO_ARCH_TO_ELECTRON_ARCH[goArch];
     if (goArch !== 'amd64') {
       const remap = value =>
@@ -92,6 +93,17 @@ export async function main(...parameters) {
     electronConfig.linux.target = electronConfig.linux.target.map(t => ({
       ...t,
       arch: electronArch,
+    }));
+  } else if (platform === 'windows' && arch === 'arm64') {
+    const remap = value =>
+      typeof value === 'string'
+        ? value.replace('windows-386', 'windows-arm64')
+        : value;
+    electronConfig.asarUnpack = electronConfig.asarUnpack.map(remap);
+    electronConfig.win.files = electronConfig.win.files.map(remap);
+    electronConfig.win.target = electronConfig.win.target.map(t => ({
+      ...t,
+      arch: 'arm64',
     }));
   }
 

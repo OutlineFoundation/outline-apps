@@ -151,8 +151,8 @@ jobs:
           export USE_SYSTEM_FPM=true
           npm run action client/electron/build linux -- --arch arm64
 
-  windows_debug_build:
-    name: Windows Debug Build
+  windows_ia32_debug_build:
+    name: Windows ia32 Debug Build
     runs-on: windows-2025
     timeout-minutes: 40
     needs: [web_test, backend_test]
@@ -186,6 +186,42 @@ jobs:
 
       - name: Build Windows Client
         run: npm run action client/electron/build windows
+
+  windows_arm64_debug_build:
+    name: Windows arm64 Debug Build
+    runs-on: windows-2025
+    timeout-minutes: 40
+    needs: [web_test, backend_test]
+    steps:
+      - name: Support longpaths
+        run: git config --system core.longpaths true
+
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Install zig
+        uses: mlugg/setup-zig@153c8d5202cbb8c7e10831110a3afd27593eb960
+        with:
+          version: 0.13.0
+          use-cache: false
+
+      - name: Build Windows Client
+        run: npm run action client/electron/build windows -- --arch arm64
 
   macos_debug_build:
     name: MacOS Debug Build
