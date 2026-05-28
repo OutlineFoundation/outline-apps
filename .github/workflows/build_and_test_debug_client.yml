@@ -145,12 +145,16 @@ jobs:
           use-cache: false
 
       - name: Install system fpm
+        # Export USE_SYSTEM_FPM from this conditional step rather than via the
+        # build step's `env:` block. `env:` would always *define* the variable
+        # (with an empty value for non-fpm matrices), and app-builder treats
+        # any defined USE_SYSTEM_FPM as a request to use system fpm.
         if: matrix.useSystemFpm
-        run: sudo gem install fpm
+        run: |
+          sudo gem install fpm
+          echo "USE_SYSTEM_FPM=true" >> $GITHUB_ENV
 
       - name: Build Client
-        env:
-          USE_SYSTEM_FPM: ${{ matrix.useSystemFpm == true && 'true' || '' }}
         run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
 
   macos_debug_build:
