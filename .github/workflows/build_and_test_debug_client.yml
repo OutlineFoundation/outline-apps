@@ -134,6 +134,12 @@ jobs:
         with:
           go-version-file: '${{ github.workspace }}/go.mod'
 
+      - name: Install zig
+        uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+          use-cache: false
+
       - name: Build Linux Client
         # electron-builder has no arm64 version fpm, so install it from
         # gem and force to use system one. Based on this workaround:
