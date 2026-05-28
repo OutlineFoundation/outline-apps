@@ -44,9 +44,12 @@ ${StrRep}
 
   isadmin:
 
-  ; TAP device files.
+  ; TAP device files. Pick the arch-specific driver bundle.
+  ; ${RunningX64} is true on both x64 and arm64 Windows, so check arm64 first.
   SetOutPath "$INSTDIR\tap-windows6"
-  ${If} ${RunningX64}
+  ${If} ${IsNativeARM64}
+    File /r "${PROJECT_DIR}\third_party\tap-windows6\bin\arm64\*"
+  ${ElseIf} ${RunningX64}
     File /r "${PROJECT_DIR}\third_party\tap-windows6\bin\amd64\*"
   ${Else}
     File /r "${PROJECT_DIR}\third_party\tap-windows6\bin\i386\*"
