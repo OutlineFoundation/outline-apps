@@ -39,6 +39,7 @@ const ELECTRON_PLATFORMS = {
     builderKey: 'linux',
     archs: ['x64', 'arm64'],
     targetFormats: ['deb'],
+    // Binary files to keep outside the asar archive so they can be loaded at runtime.
     binaryFiles: ['libbackend.so', 'tun2socks'],
     // Non-binary files to include in the package alongside the Go output.
     extraPackageFiles: ['client/electron/icons/png'],
@@ -47,6 +48,7 @@ const ELECTRON_PLATFORMS = {
     builderKey: 'win',
     archs: ['ia32', 'arm64'],
     targetFormats: ['nsis'],
+    // Binary files to keep outside the asar archive so they can be loaded at runtime.
     binaryFiles: ['backend.dll', 'tun2socks.exe'],
     extraPackageFiles: [],
   },
