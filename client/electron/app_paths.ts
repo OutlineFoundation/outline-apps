@@ -24,11 +24,12 @@ const IS_WINDOWS = os.platform() === 'win32';
 const NODE_ARCH_TO_GO_ARCH: Record<string, string> = {
   x64: 'amd64',
   arm64: 'arm64',
+  ia32: '386',
 };
 
-function linuxBinaryDir() {
+function platformBinaryDir() {
   const goArch = NODE_ARCH_TO_GO_ARCH[os.arch()] ?? os.arch();
-  return `linux-${goArch}`;
+  return `${IS_WINDOWS ? 'windows' : 'linux'}-${goArch}`;
 }
 
 /**
@@ -60,7 +61,7 @@ export function pathToEmbeddedTun2socksBinary() {
     unpackedAppPath(),
     'output',
     'client',
-    IS_WINDOWS ? 'windows-386' : linuxBinaryDir(),
+    platformBinaryDir(),
     IS_WINDOWS ? 'tun2socks.exe' : 'tun2socks'
   );
 }
@@ -70,7 +71,7 @@ export function pathToBackendLibrary() {
     unpackedAppPath(),
     'output',
     'client',
-    IS_WINDOWS ? 'windows-386' : linuxBinaryDir(),
+    platformBinaryDir(),
     IS_WINDOWS ? 'backend.dll' : 'libbackend.so'
   );
 }
