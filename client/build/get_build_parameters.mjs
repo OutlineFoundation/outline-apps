@@ -23,7 +23,12 @@ const VALID_PLATFORMS = [
   'browser',
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
-const VALID_ARCHITECTURES = ['amd64', 'arm64', 'ia32'];
+
+// --arch uses electron-builder's arch vocabulary. The Taskfile and our
+// output/client/<platform>-<arch> directories use Go arch names, so we also
+// return the corresponding Go name from this map.
+const ELECTRON_ARCH_TO_GO_ARCH = {x64: 'amd64', arm64: 'arm64', ia32: '386'};
+const VALID_ARCHITECTURES = Object.keys(ELECTRON_ARCH_TO_GO_ARCH);
 
 const MS_PER_HOUR = 1000 * 60 * 60;
 
@@ -73,5 +78,6 @@ export function getBuildParameters(cliArguments) {
     sentryDsn,
     buildNumber: Math.floor(Date.now() / MS_PER_HOUR),
     arch,
+    goArch: ELECTRON_ARCH_TO_GO_ARCH[arch],
   };
 }

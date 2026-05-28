@@ -24,23 +24,48 @@ import minimist from 'minimist';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
 const ELECTRON_BUILD_DIR = 'output';
-const ELECTRON_PLATFORMS = ['linux', 'windows'];
 
-// Maps the Go-style architecture names used throughout the build to the
-// architecture names that electron-builder expects in target.arch.
-const GO_ARCH_TO_ELECTRON_ARCH = {
-  amd64: 'x64',
-  arm64: 'arm64',
+// Per-platform build description. electron-builder.json holds only the
+// arch-independent config; everything that depends on the requested
+// architecture is filled in from this table at build time. `archs` is the
+// list of values accepted via --arch.
+const ELECTRON_PLATFORMS = {
+  linux: {
+    builderKey: 'linux',
+    archs: ['x64', 'arm64'],
+    targetFormats: ['deb'],
+    // Binary files to keep outside the asar archive so they can be loaded at runtime.
+    binaryFiles: ['libbackend.so', 'tun2socks'],
+    // Non-binary files to include in the package alongside the Go output.
+    extraPackageFiles: ['client/electron/icons/png'],
+  },
+  windows: {
+    builderKey: 'win',
+    archs: ['ia32', 'arm64'],
+    targetFormats: ['nsis'],
+    // Binary files to keep outside the asar archive so they can be loaded at runtime.
+    binaryFiles: ['backend.dll', 'tun2socks.exe'],
+    extraPackageFiles: [],
+  },
 };
 
 export async function main(...parameters) {
-  const {platform, buildMode, versionName, arch} =
+  const {platform, buildMode, versionName, arch, goArch} =
     getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
-  if (!ELECTRON_PLATFORMS.includes(platform)) {
+  const platformConfig = ELECTRON_PLATFORMS[platform];
+  if (!platformConfig) {
     throw new TypeError(
-      `The platform "${platform}" is not a valid Electron platform. It must be one of: ${ELECTRON_PLATFORMS.join(
+      `The platform "${platform}" is not a valid Electron platform. It must be one of: ${Object.keys(
+        ELECTRON_PLATFORMS
+      ).join(', ')}.`
+    );
+  }
+
+  if (!arch || !platformConfig.archs.includes(arch)) {
+    throw new TypeError(
+      `Electron ${platform} builds require --arch to be one of: ${platformConfig.archs.join(
         ', '
       )}.`
     );
@@ -74,38 +99,20 @@ export async function main(...parameters) {
     )
   );
 
-  // Retarget the bundled binaries to the requested architecture. The default
-  // config references linux-amd64 / windows-386; remap to <platform>-<arch>
-  // when building for a different arch (e.g. arm64). Also rewrite the target
-  // arch in the platform-specific config so electron-builder packages the
-  // matching artifact.
-  if (platform === 'linux') {
-    const goArch = arch || 'amd64';
-    const electronArch = GO_ARCH_TO_ELECTRON_ARCH[goArch];
-    if (goArch !== 'amd64') {
-      const remap = value =>
-        typeof value === 'string'
-          ? value.replace('linux-amd64', `linux-${goArch}`)
-          : value;
-      electronConfig.asarUnpack = electronConfig.asarUnpack.map(remap);
-      electronConfig.linux.files = electronConfig.linux.files.map(remap);
-    }
-    electronConfig.linux.target = electronConfig.linux.target.map(t => ({
-      ...t,
-      arch: electronArch,
-    }));
-  } else if (platform === 'windows' && arch === 'arm64') {
-    const remap = value =>
-      typeof value === 'string'
-        ? value.replace('windows-386', 'windows-arm64')
-        : value;
-    electronConfig.asarUnpack = electronConfig.asarUnpack.map(remap);
-    electronConfig.win.files = electronConfig.win.files.map(remap);
-    electronConfig.win.target = electronConfig.win.target.map(t => ({
-      ...t,
-      arch: 'arm64',
-    }));
-  }
+  const binaryDir = `output/client/${platform}-${goArch}`;
+
+  // Keep the Go-built binaries outside the asar archive so they're loadable
+  // at runtime (CGo .so / .dll can't be loaded from inside asar).
+  electronConfig.asarUnpack = platformConfig.binaryFiles.map(
+    f => `${binaryDir}/${f}`
+  );
+  electronConfig[platformConfig.builderKey].files = [
+    ...platformConfig.extraPackageFiles,
+    binaryDir,
+    `!${binaryDir}/*.h`,
+  ];
+  electronConfig[platformConfig.builderKey].target =
+    platformConfig.targetFormats.map(target => ({arch, target}));
 
   // build electron binary
   await electron.build({
