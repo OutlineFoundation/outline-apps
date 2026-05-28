@@ -18,7 +18,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 )
 
@@ -72,10 +72,10 @@ type PacketListener struct {
 	transport.PacketListener
 }
 
-// PacketProxy is a [network.PacketProxy] with embedded ConnectionProviderInfo.
+// PacketProxy is a [packetrelay.PacketRelay] with embedded ConnectionProviderInfo.
 type PacketProxy struct {
 	ConnectionProviderInfo
-	network.PacketProxy
+	packetrelay.PacketRelay
 	NotifyNetworkChanged func()
 }
 

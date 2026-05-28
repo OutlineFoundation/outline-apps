@@ -20,7 +20,7 @@ import (
 	"math/rand"
 
 	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/tlsfrag"
 )
@@ -63,9 +63,9 @@ func parseProxylessTransportPair(ctx context.Context, configMap map[string]any, 
 	}
 
 	pl := &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, &transport.UDPListener{}}
-	pp, err := network.NewPacketProxyFromPacketListener(pl)
+	pr, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create PacketRelay: %w", err)
 	}
 
 	return &TransportPair{
@@ -73,6 +73,6 @@ func parseProxylessTransportPair(ctx context.Context, configMap map[string]any, 
 			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeDirect},
 			Dial:                   sd.DialStream,
 		},
-		PacketProxy: &PacketProxy{ConnectionProviderInfo{ConnTypeDirect, ""}, pp, nil},
+		PacketProxy: &PacketProxy{ConnectionProviderInfo{ConnTypeDirect, ""}, pr, nil},
 	}, nil
 }

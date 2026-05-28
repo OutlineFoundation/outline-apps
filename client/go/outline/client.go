@@ -27,7 +27,7 @@ import (
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
-	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 	"github.com/goccy/go-yaml"
 )
@@ -37,7 +37,7 @@ import (
 // It's used by the connectivity test and the tun2socks handlers.
 // TODO(fortuna):
 //   - Add connectivity test to StartSession()
-//   - Add NotifyNetworkChange() method. Needs to hold a network.PacketProxy instead of configregistry.PacketListener
+//   - Add NotifyNetworkChange() method. Needs to hold a packetrelay.PacketRelay instead of configregistry.PacketListener
 //     to handle that.
 //   - Refactor so that StartSession returns a Client
 type Client struct {
@@ -52,9 +52,9 @@ func (c *Client) DialStream(ctx context.Context, address string) (transport.Stre
 	return c.sd.Dial(ctx, address)
 }
 
-// NewSession implements PacketProxy.NewSession.
-func (c *Client) NewSession(resp network.PacketResponseReceiver) (network.PacketRequestSender, error) {
-	return c.pp.NewSession(resp)
+// NewAssociation implements packetrelay.PacketRelay.NewAssociation.
+func (c *Client) NewAssociation() (packetrelay.PacketSender, packetrelay.PacketReceiver, error) {
+	return c.pp.NewAssociation()
 }
 
 func (c *Client) NotifyNetworkChanged() {
