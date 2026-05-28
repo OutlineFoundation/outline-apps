@@ -23,7 +23,7 @@ const VALID_PLATFORMS = [
   'browser',
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
-const VALID_ARCHITECTURES = ['amd64', 'arm64', 'ia32'];
+const VALID_ARCHITECTURES = ['x64', 'arm64', 'ia32'];
 
 const MS_PER_HOUR = 1000 * 60 * 60;
 
