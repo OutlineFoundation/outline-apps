@@ -75,12 +75,47 @@ jobs:
       - name: Test Go Backend
         run: go test -race -bench=. -benchtime=100ms ./client/...
 
-  linux_x64_debug_build:
-    name: Linux x64 Debug Build
-    runs-on: ubuntu-22.04
-    timeout-minutes: 20
+  electron_debug_build:
+    name: ${{ matrix.name }} Debug Build
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.timeout }}
     needs: [web_test, backend_test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            platform: linux
+            arch: x64
+            runner: ubuntu-22.04
+            timeout: 20
+          - name: Linux arm64
+            platform: linux
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            timeout: 20
+            # puppeteer 13 has no arm64 chromium; install system chromium so
+            # its postinstall finds one.
+            installChromium: true
+            # electron-builder bundles x86 fpm only; install system fpm and
+            # tell electron-builder to use it. Workaround from:
+            # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
+            useSystemFpm: true
+          - name: Windows ia32
+            platform: windows
+            arch: ia32
+            runner: windows-2025
+            timeout: 40
+          - name: Windows arm64
+            platform: windows
+            arch: arm64
+            runner: windows-2025
+            timeout: 40
     steps:
+      - name: Support longpaths
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
@@ -90,6 +125,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: ./package-lock.json
+
+      - name: Install Chromium
+        if: matrix.installChromium
+        run: sudo apt update && sudo apt install chromium-browser
 
       - name: Install NPM Dependencies
         run: npm ci
@@ -100,128 +139,23 @@ jobs:
           go-version-file: '${{ github.workspace }}/go.mod'
 
       - name: Install zig
-        uses: mlugg/setup-zig@v1
+        uses: mlugg/setup-zig@v2.2.1
         with:
           version: 0.13.0
           use-cache: false
 
-      - name: Build Linux Client
-        run: npm run action client/electron/build linux -- --arch x64
-
-  linux_arm64_debug_build:
-    name: Linux arm64 Debug Build
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 20
-    needs: [web_test, backend_test]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
-
-      - name: Install Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: ./package-lock.json
-
-      - name: Install NPM Dependencies
-        # puppeteer 13's bundled chromium has no arm64 build; install
-        # system chromium so its postinstall can resolve a working browser.
-        run: |
-          sudo apt update && sudo apt install chromium-browser
-          npm ci
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: '${{ github.workspace }}/go.mod'
-
-      - name: Install zig
-        uses: mlugg/setup-zig@v1
-        with:
-          version: 0.13.0
-          use-cache: false
-
-      - name: Build Linux Client
-        # electron-builder has no arm64 version fpm, so install it from
-        # gem and force to use system one. Based on this workaround:
-        # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
+      - name: Install system fpm
+        # Export USE_SYSTEM_FPM from this conditional step rather than via the
+        # build step's `env:` block. `env:` would always *define* the variable
+        # (with an empty value for non-fpm matrices), and app-builder treats
+        # any defined USE_SYSTEM_FPM as a request to use system fpm.
+        if: matrix.useSystemFpm
         run: |
           sudo gem install fpm
-          export USE_SYSTEM_FPM=true
-          npm run action client/electron/build linux -- --arch arm64
+          echo "USE_SYSTEM_FPM=true" >> $GITHUB_ENV
 
-  windows_ia32_debug_build:
-    name: Windows ia32 Debug Build
-    runs-on: windows-2025
-    timeout-minutes: 40
-    needs: [web_test, backend_test]
-    steps:
-      - name: Support longpaths
-        run: git config --system core.longpaths true
-
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
-
-      - name: Install Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: ./package-lock.json
-
-      - name: Install NPM Dependencies
-        run: npm ci
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: '${{ github.workspace }}/go.mod'
-
-      - name: Install zig
-        uses: mlugg/setup-zig@153c8d5202cbb8c7e10831110a3afd27593eb960
-        with:
-          version: 0.13.0
-          use-cache: false
-
-      - name: Build Windows Client
-        run: npm run action client/electron/build windows -- --arch ia32
-
-  windows_arm64_debug_build:
-    name: Windows arm64 Debug Build
-    runs-on: windows-2025
-    timeout-minutes: 40
-    needs: [web_test, backend_test]
-    steps:
-      - name: Support longpaths
-        run: git config --system core.longpaths true
-
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
-
-      - name: Install Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: ./package-lock.json
-
-      - name: Install NPM Dependencies
-        run: npm ci
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: '${{ github.workspace }}/go.mod'
-
-      - name: Install zig
-        uses: mlugg/setup-zig@153c8d5202cbb8c7e10831110a3afd27593eb960
-        with:
-          version: 0.13.0
-          use-cache: false
-
-      - name: Build Windows Client
-        run: npm run action client/electron/build windows -- --arch arm64
+      - name: Build Client
+        run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
 
   macos_debug_build:
     name: MacOS Debug Build
