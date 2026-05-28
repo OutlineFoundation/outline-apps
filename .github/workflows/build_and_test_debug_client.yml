@@ -75,8 +75,8 @@ jobs:
       - name: Test Go Backend
         run: go test -race -bench=. -benchtime=100ms ./client/...
 
-  linux_debug_build:
-    name: Linux Debug Build
+  linux_amd64_debug_build:
+    name: Linux amd64 Debug Build
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     needs: [web_test, backend_test]
@@ -106,7 +106,7 @@ jobs:
           use-cache: false
 
       - name: Build Linux Client
-        run: npm run action client/electron/build linux
+        run: npm run action client/electron/build linux -- --arch amd64
 
   linux_arm64_debug_build:
     name: Linux arm64 Debug Build
