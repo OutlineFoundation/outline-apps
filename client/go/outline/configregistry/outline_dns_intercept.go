@@ -61,19 +61,24 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 		return sd.Dial(ctx, addr)
 	}
 
-	// Create the base relay from the packet listener transport, with a 30s write-idle timeout
-	// matching the old PacketListenerProxy default.
-	relayListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
+	// Each TimeoutPacketRelay gets its own PacketListenerRelay so their independent
+	// timeouts cannot close each other's underlying listener.
+	baseListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketRelay: %w", err)
+		return nil, fmt.Errorf("failed to create base PacketRelay: %w", err)
 	}
-	relayBase, err := packetrelay.NewTimeoutPacketRelay(relayListener, 30*time.Second)
+	// 30s write-idle timeout matches the old PacketListenerProxy default.
+	relayBase, err := packetrelay.NewTimeoutPacketRelay(baseListener, 30*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create base timeout relay: %w", err)
 	}
 	// Forward relay: intercept DNS at link-local address, forward to remote resolver.
-	// DNS gets a shorter 5s timeout; non-DNS traffic uses relayBase (30s timeout).
-	dnsForwardRelay, err := packetrelay.NewTimeoutPacketRelay(relayListener, 5*time.Second)
+	// DNS gets a shorter 5s timeout on its own independent listener.
+	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DNS PacketRelay: %w", err)
+	}
+	dnsForwardRelay, err := packetrelay.NewTimeoutPacketRelay(dnsListener, 5*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS forward relay: %w", err)
 	}
