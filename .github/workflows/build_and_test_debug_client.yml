@@ -185,7 +185,7 @@ jobs:
           use-cache: false
 
       - name: Build Windows Client
-        run: npm run action client/electron/build windows
+        run: npm run action client/electron/build windows -- --arch ia32
 
   windows_arm64_debug_build:
     name: Windows arm64 Debug Build
