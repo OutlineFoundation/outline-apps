@@ -24,11 +24,13 @@ const VALID_PLATFORMS = [
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
 
-// --arch values accepted per platform. Uses electron-builder's arch
-// vocabulary; downstream (the Taskfile, our output/client/<platform>-<arch>
-// directories) uses Go arch names — translated where needed via
-// ELECTRON_ARCH_TO_GO_ARCH in build.action.mjs. Platforms not in this map
-// don't accept --arch.
+// --arch uses electron-builder's arch vocabulary. The Taskfile and our
+// output/client/<platform>-<arch> directories use Go arch names, so we also
+// return the corresponding Go name from this map.
+const ELECTRON_ARCH_TO_GO_ARCH = {x64: 'amd64', arm64: 'arm64', ia32: '386'};
+
+// --arch values accepted per platform. Platforms not in this map don't
+// accept --arch.
 const VALID_ARCHITECTURES_BY_PLATFORM = {
   linux: ['x64', 'arm64'],
   windows: ['ia32', 'arm64'],
@@ -90,5 +92,6 @@ export function getBuildParameters(cliArguments) {
     sentryDsn,
     buildNumber: Math.floor(Date.now() / MS_PER_HOUR),
     arch,
+    goArch: ELECTRON_ARCH_TO_GO_ARCH[arch],
   };
 }

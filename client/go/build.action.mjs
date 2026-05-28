@@ -18,18 +18,13 @@ import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
-// --arch uses electron-builder arch names; the Taskfile uses Go arch names.
-const ELECTRON_ARCH_TO_GO_ARCH = {x64: 'amd64', arm64: 'arm64', ia32: '386'};
-
 /**
  * @description Builds the tun2socks library for the specified platform.
  *
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  const {platform: targetPlatform, arch: targetArch} =
-    getBuildParameters(parameters);
-  const goArch = ELECTRON_ARCH_TO_GO_ARCH[targetArch] ?? targetArch;
+  const {platform: targetPlatform, goArch} = getBuildParameters(parameters);
   const targetName = goArch ? `${targetPlatform}:${goArch}` : targetPlatform;
   await spawnStream(
     'go',
