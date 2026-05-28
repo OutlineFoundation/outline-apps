@@ -25,11 +25,6 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
 const ELECTRON_BUILD_DIR = 'output';
 
-// --arch and electron-builder use electron-style arch names (x64, arm64,
-// ia32). The Taskfile and our output/client/<platform>-<arch> directories
-// use Go-style names. Translate at the boundary.
-const ELECTRON_ARCH_TO_GO_ARCH = {x64: 'amd64', arm64: 'arm64', ia32: '386'};
-
 // Per-platform build description. electron-builder.json holds only the
 // arch-independent config; everything that depends on the requested
 // architecture is filled in from this table at build time. `archs` is the
@@ -55,7 +50,7 @@ const ELECTRON_PLATFORMS = {
 };
 
 export async function main(...parameters) {
-  const {platform, buildMode, versionName, arch} =
+  const {platform, buildMode, versionName, arch, goArch} =
     getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
@@ -104,7 +99,6 @@ export async function main(...parameters) {
     )
   );
 
-  const goArch = ELECTRON_ARCH_TO_GO_ARCH[arch];
   const binaryDir = `output/client/${platform}-${goArch}`;
 
   // Keep the Go-built binaries outside the asar archive so they're loadable
