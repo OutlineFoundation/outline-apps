@@ -1,0 +1,8 @@
+{
+  "appId": "org.outline.client",
+  "appName": "Outline",
+  "webDir": "www",
+  "plugins": {
+    "CapacitorPluginOutline": {}
+  }
+}
