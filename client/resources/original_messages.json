@@ -688,8 +688,8 @@
     "message": "Outline"
   },
   "settings_auto_start_on_login": {
-    "description": "The label for a setting that controls whether the Outline Client automatically starts when the user logs in.",
-    "message": "Run Outline on startup"
+    "description": "The label for a setting that controls whether Outline automatically starts after device restart to reconnect to the last connected server.",
+    "message": "Stay connected after restart"
   },
   "settings_page_title": {
     "description": "The title of a page for changing application settings.",

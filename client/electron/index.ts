@@ -92,6 +92,7 @@ const enum Options {
 
 let currentTunnel: VpnTunnel | undefined;
 let autoStartOnLoginEnabled = true;
+let hasAutoLaunchTunnel = false;
 
 /**
  * Sentry must be initialized before electron app is ready:
@@ -315,9 +316,10 @@ function updateAutoStartOnLoginRegistration() {
     return;
   }
 
+  const openAtLogin = autoStartOnLoginEnabled && hasAutoLaunchTunnel;
   app.setLoginItemSettings({
-    openAtLogin: autoStartOnLoginEnabled,
-    args: autoStartOnLoginEnabled ? [Options.AUTOSTART] : [],
+    openAtLogin,
+    args: openAtLogin ? [Options.AUTOSTART] : [],
   });
 }
 
@@ -326,6 +328,7 @@ function updateAutoStartOnLoginRegistration() {
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
+    hasAutoLaunchTunnel = true;
     updateAutoStartOnLoginRegistration();
     // TODO(linux): support auto-launch on Debian. First check whether the Go
     // backend service already restores the tunnel on reboot — if so, no
@@ -344,6 +347,7 @@ async function setAutoStartOnLoginEnabled(enabled: boolean): Promise<void> {
 async function tearDownAutoLaunch() {
   try {
     await tunnelStore.clear();
+    hasAutoLaunchTunnel = false;
     updateAutoStartOnLoginRegistration();
   } catch (e) {
     console.error(`Failed to tear down auto-launch: ${e.message}`);
@@ -473,7 +477,6 @@ function main() {
     // TODO(fortuna): Start the app with the window hidden on auto-start?
     setupWindow();
     autoStartOnLoginEnabled = await autoStartOnLoginStore.load();
-    updateAutoStartOnLoginRegistration();
 
     if (IS_LINUX) {
       await onVpnStateChanged(setUiTunnelStatus);
@@ -482,12 +485,15 @@ function main() {
     let requestAtShutdown: StartRequestJson | undefined;
     try {
       requestAtShutdown = await tunnelStore.load();
+      hasAutoLaunchTunnel = true;
     } catch (e) {
       // No tunnel at shutdown, or failure - either way, no need to start.
       // TODO: Instead of quitting, how about creating the system tray icon?
       console.warn('Could not load active tunnel: ', e);
       await tunnelStore.clear();
+      hasAutoLaunchTunnel = false;
     }
+    updateAutoStartOnLoginRegistration();
     if (requestAtShutdown) {
       console.info(
         `was connected at shutdown, reconnecting to ${requestAtShutdown.id}`

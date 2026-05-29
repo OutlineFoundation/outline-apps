@@ -134,7 +134,7 @@
   "server-split-tunneling-info-dialog-title": "Limited Protection: Split Tunneling Information",
   "servers-menu-item": "Servers",
   "servers-page-title": "Outline",
-  "settings-auto-start-on-login": "Run Outline on startup",
+  "settings-auto-start-on-login": "Stay connected after restart",
   "settings-page-title": "Settings",
   "split-confirm-dialog-content": "This key offers limited protection when connecting to the open internet. Outline will bypass the VPN (proxy) server in certain cases.<ul><li>For some connections, Outline will connect directly to the internet.</li><li>For some connections, Outline will use an alternative method to make it hard for others to see what you connect to.</li></ul>This key may help you connect to the open internet if your VPN access key is not successfully connecting.<br><br>To learn more, contact the person who gave you this access key.",
   "split-confirm-dialog-title": "Connect with Limited Protection?",
