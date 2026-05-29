@@ -320,13 +320,11 @@ Polymer({
                   ></li>
                   <li>[[localize('aws-lightsail-firewall-1')]]</li>
                   <li>[[localize('aws-lightsail-firewall-2')]]</li>
-                  <!-- Keep these existing localization keys: the static IP steps
-                    are intentionally shown before the firewall rule steps. -->
-                  <li>[[localize('aws-lightsail-firewall-6')]]</li>
-                  <li>[[localize('aws-lightsail-firewall-7')]]</li>
                   <li>[[localize('aws-lightsail-firewall-3')]]</li>
                   <li>[[localize('aws-lightsail-firewall-4')]]</li>
                   <li>[[localize('aws-lightsail-firewall-5')]]</li>
+                  <li>[[localize('aws-lightsail-firewall-6')]]</li>
+                  <li>[[localize('aws-lightsail-firewall-7')]]</li>
                 </ol>
               </outline-cloud-instructions-view>
             </div>
