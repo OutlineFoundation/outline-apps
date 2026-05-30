@@ -33,6 +33,7 @@ import {
 } from 'electron';
 import {autoUpdater} from 'electron-updater';
 
+import {AutoStartOnLoginStore} from './auto_start_on_login_store';
 import {lookupIp} from './connectivity';
 import {invokeGoMethod} from './go_plugin';
 import {GoVpnTunnel} from './go_vpn_tunnel';
@@ -62,6 +63,9 @@ const IS_WINDOWS = os.platform() === 'win32';
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
 const tunnelStore = new TunnelStore(app.getPath('userData'));
+const autoStartOnLoginStore = new AutoStartOnLoginStore(
+  app.getPath('userData')
+);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -87,6 +91,8 @@ const enum Options {
 }
 
 let currentTunnel: VpnTunnel | undefined;
+let autoStartOnLoginEnabled = true;
+let hasAutoLaunchTunnel = false;
 
 /**
  * Sentry must be initialized before electron app is ready:
@@ -305,14 +311,25 @@ function interceptShadowsocksLink(argv: string[]) {
   }
 }
 
-// Set the app to launch at startup to connect automatically in case of a shutdown while
+function updateAutoStartOnLoginRegistration() {
+  if (!IS_WINDOWS) {
+    return;
+  }
+
+  const openAtLogin = autoStartOnLoginEnabled && hasAutoLaunchTunnel;
+  app.setLoginItemSettings({
+    openAtLogin,
+    args: openAtLogin ? [Options.AUTOSTART] : [],
+  });
+}
+
+// Store the active tunnel so the app can reconnect automatically in case of a shutdown while
 // proxying.
 async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   try {
     await tunnelStore.save(request);
-    if (IS_WINDOWS) {
-      app.setLoginItemSettings({openAtLogin: true, args: [Options.AUTOSTART]});
-    }
+    hasAutoLaunchTunnel = true;
+    updateAutoStartOnLoginRegistration();
     // TODO(linux): support auto-launch on Debian. First check whether the Go
     // backend service already restores the tunnel on reboot — if so, no
     // Electron-side auto-launch hook is needed.
@@ -321,12 +338,17 @@ async function setupAutoLaunch(request: StartRequestJson): Promise<void> {
   }
 }
 
+async function setAutoStartOnLoginEnabled(enabled: boolean): Promise<void> {
+  autoStartOnLoginEnabled = enabled;
+  updateAutoStartOnLoginRegistration();
+  await autoStartOnLoginStore.save(enabled);
+}
+
 async function tearDownAutoLaunch() {
   try {
-    if (IS_WINDOWS) {
-      app.setLoginItemSettings({openAtLogin: false});
-    }
     await tunnelStore.clear();
+    hasAutoLaunchTunnel = false;
+    updateAutoStartOnLoginRegistration();
   } catch (e) {
     console.error(`Failed to tear down auto-launch: ${e.message}`);
   }
@@ -454,6 +476,7 @@ function main() {
     setupTray();
     // TODO(fortuna): Start the app with the window hidden on auto-start?
     setupWindow();
+    autoStartOnLoginEnabled = await autoStartOnLoginStore.load();
 
     if (IS_LINUX) {
       await onVpnStateChanged(setUiTunnelStatus);
@@ -462,12 +485,15 @@ function main() {
     let requestAtShutdown: StartRequestJson | undefined;
     try {
       requestAtShutdown = await tunnelStore.load();
+      hasAutoLaunchTunnel = true;
     } catch (e) {
       // No tunnel at shutdown, or failure - either way, no need to start.
       // TODO: Instead of quitting, how about creating the system tray icon?
       console.warn('Could not load active tunnel: ', e);
       await tunnelStore.clear();
+      hasAutoLaunchTunnel = false;
     }
+    updateAutoStartOnLoginRegistration();
     if (requestAtShutdown) {
       console.info(
         `was connected at shutdown, reconnecting to ${requestAtShutdown.id}`
@@ -585,6 +611,19 @@ function main() {
       return errors.ErrorCode.UNEXPECTED;
     }
   });
+
+  ipcMain.handle(
+    'outline-ipc-set-auto-start-on-login-enabled',
+    async (_, enabled: boolean) => {
+      if (typeof enabled !== 'boolean') {
+        console.error(
+          `outline-ipc-set-auto-start-on-login-enabled: expected boolean, got ${typeof enabled}`
+        );
+        return;
+      }
+      await setAutoStartOnLoginEnabled(enabled);
+    }
+  );
 
   // TODO: refactor channel name and namespace to a constant
   ipcMain.on('outline-ipc-quit-app', quitApp);

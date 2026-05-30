@@ -108,6 +108,8 @@
   "server-rename-complete": "Server renamed",
   "servers-menu-item": "Servers",
   "servers-page-title": "Outline",
+  "settings-auto-start-on-login": "Stay connected after restart",
+  "settings-page-title": "Settings",
   "submit": "Submit",
   "submitting": "Submitting…",
   "support-form-access-key-source": "Where did you get your access key?",
