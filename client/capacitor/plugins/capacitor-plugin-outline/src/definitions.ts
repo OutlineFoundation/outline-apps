@@ -14,47 +14,25 @@
  * limitations under the License.
  */
 
-import type { PluginListenerHandle } from '@capacitor/core';
-
-export interface ExecuteOptions {
-  action: string;
-  method?: string;
-  input?: string;
-  tunnelId?: string;
-  serverName?: string;
-  transportConfig?: string;
-  apiKey?: string;
-  uuid?: string;
-}
-
-export interface ExecuteResult {
-  value: string;
-  isRunning: boolean;
-}
-
-export interface VpnStatusData {
-  id: string;
-  status: number;
-}
-
-export const Actions = {
-  INVOKE_METHOD: 'invokeMethod',
-  START: 'start',
-  STOP: 'stop',
-  ON_STATUS_CHANGE: 'onStatusChange',
-  IS_RUNNING: 'isRunning',
-  INIT_ERROR_REPORTING: 'initializeErrorReporting',
-  REPORT_EVENTS: 'reportEvents',
-  QUIT: 'quitApplication',
-} as const;
-
-export type Action = typeof Actions[keyof typeof Actions];
+import type {PluginListenerHandle} from '@capacitor/core';
 
 export interface CapacitorPluginOutline {
-  execute(options: ExecuteOptions): Promise<ExecuteResult>;
-
+  invokeMethod(options: {
+    method: string;
+    input: string;
+  }): Promise<{value: string}>;
+  start(options: {
+    tunnelId: string;
+    serverName: string;
+    transportConfig: string;
+  }): Promise<void>;
+  stop(options: {tunnelId: string}): Promise<void>;
+  isRunning(options: {tunnelId: string}): Promise<{isRunning: boolean}>;
+  initializeErrorReporting(options: {apiKey: string}): Promise<void>;
+  reportEvents(options: {uuid: string}): Promise<void>;
+  quitApplication(): Promise<void>;
   addListener(
     eventName: string,
-    listenerFunc: (data: VpnStatusData) => void
+    listenerFunc: (data: {id: string; status: number}) => void
   ): Promise<PluginListenerHandle>;
 }

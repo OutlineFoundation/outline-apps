@@ -11,14 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import { Browser } from '@capacitor/browser';
-import { Capacitor } from '@capacitor/core';
-import type { PluginListenerHandle } from '@capacitor/core';
-import { Actions, CapacitorPluginOutline } from '@capacitor-plugin-outline';
+import {Browser} from '@capacitor/browser';
+import {Capacitor} from '@capacitor/core';
+import type {PluginListenerHandle} from '@capacitor/core';
+import {CapacitorPluginOutline} from '@capacitor-plugin-outline';
 import * as Sentry from '@sentry/browser';
-import { AbstractClipboard } from '@web/app/clipboard';
-import type { EnvironmentVariables } from '@web/app/environment';
-import { main } from '@web/app/main';
+import {AbstractClipboard} from '@web/app/clipboard';
+import type {EnvironmentVariables} from '@web/app/environment';
+import {main} from '@web/app/main';
 import {
   installDefaultMethodChannel,
   type MethodChannel,
@@ -28,14 +28,20 @@ import type {
   StartRequestJson,
   TunnelStatus,
 } from '@web/app/outline_server_repository/vpn';
-import type { OutlinePlatform } from '@web/app/platform';
-import { AbstractUpdater } from '@web/app/updater';
-import * as interceptors from '@web/app/url_interceptor';
-import { NoOpVpnInstaller, type VpnInstaller } from '@web/app/vpn_installer';
-import { SentryErrorReporter, type Tags } from '@web/shared/error_reporter';
+import type {OutlinePlatform} from '@web/app/platform';
+import {AbstractUpdater} from '@web/app/updater';
+import {UrlInterceptor} from '@web/app/url_interceptor';
+import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
+import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
 
-import { CapacitorBrowserMethodChannel } from './browser_method_channel';
-import { CapacitorAndroidUrlInterceptor } from './capacitor_android_url_interceptor';
+import {CapacitorBrowserMethodChannel} from './browser_method_channel';
+import {CapacitorAndroidUrlInterceptor} from './capacitor_android_url_interceptor';
+
+interface AsyncVpnApi extends VpnApi {
+  onStatusChange(
+    listener: (id: string, status: TunnelStatus) => void
+  ): Promise<void>;
+}
 
 const hasDeviceSupport = Capacitor.isNativePlatform();
 
@@ -56,7 +62,7 @@ class CapacitorErrorReporter extends SentryErrorReporter {
   constructor(appVersion: string, dsn: string, tags: Tags) {
     super(appVersion, dsn, tags);
     if (dsn) {
-      CapacitorPluginOutline.execute({ action: Actions.INIT_ERROR_REPORTING, apiKey: dsn }).catch(
+      CapacitorPluginOutline.initializeErrorReporting({apiKey: dsn}).catch(
         console.error
       );
     }
@@ -68,8 +74,7 @@ class CapacitorErrorReporter extends SentryErrorReporter {
     userEmail?: string
   ): Promise<void> {
     await super.report(userFeedback, feedbackCategory, userEmail);
-    await CapacitorPluginOutline.execute({
-      action: Actions.REPORT_EVENTS,
+    await CapacitorPluginOutline.reportEvents({
       uuid: Sentry.lastEventId() || '',
     });
   }
@@ -77,8 +82,7 @@ class CapacitorErrorReporter extends SentryErrorReporter {
 
 class CapacitorMethodChannel implements MethodChannel {
   async invokeMethod(methodName: string, params: string): Promise<string> {
-    const response = await CapacitorPluginOutline.execute({
-      action: Actions.INVOKE_METHOD,
+    const response = await CapacitorPluginOutline.invokeMethod({
       method: methodName,
       input: params,
     });
@@ -86,12 +90,11 @@ class CapacitorMethodChannel implements MethodChannel {
   }
 }
 
-class CapacitorVpnApi implements VpnApi {
+class CapacitorVpnApi implements AsyncVpnApi {
   private statusListener?: PluginListenerHandle;
 
   async start(request: StartRequestJson): Promise<void> {
-    await CapacitorPluginOutline.execute({
-      action: Actions.START,
+    await CapacitorPluginOutline.start({
       tunnelId: request.id,
       serverName: request.name,
       transportConfig: request.client,
@@ -99,21 +102,15 @@ class CapacitorVpnApi implements VpnApi {
   }
 
   async stop(id: string): Promise<void> {
-    await CapacitorPluginOutline.execute({ action: Actions.STOP, tunnelId: id });
+    await CapacitorPluginOutline.stop({tunnelId: id});
   }
 
   async isRunning(id: string): Promise<boolean> {
-    const result = await CapacitorPluginOutline.execute({ action: Actions.IS_RUNNING, tunnelId: id });
+    const result = await CapacitorPluginOutline.isRunning({tunnelId: id});
     return result.isRunning;
   }
 
-  onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
-    void this.attachStatusListener(listener).catch((err: unknown) => {
-      console.error('Failed to register VPN status listener', err);
-    });
-  }
-
-  private async attachStatusListener(
+  async onStatusChange(
     listener: (id: string, status: TunnelStatus) => void
   ): Promise<void> {
     if (this.statusListener) {
@@ -133,7 +130,7 @@ class CapacitorVpnApi implements VpnApi {
 }
 
 class CapacitorPlatform implements OutlinePlatform {
-  getVpnApi(): VpnApi | undefined {
+  getVpnApi(): AsyncVpnApi | undefined {
     return hasDeviceSupport ? new CapacitorVpnApi() : undefined;
   }
 
@@ -141,7 +138,7 @@ class CapacitorPlatform implements OutlinePlatform {
     if (Capacitor.getPlatform() === 'android') {
       return new CapacitorAndroidUrlInterceptor();
     }
-    return new interceptors.UrlInterceptor();
+    return new UrlInterceptor();
   }
 
   getClipboard() {
@@ -149,18 +146,18 @@ class CapacitorPlatform implements OutlinePlatform {
   }
 
   getErrorReporter(env: EnvironmentVariables) {
-    const sharedTags = { 'build.number': env.APP_BUILD_NUMBER };
+    const sharedTags = {'build.number': env.APP_BUILD_NUMBER};
     return hasDeviceSupport
       ? new CapacitorErrorReporter(
-        env.APP_VERSION,
-        env.SENTRY_DSN || '',
-        sharedTags
-      )
+          env.APP_VERSION,
+          env.SENTRY_DSN || '',
+          sharedTags
+        )
       : new SentryErrorReporter(
-        env.APP_VERSION,
-        env.SENTRY_DSN || '',
-        sharedTags
-      );
+          env.APP_VERSION,
+          env.SENTRY_DSN || '',
+          sharedTags
+        );
   }
 
   getUpdater() {
@@ -175,16 +172,20 @@ class CapacitorPlatform implements OutlinePlatform {
     if (!hasDeviceSupport) {
       return;
     }
-    CapacitorPluginOutline.execute({ action: Actions.QUIT }).catch((err: unknown) => {
+    CapacitorPluginOutline.quitApplication().catch((err: unknown) => {
       console.warn('Failed to quit application', err);
     });
   }
 }
 
+/**
+ * Opens external HTTP(S) links in the system browser instead of the
+ * Capacitor WebView, by intercepting click events on anchor elements.
+ */
 function wireExternalLinkHandling() {
   const getExternalHttpUrlFromClick = (event: Event): URL | null => {
     const composedPath =
-      (event as { composedPath?: () => EventTarget[] }).composedPath?.() || [];
+      (event as {composedPath?: () => EventTarget[]}).composedPath?.() || [];
     const pathAnchor = composedPath.find(
       node =>
         node instanceof HTMLAnchorElement && Boolean(node.getAttribute('href'))
@@ -217,38 +218,21 @@ function wireExternalLinkHandling() {
       const url = getExternalHttpUrlFromClick(event);
       if (!url) return;
       event.preventDefault();
-      void Browser.open({ url: url.toString() });
+      void Browser.open({url: url.toString()});
     },
     true
   );
 }
 
-function resolveBody() {
-  document.body.removeAttribute('unresolved');
-}
+// Bootstrap: install the method channel, wire external links, then hand off
+// to the shared main() — mirroring the Cordova and Electron entry points.
+installDefaultMethodChannel(
+  hasDeviceSupport
+    ? new CapacitorMethodChannel()
+    : new CapacitorBrowserMethodChannel()
+);
+wireExternalLinkHandling();
 
-async function bootstrapCapacitor() {
-  document.addEventListener('app-localize-resources-loaded', resolveBody, {
-    once: true,
-  });
-  window.addEventListener('WebComponentsReady', () => {
-    setTimeout(resolveBody, 2000);
-  });
-
-  installDefaultMethodChannel(
-    hasDeviceSupport
-      ? new CapacitorMethodChannel()
-      : new CapacitorBrowserMethodChannel()
-  );
-  wireExternalLinkHandling();
-
-  try {
-    await window.customElements.whenDefined('app-root');
-    await main(new CapacitorPlatform());
-  } catch (e) {
-    console.error('main() failed: ', e);
-    resolveBody();
-  }
-}
-
-void bootstrapCapacitor();
+main(new CapacitorPlatform()).catch(e => {
+  console.error('main() failed: ', e);
+});

@@ -19,20 +19,22 @@ import {fileURLToPath} from 'url';
 
 import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import {merge} from 'webpack-merge';
+
+import {baseConfig, __dirname as webDir} from '../web/webpack_base.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default {
+export default merge(baseConfig, {
   entry: [
     path.resolve(__dirname, 'src/polyfills.ts'),
-    path.resolve(__dirname, '../web/style.css'),
+    path.resolve(webDir, 'style.css'),
     path.resolve(__dirname, 'src/index.ts'),
   ],
   output: {
     path: path.resolve(__dirname, 'www'),
     filename: 'bundle.js',
-    clean: true,
   },
   devServer: {
     static: {
@@ -80,22 +82,23 @@ export default {
     ],
   },
   plugins: [
-    new CopyPlugin(
-      [
-        {from: path.resolve(__dirname, '../web/assets'), to: 'assets'},
-        {from: path.resolve(__dirname, '../web/messages'), to: 'messages'},
+    new CopyPlugin({
+      patterns: [
+        {from: path.resolve(webDir, 'assets'), to: 'assets'},
+        {from: path.resolve(webDir, 'messages'), to: 'messages'},
         {
-          from: path.resolve(__dirname, '../web/favicon.ico'),
+          from: path.resolve(webDir, 'favicon.ico'),
           to: 'favicon.ico',
           noErrorOnMissing: true,
         },
         {
+          // Self-copy: pulls www/environment.json (written by action scripts)
+          // into webpack's in-memory filesystem so the dev server serves it.
           from: path.resolve(__dirname, 'www/environment.json'),
           to: 'environment.json',
         },
       ],
-      {context: __dirname}
-    ),
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src/index.html'),
       filename: 'index.html',
@@ -103,9 +106,8 @@ export default {
     }),
   ],
   resolve: {
-    extensions: ['.ts', '.js', '.json'],
     alias: {
-      '@web': path.resolve(__dirname, '../web'),
+      '@web': webDir,
       '@capacitor-plugin-outline': path.resolve(
         __dirname,
         'plugins/capacitor-plugin-outline/src'
@@ -113,4 +115,4 @@ export default {
     },
   },
   devtool: 'source-map',
-};
+});

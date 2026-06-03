@@ -12,20 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import fs from 'fs/promises';
+import path from 'path';
 import url from 'url';
 
-import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 import webpack from 'webpack';
 import WebpackServer from 'webpack-dev-server';
 
 import webpackConfig from './webpack.config.js';
+import {writeEnvironmentJson} from './write_environment.mjs';
+import {getBuildParameters} from '../build/get_build_parameters.mjs';
+
+const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
 /**
  * @description Starts the Capacitor web app for development.
  */
-export async function main() {
-  await runAction('client/capacitor/build', 'browser');
-
+export async function main(...parameters) {
+  const {platform, versionName, buildNumber} = getBuildParameters(parameters);
+  if (platform !== 'browser') {
+    throw new TypeError(
+      `start.action.mjs only supports platform "browser", got "${platform}".`
+    );
+  }
+  await fs.mkdir(path.resolve(capacitorDir, 'www'), {recursive: true});
+  await writeEnvironmentJson(capacitorDir, versionName, buildNumber);
   const config = {...webpackConfig, mode: 'development'};
   await new WebpackServer(config.devServer, webpack(config)).start();
 }

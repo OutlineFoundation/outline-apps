@@ -16,14 +16,20 @@ import fs from 'fs/promises';
 import path from 'path';
 import url from 'url';
 
+import {runAction} from '@outline/infrastructure/build/run_action.mjs';
+
 import webpackConfig from './webpack.config.js';
+import {writeEnvironmentJson} from './write_environment.mjs';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
+const SUPPORTED_PLATFORMS = new Set(['browser', 'android']);
+
 /**
- * @description Builds the Capacitor web bundle (browser / shared www output).
+ * @description Builds the Capacitor web bundle, and for native platforms also
+ * builds the tun2socks Go library that the Capacitor native projects depend on.
  *
  * @param {string[]} parameters
  */
@@ -31,48 +37,28 @@ export async function main(...parameters) {
   const {platform, buildMode, versionName, buildNumber} =
     getBuildParameters(parameters);
 
-  if (platform !== 'browser') {
+  if (!SUPPORTED_PLATFORMS.has(platform)) {
     throw new TypeError(
-      `Capacitor build.action.mjs currently supports only platform "browser", got "${platform}".`
+      `Capacitor build.action.mjs supports platforms ${[...SUPPORTED_PLATFORMS].join(', ')}, got "${platform}".`
     );
   }
 
   if (buildMode !== 'debug') {
     throw new TypeError(
-      `Capacitor browser build supports only debug mode, got "${buildMode}".`
+      `Capacitor ${platform} build supports only debug mode, got "${buildMode}".`
     );
   }
 
-  await buildWebBundle({
-    versionName,
-    buildNumber,
-  });
-}
+  const outputDir = path.resolve(capacitorDir, 'www');
+  await fs.rm(outputDir, {recursive: true, force: true});
+  await fs.mkdir(outputDir, {recursive: true});
 
-async function buildWebBundle({versionName, buildNumber}) {
-  await writeEnvironmentJson(versionName, buildNumber);
+  await writeEnvironmentJson(capacitorDir, versionName, buildNumber);
   await runWebpack({...webpackConfig, mode: 'development'});
-}
 
-async function writeEnvironmentJson(versionName, buildNumber) {
-  process.env.APP_VERSION = versionName;
-  process.env.APP_BUILD_NUMBER = String(buildNumber);
-
-  const environmentJson = JSON.stringify(
-    {
-      APP_VERSION: process.env.APP_VERSION,
-      APP_BUILD_NUMBER: process.env.APP_BUILD_NUMBER,
-    },
-    null,
-    2
-  );
-  const outputEnvironmentPath = path.resolve(
-    capacitorDir,
-    'www',
-    'environment.json'
-  );
-  await fs.mkdir(path.dirname(outputEnvironmentPath), {recursive: true});
-  await fs.writeFile(outputEnvironmentPath, environmentJson);
+  if (platform === 'android') {
+    await runAction('client/go/build', 'android', ...parameters.slice(1));
+  }
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {

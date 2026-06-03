@@ -1,10 +1,10 @@
-# Capacitor client
+# Capacitor client (browser)
 
-This directory is the Capacitor-based client shell. The sections below cover the **browser** workflow (webpack bundle under `client/capacitor/www/`) and **Android** (native shell + Capacitor CLI).
+This directory is the Capacitor-based client shell. **This README documents the browser workflow only** (webpack bundle under `client/capacitor/www/`).
 
-Unless noted otherwise, run `npm run action …` from the **repository root**.
+Run all commands from the **repository root** using `npm run action`.
 
-## Requirements (shared)
+## Requirements (browser)
 
 - [Node.js](https://nodejs.org/) 22 (see root `package.json` `engines`)
 - Install dependencies after clone:
@@ -15,7 +15,7 @@ Unless noted otherwise, run `npm run action …` from the **repository root**.
 
   If you use `nvm`, run `nvm use` in the repo root so the Node version matches.
 
-## Start (development server, browser)
+## Start (development server)
 
 Runs a **browser** build once, then starts the webpack dev server (HMR):
 
