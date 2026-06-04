@@ -23,7 +23,15 @@ const VALID_PLATFORMS = [
   'browser',
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
-const VALID_ARCHITECTURES = ['amd64', 'arm64', 'ia32'];
+
+// --arch values accepted per platform. linux uses Go arch names (matches our
+// output/client/linux-<arch> directories); windows uses electron-builder's
+// names (ia32, arm64) — they map back to Go names downstream where needed.
+// Platforms not in this map don't accept --arch.
+const VALID_ARCHITECTURES_BY_PLATFORM = {
+  linux: ['amd64', 'arm64'],
+  windows: ['ia32', 'arm64'],
+};
 
 const MS_PER_HOUR = 1000 * 60 * 60;
 
@@ -44,16 +52,24 @@ export function getBuildParameters(cliArguments) {
     arch = '',
   } = minimist(cliArguments);
 
-  if (arch && !VALID_ARCHITECTURES.includes(arch)) {
-    throw new TypeError(
-      `Architecture "${arch}" is not a valid target for Outline Client. Must be one of ${VALID_ARCHITECTURES.join(', ')}`
-    );
-  }
-
   if (platform && !VALID_PLATFORMS.includes(platform)) {
     throw new TypeError(
       `Platform "${platform}" is not a valid target for Outline Client. Must be one of ${VALID_PLATFORMS.join(', ')}`
     );
+  }
+
+  if (arch) {
+    const validArchs = VALID_ARCHITECTURES_BY_PLATFORM[platform];
+    if (!validArchs) {
+      throw new TypeError(
+        `Architecture "${arch}" cannot be specified for platform "${platform}".`
+      );
+    }
+    if (!validArchs.includes(arch)) {
+      throw new TypeError(
+        `Architecture "${arch}" is not a valid target for ${platform}. Must be one of ${validArchs.join(', ')}`
+      );
+    }
   }
 
   if (buildMode && !VALID_BUILD_MODES.includes(buildMode)) {
