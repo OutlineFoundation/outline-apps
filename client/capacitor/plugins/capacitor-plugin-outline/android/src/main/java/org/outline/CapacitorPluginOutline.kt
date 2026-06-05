@@ -24,46 +24,23 @@ import android.content.ServiceConnection
 import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
-import android.os.RemoteException
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import org.outline.log.OutlineLogger
 import org.outline.log.SentryErrorReporter
 import org.outline.vpn.Errors
 import org.outline.vpn.VpnServiceStarter
 import org.outline.vpn.VpnTunnelService
-import outline.GoBackendConfig
-import outline.InvokeMethodResult
 import outline.Outline
 import platerrors.Platerrors
 import platerrors.PlatformError
 
 @CapacitorPlugin(name = "CapacitorPluginOutline")
 class CapacitorPluginOutline : Plugin() {
-
-  enum class Action(val value: String) {
-    INVOKE_METHOD("invokeMethod"),
-    START("start"),
-    STOP("stop"),
-    ON_STATUS_CHANGE("onStatusChange"),
-    IS_RUNNING("isRunning"),
-    INIT_ERROR_REPORTING("initializeErrorReporting"),
-    REPORT_EVENTS("reportEvents"),
-    QUIT("quitApplication");
-
-    companion object {
-      private val actions = values().associateBy { it.value }
-      
-      fun fromValue(value: String): Action? = actions[value]
-      fun hasValue(value: String): Boolean = actions.containsKey(value)
-    }
-  }
 
   private data class StartVpnRequest(
       val args: StartArgs,
@@ -80,7 +57,6 @@ class CapacitorPluginOutline : Plugin() {
   private var errorReportingApiKey: String? = null
   private var pendingVpnPermissionRequest: StartVpnRequest? = null
   private var pendingServiceBindRequest: StartVpnRequest? = null
-  private val statusCallbacks = ConcurrentHashMap<String, PluginCall>()
   private val executor = Executors.newCachedThreadPool()
 
   private val vpnServiceConnection = object : ServiceConnection {
@@ -109,23 +85,15 @@ class CapacitorPluginOutline : Plugin() {
   private val vpnTunnelBroadcastReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
       val tunnelId = intent.getStringExtra(VpnTunnelService.MessageData.TUNNEL_ID.value) ?: return
-      if (statusCallbacks.isEmpty()) return
-      
       val status = intent.getIntExtra(
           VpnTunnelService.MessageData.PAYLOAD.value,
           VpnTunnelService.TunnelStatus.INVALID.value,
       )
-
       val payload = JSObject().apply {
         put("id", tunnelId)
         put("status", status)
       }
-      
-      notifyListeners(VPN_STATUS_EVENT, payload)
-
-      statusCallbacks.values.forEach { callback ->
-        callback.resolve(payload)
-      }
+      notifyListeners(STATUS_CHANGE_EVENT, payload)
     }
   }
 
@@ -134,7 +102,7 @@ class CapacitorPluginOutline : Plugin() {
     val context = baseContext()
 
     OutlineLogger.registerLogHandler(SentryErrorReporter.BREADCRUMB_LOG_HANDLER)
-    
+
     val goConfig = Outline.getBackendConfig()
     goConfig.dataDir = context.filesDir.absolutePath
 
@@ -166,63 +134,40 @@ class CapacitorPluginOutline : Plugin() {
   }
 
   @PluginMethod
-  fun execute(call: PluginCall) {
-    val actionValue = call.getString("action")
-    if (actionValue.isNullOrEmpty()) {
-      call.reject("Missing action parameter")
-      return
-    }
-
-    val action = Action.fromValue(actionValue)
-    if (action == null) {
-      call.reject("Invalid action: $actionValue")
-      return
-    }
-
-    when (action) {
-      Action.QUIT -> handleQuit(call)
-      Action.ON_STATUS_CHANGE -> handleOnStatusChange(call)
-      Action.START -> handleStart(call)
-      else -> executeAsync(action, call)
+  fun invokeMethod(call: PluginCall) {
+    executor.execute {
+      try {
+        val methodName = call.getString("method")
+        if (methodName.isNullOrEmpty()) {
+          call.reject("Missing Outline method name.")
+          return@execute
+        }
+        val input = call.getString("input", "") ?: ""
+        val result = Outline.invokeMethod(methodName, input)
+        result.error?.let { error ->
+          sendErrorResult(call, error)
+          return@execute
+        }
+        call.resolve(JSObject().apply { put("value", result.value) })
+      } catch (e: Exception) {
+        sendErrorResult(call, platformErrorFromException(e))
+      }
     }
   }
 
-  private fun handleQuit(call: PluginCall) {
-    val currentActivity = activity ?: run {
-      call.reject("No active activity to close")
-      return
-    }
-    
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      currentActivity.finishAffinity()
-      currentActivity.finishAndRemoveTask()
-    } else {
-      currentActivity.finish()
-    }
-    
-    android.os.Process.killProcess(android.os.Process.myPid())
-    call.resolve()
-  }
-
-  private fun handleOnStatusChange(call: PluginCall) {
-    call.setKeepAlive(true)
-    statusCallbacks[call.callbackId] = call
-    saveCall(call)
-    call.resolve()
-  }
-
-  private fun handleStart(call: PluginCall) {
+  @PluginMethod
+  fun start(call: PluginCall) {
     val tunnelId = call.getString("tunnelId")
     val serverName = call.getString("serverName")
     val transportConfig = call.getString("transportConfig")
-    
+
     if (tunnelId.isNullOrEmpty() || transportConfig.isNullOrEmpty() || serverName.isNullOrEmpty()) {
       call.reject("Missing tunnel start parameters.")
       return
     }
 
     val startArgs = StartArgs(tunnelId, serverName, transportConfig)
-    
+
     if (!prepareVpnService(call, startArgs)) {
       return
     }
@@ -230,88 +175,95 @@ class CapacitorPluginOutline : Plugin() {
     executeStartTunnel(call, startArgs)
   }
 
-  private fun executeAsync(action: Action, call: PluginCall) {
+  @PluginMethod
+  fun stop(call: PluginCall) {
     executor.execute {
       try {
-        when (action) {
-          Action.INVOKE_METHOD -> handleInvokeMethod(call)
-          Action.STOP -> handleStop(call)
-          Action.IS_RUNNING -> handleIsRunning(call)
-          Action.INIT_ERROR_REPORTING -> handleInitErrorReporting(call)
-          Action.REPORT_EVENTS -> handleReportEvents(call)
-          else -> call.reject("Unsupported async action: ${action.value}")
+        val tunnelId = call.getString("tunnelId")
+        if (tunnelId.isNullOrEmpty()) {
+          call.reject("Missing tunnelId.")
+          return@execute
         }
+        val result = vpnTunnelService?.stopTunnel(tunnelId)
+        if (result == null) call.resolve() else call.reject(result.errorJson)
       } catch (e: Exception) {
         sendErrorResult(call, platformErrorFromException(e))
       }
     }
   }
 
-  private fun handleInvokeMethod(call: PluginCall) {
-    val methodName = call.getString("method")
-    val input = call.getString("input", "")
-    
-    if (methodName.isNullOrEmpty()) {
-      call.reject("Missing Outline method name.")
-      return
+  @PluginMethod
+  fun isRunning(call: PluginCall) {
+    executor.execute {
+      try {
+        val tunnelId = call.getString("tunnelId")
+        if (tunnelId.isNullOrEmpty()) {
+          call.reject("Missing tunnelId.")
+          return@execute
+        }
+        val isActive = try {
+          vpnTunnelService?.isTunnelActive(tunnelId) ?: false
+        } catch (e: Exception) {
+          false
+        }
+        call.resolve(JSObject().apply { put("isRunning", isActive) })
+      } catch (e: Exception) {
+        sendErrorResult(call, platformErrorFromException(e))
+      }
     }
-    
-    val result = Outline.invokeMethod(methodName, input)
-    result.error?.let { error ->
-      sendErrorResult(call, error)
-      return
-    }
-    
-    call.resolve(JSObject().apply { put("value", result.value) })
   }
 
-  private fun handleStop(call: PluginCall) {
-    val tunnelId = call.getString("tunnelId")
-    if (tunnelId.isNullOrEmpty()) {
-      call.reject("Missing tunnelId.")
-      return
+  @PluginMethod
+  fun initializeErrorReporting(call: PluginCall) {
+    executor.execute {
+      try {
+        val apiKey = call.getString("apiKey")
+        if (apiKey.isNullOrEmpty()) {
+          call.reject("Missing error reporting API key.")
+          return@execute
+        }
+        errorReportingApiKey = apiKey
+        SentryErrorReporter.init(baseContext(), apiKey)
+        vpnTunnelService?.initErrorReporting(apiKey)
+        call.resolve()
+      } catch (e: Exception) {
+        sendErrorResult(call, platformErrorFromException(e))
+      }
     }
-    
-    val result = vpnTunnelService?.stopTunnel(tunnelId)
-    if (result == null) call.resolve() else call.reject(result.errorJson)
   }
 
-  private fun handleIsRunning(call: PluginCall) {
-    val tunnelId = call.getString("tunnelId")
-    if (tunnelId.isNullOrEmpty()) {
-      call.reject("Missing tunnelId.")
-      return
+  @PluginMethod
+  fun reportEvents(call: PluginCall) {
+    executor.execute {
+      try {
+        val uuid = call.getString("uuid")
+        if (uuid.isNullOrEmpty()) {
+          call.reject("Missing report UUID.")
+          return@execute
+        }
+        SentryErrorReporter.send(uuid)
+        call.resolve()
+      } catch (e: Exception) {
+        sendErrorResult(call, platformErrorFromException(e))
+      }
     }
-    
-    val isActive = try {
-      vpnTunnelService?.isTunnelActive(tunnelId) ?: false
-    } catch (e: Exception) {
-      false
-    }
-    call.resolve(JSObject().apply { put("isRunning", isActive) })
   }
 
-  private fun handleInitErrorReporting(call: PluginCall) {
-    val apiKey = call.getString("apiKey")
-    if (apiKey.isNullOrEmpty()) {
-      call.reject("Missing error reporting API key.")
+  @PluginMethod
+  fun quitApplication(call: PluginCall) {
+    val currentActivity = activity ?: run {
+      call.reject("No active activity to close")
       return
     }
-    
-    errorReportingApiKey = apiKey
-    SentryErrorReporter.init(baseContext(), apiKey)
-    vpnTunnelService?.initErrorReporting(apiKey)
-    call.resolve()
-  }
 
-  private fun handleReportEvents(call: PluginCall) {
-    val uuid = call.getString("uuid")
-    if (uuid.isNullOrEmpty()) {
-      call.reject("Missing report UUID.")
-      return
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      currentActivity.finishAffinity()
+      currentActivity.finishAndRemoveTask()
+    } else {
+      currentActivity.finish()
     }
-    
-    SentryErrorReporter.send(uuid)
+
+    android.os.Process.killProcess(android.os.Process.myPid())
     call.resolve()
   }
 
@@ -324,10 +276,7 @@ class CapacitorPluginOutline : Plugin() {
     val call = startRequest.call
 
     if (resultCode != Activity.RESULT_OK) {
-      sendErrorResult(
-          call,
-          vpnPermissionDeniedError(),
-      )
+      sendErrorResult(call, vpnPermissionDeniedError())
       bridge.releaseCall(call)
       pendingVpnPermissionRequest = null
       return
@@ -344,7 +293,7 @@ class CapacitorPluginOutline : Plugin() {
       saveCall(call)
       return
     }
-    
+
     val config = TunnelConfig().apply {
       id = args.tunnelId
       name = args.serverName
@@ -383,7 +332,7 @@ class CapacitorPluginOutline : Plugin() {
 
   companion object {
     private const val REQUEST_CODE_PREPARE_VPN = 100
-    private const val VPN_STATUS_EVENT = "vpnStatus"
+    private const val STATUS_CHANGE_EVENT = "onStatusChange"
   }
 }
 
