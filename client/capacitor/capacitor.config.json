@@ -33,13 +33,5 @@
             "fadeInDuration": 0,
             "fadeOutDuration": 300
         }
-    },
-    "android": {
-        "server": {
-            "cleartext": true,
-            "allowNavigation": [
-                "*"
-            ]
-        }
     }
 }
