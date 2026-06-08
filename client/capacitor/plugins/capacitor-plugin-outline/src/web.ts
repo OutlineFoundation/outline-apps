@@ -15,6 +15,7 @@
  */
 
 import {WebPlugin} from '@capacitor/core';
+import type {PluginListenerHandle} from '@capacitor/core';
 
 import type {CapacitorPluginOutline} from './definitions';
 
@@ -55,5 +56,12 @@ export class CapacitorPluginOutlineWeb
 
   async quitApplication(): Promise<void> {
     throw this.unimplemented('Not implemented on web.');
+  }
+
+  async addListener(
+    eventName: string,
+    listenerFunc: (data: {id: string; status: number}) => void
+  ): Promise<PluginListenerHandle> {
+    return super.addListener(eventName, listenerFunc);
   }
 }

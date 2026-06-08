@@ -19,9 +19,21 @@ import {app} from 'electron';
 
 const IS_WINDOWS = os.platform() === 'win32';
 
+// Maps Node's `os.arch()` values to the architecture names used in our
+// `output/client/<platform>-<arch>` build output directories (Go arch names).
+const NODE_ARCH_TO_GO_ARCH: Record<string, string> = {
+  x64: 'amd64',
+  arm64: 'arm64',
+  ia32: '386',
+};
+
+function platformBinaryDir() {
+  const goArch = NODE_ARCH_TO_GO_ARCH[os.arch()] ?? os.arch();
+  return `${IS_WINDOWS ? 'windows' : 'linux'}-${goArch}`;
+}
+
 /**
  * Get the unpacked asar folder path.
- *   - For AppImage, `/tmp/.mount_OutlinXXXXXX/resources/app.asar.unpacked/`
  *   - For Debian, `/opt/Outline/resources/app.asar.unpacked`
  *   - For Windows, `C:\Program Files (x86)\Outline\`
  * @returns A string representing the path of the unpacked asar folder.
@@ -32,7 +44,6 @@ function unpackedAppPath() {
 
 /**
  * Get the parent directory path of the current application binary.
- *   - For AppImage, `/tmp/.mount_OutlinXXXXX/resources/app.asar`
  *   - For Debian, `/opt/Outline/resources/app.asar`
  *   - For Windows, `C:\Program Files (x86)\Outline\`
  * @returns A string representing the path of the application directory.
@@ -50,7 +61,7 @@ export function pathToEmbeddedTun2socksBinary() {
     unpackedAppPath(),
     'output',
     'client',
-    IS_WINDOWS ? 'windows-386' : 'linux-amd64',
+    platformBinaryDir(),
     IS_WINDOWS ? 'tun2socks.exe' : 'tun2socks'
   );
 }
@@ -60,26 +71,16 @@ export function pathToBackendLibrary() {
     unpackedAppPath(),
     'output',
     'client',
-    IS_WINDOWS ? 'windows-386' : 'linux-amd64',
+    platformBinaryDir(),
     IS_WINDOWS ? 'backend.dll' : 'libbackend.so'
   );
 }
 
 /**
- * Get the parent directory path containing the background service binaries.
- * On Windows, this folder contains `OutlineService.exe`.
- * While on Linux this folder contains `outline_proxy_controller`.
+ * Get the directory containing the Windows background service binaries
+ * (`OutlineService.exe` and `install_windows_service.bat`).
  * @returns A string representing the path of the directory that contains service binaries.
  */
 export function pathToEmbeddedOutlineService() {
-  if (IS_WINDOWS) {
-    return getAppPath();
-  }
-  return path.join(
-    unpackedAppPath(),
-    'client',
-    'electron',
-    'linux_proxy_controller',
-    'dist'
-  );
+  return getAppPath();
 }

@@ -16,3 +16,17 @@ third_party {
   version: "9.21.2"
   last_upgrade_date { year: 2018 month: 5 day: 7 }
 }
+
+# arm64 driver bundle is from a later release (no arm64 build existed in
+# 9.21.2). Source: https://github.com/OpenVPN/tap-windows6/releases/tag/9.27.0
+# (dist.win10.zip). 9.27.0 ships Microsoft's devcon.exe in place of the
+# OpenVPN-built tapinstall.exe the older releases include; add_tap_device.bat
+# accepts either binary name.
+third_party {
+  url {
+    type: ARCHIVE
+    value: "https://github.com/OpenVPN/tap-windows6/releases/download/9.27.0/dist.win10.zip"
+  }
+  version: "9.27.0"
+  last_upgrade_date { year: 2026 month: 5 day: 28 }
+}

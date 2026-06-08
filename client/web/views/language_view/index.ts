@@ -40,19 +40,7 @@ export class LanguageView extends LitElement {
       color: var(--outline-text-color);
       display: block;
       box-sizing: border-box;
-      padding-top: var(--language-safe-area-top);
-    }
-
-    @supports (padding-top: constant(safe-area-inset-top)) {
-      :host {
-        --language-safe-area-top: constant(safe-area-inset-top);
-      }
-    }
-
-    @supports (padding-top: env(safe-area-inset-top)) {
-      :host {
-        --language-safe-area-top: env(safe-area-inset-top);
-      }
+      padding-top: var(--outline-safe-area-top);
     }
 
     md-list {

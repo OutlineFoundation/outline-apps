@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type {PluginListenerHandle} from '@capacitor/core';
+
 export interface CapacitorPluginOutline {
   invokeMethod(options: {
     method: string;
@@ -30,7 +32,7 @@ export interface CapacitorPluginOutline {
   reportEvents(options: {uuid: string}): Promise<void>;
   quitApplication(): Promise<void>;
   addListener(
-    eventName: 'vpnStatus',
+    eventName: string,
     listenerFunc: (data: {id: string; status: number}) => void
-  ): Promise<any>;
+  ): Promise<PluginListenerHandle>;
 }

@@ -19,3 +19,5 @@ node_modules
 # Capacitor generated assets (icons, splash screens)
 client/capacitor/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-*.png
 client/capacitor/ios/App/App/Assets.xcassets/Splash.imageset/Default@*.png
+# Capacitor web build output
+client/capacitor/www/

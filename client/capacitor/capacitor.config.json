@@ -32,6 +32,7 @@
             "autoHide": false,
             "fadeInDuration": 0,
             "fadeOutDuration": 300
-        }
+        },
+        "CapacitorPluginOutline": {}
     }
 }
