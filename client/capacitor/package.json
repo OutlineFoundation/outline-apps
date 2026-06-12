@@ -12,7 +12,8 @@
   "scripts": {
     "clean": "rm -rf node_modules www",
     "start": "node ./start.action.mjs",
-    "build": "node ./build.action.mjs"
+    "build": "node ./build.action.mjs",
+    "capacitor:sync:before": "npm run build && cd ../.. && go tool task -v client:tun2socks:$CAPACITOR_PLATFORM_NAME && ([ \"$CAPACITOR_PLATFORM_NAME\" != \"android\" ] || go tool task -v client:android:configure)"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
@@ -23,16 +24,17 @@
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.7",
     "webpack": "^5.16.0",
-    "webpack-merge": "^5.8.0",
     "webpack-cli": "^4.4.0",
-    "webpack-dev-server": "^4.5.0"
+    "webpack-dev-server": "^4.5.0",
+    "webpack-merge": "^5.8.0"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.1",
     "@capacitor/app": "^8.1.0",
     "@capacitor/browser": "^8.0.3",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1",
+    "@capacitor/splash-screen": "8.0.1",
     "@polymer/polymer": "^3.5.1",
     "@sentry/browser": "^7.31.1",
     "@webcomponents/webcomponentsjs": "^2.4.4",
