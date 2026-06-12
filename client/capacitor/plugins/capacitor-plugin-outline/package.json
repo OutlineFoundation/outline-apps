@@ -10,7 +10,8 @@
         "dist/",
         "ios/",
         "android/",
-        "src/"
+        "src/",
+        "Package.swift"
     ],
     "author": "Outline Authors",
     "license": "Apache-2.0",
@@ -24,11 +25,11 @@
         "build": "tsc"
     },
     "devDependencies": {
-        "@capacitor/core": "^6.0.0",
+        "@capacitor/core": "^8.3.1",
         "typescript": "^5.0.0"
     },
     "peerDependencies": {
-        "@capacitor/core": "^6.0.0"
+        "@capacitor/core": "^8.3.1"
     },
     "capacitor": {
         "ios": {

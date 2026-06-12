@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0463CD242FDB66EC00B7DF51 /* PacketTunnelProvider.m in Sources */ = {isa = PBXBuildFile; fileRef = 0463CD222FDB66EC00B7DF51 /* PacketTunnelProvider.m */; };
+		0463CD252FDB66EC00B7DF51 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0463CD232FDB66EC00B7DF51 /* PacketTunnelProvider.swift */; };
+		04BEED342FDAC45A00127BCE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BEED332FDAC45300127BCE /* SceneDelegate.swift */; };
 		182DA39E2EBBEDA40059C856 /* OutlineViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 182DA39D2EBBEDA40059C856 /* OutlineViewController.swift */; };
 		18E12A192EC4C940001BF6C8 /* NetworkExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18E12A182EC4C940001BF6C8 /* NetworkExtension.framework */; };
 		18E12A212EC4C940001BF6C8 /* VpnExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 18E12A172EC4C940001BF6C8 /* VpnExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -62,6 +65,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0463CD222FDB66EC00B7DF51 /* PacketTunnelProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = PacketTunnelProvider.m; path = ../../../src/cordova/apple/OutlineLib/VpnExtension/Sources/PacketTunnelProvider.m; sourceTree = "<group>"; };
+		0463CD232FDB66EC00B7DF51 /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PacketTunnelProvider.swift; path = ../../../src/cordova/apple/OutlineLib/VpnExtension/Sources/PacketTunnelProvider.swift; sourceTree = "<group>"; };
+		04BEED332FDAC45300127BCE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		182DA39D2EBBEDA40059C856 /* OutlineViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlineViewController.swift; sourceTree = "<group>"; };
 		18E12A172EC4C940001BF6C8 /* VpnExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VpnExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		18E12A182EC4C940001BF6C8 /* NetworkExtension.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NetworkExtension.framework; path = System/Library/Frameworks/NetworkExtension.framework; sourceTree = SDKROOT; };
@@ -89,18 +95,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		18E12A1A2EC4C940001BF6C8 /* VpnExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				18E12A222EC4C940001BF6C8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = VpnExtension;
-			sourceTree = "<group>";
-		};
+		18E12A1A2EC4C940001BF6C8 /* VpnExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (18E12A222EC4C940001BF6C8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = VpnExtension; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +127,8 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				0463CD222FDB66EC00B7DF51 /* PacketTunnelProvider.m */,
+				0463CD232FDB66EC00B7DF51 /* PacketTunnelProvider.swift */,
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				18E12A1A2EC4C940001BF6C8 /* VpnExtension */,
@@ -152,6 +149,7 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				04BEED332FDAC45300127BCE /* SceneDelegate.swift */,
 				182DA39D2EBBEDA40059C856 /* OutlineViewController.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -296,6 +294,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0463CD242FDB66EC00B7DF51 /* PacketTunnelProvider.m in Sources */,
+				0463CD252FDB66EC00B7DF51 /* PacketTunnelProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,6 +305,7 @@
 			files = (
 				182DA39E2EBBEDA40059C856 /* OutlineViewController.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				04BEED342FDAC45A00127BCE /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,7 +352,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = VpnExtension;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -395,7 +396,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = VpnExtension;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -544,7 +545,7 @@
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Outline;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -576,7 +577,7 @@
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Outline;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -1,14 +1,13 @@
 {
-    "appId": "org.outline.client",
+    "appId": "com.nthlink.outline",
     "appName": "Outline",
-    "webDir": "../www",
+    "webDir": "www",
     "bundledWebRuntime": false,
     "server": {
         "cleartext": true,
         "allowNavigation": [
             "*"
-        ],
-        "url": "http://localhost:8080"
+        ]
     },
     "ios": {
         "contentInset": "never",
@@ -17,8 +16,8 @@
     },
     "plugins": {
         "SplashScreen": {
-            "launchAutoHide": false,
-            "launchShowDuration": 3000,
+            "launchAutoHide": true,
+            "launchShowDuration": 1000,
             "backgroundColor": "#0F1621",
             "androidSplashResourceName": "splash",
             "androidScaleType": "CENTER_CROP",
