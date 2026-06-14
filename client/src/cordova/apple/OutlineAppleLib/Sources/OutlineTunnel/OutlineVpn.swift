@@ -235,7 +235,7 @@ public class OutlineVpn: NSObject {
       return
     }
     DDLogDebug("OutlineVpn received status change for \(tunnelId): \(String(describing: session.status))")
-    if isActiveSession(session) {
+    if shouldEnableConnectVpnOnDemand(session) {
       Task {
         await setConnectVpnOnDemand(manager, true)
       }
@@ -268,6 +268,11 @@ private func isActiveSession(_ session: NEVPNConnection?) -> Bool {
   let vpnStatus = session?.status
   return vpnStatus == .connected || vpnStatus == .connecting ||
     vpnStatus == .disconnecting || vpnStatus == .reasserting
+}
+
+private func shouldEnableConnectVpnOnDemand(_ session: NEVPNConnection?) -> Bool {
+  let vpnStatus = session?.status
+  return vpnStatus == .connected || vpnStatus == .connecting || vpnStatus == .reasserting
 }
 
 private func stopSession(_ manager:NETunnelProviderManager) async {
