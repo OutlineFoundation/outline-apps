@@ -28,7 +28,12 @@ private enum OutlineVpnControlBridge {
     guard let manager = await getTunnelManager() else {
       return (false, nil)
     }
-    return (isActiveSession(manager.connection), serverName(for: manager))
+    #if compiler(>=6.0)
+      if #available(iOS 18.0, *) {
+        OutlineVpnControlStatusObserver.shared.start()
+      }
+    #endif
+    return (isConnectedSession(manager.connection), serverName(for: manager))
   }
 
   static func startConfiguredTunnel() async throws {
@@ -156,6 +161,12 @@ private enum OutlineVpnControlBridge {
       status == .disconnecting || status == .reasserting
   }
 
+  private static func isConnectedSession(_ session: NEVPNConnection?) -> Bool {
+    let status = session?.status
+    return status == .connected || status == .connecting ||
+      status == .reasserting
+  }
+
   private static func isStoppedSession(_ session: NEVPNConnection?) -> Bool {
     let status = session?.status
     return status == .disconnected || status == .invalid
@@ -168,6 +179,30 @@ enum OutlineVpnControlError: Error {
 }
 
 #if compiler(>=6.0)
+
+@available(iOS 18.0, *)
+private final class OutlineVpnControlStatusObserver {
+  static let shared = OutlineVpnControlStatusObserver()
+
+  private var token: NSObjectProtocol?
+
+  private init() {}
+
+  func start() {
+    guard token == nil else {
+      return
+    }
+    token = NotificationCenter.default.addObserver(
+      forName: .NEVPNStatusDidChange,
+      object: nil,
+      queue: nil
+    ) { _ in
+      Task { @MainActor in
+        ControlCenter.shared.reloadControls(ofKind: OutlineVpnToggleControl.kind)
+      }
+    }
+  }
+}
 
 @available(iOS 18.0, *)
 struct OutlineVpnControlValue {
