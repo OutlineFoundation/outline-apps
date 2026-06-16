@@ -121,18 +121,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
-      - name: Set up MSVC build environment
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-        with:
-          arch: ${{ matrix.arch == 'ia32' && 'x86' || matrix.arch }}
-
       - name: Install Node
         uses: actions/setup-node@v3
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: ./package-lock.json
+
+      - name: Upgrade node-gyp
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          npm install -g node-gyp@latest
+          npm config set node-gyp "$((npm root -g).trim())\node-gyp\bin\node-gyp.js" --global
 
       - name: Install Chromium
         if: matrix.installChromium
