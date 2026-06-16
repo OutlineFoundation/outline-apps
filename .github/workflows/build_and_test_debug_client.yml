@@ -121,6 +121,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.3.4
 
+      - name: Set up MSVC build environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@73027bb1ae0c0f757cf435d070b4f8cb6e7bb46c # v1.13.0
+        with:
+          arch: ${{ matrix.arch == 'ia32' && 'x86' || matrix.arch }}
+
       - name: Install Node
         uses: actions/setup-node@v3
         with:
