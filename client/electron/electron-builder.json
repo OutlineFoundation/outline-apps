@@ -1,12 +1,6 @@
 {
   "productName": "Outline",
-  "artifactName": "Outline-Client.${ext}",
-  "asarUnpack": [
-    "output/client/linux-amd64/libbackend.so",
-    "output/client/linux-amd64/tun2socks",
-    "output/client/windows-386/backend.dll",
-    "output/client/windows-386/tun2socks.exe"
-  ],
+  "artifactName": "Outline-Client-${arch}.${ext}",
   "directories": {
     "buildResources": "output/client/electron",
     "output": "output/client/electron/build"
@@ -34,39 +28,18 @@
   "linux": {
     "category": "Network",
     "executableName": "Outline",
-    "files": [
-      "client/electron/icons/png",
-      "output/client/linux-amd64",
-      "!output/client/linux-amd64/*.h"
-    ],
     "icon": "client/electron/icons/png",
-    "maintainer": "Outline Foundation",
-    "target": [
-      {
-        "arch": "x64",
-        "target": "deb"
-      }
-    ]
+    "maintainer": "Outline Foundation"
   },
   "nsis": {
     "include": "client/electron/custom_install_steps.nsh",
     "perMachine": true
   },
   "win": {
-    "files": [
-      "output/client/windows-386",
-      "!output/client/windows-386/*.h"
-    ],
     "icon": "client/electron/icons/win/icon.ico",
     "sign": "client/electron/windows/electron_builder_signing_plugin.cjs",
     "signingHashAlgorithms": [
       "sha256"
-    ],
-    "target": [
-      {
-        "arch": "ia32",
-        "target": "nsis"
-      }
     ]
   }
 }

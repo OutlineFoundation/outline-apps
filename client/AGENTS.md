@@ -39,8 +39,8 @@ npm run storybook
 
 ### Electron Client
 
-*   **Build (Linux)**: `npm run action client/electron/build linux`
-*   **Build (Windows)**: `npm run action client/electron/build windows`
+*   **Build (Linux)**: `npm run action client/electron/build linux -- --arch=[x64|arm64]`
+*   **Build (Windows)**: `npm run action client/electron/build windows -- --arch=[ia32|arm64]`
 
 ### Cordova Clients
 

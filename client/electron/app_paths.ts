@@ -19,6 +19,19 @@ import {app} from 'electron';
 
 const IS_WINDOWS = os.platform() === 'win32';
 
+// Maps Node's `os.arch()` values to the architecture names used in our
+// `output/client/<platform>-<arch>` build output directories (Go arch names).
+const NODE_ARCH_TO_GO_ARCH: Record<string, string> = {
+  x64: 'amd64',
+  arm64: 'arm64',
+  ia32: '386',
+};
+
+function platformBinaryDir() {
+  const goArch = NODE_ARCH_TO_GO_ARCH[os.arch()] ?? os.arch();
+  return `${IS_WINDOWS ? 'windows' : 'linux'}-${goArch}`;
+}
+
 /**
  * Get the unpacked asar folder path.
  *   - For Debian, `/opt/Outline/resources/app.asar.unpacked`
@@ -48,7 +61,7 @@ export function pathToEmbeddedTun2socksBinary() {
     unpackedAppPath(),
     'output',
     'client',
-    IS_WINDOWS ? 'windows-386' : 'linux-amd64',
+    platformBinaryDir(),
     IS_WINDOWS ? 'tun2socks.exe' : 'tun2socks'
   );
 }
@@ -58,7 +71,7 @@ export function pathToBackendLibrary() {
     unpackedAppPath(),
     'output',
     'client',
-    IS_WINDOWS ? 'windows-386' : 'linux-amd64',
+    platformBinaryDir(),
     IS_WINDOWS ? 'backend.dll' : 'libbackend.so'
   );
 }
