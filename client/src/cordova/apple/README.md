@@ -165,7 +165,7 @@ To fix, run:
 
 ```sh
 pkill -9 VpnExtension
-for p in $(pluginkit -Amv | cut -f 4 | grep Outline); do pluginkit -r $p; done;
+pluginkit -Amv | cut -f 4 | grep Outline | while IFS= read -r p; do pluginkit -r "$p"; done;
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -gc
 ```
 

@@ -125,13 +125,11 @@ NSString *const kDefaultPathKey = @"defaultPath";
 - (void)stopTunnelWithReason:(NEProviderStopReason)reason
            completionHandler:(void (^)(void))completionHandler {
   DDLogInfo(@"Stopping tunnel, reason: %ld", (long)reason);
-  // Check for NEProviderStopReasonUserInitiated
   [self stopListeningForNetworkChanges];
   PlaterrorsPlatformError *err = [self.remoteDevice close];
   if (err != nil) {
     DDLogWarn(@"Failed to close remote device: %@", err.error);
   }
-  [self cancelTunnelWithError:nil];
   completionHandler();
 }
 
