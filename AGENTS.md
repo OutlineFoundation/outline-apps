@@ -24,7 +24,7 @@ npm run action client/src/cordova/setup macos -- --buildMode=release
 *   `npm run action client/web/start`: Starts a dev server for the shared web UI.
 *   `npm run action server_manager/www/start`: Starts a dev server for the Manager UI.
 *   `npm run action <component>/test`: Runs tests (e.g. `npm run action client/web/test`).
-*   `npm run action <component>/build`: Builds a component (e.g. `npm run action client/electron/build linux`).
+*   `npm run action <component>/build`: Builds a component (e.g. `npm run action client/electron/build linux -- --arch=x64`).
 
 ### Other useful commands
 

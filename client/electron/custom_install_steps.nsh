@@ -44,9 +44,12 @@ ${StrRep}
 
   isadmin:
 
-  ; TAP device files.
+  ; TAP device files. Pick the arch-specific driver bundle.
+  ; ${RunningX64} is true on both x64 and arm64 Windows, so check arm64 first.
   SetOutPath "$INSTDIR\tap-windows6"
-  ${If} ${RunningX64}
+  ${If} ${IsNativeARM64}
+    File /r "${PROJECT_DIR}\third_party\tap-windows6\bin\arm64\*"
+  ${ElseIf} ${RunningX64}
     File /r "${PROJECT_DIR}\third_party\tap-windows6\bin\amd64\*"
   ${Else}
     File /r "${PROJECT_DIR}\third_party\tap-windows6\bin\i386\*"
@@ -77,7 +80,7 @@ ${StrRep}
   ;  - skip the Sentry report
   ;  - quit
   ;
-  ; When this happens, tapinstall.exe prints an error message like this:
+  ; When this happens, devcon.exe prints an error message like this:
   ; UpdateDriverForPlugAndPlayDevices failed, GetLastError=-536870333
   ;
   ; We can use the presence of that magic number to detect this case.
@@ -162,7 +165,7 @@ ${StrRep}
 !macroend
 
 ; TODO: Remove the TAP device on uninstall. This is impossible to implement safely
-;       with the bundled tapinstall.exe because it can only remove *all* devices
+;       with the bundled devcon.exe because it can only remove *all* devices
 ;       having hwid tap0901 and these may include non-Outline devices.
 !macro customUnInstall
   nsExec::Exec "$SYSDIR\net stop OutlineService"
