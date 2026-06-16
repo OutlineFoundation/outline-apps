@@ -77,7 +77,10 @@ class CapacitorPluginOutline : Plugin() {
     }
 
     override fun onServiceDisconnected(name: ComponentName) {
-      val apiKey = synchronized(stateLock) { errorReportingApiKey }
+      val apiKey = synchronized(stateLock) {
+        vpnTunnelService = null
+        errorReportingApiKey
+      }
       val context = baseContext()
       val rebind = Intent(context, VpnTunnelService::class.java).apply {
         putExtra(VpnServiceStarter.AUTOSTART_EXTRA, true)
