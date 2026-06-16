@@ -13,15 +13,30 @@
 // limitations under the License.
 
 import { App } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import { UrlInterceptor } from '@web/app/url_interceptor';
 
 
 export class CapacitorAndroidUrlInterceptor extends UrlInterceptor {
+  private appUrlOpenHandle?: PluginListenerHandle;
+  private readonly handlePageHide = () => {
+    void this.destroy();
+  };
+
   constructor() {
     super();
+    // Native plugin listeners outlive the WebView's JS context across page
+    // reloads, so tear ours down before unload to avoid duplicate dispatches.
+    window.addEventListener('pagehide', this.handlePageHide);
     void this.wireAppUrlHandling().catch((err: unknown) => {
       console.warn('Capacitor Android URL interception setup failed', err);
     });
+  }
+
+  async destroy(): Promise<void> {
+    window.removeEventListener('pagehide', this.handlePageHide);
+    await this.appUrlOpenHandle?.remove();
+    this.appUrlOpenHandle = undefined;
   }
 
   private async wireAppUrlHandling(): Promise<void> {
@@ -34,7 +49,7 @@ export class CapacitorAndroidUrlInterceptor extends UrlInterceptor {
       // No launch URL (normal when the app is opened from the launcher).
     }
 
-    await App.addListener('appUrlOpen', ({ url }) => {
+    this.appUrlOpenHandle = await App.addListener('appUrlOpen', ({ url }) => {
       if (url) {
         this.executeListeners(url);
       }

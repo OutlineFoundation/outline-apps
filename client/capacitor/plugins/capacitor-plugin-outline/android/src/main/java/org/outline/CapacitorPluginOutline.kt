@@ -22,7 +22,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.net.VpnService
-import android.os.Build
 import android.os.IBinder
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -53,6 +52,11 @@ class CapacitorPluginOutline : Plugin() {
       val transportConfig: String,
   )
 
+  // All fields below are read from both the main thread (ServiceConnection /
+  // activity-result callbacks) and the executor pool (@PluginMethod handlers),
+  // so every access must go through `stateLock` to guarantee both visibility
+  // and atomicity of check-then-act sequences.
+  private val stateLock = Any()
   private var vpnTunnelService: IVpnTunnelService? = null
   private var errorReportingApiKey: String? = null
   private var pendingVpnPermissionRequest: StartVpnRequest? = null
@@ -61,21 +65,25 @@ class CapacitorPluginOutline : Plugin() {
 
   private val vpnServiceConnection = object : ServiceConnection {
     override fun onServiceConnected(name: ComponentName, service: IBinder) {
-      vpnTunnelService = IVpnTunnelService.Stub.asInterface(service)
-      val pending = pendingServiceBindRequest
-      if (pending != null) {
+      val pending: StartVpnRequest?
+      synchronized(stateLock) {
+        vpnTunnelService = IVpnTunnelService.Stub.asInterface(service)
+        pending = pendingServiceBindRequest
         pendingServiceBindRequest = null
+      }
+      if (pending != null) {
         executeStartTunnel(pending.call, pending.args)
       }
     }
 
     override fun onServiceDisconnected(name: ComponentName) {
+      val apiKey = synchronized(stateLock) { errorReportingApiKey }
       val context = baseContext()
       val rebind = Intent(context, VpnTunnelService::class.java).apply {
         putExtra(VpnServiceStarter.AUTOSTART_EXTRA, true)
         putExtra(
             VpnTunnelService.MessageData.ERROR_REPORTING_API_KEY.value,
-            errorReportingApiKey,
+            apiKey,
         )
       }
       context.bindService(rebind, this, Context.BIND_AUTO_CREATE)
@@ -184,7 +192,12 @@ class CapacitorPluginOutline : Plugin() {
           call.reject("Missing tunnelId.")
           return@execute
         }
-        val result = vpnTunnelService?.stopTunnel(tunnelId)
+        val service = synchronized(stateLock) { vpnTunnelService }
+        if (service == null) {
+          sendErrorResult(call, vpnServiceUnavailableError())
+          return@execute
+        }
+        val result = service.stopTunnel(tunnelId)
         if (result == null) call.resolve() else call.reject(result.errorJson)
       } catch (e: Exception) {
         sendErrorResult(call, platformErrorFromException(e))
@@ -201,8 +214,9 @@ class CapacitorPluginOutline : Plugin() {
           call.reject("Missing tunnelId.")
           return@execute
         }
+        val service = synchronized(stateLock) { vpnTunnelService }
         val isActive = try {
-          vpnTunnelService?.isTunnelActive(tunnelId) ?: false
+          service?.isTunnelActive(tunnelId) ?: false
         } catch (e: Exception) {
           false
         }
@@ -222,9 +236,12 @@ class CapacitorPluginOutline : Plugin() {
           call.reject("Missing error reporting API key.")
           return@execute
         }
-        errorReportingApiKey = apiKey
+        val service = synchronized(stateLock) {
+          errorReportingApiKey = apiKey
+          vpnTunnelService
+        }
         SentryErrorReporter.init(baseContext(), apiKey)
-        vpnTunnelService?.initErrorReporting(apiKey)
+        service?.initErrorReporting(apiKey)
         call.resolve()
       } catch (e: Exception) {
         sendErrorResult(call, platformErrorFromException(e))
@@ -256,12 +273,8 @@ class CapacitorPluginOutline : Plugin() {
       return
     }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      currentActivity.finishAffinity()
-      currentActivity.finishAndRemoveTask()
-    } else {
-      currentActivity.finish()
-    }
+    currentActivity.finishAffinity()
+    currentActivity.finishAndRemoveTask()
 
     android.os.Process.killProcess(android.os.Process.myPid())
     call.resolve()
@@ -272,35 +285,49 @@ class CapacitorPluginOutline : Plugin() {
 
     if (requestCode != REQUEST_CODE_PREPARE_VPN) return
 
-    val startRequest = pendingVpnPermissionRequest ?: return
+    val startRequest = synchronized(stateLock) {
+      val req = pendingVpnPermissionRequest
+      pendingVpnPermissionRequest = null
+      req
+    } ?: return
     val call = startRequest.call
 
     if (resultCode != Activity.RESULT_OK) {
       sendErrorResult(call, vpnPermissionDeniedError())
       bridge.releaseCall(call)
-      pendingVpnPermissionRequest = null
       return
     }
 
-    pendingVpnPermissionRequest = null
     executeStartTunnel(call, startRequest.args)
   }
 
   private fun executeStartTunnel(call: PluginCall, args: StartArgs) {
-    if (vpnTunnelService == null) {
-      pendingServiceBindRequest = StartVpnRequest(args, call)
+    val service = synchronized(stateLock) {
+      val current = vpnTunnelService
+      if (current == null) {
+        pendingServiceBindRequest = StartVpnRequest(args, call)
+      }
+      current
+    }
+    if (service == null) {
       call.setKeepAlive(true)
       saveCall(call)
       return
     }
 
-    val config = TunnelConfig().apply {
-      id = args.tunnelId
-      name = args.serverName
-      transportConfig = args.transportConfig
+    executor.execute {
+      try {
+        val config = TunnelConfig().apply {
+          id = args.tunnelId
+          name = args.serverName
+          transportConfig = args.transportConfig
+        }
+        val result = service.startTunnel(config)
+        if (result == null) call.resolve() else call.reject(result.errorJson)
+      } catch (e: Exception) {
+        sendErrorResult(call, platformErrorFromException(e))
+      }
     }
-    val result = vpnTunnelService?.startTunnel(config)
-    if (result == null) call.resolve() else call.reject(result.errorJson)
   }
 
   private fun prepareVpnService(call: PluginCall, args: StartArgs): Boolean {
@@ -312,7 +339,9 @@ class CapacitorPluginOutline : Plugin() {
       return false
     }
 
-    pendingVpnPermissionRequest = StartVpnRequest(args, call)
+    synchronized(stateLock) {
+      pendingVpnPermissionRequest = StartVpnRequest(args, call)
+    }
     call.setKeepAlive(true)
     saveCall(call)
     currentActivity.startActivityForResult(prepareIntent, REQUEST_CODE_PREPARE_VPN)
@@ -341,3 +370,6 @@ private fun platformErrorFromException(e: Exception): PlatformError =
 
 private fun vpnPermissionDeniedError(): PlatformError =
     PlatformError(Platerrors.VPNPermissionNotGranted, "VPN permission not granted")
+
+private fun vpnServiceUnavailableError(): PlatformError =
+    PlatformError(Platerrors.InternalError, "VPN tunnel service is not bound")
