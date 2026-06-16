@@ -103,15 +103,18 @@ jobs:
             # via gem and tell electron-builder to use it. Workaround from:
             # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
             useSystemFpm: true
+            # We use windows-2022 instead of windows-2025 because windows-2025
+            # includes Visual Studio 2026, which causes a buffer overflow crash
+            # in the node-gyp version (v10.1.0) bundled with Node 22.
           - name: Windows ia32
             platform: windows
             arch: ia32
-            runner: windows-2025
+            runner: windows-2022
             timeout: 40
           - name: Windows arm64
             platform: windows
             arch: arm64
-            runner: windows-2025
+            runner: windows-2022
             timeout: 40
     steps:
       - name: Support longpaths
@@ -127,13 +130,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: ./package-lock.json
-
-      - name: Upgrade node-gyp
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          npm install -g node-gyp@latest
-          echo "npm_config_node_gyp=$((npm root -g).trim())\node-gyp\bin\node-gyp.js" >> $env:GITHUB_ENV
 
       - name: Install Chromium
         if: matrix.installChromium
