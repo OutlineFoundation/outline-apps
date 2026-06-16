@@ -92,10 +92,10 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 		go func() {
 			if err := connectivity.CheckUDPConnectivity(pl); err == nil {
 				slog.Info("remote device UDP is healthy")
-				_ = relayMain.SetRelay(relayForward)
+				relayMain.SetRelay(relayForward)
 			} else {
 				slog.Warn("remote device UDP is not healthy", "err", err)
-				_ = relayMain.SetRelay(relayTrunc)
+				relayMain.SetRelay(relayTrunc)
 			}
 		}()
 	}
