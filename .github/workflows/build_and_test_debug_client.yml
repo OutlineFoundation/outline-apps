@@ -133,7 +133,7 @@ jobs:
         shell: pwsh
         run: |
           npm install -g node-gyp@latest
-          npm config set node-gyp "$((npm root -g).trim())\node-gyp\bin\node-gyp.js" --global
+          echo "npm_config_node_gyp=$((npm root -g).trim())\node-gyp\bin\node-gyp.js" >> $env:GITHUB_ENV
 
       - name: Install Chromium
         if: matrix.installChromium
