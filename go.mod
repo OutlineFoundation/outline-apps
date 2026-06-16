@@ -9,7 +9,7 @@ require (
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/stretchr/testify v1.10.0
 	go.nhat.io/cookiejar v0.3.0
-	golang.getoutline.org/sdk v0.0.23
+	golang.getoutline.org/sdk v0.0.24-0.20260616061959-4f32f083df86
 	golang.getoutline.org/sdk/x v0.0.9-alpha.1
 	golang.org/x/mobile v0.0.0-20250813145510-f12310a0cfd9
 	golang.org/x/sys v0.36.0

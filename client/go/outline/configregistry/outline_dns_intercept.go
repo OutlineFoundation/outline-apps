@@ -61,16 +61,9 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 		return sd.Dial(ctx, addr)
 	}
 
-	// Each TimeoutPacketRelay gets its own PacketListenerRelay so their independent
-	// timeouts cannot close each other's underlying listener.
 	baseListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create base PacketRelay: %w", err)
-	}
-	// 30s write-idle timeout matches the old PacketListenerProxy default.
-	relayBase, err := packetrelay.NewTimeoutPacketRelay(baseListener, 30*time.Second)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create base timeout relay: %w", err)
 	}
 	// Forward relay: intercept DNS at link-local address, forward to remote resolver.
 	// DNS gets a shorter 5s timeout on its own independent listener.
@@ -78,18 +71,17 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS PacketRelay: %w", err)
 	}
-	dnsForwardRelay, err := packetrelay.NewTimeoutPacketRelay(dnsListener, 5*time.Second)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DNS forward relay: %w", err)
+	if err := dnsListener.SetWriteIdleTimeout(5 * time.Second); err != nil {
+		return nil, fmt.Errorf("failed to set DNS relay timeout: %w", err)
 	}
-	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsForwardRelay, relayBase, linkLocalDNS, remoteDNS)
+	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsListener, baseListener, linkLocalDNS, remoteDNS)
 	// Truncate relay: intercept DNS at link-local address, return truncated response (forces TCP retry).
-	// Non-DNS traffic passes through to relayBase.
+	// Non-DNS traffic passes through to baseListener.
 	dnsTruncRelay, err := dnstruncate.NewPacketRelay()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS truncate relay: %w", err)
 	}
-	relayTrunc := dnsintercept.NewInterceptDNSPacketRelay(dnsTruncRelay, relayBase, linkLocalDNS, remoteDNS)
+	relayTrunc := dnsintercept.NewInterceptDNSPacketRelay(dnsTruncRelay, baseListener, linkLocalDNS, remoteDNS)
 	// Delegate relay starts with truncate (UDP unverified), switches to forward when UDP is healthy.
 	relayMain, err := packetrelay.NewDelegatePacketRelay(relayTrunc)
 	if err != nil {

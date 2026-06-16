@@ -36,5 +36,5 @@ func TestParseProxyless(t *testing.T) {
 	require.NotNil(t, transportPair.PacketProxy)
 	require.Equal(t, ConnTypeDirect, transportPair.StreamDialer.ConnType)
 	require.Equal(t, ConnTypeDirect, transportPair.PacketProxy.ConnType)
-	require.IsType(t, &packetrelay.TimeoutPacketRelay{}, transportPair.PacketProxy.PacketRelay)
+	require.IsType(t, &packetrelay.PacketListenerRelay{}, transportPair.PacketProxy.PacketRelay)
 }
