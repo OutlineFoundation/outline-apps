@@ -18,11 +18,12 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"time"
 
-	"localhost/client/go/configyaml"
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/tlsfrag"
+	"localhost/client/go/configyaml"
 )
 
 const (
@@ -67,12 +68,16 @@ func parseProxylessTransportPair(ctx context.Context, configMap map[string]any, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PacketRelay: %w", err)
 	}
+	prWithTimeout, err := packetrelay.NewTimeoutPacketRelay(pr, 30*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create timeout PacketRelay: %w", err)
+	}
 
 	return &TransportPair{
 		StreamDialer: &Dialer[transport.StreamConn]{
 			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeDirect},
 			Dial:                   sd.DialStream,
 		},
-		PacketProxy: &PacketProxy{ConnectionProviderInfo{ConnTypeDirect, ""}, pr, nil},
+		PacketProxy: &PacketProxy{ConnectionProviderInfo{ConnTypeDirect, ""}, prWithTimeout, nil},
 	}, nil
 }
