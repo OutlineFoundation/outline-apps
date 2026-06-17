@@ -304,31 +304,50 @@ class CapacitorPluginOutline : Plugin() {
     executeStartTunnel(call, startRequest.args)
   }
 
+  private sealed class StartDecision {
+    data class Dispatch(val service: IVpnTunnelService) : StartDecision()
+    object Queued : StartDecision()
+    object AlreadyPending : StartDecision()
+  }
+
   private fun executeStartTunnel(call: PluginCall, args: StartArgs) {
-    val service = synchronized(stateLock) {
+    val decision = synchronized(stateLock) {
       val current = vpnTunnelService
-      if (current == null) {
-        pendingServiceBindRequest = StartVpnRequest(args, call)
+      when {
+        current != null -> StartDecision.Dispatch(current)
+        pendingServiceBindRequest != null -> StartDecision.AlreadyPending
+        else -> {
+          pendingServiceBindRequest = StartVpnRequest(args, call)
+          StartDecision.Queued
+        }
       }
-      current
-    }
-    if (service == null) {
-      call.setKeepAlive(true)
-      saveCall(call)
-      return
     }
 
-    executor.execute {
-      try {
-        val config = TunnelConfig().apply {
-          id = args.tunnelId
-          name = args.serverName
-          transportConfig = args.transportConfig
+    when (decision) {
+      StartDecision.AlreadyPending -> {
+        sendErrorResult(call, startAlreadyInProgressError())
+      }
+      StartDecision.Queued -> {
+        call.setKeepAlive(true)
+        saveCall(call)
+      }
+      is StartDecision.Dispatch -> executor.execute {
+        try {
+          val config = TunnelConfig().apply {
+            id = args.tunnelId
+            name = args.serverName
+            transportConfig = args.transportConfig
+          }
+          val result = decision.service.startTunnel(config)
+          if (result == null) call.resolve() else call.reject(result.errorJson)
+        } catch (e: Exception) {
+          sendErrorResult(call, platformErrorFromException(e))
+        } finally {
+          // Release the saved-call slot held when this call was queued
+          // (via prepareVpnService or the Queued branch above). For an
+          // unsaved call, releaseCall is a no-op.
+          bridge.releaseCall(call)
         }
-        val result = service.startTunnel(config)
-        if (result == null) call.resolve() else call.reject(result.errorJson)
-      } catch (e: Exception) {
-        sendErrorResult(call, platformErrorFromException(e))
       }
     }
   }
@@ -342,9 +361,19 @@ class CapacitorPluginOutline : Plugin() {
       return false
     }
 
-    synchronized(stateLock) {
-      pendingVpnPermissionRequest = StartVpnRequest(args, call)
+    val alreadyPending = synchronized(stateLock) {
+      if (pendingVpnPermissionRequest != null) {
+        true
+      } else {
+        pendingVpnPermissionRequest = StartVpnRequest(args, call)
+        false
+      }
     }
+    if (alreadyPending) {
+      sendErrorResult(call, startAlreadyInProgressError())
+      return false
+    }
+
     call.setKeepAlive(true)
     saveCall(call)
     currentActivity.startActivityForResult(prepareIntent, REQUEST_CODE_PREPARE_VPN)
@@ -376,3 +405,6 @@ private fun vpnPermissionDeniedError(): PlatformError =
 
 private fun vpnServiceUnavailableError(): PlatformError =
     PlatformError(Platerrors.InternalError, "VPN tunnel service is not bound")
+
+private fun startAlreadyInProgressError(): PlatformError =
+    PlatformError(Platerrors.InternalError, "A VPN start request is already in progress")
