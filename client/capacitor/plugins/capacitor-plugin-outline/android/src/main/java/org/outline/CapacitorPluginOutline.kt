@@ -326,6 +326,10 @@ class CapacitorPluginOutline : Plugin() {
     when (decision) {
       StartDecision.AlreadyPending -> {
         sendErrorResult(call, startAlreadyInProgressError())
+        // Release the saved-call slot if this call was saved earlier by
+        // prepareVpnService before handleOnActivityResult re-entered here.
+        // No-op for an unsaved call.
+        bridge.releaseCall(call)
       }
       StartDecision.Queued -> {
         call.setKeepAlive(true)
