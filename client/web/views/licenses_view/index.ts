@@ -31,7 +31,7 @@ export class LicensesView extends LitElement {
       padding: calc(12px + var(--outline-safe-area-top)) 12px 12px 12px;
       width: 100%;
     }
-      
+
     code {
       font-size: 0.7em;
     }
