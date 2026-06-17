@@ -194,8 +194,13 @@ function getInstallScript(
   shadowboxSettings: ShadowboxSettings
 ): string {
   const sanitizedAccessToken = sanitizeDigitalOceanToken(accessToken);
+  // Must be `#!/bin/sh`: with anything else, DigitalOcean doesn't add
+  // `droplet_agent` to the droplet's features at create time and the
+  // web console refuses to connect.
+  // See https://github.com/digitalocean/droplet-agent/issues/224.
   return (
-    '#!/bin/bash -eu\n' +
+    '#!/bin/sh\n' +
+    'set -eu\n' +
     `export DO_ACCESS_TOKEN='${sanitizedAccessToken}'\n` +
     getShellExportCommands(shadowboxSettings, name, metricsEnabled) +
     do_install_script.SCRIPT

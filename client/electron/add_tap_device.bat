@@ -41,15 +41,8 @@ if %errorlevel% equ 0 (
   goto :configure
 )
 
-:: Older tap-windows6 releases (e.g. 9.21.2) ship OpenVPN's own
-:: tapinstall.exe; newer ones (e.g. 9.27.0, used for the arm64 bundle) ship
-:: Microsoft's devcon.exe instead. Both accept the same `install` arguments;
-:: pick whichever one the active arch bundle includes.
-set TAP_INSTALLER=tap-windows6\tapinstall
-if exist tap-windows6\devcon.exe set TAP_INSTALLER=tap-windows6\devcon
-
 echo Creating TAP network device...
-%TAP_INSTALLER% install tap-windows6\OemVista.inf %DEVICE_HWID%
+tap-windows6\devcon install tap-windows6\OemVista.inf %DEVICE_HWID%
 if %errorlevel% neq 0 (
   echo Could not create TAP network device. >&2
   exit /b %ERROR_TAP_INSTALL%

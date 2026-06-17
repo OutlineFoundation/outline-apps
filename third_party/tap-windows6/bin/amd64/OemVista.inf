@@ -54,8 +54,8 @@
    Class = Net
 
 ; This version number should match the version
-; number given in SOURCES.
-   DriverVer=04/21/2016,9.00.00.21
+; number given in ..\version.m4.
+   DriverVer = 02/27/2024,9.27.0.0
 
 [Strings]
    DeviceDescription = "TAP-Windows Adapter V9"
@@ -88,10 +88,11 @@
    CopyFiles       = tap0901.driver, tap0901.files
    AddReg          = tap0901.reg
    AddReg          = tap0901.params.reg
-   Characteristics = 
-   *IfType            = 0x6 ; IF_TYPE_ETHERNET_CSMACD
+   DelReg          = tap0901.params.delreg
+   Characteristics = 0x1
+   *IfType            = 53  ; IF_TYPE_PROP_VIRTUAL
    *MediaType         = 0x0 ; NdisMedium802_3
-   *PhysicalMediaType = 14  ; NdisPhysicalMedium802_3
+   *PhysicalMediaType = 0   ; NdisPhysicalMediumUnspecified
 
 [tap0901.ndi.Services]
    AddService = tap0901,        2, tap0901.service
@@ -117,15 +118,18 @@
    HKR, Ndi\params\MediaStatus,          Optional,  0, "0"
    HKR, Ndi\params\MediaStatus\enum,     "0",       0, "Application Controlled"
    HKR, Ndi\params\MediaStatus\enum,     "1",       0, "Always Connected"
-   HKR, Ndi\params\MAC,                  ParamDesc, 0, "MAC Address"
-   HKR, Ndi\params\MAC,                  Type,      0, "edit"
-   HKR, Ndi\params\MAC,                  Optional,  0, "1"
+   HKR, Ndi\params\NetworkAddress,       ParamDesc, 0, "MAC Address"
+   HKR, Ndi\params\NetworkAddress,       Type,      0, "edit"
+   HKR, Ndi\params\NetworkAddress,       Optional,  0, "1"
    HKR, Ndi\params\AllowNonAdmin,        ParamDesc, 0, "Non-Admin Access"
    HKR, Ndi\params\AllowNonAdmin,        Type,      0, "enum"
    HKR, Ndi\params\AllowNonAdmin,        Default,   0, "1"
    HKR, Ndi\params\AllowNonAdmin,        Optional,  0, "0"
    HKR, Ndi\params\AllowNonAdmin\enum,   "0",       0, "Not Allowed"
    HKR, Ndi\params\AllowNonAdmin\enum,   "1",       0, "Allowed"
+
+[tap0901.params.delreg]
+   HKR, Ndi\params\MAC
 
 ;----------------------------------------------------------------
 ;                             Service Section

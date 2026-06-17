@@ -80,7 +80,7 @@ ${StrRep}
   ;  - skip the Sentry report
   ;  - quit
   ;
-  ; When this happens, tapinstall.exe prints an error message like this:
+  ; When this happens, devcon.exe prints an error message like this:
   ; UpdateDriverForPlugAndPlayDevices failed, GetLastError=-536870333
   ;
   ; We can use the presence of that magic number to detect this case.
@@ -165,7 +165,7 @@ ${StrRep}
 !macroend
 
 ; TODO: Remove the TAP device on uninstall. This is impossible to implement safely
-;       with the bundled tapinstall.exe because it can only remove *all* devices
+;       with the bundled devcon.exe because it can only remove *all* devices
 ;       having hwid tap0901 and these may include non-Outline devices.
 !macro customUnInstall
   nsExec::Exec "$SYSDIR\net stop OutlineService"

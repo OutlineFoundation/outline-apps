@@ -97,8 +97,10 @@ jobs:
             # puppeteer 13 has no arm64 chromium; install system chromium so
             # its postinstall finds one.
             installChromium: true
-            # electron-builder bundles x86 fpm only; install system fpm and
-            # tell electron-builder to use it. Workaround from:
+            # fpm ("Effing Package Manager") is what electron-builder
+            # invokes to produce the Linux .deb. It bundles an x86 fpm
+            # binary only, so the arm64 runner has to install a native fpm
+            # via gem and tell electron-builder to use it. Workaround from:
             # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
             useSystemFpm: true
           - name: Windows ia32
@@ -139,7 +141,7 @@ jobs:
           go-version-file: '${{ github.workspace }}/go.mod'
 
       - name: Install zig
-        uses: mlugg/setup-zig@v2.2.1
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.13.0
           use-cache: false

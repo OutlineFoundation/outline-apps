@@ -28,14 +28,22 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  const {platform, buildMode} = getBuildParameters(parameters);
+  // getBuildParameters enforces that --arch is set for linux/windows, so by
+  // the time we forward it to `client/electron/build` we know it's valid.
+  const {platform, buildMode, arch} = getBuildParameters(parameters);
 
-  await runAction('client/web/build', platform, `--buildMode=${buildMode}`);
+  await runAction(
+    'client/web/build',
+    platform,
+    `--buildMode=${buildMode}`,
+    `--arch=${arch}`
+  );
   await runAction('client/electron/build_main', ...parameters);
   await runAction(
     'client/electron/build',
     platform,
-    `--buildMode=${buildMode}`
+    `--buildMode=${buildMode}`,
+    `--arch=${arch}`
   );
 
   process.env.OUTLINE_DEBUG = buildMode === 'debug';
