@@ -61,18 +61,15 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 		return sd.Dial(ctx, addr)
 	}
 
-	baseListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
+	baseListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener, 30*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create base PacketRelay: %w", err)
 	}
 	// Forward relay: intercept DNS at link-local address, forward to remote resolver.
 	// DNS gets a shorter 5s timeout on its own independent listener.
-	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener)
+	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener, 5*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS PacketRelay: %w", err)
-	}
-	if err := dnsListener.SetWriteIdleTimeout(5 * time.Second); err != nil {
-		return nil, fmt.Errorf("failed to set DNS relay timeout: %w", err)
 	}
 	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsListener, baseListener, linkLocalDNS, remoteDNS)
 	// Truncate relay: intercept DNS at link-local address, return truncated response (forces TCP retry).
@@ -102,6 +99,6 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 
 	return &TransportPair{
 		&Dialer[transport.StreamConn]{sd.ConnectionProviderInfo, sdForward},
-		&PacketProxy{pl.ConnectionProviderInfo, relayMain, onNetworkChanged},
+		&PacketRelay{pl.ConnectionProviderInfo, relayMain, onNetworkChanged},
 	}, nil
 }

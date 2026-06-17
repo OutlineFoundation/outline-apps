@@ -157,13 +157,13 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	}
 
 	streamFirstHop := result.Client.sd.ConnectionProviderInfo.FirstHop
-	packetFirstHop := result.Client.pp.ConnectionProviderInfo.FirstHop
+	packetFirstHop := result.Client.pr.ConnectionProviderInfo.FirstHop
 	if streamFirstHop == packetFirstHop {
 		response.FirstHop = streamFirstHop
 	}
 
 	streamConnType := result.Client.sd.ConnectionProviderInfo.ConnType
-	packetConnType := result.Client.pp.ConnectionProviderInfo.ConnType
+	packetConnType := result.Client.pr.ConnectionProviderInfo.ConnType
 	response.ConnectionType = combinedConnectionType(streamConnType, packetConnType)
 
 	responseBytes, err := json.Marshal(response)

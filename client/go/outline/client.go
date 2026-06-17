@@ -42,7 +42,7 @@ import (
 //   - Refactor so that StartSession returns a Client
 type Client struct {
 	sd            *configregistry.Dialer[transport.StreamConn]
-	pp            *configregistry.PacketProxy
+	pr            *configregistry.PacketRelay
 	reporter      reporting.Reporter
 	sessionCancel context.CancelFunc
 }
@@ -54,12 +54,12 @@ func (c *Client) DialStream(ctx context.Context, address string) (transport.Stre
 
 // NewAssociation implements packetrelay.PacketRelay.NewAssociation.
 func (c *Client) NewAssociation() (packetrelay.PacketSender, packetrelay.PacketReceiver, error) {
-	return c.pp.NewAssociation()
+	return c.pr.NewAssociation()
 }
 
 func (c *Client) NotifyNetworkChanged() {
-	if c.pp.NotifyNetworkChanged != nil {
-		c.pp.NotifyNetworkChanged()
+	if c.pr.NotifyNetworkChanged != nil {
+		c.pr.NotifyNetworkChanged()
 	}
 }
 
@@ -155,7 +155,7 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 		}
 	}
 
-	client := &Client{sd: transportPair.StreamDialer, pp: transportPair.PacketProxy}
+	client := &Client{sd: transportPair.StreamDialer, pr: transportPair.PacketRelay}
 
 	// TODO: figure out a better way to handle parse calls.
 	if providerClientConfig.Reporter != nil {
