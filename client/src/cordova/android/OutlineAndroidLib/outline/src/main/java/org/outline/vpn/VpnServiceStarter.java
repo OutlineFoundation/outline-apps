@@ -25,7 +25,6 @@ public class VpnServiceStarter extends BroadcastReceiver {
   public static final String AUTOSTART_EXTRA = "autostart";
 
   @Override
-  // codeql[android/improper-intent-verification]
   public void onReceive(Context context, Intent intent) {
     final VpnTunnelStore tunnelStore = new VpnTunnelStore(context);
     boolean wasConnectedAtShutdown =
