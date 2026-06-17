@@ -1,5 +1,5 @@
 {
-    "appId": "com.nthlink.outline",
+    "appId": "org.outline.ios.client",
     "appName": "Outline",
     "webDir": "www",
     "bundledWebRuntime": false,
