@@ -19,7 +19,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.getoutline.org/sdk/network/packetrelay"
 	"localhost/client/go/configyaml"
 )
 
@@ -36,5 +35,4 @@ func TestParseProxyless(t *testing.T) {
 	require.NotNil(t, transportPair.PacketRelay)
 	require.Equal(t, ConnTypeDirect, transportPair.StreamDialer.ConnType)
 	require.Equal(t, ConnTypeDirect, transportPair.PacketRelay.ConnType)
-	require.IsType(t, &packetrelay.PacketListenerRelay{}, transportPair.PacketRelay.PacketRelay)
 }
