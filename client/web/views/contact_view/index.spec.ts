@@ -101,7 +101,7 @@ describe('ContactView', () => {
       radioButton.click();
       await nextFrame();
 
-      issueSelector = el.shadowRoot!.querySelector('md-filled-select')!;
+      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
     });
 
     it('shows the issue selector', () => {
@@ -109,7 +109,7 @@ describe('ContactView', () => {
     });
 
     it('shows the correct items in the selector', () => {
-      const issueItemEls = issueSelector.querySelectorAll('md-select-option');
+      const issueItemEls = issueSelector.querySelectorAll('mwc-list-item');
       const issueTypes = Array.from(issueItemEls).map(
         el => (el as {value: string}).value
       );
@@ -121,7 +121,7 @@ describe('ContactView', () => {
     let issueSelector: Element;
 
     beforeEach(async () => {
-      issueSelector = el.shadowRoot!.querySelector('md-filled-select')!;
+      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
       const radioButton = el.shadowRoot!.querySelectorAll(
         'mwc-formfield mwc-radio'
       )[1] as HTMLElement;

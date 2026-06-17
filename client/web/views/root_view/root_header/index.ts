@@ -23,7 +23,6 @@ export class RootHeader extends LitElement {
 
   static styles = css`
     header {
-      --safe-area-top: 0px;
       align-items: center;
       justify-content: space-between;
       background-color: var(--outline-dark-primary);

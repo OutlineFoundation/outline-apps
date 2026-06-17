@@ -29,7 +29,6 @@ export class AboutView extends LitElement {
 
   static styles = css`
     :host {
-      --about-safe-area-top: 0px;
       display: flex;
       flex-direction: column;
       font-family: var(--outline-font-family);
