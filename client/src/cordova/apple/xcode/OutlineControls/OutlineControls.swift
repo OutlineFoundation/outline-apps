@@ -24,6 +24,10 @@ private enum OutlineVpnControlBridge {
     static let transport = "transport"
   }
 
+  /// Maximum time to wait for the VPN to reach a stopped state before giving up,
+  /// so the caller (e.g. a Control Center intent) can never block indefinitely.
+  private static let kStopTunnelTimeoutNanoseconds: UInt64 = 10 * NSEC_PER_SEC
+
   static func currentState() async -> (isConnected: Bool, serverName: String?) {
     guard let manager = await getTunnelManager() else {
       return (false, nil)
@@ -78,32 +82,59 @@ private enum OutlineVpnControlBridge {
     await stopTunnel(manager.connection)
   }
 
+  /// Stops the tunnel and waits until the connection reaches a stopped state.
+  ///
+  /// `.NEVPNStatusDidChange` is delivered on the main thread while this runs on a
+  /// background cooperative thread, so the continuation is guarded by `ResumeOnce`
+  /// to guarantee a single, race-free resume (resuming a continuation twice traps).
+  /// A timeout ensures a stuck or immediately-reconnecting session can never block
+  /// the caller forever.
   private static func stopTunnel(_ connection: NEVPNConnection) async {
     guard !isStoppedSession(connection) else {
       return
     }
 
-    class TokenHolder {
+    // Runs its body at most once, safe to call from multiple threads.
+    final class ResumeOnce {
+      private let lock = NSLock()
+      private var hasRun = false
+
+      func run(_ body: () -> Void) {
+        lock.lock()
+        let shouldRun = !hasRun
+        hasRun = true
+        lock.unlock()
+        if shouldRun {
+          body()
+        }
+      }
+    }
+
+    final class TokenHolder {
       var token: NSObjectProtocol?
     }
+
+    let resumeOnce = ResumeOnce()
     let tokenHolder = TokenHolder()
 
     await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      var didResume = false
+      func finish() {
+        resumeOnce.run {
+          if let token = tokenHolder.token {
+            NotificationCenter.default.removeObserver(
+              token,
+              name: .NEVPNStatusDidChange,
+              object: connection
+            )
+          }
+          continuation.resume()
+        }
+      }
 
-      func resumeIfStopped() {
-        guard isStoppedSession(connection), !didResume else {
-          return
+      func finishIfStopped() {
+        if isStoppedSession(connection) {
+          finish()
         }
-        didResume = true
-        if let token = tokenHolder.token {
-          NotificationCenter.default.removeObserver(
-            token,
-            name: .NEVPNStatusDidChange,
-            object: connection
-          )
-        }
-        continuation.resume()
       }
 
       tokenHolder.token = NotificationCenter.default.addObserver(
@@ -111,11 +142,18 @@ private enum OutlineVpnControlBridge {
         object: connection,
         queue: nil
       ) { _ in
-        resumeIfStopped()
+        finishIfStopped()
+      }
+
+      // Fail open: never block the caller forever if the session does not reach a
+      // stopped state (for example, if on-demand immediately reconnects).
+      Task {
+        try? await Task.sleep(nanoseconds: kStopTunnelTimeoutNanoseconds)
+        finish()
       }
 
       connection.stopVPNTunnel()
-      resumeIfStopped()
+      finishIfStopped()
     }
   }
 
