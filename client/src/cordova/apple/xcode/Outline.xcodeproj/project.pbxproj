@@ -19,6 +19,8 @@
 		5260B05F2C4F0A4E00CDF289 /* VpnExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 5260B05C2C4F09FB00CDF289 /* VpnExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		52CE53E7295B6A310064D03D /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 52CE53E6295B6A310064D03D /* Sentry */; };
 		A30000012F40000000000001 /* OutlineControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000072F40000000000007 /* OutlineControls.swift */; };
+		A30000132F40000000000013 /* OutlineControlKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000122F40000000000012 /* OutlineControlKind.swift */; };
+		A30000142F40000000000014 /* OutlineControlKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000122F40000000000012 /* OutlineControlKind.swift */; };
 		A30000022F40000000000002 /* OutlineControls.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A30000052F40000000000005 /* OutlineControls.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5F7F90AE0E924FD7B065C415 /* CDVStatusBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 0394302BA6114B2AB648D4FF /* CDVStatusBar.m */; };
 		65A9AC9C2BEC091700C5899F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 65A9AC9B2BEC091700C5899F /* PrivacyInfo.xcprivacy */; };
@@ -160,6 +162,7 @@
 		8D1107310486CEB800E47090 /* Outline-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Outline-Info.plist"; path = "Outline/Outline-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = SOURCE_ROOT; };
 		A30000052F40000000000005 /* OutlineControls.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OutlineControls.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A30000072F40000000000007 /* OutlineControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlineControls.swift; sourceTree = "<group>"; };
+		A30000122F40000000000012 /* OutlineControlKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlineControlKind.swift; sourceTree = "<group>"; };
 		A30000082F40000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A30000092F40000000000009 /* OutlineControls.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OutlineControls.entitlements; sourceTree = "<group>"; };
 		91E45572BB494E9299D2DD41 /* CDVClipboard.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = CDVClipboard.m; path = "cordova-plugin-clipboard/CDVClipboard.m"; sourceTree = "<group>"; };
@@ -427,6 +430,7 @@
 			isa = PBXGroup;
 			children = (
 				A30000072F40000000000007 /* OutlineControls.swift */,
+				A30000122F40000000000012 /* OutlineControlKind.swift */,
 				A30000082F40000000000008 /* Info.plist */,
 				A30000092F40000000000009 /* OutlineControls.entitlements */,
 			);
@@ -751,6 +755,7 @@
 				302D95F114D2391D003F00A1 /* MainViewController.m in Sources */,
 				5F7F90AE0E924FD7B065C415 /* CDVStatusBar.m in Sources */,
 				2A617D29B96942E58B082FAC /* OutlinePlugin.swift in Sources */,
+				A30000142F40000000000014 /* OutlineControlKind.swift in Sources */,
 				1273B4E700B84E31B2528701 /* CDVClipboard.m in Sources */,
 				A271D42D2A708240009981B2 /* AppDelegate+Outline.m in Sources */,
 			);
@@ -770,6 +775,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A30000012F40000000000001 /* OutlineControls.swift in Sources */,
+				A30000132F40000000000013 /* OutlineControlKind.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

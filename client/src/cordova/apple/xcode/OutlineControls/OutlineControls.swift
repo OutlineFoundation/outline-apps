@@ -212,7 +212,7 @@ struct OutlineVpnControlValue {
 
 @available(iOS 18.0, *)
 struct OutlineVpnToggleControl: ControlWidget {
-  static let kind = "org.outline.ios.client.OutlineVpnToggleControl"
+  static let kind = OutlineControlKind.vpnToggle
 
   var body: some ControlWidgetConfiguration {
     StaticControlConfiguration(kind: Self.kind, provider: Provider()) { value in
@@ -307,7 +307,7 @@ private struct OutlineControlsUnavailableProvider: TimelineProvider {
 }
 
 private struct OutlineControlsUnavailableWidget: Widget {
-  private let kind = "org.outline.ios.client.OutlineVpnToggleControl"
+  private let kind = OutlineControlKind.vpnToggle
 
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: OutlineControlsUnavailableProvider()) { _ in
