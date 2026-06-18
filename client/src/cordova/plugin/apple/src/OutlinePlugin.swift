@@ -53,10 +53,14 @@ class OutlinePlugin: CDVPlugin {
   #endif
   private static let kAppGroup = "group.org.getoutline.client"
 
+  // Must match OutlineVpnToggleControl.kind in the OutlineControls extension.
+  // The control type lives in a separate target, so it cannot be referenced directly here.
+  private static let kOutlineVpnControlKind = "org.outline.ios.client.OutlineVpnToggleControl"
+
   private func reloadOutlineControls() {
     #if os(iOS) && !targetEnvironment(macCatalyst)
       if #available(iOS 18.0, *) {
-        ControlCenter.shared.reloadAllControls()
+        ControlCenter.shared.reloadControls(ofKind: OutlinePlugin.kOutlineVpnControlKind)
       }
     #endif
   }
