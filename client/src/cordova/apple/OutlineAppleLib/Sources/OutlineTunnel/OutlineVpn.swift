@@ -315,24 +315,36 @@ private func setConnectVpnOnDemand(_ manager: NETunnelProviderManager?, _ enable
 
 // MARK: - Fetch last disconnect error
 
-// TODO: Remove this code once we only support newer systems (macOS 13.0+, iOS 16.0+)
-// mimics fetchLastDisconnectErrorWithCompletionHandler on older systems
-// See: "fetch last disconnect error" section in the VPN extension code.
+// Fetches the most recent error that caused the VPN extension to disconnect.
+// Returns nil if the tunnel disconnected cleanly, or an Error describing the failure.
+private func fetchExtensionLastDisconnectError(_ session: NETunnelProviderSession) async -> Error? {
+  if #available(macOS 13.0, iOS 16.0, *) {
+    return await withCheckedContinuation { continuation in
+      DDLogDebug("Calling fetchLastDisconnectError")
+      session.fetchLastDisconnectError { error in
+        DDLogDebug("fetchLastDisconnectError returned: \(String(describing: error))")
+        continuation.resume(returning: error)
+      }
+    }
+  }
+  // Fallback for macOS 12 / iOS 15: use IPC to read the error the extension saved to disk.
+  // Note: sendProviderMessage returns nil when the session is disconnected, so this is best-effort.
+  return await fetchExtensionLastDisconnectErrorViaIPC(session)
+}
 
+// TODO: Remove once we only support macOS 13.0+, iOS 16.0+
 private enum ExtensionIPC {
   static let fetchLastDetailedJsonError = "fetchLastDisconnectDetailedJsonError"
 }
 
-/// Keep it in sync with the data type defined in PacketTunnelProvider.Swift
-/// Also keep in mind that we will always use PropertyListEncoder and PropertyListDecoder to marshal this data.
+/// Keep in sync with the data type defined in PacketTunnelProvider.Swift.
 private struct LastErrorIPCData: Decodable {
   let errorCode: String
   let errorJson: String
 }
 
-// Fetches the most recent error that caused the VPN extension to disconnect.
-// If no error, it returns nil. Otherwise, it returns a description of the error.
-private func fetchExtensionLastDisconnectError(_ session: NETunnelProviderSession) async -> Error? {
+// TODO: Remove once we only support macOS 13.0+, iOS 16.0+
+private func fetchExtensionLastDisconnectErrorViaIPC(_ session: NETunnelProviderSession) async -> Error? {
   do {
     guard let rpcNameData = ExtensionIPC.fetchLastDetailedJsonError.data(using: .utf8) else {
       return OutlineError.internalError(message: "IPC fetchLastDisconnectError failed")
