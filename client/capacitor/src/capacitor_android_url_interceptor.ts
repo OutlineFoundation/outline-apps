@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { App } from '@capacitor/app';
-import type { PluginListenerHandle } from '@capacitor/core';
-import { UrlInterceptor } from '@web/app/url_interceptor';
-
+import {App} from '@capacitor/app';
+import type {PluginListenerHandle} from '@capacitor/core';
+import {UrlInterceptor} from '@web/app/url_interceptor';
 
 export class CapacitorAndroidUrlInterceptor extends UrlInterceptor {
   private appUrlOpenHandle?: PluginListenerHandle;
@@ -49,7 +48,7 @@ export class CapacitorAndroidUrlInterceptor extends UrlInterceptor {
       // No launch URL (normal when the app is opened from the launcher).
     }
 
-    this.appUrlOpenHandle = await App.addListener('appUrlOpen', ({ url }) => {
+    this.appUrlOpenHandle = await App.addListener('appUrlOpen', ({url}) => {
       if (url) {
         this.executeListeners(url);
       }
