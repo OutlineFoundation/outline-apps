@@ -4,10 +4,9 @@
     "webDir": "www",
     "bundledWebRuntime": false,
     "server": {
-        "cleartext": true,
-        "allowNavigation": [
-            "*"
-        ]
+      "allowNavigation": [
+          "*"
+      ]
     },
     "ios": {
         "contentInset": "never",
