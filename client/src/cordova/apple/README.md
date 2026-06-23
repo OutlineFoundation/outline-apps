@@ -124,6 +124,18 @@ log stream  --info --predicate 'senderImagePath contains "Outline.app" or (proce
 
 To see past logs use `log show` and the `--last` flag.
 
+Private values are redacted from Apple system logs by default. To include private debug values while developing, run:
+
+```sh
+sudo log config --mode "private_data:on"
+```
+
+Restore the default redaction behavior when you are done:
+
+```sh
+sudo log config --mode "private_data:off"
+```
+
 For details on Apple logging, see [Your Friend the System Log](https://developer.apple.com/forums/thread/705868/) and [Mac Logging and the log Command: A Guide for Apple Admins](https://blog.kandji.io/mac-logging-and-the-log-command-a-guide-for-apple-admins#:~:text=The%20log%20command%20is%20built,(Press%20q%20to%20exit.)).
 
 
@@ -153,7 +165,7 @@ To fix, run:
 
 ```sh
 pkill -9 VpnExtension
-for p in $(pluginkit -Amv | cut -f 4 | grep Outline); do pluginkit -r $p; done;
+pluginkit -Amv | cut -f 4 | grep Outline | while IFS= read -r p; do pluginkit -r "$p"; done;
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -gc
 ```
 
