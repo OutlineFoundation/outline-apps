@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"localhost/client/go/outline/callback"
-	"golang.getoutline.org/sdk/network"
+	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 )
 
@@ -105,7 +105,7 @@ func SetStateChangeListener(token callback.Token) {
 // newly created [VPNConnection] as the currently active connection.
 // It returns the new [VPNConnection], or an error if the connection fails.
 func EstablishVPN(
-	ctx context.Context, conf *Config, sd transport.StreamDialer, pp network.PacketProxy,
+	ctx context.Context, conf *Config, sd transport.StreamDialer, pr packetrelay.PacketRelay,
 ) (_ *VPNConnection, err error) {
 	if conf == nil {
 		panic("a VPN config must be provided")
@@ -113,8 +113,8 @@ func EstablishVPN(
 	if sd == nil {
 		panic("a StreamDialer must be provided")
 	}
-	if pp == nil {
-		panic("a PacketListener must be provided")
+	if pr == nil {
+		panic("a PacketRelay must be provided")
 	}
 
 	c := &VPNConnection{ID: conf.ID, Status: ConnectionDisconnected}
@@ -142,7 +142,7 @@ func EstablishVPN(
 		}
 	}()
 
-	if c.proxy, err = ConnectRemoteDevice(ctx, sd, pp); err != nil {
+	if c.proxy, err = ConnectRemoteDevice(ctx, sd, pr); err != nil {
 		slog.Error("failed to connect to the remote device", "err", err)
 		return
 	}
