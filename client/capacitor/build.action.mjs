@@ -16,6 +16,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import url from 'url';
 
+import {runAction} from '@outline/infrastructure/build/run_action.mjs';
+
 import webpackConfig from './webpack.config.js';
 import {writeEnvironmentJson} from './write_environment.mjs';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
@@ -23,8 +25,11 @@ import {runWebpack} from '../build/run_webpack.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
+const SUPPORTED_PLATFORMS = new Set(['browser', 'android']);
+
 /**
- * @description Builds the Capacitor web bundle (browser / shared www output).
+ * @description Builds the Capacitor web bundle, and for native platforms also
+ * builds the tun2socks Go library that the Capacitor native projects depend on.
  *
  * @param {string[]} parameters
  */
@@ -32,15 +37,15 @@ export async function main(...parameters) {
   const {platform, buildMode, versionName, buildNumber} =
     getBuildParameters(parameters);
 
-  if (platform !== 'browser') {
+  if (!SUPPORTED_PLATFORMS.has(platform)) {
     throw new TypeError(
-      `Capacitor build.action.mjs currently supports only platform "browser", got "${platform}".`
+      `Capacitor build.action.mjs supports platforms ${[...SUPPORTED_PLATFORMS].join(', ')}, got "${platform}".`
     );
   }
 
   if (buildMode !== 'debug') {
     throw new TypeError(
-      `Capacitor browser build supports only debug mode, got "${buildMode}".`
+      `Capacitor ${platform} build supports only debug mode, got "${buildMode}".`
     );
   }
 
@@ -50,6 +55,10 @@ export async function main(...parameters) {
 
   await writeEnvironmentJson(capacitorDir, versionName, buildNumber);
   await runWebpack({...webpackConfig, mode: 'development'});
+
+  if (platform === 'android') {
+    await runAction('client/go/build', 'android', ...parameters.slice(1));
+  }
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {

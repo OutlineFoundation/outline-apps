@@ -1,0 +1,6 @@
+www/
+plugins/**/android/build/
+plugins/**/android/.gradle/
+plugins/**/android/.cxx/
+plugins/**/android/local.properties
+capacitor-build.log
