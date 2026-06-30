@@ -33,6 +33,8 @@ class AppKitController: NSObject {
         if let observer = windowCloseObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        NotificationCenter.default.removeObserver(
+            self, name: NSApplication.didBecomeActiveNotification, object: nil)
     }
     
     private func setupWindowCloseObserver() {
