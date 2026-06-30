@@ -32,7 +32,7 @@ function package_electron() {
     linux)
       electron_builder_cmd+=(--linux);;
     windows)
-      electron_builder_cmd+=(--win --ia32);;
+      electron_builder_cmd+=(--win --ia32 --arm64);;
     macos)
       electron_builder_cmd+=(--mac);;
     *)
