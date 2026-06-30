@@ -33,6 +33,8 @@ class AppKitController: NSObject {
         if let observer = windowCloseObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        NotificationCenter.default.removeObserver(
+            self, name: NSApplication.didBecomeActiveNotification, object: nil)
     }
     
     private func setupWindowCloseObserver() {
@@ -49,40 +51,29 @@ class AppKitController: NSObject {
             }
         }
         
-        // Also observe when the app becomes active/inactive to manage Dock icon
+        // Restore the Dock icon when the app becomes active again (e.g. the main
+        // window is reopened after being closed).
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
             name: NSApplication.didBecomeActiveNotification,
             object: nil
         )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appDidResignActive),
-            name: NSApplication.didResignActiveNotification,
-            object: nil
-        )
     }
-    
+
     @objc private func appDidBecomeActive() {
         // Show Dock icon when app becomes active
         showDockIcon()
     }
-    
-    @objc private func appDidResignActive() {
-        // Only hide Dock icon if no windows are visible
-        let hasVisibleWindows = NSApp.windows.contains { window in
-            window.isVisible && isMainUiWindow(window)
-        }
-        
-        if !hasVisibleWindows {
-            hideDockIcon()
-        }
-    }
-    
+
     private func hideDockIcon() {
-        // Hide the Dock icon when the main window is closed
+        // Hide the Dock icon when the main window is closed.
+        //
+        // This is only triggered by NSWindow.willCloseNotification, never by
+        // didResignActive: switching to .accessory deactivates the app and sends
+        // its window behind other apps. During launch the main UINSWindow isn't
+        // reliably visible yet, so hiding on an early resign-active made the
+        // window "disappear" behind other windows.
         NSApp.setActivationPolicy(.accessory)
     }
     
