@@ -24,10 +24,6 @@ import OutlineTunnel
 import Sentry
 import Tun2socks
 
-#if os(macOS)
-import AppKit
-#endif
-
 @objc public class CapacitorPluginOutlineImplementation: NSObject {
     
     private enum CallKeys {
@@ -67,16 +63,6 @@ import AppKit
         sentryLogger = OutlineSentryLogger(forAppGroup: CapacitorPluginOutlineImplementation.appGroupIdentifier)
         configureGoBackendDataDirectory()
         beginObservingVpnStatus()
-        
-        #if os(macOS)
-        // Handle URL interception for ss:// URLs
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(self.handleOpenUrl),
-            name: .kHandleUrl,
-            object: nil
-        )
-        #endif
         
         #if os(macOS) || targetEnvironment(macCatalyst)
         NotificationCenter.default.addObserver(
@@ -219,9 +205,6 @@ import AppKit
     }
     
     public func quitApplication(_ call: CAPPluginCall) {
-        #if os(macOS)
-        NSApplication.shared.terminate(self)
-        #endif
         call.resolve()
     }
     
@@ -287,27 +270,6 @@ import AppKit
         } catch {
         }
     }
-    
-    // MARK: - URL Interception (macOS only)
-    
-    #if os(macOS)
-    @objc private func handleOpenUrl(_ notification: Notification) {
-        guard let url = notification.object as? String else {
-            return
-        }
-        guard let urlJson = try? JSONEncoder().encode(url),
-              let encodedUrl = String(data: urlJson, encoding: .utf8)
-        else {
-            return
-        }
-        // In Capacitor, URL handling is typically done through AppDelegate
-        // This notification can be used to trigger JavaScript handlers
-        DispatchQueue.main.async {
-            // Capacitor handles URL interception differently than Cordova
-            // The URL should be handled by the Capacitor AppDelegate
-        }
-    }
-    #endif
     
     // MARK: - App Quit Handler
     
