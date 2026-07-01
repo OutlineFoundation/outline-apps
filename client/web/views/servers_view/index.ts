@@ -43,15 +43,19 @@ export class ServerList extends LitElement {
         display: flex;
         flex-direction: column;
         font-size: 0.9rem;
-        height: 100%;
         /* Use vh, as % does not work in iOS. |header-height|+|server-margin| = 64px.
          * Subtract |header-height| to fix iOS padding, and |server-margin| to fix scrolling in Android.
+         * Also subtract the top safe-area inset, which root-header adds to its own
+         * height on platforms with a non-zero inset (e.g. macOS/Mac Catalyst); without
+         * this the view is taller than the space below the header, hiding the first
+         * card under it and breaking scrolling.
          */
-        height: -webkit-calc(100vh - 64px);
+        height: calc(100vh - 64px - var(--outline-safe-area-top));
         justify-content: center;
         line-height: 1.25rem;
         margin: auto;
         max-width: 400px;
+        overflow-y: auto;
         width: 100%;
       }
       :host a {
