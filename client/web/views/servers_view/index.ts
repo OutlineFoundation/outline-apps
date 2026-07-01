@@ -43,7 +43,6 @@ export class ServerList extends LitElement {
         display: flex;
         flex-direction: column;
         font-size: 0.9rem;
-        height: 100%;
         /* Use vh, as % does not work in iOS. |header-height|+|server-margin| = 64px.
          * Subtract |header-height| to fix iOS padding, and |server-margin| to fix scrolling in Android.
          * Also subtract the top safe-area inset, which root-header adds to its own
