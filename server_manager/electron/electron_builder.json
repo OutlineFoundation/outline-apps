@@ -1,6 +1,6 @@
 {
   "asarUnpack": ["server_manager/www/images"],
-  "artifactName": "Outline-Manager-${arch}.${ext}",
+  "artifactName": "Outline-Manager.${ext}",
   "linux": {
     "icon": "icons/png",
     "category": "Network",
@@ -10,6 +10,9 @@
         "arch": ["x64", "arm64"]
       }
     ]
+  },
+  "appImage": {
+    "artifactName": "Outline-Manager-${arch}.${ext}"
   },
   "win": {
     "icon": "icons/win/icon.ico",
