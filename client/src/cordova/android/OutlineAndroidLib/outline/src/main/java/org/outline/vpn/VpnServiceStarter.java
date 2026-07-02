@@ -26,6 +26,17 @@ public class VpnServiceStarter extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
+    if (intent == null) {
+      return;
+    }
+    
+    final String action = intent.getAction();
+    if (action == null
+        || (!Intent.ACTION_BOOT_COMPLETED.equals(action)
+            && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(action))) {
+      return;
+    }
+    
     final VpnTunnelStore tunnelStore = new VpnTunnelStore(context);
     boolean wasConnectedAtShutdown =
         VpnTunnelService.TunnelStatus.CONNECTED.equals(tunnelStore.getTunnelStatus());
