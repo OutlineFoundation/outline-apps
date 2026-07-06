@@ -82,10 +82,17 @@ class AppKitController: NSObject {
         NSApp.setActivationPolicy(.regular)
     }
     
-    /// Determines if the given window is the main UI window
+    /// Determines if the given window is the main UI window.
+    ///
+    /// Match the Catalyst content window class exactly ("UINSWindow"). A substring
+    /// match is wrong here: during launch Catalyst also creates and destroys a
+    /// transient, non-visible "TUINSWindow", whose name *contains* "UINSWindow".
+    /// Treating that transient window's close as the main window closing flipped
+    /// the app to .accessory and sent the real (still-visible) window behind other
+    /// apps on launch.
     /// TODO: Decouple from the internal class name "UINSWindow" in the future
     private func isMainUiWindow(_ window: NSWindow) -> Bool {
-        return String(describing: window).contains("UINSWindow")
+        return window.className == "UINSWindow"
     }
 
     /// Set the connection status in the app's menu in the system-wide menu bar.
