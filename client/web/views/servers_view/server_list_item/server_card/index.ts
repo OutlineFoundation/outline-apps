@@ -305,7 +305,9 @@ export class ServerCard extends LitElement implements ServerListItemElement {
             >
               ${this.server.name}
             </h2>
-            <label class="card-metadata-server-address"
+            <label
+              class="card-metadata-server-address"
+              data-testid="server-address"
               >${this.server.address}</label
             >
             <div class="card-metadata-connection-type-container">
@@ -313,7 +315,11 @@ export class ServerCard extends LitElement implements ServerListItemElement {
             </div>
           </div>
         </div>
-        <md-icon-button class="card-menu-button" @click=${this.openMenu}>
+        <md-icon-button
+          class="card-menu-button"
+          data-testid="server-menu-button"
+          @click=${this.openMenu}
+        >
           <md-icon>more_vert</md-icon>
         </md-icon-button>
         <footer class="card-footer">
@@ -324,6 +330,7 @@ export class ServerCard extends LitElement implements ServerListItemElement {
           >
           <md-text-button
             class="card-footer-button"
+            data-testid="server-connect-button"
             @click="${this.connectToggle}"
             ?disabled=${this.hasErrorMessage}
           >
@@ -357,10 +364,16 @@ export class ServerCard extends LitElement implements ServerListItemElement {
     }
 
     return html`<md-menu class="card-menu" menuCorner=${Corner.END_END} quick>
-      <md-menu-item @click="${this.beginRename}">
+      <md-menu-item
+        data-testid="server-rename-menu-item"
+        @click="${this.beginRename}"
+      >
         ${this.localize('server-rename')}
       </md-menu-item>
-      <md-menu-item @click="${this.forget}">
+      <md-menu-item
+        data-testid="server-forget-menu-item"
+        @click="${this.forget}"
+      >
         ${this.localize('server-forget')}
       </md-menu-item>
     </md-menu>`;

@@ -19,10 +19,12 @@ export const FAKE_BROKEN_HOSTNAME = '192.0.2.1';
 export const FAKE_UNREACHABLE_HOSTNAME = '10.0.0.24';
 
 // Fake VPN API implementation for demoing and testing.
-// Note that because this implementation does not emit disconnection events, "switching" between
-// servers in the server list will not work as expected.
+// Emits status change events on start/stop, like the real implementations do,
+// so server switching and status-driven UI can be exercised in the browser.
 export class FakeVpnApi implements VpnApi {
-  private running = false;
+  private runningId: string | null = null;
+  // Like ElectronVpnApi, only the most recent listener is kept.
+  private statusChangeListener?: (id: string, status: TunnelStatus) => void;
 
   constructor() {}
 
@@ -34,8 +36,12 @@ export class FakeVpnApi implements VpnApi {
     return address?.startsWith(FAKE_UNREACHABLE_HOSTNAME);
   }
 
+  private notifyListeners(id: string, status: TunnelStatus) {
+    this.statusChangeListener?.(id, status);
+  }
+
   async start(request: StartRequestJson): Promise<void> {
-    if (this.running) {
+    if (this.runningId === request.id) {
       return;
     }
 
@@ -48,21 +54,29 @@ export class FakeVpnApi implements VpnApi {
       );
     }
 
-    this.running = true;
+    // Like the real implementations, starting a new tunnel disconnects the
+    // currently running one.
+    if (this.runningId !== null) {
+      this.notifyListeners(this.runningId, TunnelStatus.DISCONNECTED);
+    }
+
+    this.runningId = request.id;
+    this.notifyListeners(request.id, TunnelStatus.CONNECTED);
   }
 
-  async stop(_id: string): Promise<void> {
-    if (!this.running) {
+  async stop(id: string): Promise<void> {
+    if (this.runningId !== id) {
       return;
     }
-    this.running = false;
+    this.runningId = null;
+    this.notifyListeners(id, TunnelStatus.DISCONNECTED);
   }
 
-  async isRunning(_id: string): Promise<boolean> {
-    return this.running;
+  async isRunning(id: string): Promise<boolean> {
+    return this.runningId === id;
   }
 
-  onStatusChange(_listener: (id: string, status: TunnelStatus) => void): void {
-    // NOOP
+  onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
+    this.statusChangeListener = listener;
   }
 }

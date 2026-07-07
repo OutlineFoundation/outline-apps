@@ -76,7 +76,11 @@ async function createServerRepo(
     localize
   );
 
-  if (repo.getAll().length === 0) {
+  // Suppressed with `?demoServers=false` so automated E2E tests can assert on
+  // a clean first-launch state.
+  const seedDemoServers =
+    new URL(document.URL).searchParams.get('demoServers') !== 'false';
+  if (seedDemoServers && repo.getAll().length === 0) {
     repo.add(
       SIP002_URI.stringify(
         makeConfig({

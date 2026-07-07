@@ -174,7 +174,11 @@ export class ServerList extends LitElement {
       return html`
         <section>
           <header>
-            <button type="button" @click=${this.requestPromptAddServer}>
+            <button
+              type="button"
+              data-testid="zero-state-add-server-button"
+              @click=${this.requestPromptAddServer}
+            >
               <server-connection-indicator
                 connection-state="disconnected"
                 ?darkMode=${this.darkMode}

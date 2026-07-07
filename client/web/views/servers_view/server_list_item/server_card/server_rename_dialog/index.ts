@@ -75,6 +75,7 @@ export class ServerRenameDialog extends LitElement {
         -->
         <mwc-textfield
           slot="content"
+          data-testid="server-rename-input"
           maxLength="100"
           value="${this.internalServerName}"
           @input=${(e: Event) => {
@@ -86,6 +87,7 @@ export class ServerRenameDialog extends LitElement {
             >${this.localize('cancel')}</md-text-button
           >
           <md-filled-button
+            data-testid="server-rename-save-button"
             @click=${this.handleRename}
             ?disabled=${this.internalServerName === this.serverName}
             >${this.localize('save')}</md-filled-button
