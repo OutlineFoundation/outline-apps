@@ -18,3 +18,7 @@ node_modules
 
 # Capacitor web build output
 client/capacitor/www/
+
+# Playwright E2E artifacts
+client/e2e/test-results/
+client/e2e/playwright-report/

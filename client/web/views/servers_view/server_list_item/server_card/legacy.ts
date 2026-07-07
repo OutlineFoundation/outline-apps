@@ -219,7 +219,11 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
           <h2 class="card-metadata-server-name" id="server-name">
             ${messages.serverName}
           </h2>
-          <label class="card-metadata-server-address">${server.address}</label>
+          <label
+            class="card-metadata-server-address"
+            data-testid="server-address"
+            >${server.address}</label
+          >
         </div>
       `,
       menu: html`
@@ -229,10 +233,16 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
           menuCorner=${Corner.END_END}
           quick
         >
-          <md-menu-item @click="${dispatchers.beginRename}">
+          <md-menu-item
+            data-testid="server-rename-menu-item"
+            @click="${dispatchers.beginRename}"
+          >
             ${localize('server-rename')}
           </md-menu-item>
-          <md-menu-item @click="${dispatchers.forget}">
+          <md-menu-item
+            data-testid="server-forget-menu-item"
+            @click="${dispatchers.forget}"
+          >
             ${localize('server-forget')}
           </md-menu-item>
         </md-menu>
@@ -241,6 +251,7 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
         <md-icon-button
           ${ref(menuButton)}
           class="card-menu-button"
+          data-testid="server-menu-button"
           @click=${handleMenuOpen}
         >
           <md-icon>more_vert</md-icon>
@@ -251,6 +262,7 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
           <span class="card-error">${messages.error}</span>
           <md-text-button
             class="card-footer-button"
+            data-testid="server-connect-button"
             @click="${dispatchers.connectToggle}"
             ?disabled=${hasErrorMessage}
           >
