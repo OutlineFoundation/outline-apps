@@ -153,7 +153,10 @@ export class AddAccessKeyDialog extends LitElement {
         </section>
       </article>
       <fieldset slot="actions">
-        <md-text-button data-testid="add-server-cancel-button" @click=${this.cancel}>
+        <md-text-button
+          data-testid="add-server-cancel-button"
+          @click=${this.cancel}
+        >
           ${this.localize('cancel')}
         </md-text-button>
         <md-filled-button
