@@ -65,14 +65,28 @@ export async function resetToFirstLaunch(page: Page): Promise<void> {
 }
 
 /**
- * Quits the app the way the tray "Quit" entry does. The main window close
- * button intentionally hides the window instead of quitting, so tests must
- * quit via app.quit() and then wait for the process to exit.
+ * Quits the app and waits for the process to exit.
+ *
+ * The main window's `close` handler hides the window instead of closing it
+ * (tray-app behavior), so a plain `app.quit()` is vetoed and never exits. We
+ * destroy the windows to bypass that veto; with no `window-all-closed`
+ * handler, Electron then quits by default. The evaluate is fire-and-forget:
+ * quitting tears down the evaluate IPC mid-call, so awaiting its return would
+ * hang — we wait on the process `exit` event instead.
  */
 export async function quitOutlineApp(app: ElectronApplication): Promise<void> {
   const exited = new Promise<void>(resolve => {
     app.process().once('exit', () => resolve());
   });
-  await app.evaluate(({app: electronApp}) => electronApp.quit());
+  app
+    .evaluate(({app: electronApp, BrowserWindow}) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.destroy();
+      }
+      electronApp.quit();
+    })
+    .catch(() => {
+      // Expected: the IPC channel drops as the app exits.
+    });
   await exited;
 }

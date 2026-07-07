@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import url from 'url';
@@ -38,19 +39,31 @@ export async function main(...parameters) {
   }
 
   // Node's os.arch() values ('x64', 'arm64') match the --arch values the
-  // build actions accept.
+  // build actions accept; the Go toolchain names them differently.
   const arch = os.arch();
+  const goArch = {x64: 'amd64', arm64: 'arm64', ia32: '386'}[arch] ?? arch;
 
   // Compiles libbackend.so + tun2socks for the current linux arch.
   await runAction('client/go/build', 'linux', `--arch=${arch}`);
   // Builds the web UI and webpacks the Electron main process + preload.
   await runAction('client/electron/build_main', 'linux', `--arch=${arch}`);
 
+  const appPath = path.join(getRootDir(), 'output', 'client', 'electron');
+
   // Mirror the tray icons, web app, and platform icons into the launched app
   // path so app.getAppPath()-relative lookups resolve, exactly as the `start`
   // action does (this build skips electron-builder packaging).
-  await stageRuntimeAssets(
-    path.join(getRootDir(), 'output', 'client', 'electron')
+  await stageRuntimeAssets(appPath);
+
+  // Stage the Go backend (libbackend.so + tun2socks) at the path
+  // app_paths.ts#pathToBackendLibrary resolves it: <appPath>/output/client/
+  // linux-<goArch>. In a packaged build electron-builder bundles this dir; the
+  // unpackaged E2E launch has to mirror it so the real backend loads.
+  const backendDir = path.join('output', 'client', `linux-${goArch}`);
+  await fs.cp(
+    path.join(getRootDir(), backendDir),
+    path.join(appPath, backendDir),
+    {recursive: true}
   );
 
   await spawnStream(
