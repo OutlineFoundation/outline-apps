@@ -69,10 +69,13 @@ export async function loadApp(
  */
 export async function addServer(page: Page, accessKey: string): Promise<void> {
   const dialog = page.locator('add-access-key-dialog md-dialog[open]');
-  try {
-    await dialog.waitFor({timeout: 2000});
-  } catch {
-    await page.getByTestId('add-server-button').click();
+  // On a zero-state launch the app opens the dialog itself; when servers
+  // already exist it must be opened via the header's add button (which is
+  // visibility:hidden in the zero state, so it never matches first there).
+  const headerAddButton = page.getByTestId('add-server-button');
+  await dialog.or(headerAddButton).first().waitFor();
+  if (!(await dialog.isVisible())) {
+    await headerAddButton.click();
     await dialog.waitFor();
   }
   await page

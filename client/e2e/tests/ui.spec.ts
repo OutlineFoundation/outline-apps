@@ -24,16 +24,16 @@ test('App.Start: first launch shows the privacy acknowledgement, then the zero s
 }) => {
   await loadApp(page, {firstLaunch: true});
 
-  const privacyDialog = page.locator('privacy-acknowledgement-dialog');
-  await expect(privacyDialog.locator('md-filled-button')).toBeVisible();
-  await privacyDialog.locator('md-filled-button').click();
+  const acceptButton = page.getByTestId('privacy-accept-button');
+  await expect(acceptButton).toBeVisible();
+  await acceptButton.click();
 
   await expect(page.getByTestId('zero-state-add-server-button')).toBeVisible();
 
   // The acknowledgement must persist across restarts.
   await page.reload();
   await expect(page.getByTestId('zero-state-add-server-button')).toBeVisible();
-  await expect(privacyDialog.locator('md-filled-button')).not.toBeVisible();
+  await expect(acceptButton).not.toBeVisible();
 });
 
 test('Ui.ServerRename: user can rename a server, and the name persists', async ({

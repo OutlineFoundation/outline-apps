@@ -26,7 +26,10 @@ import {
 } from './helpers';
 
 test('Vpn.Default.Clean: no servers on first launch', async ({page}) => {
-  await loadApp(page);
+  // A true first launch: nothing pre-dismissed, so acknowledge the privacy
+  // dialog the way a real user would before checking the default state.
+  await loadApp(page, {firstLaunch: true});
+  await page.getByTestId('privacy-accept-button').click();
 
   await expect(page.getByTestId('zero-state-add-server-button')).toBeVisible();
   await expect(serverCard(page)).toHaveCount(0);
@@ -90,12 +93,19 @@ test('Vpn.Connect & Vpn.Disconnect: connect toggle drives connection state', asy
   await expect(connectButton).toContainText(/disconnect/i);
 
   // The app throttles connection state changes for 600ms (see
-  // DEFAULT_SERVER_CONNECTION_STATUS_CHANGE_TIMEOUT in client/web/app/app.ts);
-  // a disconnect click inside that window is intentionally ignored.
-  await page.waitForTimeout(700);
-
-  await connectButton.click();
-  await expect(indicator).toHaveAttribute('connection-state', 'disconnected');
+  // DEFAULT_SERVER_CONNECTION_STATUS_CHANGE_TIMEOUT in client/web/app/app.ts)
+  // and silently ignores clicks inside that window, so click until the state
+  // actually transitions. Extra clicks while still connected are ignored, and
+  // polling stops on the first successful disconnect.
+  await expect
+    .poll(
+      async () => {
+        await connectButton.click();
+        return indicator.getAttribute('connection-state');
+      },
+      {timeout: 10_000}
+    )
+    .toBe('disconnected');
   await expect(connectButton).not.toContainText(/disconnect/i);
   await expect(connectButton).toContainText(/connect/i);
 });

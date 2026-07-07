@@ -114,7 +114,11 @@ export class PrivacyAcknowledgementDialog extends LitElement {
         </article>
         <fieldset slot="actions">
           <a href="${this.privacyPageUrl}">${this.localize('learn-more')}</a>
-          <md-filled-button @click="${this.handleAcknowledgement}" autofocus>
+          <md-filled-button
+            data-testid="privacy-accept-button"
+            @click="${this.handleAcknowledgement}"
+            autofocus
+          >
             ${this.localize('got-it')}
           </md-filled-button>
         </fieldset>
