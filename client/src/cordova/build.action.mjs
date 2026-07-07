@@ -224,27 +224,40 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
   await downloadHttpsFile(JAVA_BUNDLETOOL_RESOURCE_URL, bundletoolPath);
 
   const outputPath = path.resolve(androidBuildPath, 'Outline.apks');
-  await spawnStream(
-    path.resolve(javaPath, 'bin', 'java'),
-    '-jar',
-    bundletoolPath,
-    'build-apks',
-    `--bundle=${path.resolve(
-      androidBuildPath,
-      'app',
-      'build',
-      'outputs',
-      'bundle',
-      'release',
-      'app-release.aab'
-    )}`,
-    `--output=${outputPath}`,
-    '--mode=universal',
-    `--ks=${keystorePath}`,
-    `--ks-pass=pass:${ksPassword}`,
-    '--ks-key-alias=privatekey',
-    `--key-pass=pass:${ksPassword}`
-  );
+
+  // Pass the keystore password through a file rather than `pass:<password>`:
+  // spawnStream echoes the full command line, and argv is visible to other
+  // processes via `ps`.
+  const ksPasswordPath = path.resolve(androidBuildPath, 'keystore.pass');
+  // Remove any stale file first so the 0600 mode is applied on creation.
+  await fs.rm(ksPasswordPath, {force: true});
+  await fs.writeFile(ksPasswordPath, ksPassword, {mode: 0o600});
+
+  try {
+    await spawnStream(
+      path.resolve(javaPath, 'bin', 'java'),
+      '-jar',
+      bundletoolPath,
+      'build-apks',
+      `--bundle=${path.resolve(
+        androidBuildPath,
+        'app',
+        'build',
+        'outputs',
+        'bundle',
+        'release',
+        'app-release.aab'
+      )}`,
+      `--output=${outputPath}`,
+      '--mode=universal',
+      `--ks=${keystorePath}`,
+      `--ks-pass=file:${ksPasswordPath}`,
+      '--ks-key-alias=privatekey',
+      `--key-pass=file:${ksPasswordPath}`
+    );
+  } finally {
+    await fs.rm(ksPasswordPath, {force: true});
+  }
 
   return fs.rename(outputPath, path.resolve(androidBuildPath, 'Outline.zip'));
 }
