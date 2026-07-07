@@ -241,9 +241,10 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
     path.join(os.tmpdir(), 'outline-android-signing-')
   );
   const ksPasswordPath = path.join(ksPasswordDir, 'keystore.pass');
-  await fs.writeFile(ksPasswordPath, ksPassword, {mode: 0o600});
 
   try {
+    await fs.writeFile(ksPasswordPath, ksPassword, {mode: 0o600});
+
     await spawnStream(
       path.resolve(javaPath, 'bin', 'java'),
       '-jar',
