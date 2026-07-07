@@ -346,3 +346,50 @@ jobs:
 
       - name: Build Android Client
         run: npm run action client/src/cordova/build android -- --verbose
+
+  notify_scheduled_failure:
+    name: Report Scheduled Failure
+    runs-on: ubuntu-22.04
+    # Depend on the leaf jobs; with failure() this fires if anything in the
+    # (transitive) needs graph failed, so a broken web_test/backend_test still
+    # surfaces here via the build jobs that depend on them.
+    needs:
+      [
+        shared_ui_e2e_test,
+        electron_e2e_test,
+        electron_debug_build,
+        macos_debug_build,
+        ios_debug_build,
+        android_debug_build,
+      ]
+    # Only scheduled runs file an issue; PR failures are already visible on the PR.
+    if: failure() && github.event_name == 'schedule'
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          label="ci-nightly-failure"
+          {
+            echo "The scheduled \"Build and Test / Client\" workflow failed."
+            echo
+            echo "- Branch: \`$REF\`"
+            echo "- Commit: $SHA"
+            echo "- Run: $RUN_URL"
+          } > body.md
+          # Reuse an existing open issue so repeated failures don't spam new ones.
+          existing=$(gh issue list --repo "$REPO" --label "$label" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body-file body.md
+          else
+            gh label create "$label" --repo "$REPO" --color b60205 \
+              --description "Scheduled CI failure" 2>/dev/null || true
+            gh issue create --repo "$REPO" --title "Scheduled client CI failed" \
+              --label "$label" --body-file body.md
+          fi
