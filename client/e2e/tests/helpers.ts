@@ -67,10 +67,7 @@ export async function loadApp(
  * On a zero-state launch the app opens the dialog automatically; otherwise
  * this opens it via the header's add button.
  */
-export async function addServer(
-  page: Page,
-  accessKey: string
-): Promise<void> {
+export async function addServer(page: Page, accessKey: string): Promise<void> {
   const dialog = page.locator('add-access-key-dialog md-dialog[open]');
   try {
     await dialog.waitFor({timeout: 2000});

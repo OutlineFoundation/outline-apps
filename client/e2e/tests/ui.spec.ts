@@ -46,9 +46,7 @@ test('Ui.ServerRename: user can rename a server, and the name persists', async (
   await card.getByTestId('server-menu-button').click();
   await card.getByTestId('server-rename-menu-item').click();
 
-  const renameInput = card
-    .getByTestId('server-rename-input')
-    .locator('input');
+  const renameInput = card.getByTestId('server-rename-input').locator('input');
   await renameInput.fill('Renamed QA Server');
   await card.getByTestId('server-rename-save-button').click();
 

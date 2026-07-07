@@ -158,14 +158,22 @@ explicitly.
 ## Phasing & status
 
 - [ ] **Phase 0 — groundwork**
-  - [ ] Test-mode method channel (fake native bridge for browser testing)
-  - [ ] `data-testid` attributes + accessibility labels on key components
+  - [x] Test-mode method channel (the Capacitor browser build's
+        `CapacitorBrowserMethodChannel` + `FakeVpnApi`, which now emits status
+        change events; demo-server seeding suppressible via
+        `?demoServers=false`)
+  - [x] `data-testid` attributes on key components (zero state, header,
+        add-key dialog, server cards, rename dialog)
   - [ ] Hermetic ss-server harness (local Shadowsocks + ssconf file server)
   - [ ] Maestro-on-Cordova-webview spike (Android)
 - [ ] **Phase 1 — per-PR suites**
-  - [ ] Playwright shared-UI suite, tagged with checklist IDs
+  - [x] Playwright shared-UI suite, tagged with checklist IDs
+        (`client/e2e`; covers App.Start, Vpn.Default.Clean, Vpn.AddKey,
+        Vpn.AddKey.InvalidKey, Vpn.Connect/Disconnect at UI level,
+        Ui.ServerRename, Ui.About)
   - [ ] Go transport integration tests against the hermetic harness
-  - [ ] Wire both into per-PR CI
+  - [x] Wire the Playwright suite into per-PR CI
+        (`shared_ui_e2e_test` job in build_and_test_debug_client.yml)
 - [ ] **Phase 2 — desktop E2E**
   - [ ] Playwright Electron on Linux (real tunnel, Net.Web, AutoReconnect)
   - [ ] Playwright Electron on Windows
