@@ -34,9 +34,17 @@ export interface OutlineApp {
  */
 export async function launchOutlineApp(): Promise<OutlineApp> {
   const app = await electron.launch({
-    args: [path.join(REPO_ROOT, 'output', 'client', 'electron')],
+    // --no-sandbox: the Chromium SUID sandbox is unavailable on CI runners.
+    args: [
+      '--no-sandbox',
+      path.join(REPO_ROOT, 'output', 'client', 'electron'),
+    ],
     env: {...process.env, OUTLINE_DEBUG: 'true'},
   });
+  // Surface the main process's own logs so a startup failure (e.g. before the
+  // window is created) is diagnosable instead of a bare firstWindow timeout.
+  app.process().stdout?.on('data', d => process.stdout.write(`[app] ${d}`));
+  app.process().stderr?.on('data', d => process.stderr.write(`[app] ${d}`));
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
   return {app, page};
