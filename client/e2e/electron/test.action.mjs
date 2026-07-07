@@ -20,6 +20,8 @@ import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
 import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 
+import {stageRuntimeAssets} from '../../electron/stage_runtime_assets.mjs';
+
 /**
  * @description Builds the Electron app for Linux and runs the desktop E2E
  * suite (Playwright _electron) against it. Extra parameters are forwarded to
@@ -43,6 +45,13 @@ export async function main(...parameters) {
   await runAction('client/go/build', 'linux', `--arch=${arch}`);
   // Builds the web UI and webpacks the Electron main process + preload.
   await runAction('client/electron/build_main', 'linux', `--arch=${arch}`);
+
+  // Mirror the tray icons, web app, and platform icons into the launched app
+  // path so app.getAppPath()-relative lookups resolve, exactly as the `start`
+  // action does (this build skips electron-builder packaging).
+  await stageRuntimeAssets(
+    path.join(getRootDir(), 'output', 'client', 'electron')
+  );
 
   await spawnStream(
     'npx',

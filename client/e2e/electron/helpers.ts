@@ -39,11 +39,15 @@ export async function launchOutlineApp(): Promise<OutlineApp> {
       '--no-sandbox',
       path.join(REPO_ROOT, 'output', 'client', 'electron'),
     ],
-    env: {...process.env, OUTLINE_DEBUG: 'true'},
+    // ELECTRON_ENABLE_LOGGING routes the main process's console output to
+    // stderr unbuffered, so a startup failure surfaces in the test output
+    // instead of a bare firstWindow timeout.
+    env: {
+      ...process.env,
+      OUTLINE_DEBUG: 'true',
+      ELECTRON_ENABLE_LOGGING: '1',
+    },
   });
-  // Surface the main process's own logs so a startup failure (e.g. before the
-  // window is created) is diagnosable instead of a bare firstWindow timeout.
-  app.process().stdout?.on('data', d => process.stdout.write(`[app] ${d}`));
   app.process().stderr?.on('data', d => process.stderr.write(`[app] ${d}`));
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
