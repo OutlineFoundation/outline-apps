@@ -107,6 +107,9 @@ jobs:
       - name: Test Go Backend
         run: go test -race -bench=. -benchtime=100ms ./client/...
 
+      - name: Test Go Transport E2E
+        run: go test -C client/go/e2etest -race ./...
+
   electron_debug_build:
     name: ${{ matrix.name }} Debug Build
     runs-on: ${{ matrix.runner }}

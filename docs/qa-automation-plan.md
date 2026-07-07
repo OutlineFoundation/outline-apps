@@ -164,14 +164,18 @@ explicitly.
         `?demoServers=false`)
   - [x] `data-testid` attributes on key components (zero state, header,
         add-key dialog, server cards, rename dialog)
-  - [ ] Hermetic ss-server harness (local Shadowsocks + ssconf file server)
+  - [x] Hermetic Shadowsocks harness (`client/go/e2etest`: a real
+        `tunnel-server` service running in-process on loopback)
   - [ ] Maestro-on-Cordova-webview spike (Android)
 - [ ] **Phase 1 — per-PR suites**
   - [x] Playwright shared-UI suite, tagged with checklist IDs
         (`client/e2e`; covers App.Start, Vpn.Default.Clean, Vpn.AddKey,
         Vpn.AddKey.InvalidKey, Vpn.Connect/Disconnect at UI level,
         Ui.ServerRename, Ui.About)
-  - [ ] Go transport integration tests against the hermetic harness
+  - [x] Go transport integration tests against the hermetic harness
+        (`client/go/e2etest`: TCP/UDP round-trips through the real Client for
+        static keys, JSON configs, prefix — asserted on the wire — and
+        served dynamic-key configs; runs in the Go Backend Test CI job)
   - [x] Wire the Playwright suite into per-PR CI
         (`shared_ui_e2e_test` job in build_and_test_debug_client.yml)
 - [ ] **Phase 2 — desktop E2E**
