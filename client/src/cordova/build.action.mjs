@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import url from 'url';
 
@@ -227,10 +228,19 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
 
   // Pass the keystore password through a file rather than `pass:<password>`:
   // spawnStream echoes the full command line, and argv is visible to other
-  // processes via `ps`.
-  const ksPasswordPath = path.resolve(androidBuildPath, 'keystore.pass');
-  // Remove any stale file first so the 0600 mode is applied on creation.
-  await fs.rm(ksPasswordPath, {force: true});
+  // processes via `ps`. bundletool reads only the first line of the file.
+  if (/[\r\n]/.test(ksPassword)) {
+    throw new TypeError(
+      'ANDROID_KEY_STORE_PASSWORD must not contain newline characters!'
+    );
+  }
+
+  // A unique 0700 temp directory per invocation, so concurrent builds
+  // cannot overwrite or delete each other's password file.
+  const ksPasswordDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'outline-android-signing-')
+  );
+  const ksPasswordPath = path.join(ksPasswordDir, 'keystore.pass');
   await fs.writeFile(ksPasswordPath, ksPassword, {mode: 0o600});
 
   try {
@@ -256,7 +266,7 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
       `--key-pass=file:${ksPasswordPath}`
     );
   } finally {
-    await fs.rm(ksPasswordPath, {force: true});
+    await fs.rm(ksPasswordDir, {recursive: true, force: true});
   }
 
   return fs.rename(outputPath, path.resolve(androidBuildPath, 'Outline.zip'));
