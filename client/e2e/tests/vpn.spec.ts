@@ -19,6 +19,7 @@ import {test, expect} from '@playwright/test';
 
 import {
   addServer,
+  englishMessage,
   loadApp,
   serverCard,
   TEST_ACCESS_KEY,
@@ -45,7 +46,9 @@ test('Vpn.AddKey: user can add a server key, and it persists across restarts', a
   await expect(serverCard(page).locator('#server-name')).toHaveText(
     TEST_SERVER_NAME
   );
-  await expect(page.locator('#toast')).toContainText('Added server');
+  await expect(page.locator('#toast')).toContainText(
+    englishMessage('server-added', {serverName: TEST_SERVER_NAME})
+  );
 
   // "Restart" the application: the server must still be there.
   await page.reload();

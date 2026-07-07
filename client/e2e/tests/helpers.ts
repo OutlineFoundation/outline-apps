@@ -14,6 +14,24 @@
 
 import type {Page} from '@playwright/test';
 
+import englishMessages from '../../web/messages/en.json';
+
+/**
+ * Returns the app's own English message for the given key, so toast/text
+ * assertions track wording changes instead of hardcoding strings. Supports
+ * simple ICU-style `{placeholder}` substitution.
+ */
+export function englishMessage(
+  key: keyof typeof englishMessages,
+  substitutions: Record<string, string> = {}
+): string {
+  let message: string = englishMessages[key];
+  for (const [name, value] of Object.entries(substitutions)) {
+    message = message.replace(`{${name}}`, value);
+  }
+  return message;
+}
+
 // TEST-NET-3 (RFC 5737) address: never routable, and distinct from the fake
 // VPN API's "broken" (192.0.2.1) and "unreachable" (10.0.0.24) trigger
 // addresses (see client/web/app/outline_server_repository/vpn.fake.ts).

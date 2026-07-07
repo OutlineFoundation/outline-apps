@@ -23,7 +23,8 @@ export const FAKE_UNREACHABLE_HOSTNAME = '10.0.0.24';
 // so server switching and status-driven UI can be exercised in the browser.
 export class FakeVpnApi implements VpnApi {
   private runningId: string | null = null;
-  private listeners: Array<(id: string, status: TunnelStatus) => void> = [];
+  // Like ElectronVpnApi, only the most recent listener is kept.
+  private statusChangeListener?: (id: string, status: TunnelStatus) => void;
 
   constructor() {}
 
@@ -36,9 +37,7 @@ export class FakeVpnApi implements VpnApi {
   }
 
   private notifyListeners(id: string, status: TunnelStatus) {
-    for (const listener of this.listeners) {
-      listener(id, status);
-    }
+    this.statusChangeListener?.(id, status);
   }
 
   async start(request: StartRequestJson): Promise<void> {
@@ -78,6 +77,6 @@ export class FakeVpnApi implements VpnApi {
   }
 
   onStatusChange(listener: (id: string, status: TunnelStatus) => void): void {
-    this.listeners.push(listener);
+    this.statusChangeListener = listener;
   }
 }
