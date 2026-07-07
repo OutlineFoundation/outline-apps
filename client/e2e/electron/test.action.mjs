@@ -35,10 +35,14 @@ export async function main(...parameters) {
     );
   }
 
+  // Node's os.arch() values ('x64', 'arm64') match the --arch values the
+  // build actions accept.
+  const arch = os.arch();
+
   // Compiles libbackend.so + tun2socks for the current linux arch.
-  await runAction('client/go/build', 'linux');
+  await runAction('client/go/build', 'linux', `--arch=${arch}`);
   // Builds the web UI and webpacks the Electron main process + preload.
-  await runAction('client/electron/build_main', 'linux');
+  await runAction('client/electron/build_main', 'linux', `--arch=${arch}`);
 
   await spawnStream(
     'npx',
