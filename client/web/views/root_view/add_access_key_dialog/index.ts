@@ -141,6 +141,7 @@ export class AddAccessKeyDialog extends LitElement {
         ></section>
         <section>
           <md-filled-text-field
+            data-testid="access-key-input"
             .error=${!this.hasEmptyAccessKey && this.hasInvalidAccessKey}
             @input=${this.edit}
             error-text="${this.localize('add-access-key-dialog-error-text')}"
@@ -152,10 +153,11 @@ export class AddAccessKeyDialog extends LitElement {
         </section>
       </article>
       <fieldset slot="actions">
-        <md-text-button @click=${this.cancel}>
+        <md-text-button data-testid="add-server-cancel-button" @click=${this.cancel}>
           ${this.localize('cancel')}
         </md-text-button>
         <md-filled-button
+          data-testid="add-server-confirm-button"
           @click=${this.confirm}
           ?disabled=${this.hasEmptyAccessKey || this.hasInvalidAccessKey}
           >${this.localize('confirm')}</md-filled-button
