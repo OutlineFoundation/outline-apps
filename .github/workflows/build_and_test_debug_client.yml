@@ -36,10 +36,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -65,7 +65,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v4
@@ -122,10 +122,10 @@ jobs:
         run: git config --system core.longpaths true
 
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -172,10 +172,10 @@ jobs:
         run: xcode-select --print-path
 
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -213,10 +213,10 @@ jobs:
         run: xcode-select --print-path
 
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -251,10 +251,10 @@ jobs:
     needs: [web_test, backend_test]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
