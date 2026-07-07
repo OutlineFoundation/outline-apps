@@ -1,9 +1,19 @@
-# Shared-UI E2E Suite
+# Client E2E Suites
 
-This is Layer 1 of the automated QA suite described in
-[docs/qa-automation-plan.md](../../docs/qa-automation-plan.md): Playwright
-tests that drive the real shared web UI (the Capacitor browser build) against
-the browser method channel and the fake VPN API.
+Playwright suites from the automated QA plan
+([docs/qa-automation-plan.md](../../docs/qa-automation-plan.md)):
+
+- **Shared-UI suite** (`tests/`, Layer 1): drives the real shared web UI (the
+  Capacitor browser build) against the browser method channel and the fake
+  VPN API.
+- **Electron desktop suite** (`electron/`, Layer 3): launches the real
+  Electron app — main process, preload, Go backend over koffi, real renderer
+  — with Playwright's `_electron` driver. Linux-only (the Electron client
+  does not run on macOS); runs in CI on ubuntu:
+
+  ```sh
+  npm run action client/e2e/electron/test
+  ```
 
 Each test title starts with the QA checklist ID it automates (e.g.
 `Vpn.AddKey`), so results can be traced back to — and eventually generate —

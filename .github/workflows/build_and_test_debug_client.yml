@@ -110,6 +110,49 @@ jobs:
       - name: Test Go Transport E2E
         run: go test -C client/go/e2etest -race ./...
 
+  electron_e2e_test:
+    name: Electron E2E Test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm set cache .npm && npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Install zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.13.0
+          use-cache: false
+
+      - name: Install System Dependencies
+        run: npx playwright install-deps chromium
+
+      - name: Run Electron E2E Suite
+        run: xvfb-run --auto-servernum -- npm run action client/e2e/electron/test
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-electron
+          path: client/e2e/playwright-report-electron/
+          retention-days: 7
+
   electron_debug_build:
     name: ${{ matrix.name }} Debug Build
     runs-on: ${{ matrix.runner }}
