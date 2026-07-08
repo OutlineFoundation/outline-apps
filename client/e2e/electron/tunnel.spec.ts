@@ -29,6 +29,7 @@
 
 import {execFile} from 'child_process';
 import * as fs from 'fs/promises';
+import * as http from 'http';
 import * as path from 'path';
 import {promisify} from 'util';
 
@@ -47,7 +48,7 @@ const exec = promisify(execFile);
 // These constants mirror tunnel/setup_netns.sh and the e2eserver defaults.
 const SS_HOST_PORT = '10.200.0.2:19999';
 const SS_SECRET = 'outline-e2e-tunnel';
-const TARGET_URL = 'http://10.200.1.1/';
+const TARGET_HOST = '10.200.1.1';
 const TARGET_RESPONSE_BODY = 'outline-e2e-target';
 const VETH_HOST_INTERFACE = 'oe2e-host';
 
@@ -59,30 +60,32 @@ const TUNNEL_ACCESS_KEY = `ss://${Buffer.from(
 )}`;
 
 /**
- * Fetches the hermetic HTTP target from the app's main process. The target
- * address is routable only from inside the server's network namespace, so
- * this succeeds if and only if traffic egresses through the tunnel.
+ * Requests the hermetic HTTP target and reports whether it responded.
+ *
+ * The target address is on the server namespace's loopback, so it has no
+ * route from this (root-namespace) process except through the VPN's TUN
+ * device: system-wide policy routing sends any non-fwmark-protected traffic
+ * there once the tunnel is up. So a successful response proves traffic
+ * egresses through the tunnel, and a failure proves it does not. Plain Node
+ * `http` is used rather than the app's Chromium `fetch` so the probe is a
+ * direct, deterministic kernel-routed request with no renderer caching.
  */
-async function fetchTunnelTarget(
-  app: ElectronApplication,
-  timeoutMs = 5_000
-): Promise<{ok: boolean; body?: string}> {
-  return await app.evaluate(
-    async (_electron, {url, timeoutMs}) => {
-      try {
-        const response = await fetch(url, {
-          // This runs in the Electron main process (Node), not a browser.
-          // eslint-disable-next-line compat/compat
-          signal: AbortSignal.timeout(timeoutMs),
-          cache: 'no-store',
-        });
-        return {ok: response.ok, body: await response.text()};
-      } catch {
-        return {ok: false};
+function probeTarget(timeoutMs = 4_000): Promise<{ok: boolean; body: string}> {
+  return new Promise(resolve => {
+    const request = http.get(
+      {host: TARGET_HOST, port: 80, path: '/', timeout: timeoutMs},
+      response => {
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', chunk => (body += chunk));
+        response.on('end', () =>
+          resolve({ok: response.statusCode === 200, body})
+        );
       }
-    },
-    {url: TARGET_URL, timeoutMs}
-  );
+    );
+    request.on('timeout', () => request.destroy());
+    request.on('error', () => resolve({ok: false, body: ''}));
+  });
 }
 
 /**
@@ -159,15 +162,17 @@ test('Vpn.Connect & Net.Web & Vpn.Disconnect: a real tunnel routes traffic to th
 
     // Before connecting, the target must be unreachable: it only has a
     // route from inside the server's network namespace.
-    expect((await fetchTunnelTarget(app)).ok).toBe(false);
+    expect((await probeTarget()).ok).toBe(false);
 
     await connectToTunnelServer(page);
 
     // Net.Web: traffic reaches the target through the TUN device, the Go
-    // backend, and the Shadowsocks server.
-    const throughTunnel = await fetchTunnelTarget(app);
-    expect(throughTunnel.ok).toBe(true);
-    expect(throughTunnel.body).toBe(TARGET_RESPONSE_BODY);
+    // backend, and the Shadowsocks server. Poll to give the freshly
+    // installed routing rules a moment to take effect.
+    await expect
+      .poll(async () => (await probeTarget()).ok, {timeout: 20_000})
+      .toBe(true);
+    expect((await probeTarget()).body).toBe(TARGET_RESPONSE_BODY);
 
     // Vpn.Disconnect: the connect toggle tears the tunnel down and the
     // target becomes unreachable again. The app throttles connection state
@@ -185,7 +190,9 @@ test('Vpn.Connect & Net.Web & Vpn.Disconnect: a real tunnel routes traffic to th
         {timeout: 30_000}
       )
       .toBe('disconnected');
-    expect((await fetchTunnelTarget(app)).ok).toBe(false);
+    await expect
+      .poll(async () => (await probeTarget()).ok, {timeout: 20_000})
+      .toBe(false);
   } finally {
     await quitAndDisconnect(app);
   }
@@ -196,13 +203,15 @@ test('Vpn.AutoReconnect: the tunnel recovers after the physical network drops', 
   try {
     await resetAppState(app, page);
     await connectToTunnelServer(page);
-    expect((await fetchTunnelTarget(app)).ok).toBe(true);
+    await expect
+      .poll(async () => (await probeTarget()).ok, {timeout: 20_000})
+      .toBe(true);
 
     // Drop the link to the Shadowsocks server: traffic stops flowing.
     await exec('ip', ['link', 'set', 'dev', VETH_HOST_INTERFACE, 'down']);
     try {
       await expect
-        .poll(async () => (await fetchTunnelTarget(app)).ok, {timeout: 30_000})
+        .poll(async () => (await probeTarget()).ok, {timeout: 30_000})
         .toBe(false);
     } finally {
       await exec('ip', ['link', 'set', 'dev', VETH_HOST_INTERFACE, 'up']);
@@ -211,7 +220,7 @@ test('Vpn.AutoReconnect: the tunnel recovers after the physical network drops', 
     // Once the network returns, the tunnel resumes relaying without user
     // action, and the UI has stayed connected throughout.
     await expect
-      .poll(async () => (await fetchTunnelTarget(app)).ok, {timeout: 60_000})
+      .poll(async () => (await probeTarget()).ok, {timeout: 60_000})
       .toBe(true);
     await expect(
       serverCard(page).locator('server-connection-indicator').first()
@@ -227,7 +236,9 @@ test('Vpn.AutoReconnect: the client reconnects on launch after an unclean shutdo
   const first = await launchOutlineApp();
   await resetAppState(first.app, first.page);
   await connectToTunnelServer(first.page);
-  expect((await fetchTunnelTarget(first.app)).ok).toBe(true);
+  await expect
+    .poll(async () => (await probeTarget()).ok, {timeout: 20_000})
+    .toBe(true);
 
   const firstExited = new Promise<void>(resolve => {
     first.app.process().once('exit', () => resolve());
@@ -241,7 +252,7 @@ test('Vpn.AutoReconnect: the client reconnects on launch after an unclean shutdo
     // the tunnel from the saved state (index.ts reconnects at startup with
     // a RECONNECTING → CONNECTED status transition).
     await expect
-      .poll(async () => (await fetchTunnelTarget(app)).ok, {timeout: 60_000})
+      .poll(async () => (await probeTarget()).ok, {timeout: 60_000})
       .toBe(true);
   } finally {
     await quitAndDisconnect(app);
