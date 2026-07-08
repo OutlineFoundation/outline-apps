@@ -73,6 +73,36 @@
   };
 };
 
+// Mirrors the DigitalOcean stub above: the browser build cannot run the
+// full OAuth dance the Electron build does, so ask for a refresh token
+// directly. Also used by the E2E suite (server_manager/e2e), which answers
+// the prompt through Playwright's dialog handler.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).runGcpOauth = () => {
+  let isCancelled = false;
+  const rejectWrapper = {reject: (_error: Error) => {}};
+  const result = new Promise((resolve, reject) => {
+    rejectWrapper.reject = reject;
+    const refreshToken = window.prompt('Please enter your GCP refresh token');
+    if (refreshToken) {
+      resolve(refreshToken);
+    } else {
+      reject(new Error('No refresh token entered'));
+    }
+  });
+  return {
+    result,
+    isCancelled() {
+      return isCancelled;
+    },
+    cancel() {
+      console.log('Session cancelled');
+      isCancelled = true;
+      rejectWrapper.reject(new Error('Authentication cancelled'));
+    },
+  };
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).bringToFront = () => {
   console.info('Requested bringToFront');
