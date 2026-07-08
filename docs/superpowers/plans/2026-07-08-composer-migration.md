@@ -2561,8 +2561,13 @@ func (c *Client) NotifyNetworkChanged() {
 }
 
 // The old exported ProviderClientConfig struct is replaced by the
-// unexported inline decode struct inside ParseConfig below (delete the
-// old type; rg confirms it has no external users).
+// unexported inline decode struct inside ParseConfig below. Delete the
+// old type. It has ONE external user: parse.go embeds it in
+// ProviderTunnelConfig purely to give the lenient goccy unmarshal a
+// shape — but doParseTunnelConfig only ever reads the Error field, so
+// also delete ProviderTunnelConfig there and reduce providerConfig to:
+//   type providerConfig struct { ProviderErrorConfig `yaml:",inline"` }
+// (goccy ignores unknown fields by default; behavior is unchanged).
 
 func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*ParsedClient, error) {
 	parser := c.TransportParser
