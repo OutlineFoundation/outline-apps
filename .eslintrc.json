@@ -8,7 +8,8 @@
       "./client/tsconfig.json",
       "./client/capacitor/tsconfig.json",
       "./infrastructure/tsconfig.json",
-      "./server_manager/tsconfig.json"
+      "./server_manager/tsconfig.json",
+      "./server_manager/e2e/tsconfig.json"
     ]
   },
   "plugins": [

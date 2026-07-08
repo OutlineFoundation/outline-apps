@@ -404,14 +404,14 @@ export class AppRoot extends polymerElementWithLocalize {
                 <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
             </span>
-            <span on-tap="submitFeedbackTapped">[[localize('nav-feedback')]]</span>
+            <span on-tap="submitFeedbackTapped" data-testid="nav-feedback">[[localize('nav-feedback')]]</span>
             <span on-tap="maybeCloseDrawer">
               <a href="https://support.getoutline.org">
                 <span>[[localize('nav-help')]]</span>
                 <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
             </span>
-            <span on-tap="aboutTapped">[[localize('nav-about')]]</span>
+            <span on-tap="aboutTapped" data-testid="nav-about">[[localize('nav-about')]]</span>
             <div id="links-footer">
               <paper-icon-item id="language-row">
                 <iron-icon id="language-icon" icon="language" slot="item-icon"></iron-icon>

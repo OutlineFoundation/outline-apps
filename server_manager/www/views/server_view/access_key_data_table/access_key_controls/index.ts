@@ -84,22 +84,35 @@ export class AccessKeyControls extends LitElement {
   render() {
     return html`
       <span class="wrapper">
-        <mwc-icon-button icon="share" @click=${this.share}></mwc-icon-button>
+        <mwc-icon-button
+          icon="share"
+          data-testid="access-key-share-button"
+          @click=${this.share}
+        ></mwc-icon-button>
         <span class="menu-wrapper">
           <mwc-icon-button
             icon="more_vert"
             id="menuButton"
+            data-testid="access-key-menu-button"
             @click=${() => {
               this.menu.anchor = this.menuButton;
               this.menu.show();
             }}
           ></mwc-icon-button>
           <mwc-menu id="menu">
-            <mwc-list-item @click=${this.editName} graphic="icon">
+            <mwc-list-item
+              data-testid="access-key-rename-menu-item"
+              @click=${this.editName}
+              graphic="icon"
+            >
               <mwc-icon slot="graphic">create</mwc-icon>
               ${this.localize('server-access-key-rename')}
             </mwc-list-item>
-            <mwc-list-item @click=${this.delete} graphic="icon">
+            <mwc-list-item
+              data-testid="access-key-delete-menu-item"
+              @click=${this.delete}
+              graphic="icon"
+            >
               <mwc-icon slot="graphic">delete</mwc-icon>
               ${this.localize('remove')}
             </mwc-list-item>

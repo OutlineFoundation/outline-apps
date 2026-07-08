@@ -159,7 +159,10 @@ Polymer({
       <!-- end of #feedbackWrapper -->
       <p class="buttons">
         <paper-button dialog-dismiss="">[[localize('cancel')]]</paper-button>
-        <paper-button autofocus="" on-tap="submitTappedHandler"
+        <paper-button
+          autofocus=""
+          on-tap="submitTappedHandler"
+          data-testid="feedback-submit-button"
           >[[localize('feedback-submit')]]</paper-button
         >
       </p>

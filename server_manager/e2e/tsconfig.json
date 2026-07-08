@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "include": ["playwright.config.ts", "test.action.mjs", "tests"],
+  "exclude": ["node_modules"]
+}
