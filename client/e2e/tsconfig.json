@@ -3,5 +3,11 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["playwright.config.ts", "test.action.mjs", "tests"]
+  "include": [
+    "playwright.config.ts",
+    "electron.playwright.config.ts",
+    "test.action.mjs",
+    "tests",
+    "electron"
+  ]
 }
