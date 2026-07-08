@@ -184,9 +184,15 @@ explicitly.
         Vpn.AddKey.InvalidKey through the real `ParseTunnelConfig`,
         App.Terminate; runs in the `electron_e2e_test` CI job under xvfb).
         Depends on the runtime-asset staging from #2762.
-  - [ ] Playwright Electron on Linux — real tunnel (Vpn.Connect, Net.Web,
-        Vpn.AutoReconnect); needs the service installed with elevated
-        privileges, so it belongs on a nightly/gated job
+  - [x] Playwright Electron on Linux — real tunnel
+        (`client/e2e/electron/tunnel.spec.ts`: Vpn.Connect, Net.Web,
+        Vpn.Disconnect, Vpn.AutoReconnect against a hermetic Shadowsocks
+        server in a network namespace; needs root, so it runs in the
+        nightly workflow `nightly_client_e2e.yml`, not per-PR). Caveat: the
+        Linux backend has no network-change monitor, so Vpn.AutoReconnect
+        is verified as traffic recovery after an interface bounce plus
+        reconnect-on-launch after an unclean shutdown — no transient
+        "reconnecting" UI state exists on Linux for network drops.
   - [ ] Playwright Electron on Windows
   - [ ] Windows installer/signature scripts on the release gate
 - [ ] **Phase 3 — Android**

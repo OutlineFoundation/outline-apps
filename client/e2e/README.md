@@ -15,6 +15,19 @@ Playwright suites from the automated QA plan
   npm run action client/e2e/electron/test
   ```
 
+- **Electron real-tunnel suite** (`electron/tunnel.spec.ts`, Layer 3,
+  nightly tier): establishes a *real* VPN — TUN device, NetworkManager
+  routing — against a hermetic Shadowsocks server in an isolated network
+  namespace (`electron/tunnel/setup_netns.sh` +
+  `client/go/e2etest/cmd/e2eserver`), and asserts traffic egresses through
+  the tunnel. Requires root and mutates the machine's routing state, so it
+  runs on a disposable CI runner (`nightly_client_e2e.yml`), never per-PR:
+
+  ```sh
+  sudo -E env "PATH=$PATH" xvfb-run --auto-servernum -- \
+    npm run action client/e2e/electron/test_tunnel
+  ```
+
 Each test title starts with the QA checklist ID it automates (e.g.
 `Vpn.AddKey`), so results can be traced back to — and eventually generate —
 the release sign-off sheet.

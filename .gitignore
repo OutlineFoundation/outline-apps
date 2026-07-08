@@ -24,3 +24,5 @@ client/e2e/test-results/
 client/e2e/playwright-report/
 client/e2e/test-results-electron/
 client/e2e/playwright-report-electron/
+client/e2e/test-results-electron-tunnel/
+client/e2e/playwright-report-electron-tunnel/
