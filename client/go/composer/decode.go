@@ -92,6 +92,29 @@ func (n Node) decodeValue(dst reflect.Value, depth int, st *decodeState) error {
 	}
 }
 
+// describe names the node's concrete value type for error messages,
+// e.g. "an integer" rather than the coarser Kind "scalar".
+func (n Node) describe() string {
+	switch n.ast.(type) {
+	case nil, *ast.NullNode:
+		return "absent"
+	case *ast.StringNode, *ast.LiteralNode:
+		return "a string"
+	case *ast.IntegerNode:
+		return "an integer"
+	case *ast.FloatNode:
+		return "a number"
+	case *ast.BoolNode:
+		return "a boolean"
+	case *ast.MappingNode, *ast.MappingValueNode:
+		return "a map"
+	case *ast.SequenceNode:
+		return "a list"
+	default:
+		return fmt.Sprintf("%T", n.ast)
+	}
+}
+
 func (n Node) decodeScalar(dst reflect.Value) error {
 	switch dst.Kind() {
 	case reflect.String:
@@ -101,12 +124,12 @@ func (n Node) decodeScalar(dst reflect.Value) error {
 		case *ast.LiteralNode:
 			dst.SetString(t.Value.Value)
 		default:
-			return n.errorf("expected a string, found %v", n.Kind())
+			return n.errorf("expected a string, found %s", n.describe())
 		}
 	case reflect.Bool:
 		t, ok := n.ast.(*ast.BoolNode)
 		if !ok {
-			return n.errorf("expected a boolean, found %v", n.Kind())
+			return n.errorf("expected a boolean, found %s", n.describe())
 		}
 		dst.SetBool(t.Value)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -138,7 +161,7 @@ func (n Node) decodeScalar(dst reflect.Value) error {
 			}
 			dst.SetFloat(float64(i))
 		default:
-			return n.errorf("expected a number, found %v", n.Kind())
+			return n.errorf("expected a number, found %s", n.describe())
 		}
 	}
 	return nil
@@ -149,7 +172,7 @@ func (n Node) decodeScalar(dst reflect.Value) error {
 func (n Node) intValue() (int64, error) {
 	iv, ok := n.ast.(*ast.IntegerNode)
 	if !ok {
-		return 0, n.errorf("expected an integer, found %v", n.Kind())
+		return 0, n.errorf("expected an integer, found %s", n.describe())
 	}
 	switch v := iv.Value.(type) {
 	case int64:
@@ -167,7 +190,7 @@ func (n Node) intValue() (int64, error) {
 func (n Node) uintValue() (uint64, error) {
 	iv, ok := n.ast.(*ast.IntegerNode)
 	if !ok {
-		return 0, n.errorf("expected an integer, found %v", n.Kind())
+		return 0, n.errorf("expected an integer, found %s", n.describe())
 	}
 	switch v := iv.Value.(type) {
 	case int64:

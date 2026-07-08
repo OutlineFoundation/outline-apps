@@ -194,7 +194,7 @@ func (n Node) mappingEntries() ([]mapEntry, error) {
 	case *ast.MappingValueNode:
 		kvs = []*ast.MappingValueNode{t}
 	default:
-		return nil, n.errorf("expected a map, found %v", n.Kind())
+		return nil, n.errorf("expected a map, found %s", n.describe())
 	}
 	entries := make([]mapEntry, 0, len(kvs))
 	for _, kv := range kvs {
@@ -212,7 +212,7 @@ func (n Node) mappingEntries() ([]mapEntry, error) {
 func (n Node) sequenceItems() ([]Node, error) {
 	seq, ok := n.ast.(*ast.SequenceNode)
 	if !ok {
-		return nil, n.errorf("expected a list, found %v", n.Kind())
+		return nil, n.errorf("expected a list, found %s", n.describe())
 	}
 	items := make([]Node, 0, len(seq.Values))
 	for i, v := range seq.Values {
