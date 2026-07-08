@@ -198,8 +198,9 @@ explicitly.
   - [x] Maestro smoke flow (deep-link add-key, real VpnService connect,
         consent dialog, disconnect; Net.Web asserted via ss-server logs) —
         `client/e2e/android/flows/`
-  - [ ] Validate `nightly_android_e2e.yml` on CI runners (x86_64 emulator
-        under KVM; spike ran locally on arm64)
+  - [x] Validate `nightly_android_e2e.yml` on CI runners — green on
+        ubuntu-latest (x86_64 emulator under KVM, ~8 min end-to-end, real
+        tunnel traffic asserted server-side)
   - [ ] `Vpn.AutoReconnect` flow if emulator network toggling proves reliable
 - [ ] **Phase 4 — Apple platforms**
   - [ ] iOS simulator UI suite (mocked VPN)
