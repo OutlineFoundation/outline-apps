@@ -179,7 +179,14 @@ explicitly.
   - [x] Wire the Playwright suite into per-PR CI
         (`shared_ui_e2e_test` job in build_and_test_debug_client.yml)
 - [ ] **Phase 2 — desktop E2E**
-  - [ ] Playwright Electron on Linux (real tunnel, Net.Web, AutoReconnect)
+  - [x] Playwright Electron on Linux, UI level against the real app + Go
+        backend (`client/e2e/electron`: App.Start, Vpn.AddKey /
+        Vpn.AddKey.InvalidKey through the real `ParseTunnelConfig`,
+        App.Terminate; runs in the `electron_e2e_test` CI job under xvfb).
+        Depends on the runtime-asset staging from #2762.
+  - [ ] Playwright Electron on Linux — real tunnel (Vpn.Connect, Net.Web,
+        Vpn.AutoReconnect); needs the service installed with elevated
+        privileges, so it belongs on a nightly/gated job
   - [ ] Playwright Electron on Windows
   - [ ] Windows installer/signature scripts on the release gate
 - [ ] **Phase 3 — Android**
