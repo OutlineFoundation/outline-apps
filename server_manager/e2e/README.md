@@ -55,9 +55,8 @@ Both run nightly in CI (`.github/workflows/nightly_manager_e2e.yml`).
   For the Electron suite the same fake serves over a real local HTTPS socket
   instead (CDP-fulfilled responses reach the `outline://` renderer with
   status 0).
-- The DigitalOcean flows run against an intercepted DO REST API
-  (tests/fake_digitalocean.ts); the token prompt of the browser build's
-  OAuth stub is answered via Playwright's dialog handler. GCP is not covered
-  yet; see the phasing section of the plan.
+- The cloud-provider flows run against intercepted provider APIs
+  (tests/fake_digitalocean.ts, tests/fake_gcp.ts); the token prompts of the
+  browser build's OAuth stubs are answered via Playwright's dialog handler.
 - Prefer `data-testid` selectors (or existing stable `id`s); add new ones to
   components rather than relying on classes or localized text.

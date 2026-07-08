@@ -83,14 +83,16 @@ DigitalOcean code over the intercepted REST API. Covers
 `ServerCreate.DigitalOcean`, `ServerConnect.DigitalOcean`,
 `ServerDestroy.DigitalOcean` (UI halves; the full-stack halves are Layer 4).
 
-GCP is the remaining provider. It needs (a) a `runGcpOauth` stub in
-`browser_main.ts` (the browser build currently has none, so the GCP intro
-card is unusable outside Electron), and (b) a substantially larger
-intercepted surface than DigitalOcean: the OAuth token exchange, Compute
-(instances, static IPs, guest attributes, firewalls, zones, operation
-polling), Resource Manager (project create/list + operations), Service Usage
-(list/batchEnable + operations) and Cloud Billing. Deferred to its own
-phase.
+The GCP flows run the same way against a larger intercepted surface
+(`server_manager/e2e/tests/fake_gcp.ts`): the OAuth token exchange, OpenID
+userinfo, Compute (instances, static IPs, guest attributes, firewalls,
+zones, operation polling), Resource Manager, Service Usage and Cloud
+Billing. `browser_main.ts` gained a `runGcpOauth` prompt stub (mirroring the
+DigitalOcean one), which also makes the GCP card usable in browser dev mode.
+Covers `ServerCreate.GCP` (both the existing-project fast path and the
+first-run billing-verification + project-creation flow),
+`ServerConnect.GCP`, `ServerDestroy.GCP` (UI halves; full-stack is
+Layer 4).
 
 ### Layer 2 — Real-Shadowbox integration (hermetic server, nightly)
 
@@ -206,8 +208,9 @@ explicitly. Shared with the client plan's Phase 5 tooling.
   - [x] DigitalOcean flows against an intercepted DO API
         (`fake_digitalocean.ts`; ServerCreate/ServerConnect/ServerDestroy
         .DigitalOcean)
-  - [ ] GCP flows against an intercepted GCP API (needs a browser
-        `runGcpOauth` stub first; see the Layer 1 section)
+  - [x] GCP flows against an intercepted GCP API (`fake_gcp.ts` + browser
+        `runGcpOauth` stub; ServerCreate/ServerConnect/ServerDestroy.GCP,
+        including the first-run billing + project-creation flow)
 - [ ] **Phase 2 — hermetic real server**
   - [x] Real-Shadowbox journey + nightly job
         (`server_manager/e2e/test_real`, `real_shadowbox_e2e` in
