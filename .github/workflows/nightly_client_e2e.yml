@@ -31,13 +31,6 @@ on:
   schedule:
     - cron: '0 14 * * *' # Daily at 2PM UTC, after the 1PM Build and Test run.
   workflow_dispatch: {}
-  # TEMPORARY — remove before merge. GitHub only registers schedule and
-  # workflow_dispatch triggers for workflows on the default branch, so this
-  # push trigger is the only way to validate the workflow from its feature
-  # branch.
-  push:
-    branches:
-      - qa-automation-electron-tunnel
 
 jobs:
   linux_electron_tunnel_e2e:
