@@ -199,6 +199,9 @@ func (n Node) mappingEntries() ([]mapEntry, error) {
 	entries := make([]mapEntry, 0, len(kvs))
 	for _, kv := range kvs {
 		key := kv.Key.GetToken().Value
+		if key == "<<" {
+			return nil, n.errorf("YAML merge keys (<<) are not supported; use an anchor on the whole value instead")
+		}
 		child, err := n.childNode(kv.Value, joinPath(n.path, key))
 		if err != nil {
 			return nil, err

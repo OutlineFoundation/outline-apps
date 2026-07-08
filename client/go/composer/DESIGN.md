@@ -118,3 +118,25 @@ music." Rejected: `config` (too generic, and it collides with the
 ubiquitous `config` local-variable name at call sites) and `configyaml`
 (ties the name to one serialization format when the core is
 format-agnostic).
+
+## Spike findings (2026-07, goccy/go-yaml v1.18.0)
+
+The canary tests in `goccy_test.go` pin the library behaviors the
+design relies on. Findings vs the original assumptions:
+
+- Mappings always parse as `*ast.MappingNode`, regardless of size,
+  style, or nesting. (Older goccy used `*ast.MappingValueNode` for
+  single-pair mappings; `mappingEntries` keeps a defensive case.)
+- `IntegerNode.Value` is `uint64` for ALL non-negative integers, even
+  small ones, and `int64` for negative ones. Both decoder paths handle
+  both representations.
+- `yes`/`no` parse as strings (YAML 1.2 semantics), so the SPEC's
+  "only true/false are bool" rule needs no extra enforcement.
+- A trailing `?` is part of a plain YAML key (`padding?:` works).
+- Block-literal chomping is already applied to the AST string value.
+- goccy rejects an anchor whose value is an alias (`&x *x`) at parse
+  time, so direct alias chains cannot be constructed; composer's
+  `maxAliasDepth` guard is defense-in-depth behind that.
+- Composer resolves anchors document-globally, so aliases may reference
+  anchors defined later in the document — deliberately more lenient
+  than the YAML spec's define-before-use rule.

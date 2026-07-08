@@ -99,3 +99,12 @@ To introduce a new network capability (e.g., custom proxy protocol, dialing stra
    ```go
    streamDialers.RegisterSubParser("my_strategy", NewMyStrategyDialerSubParser(streamEndpoints.Parse))
    ```
+
+## Migration note (2026-07)
+
+A new config core lives in `client/go/composer` (Outline Composer; see
+its SPEC.md and DESIGN.md): opaque `composer.Node`, tag-free struct
+decoding with required-by-default fields, `?`-suffix ignorable fields,
+and a `TypeParser` with built-in `first-supported`. New strategies
+should be designed against that API; this package will migrate to it in
+a follow-up plan.

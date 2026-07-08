@@ -125,6 +125,15 @@ func TestNode_AliasCycles(t *testing.T) {
 	require.Equal(t, KindMapping, sub[0].value.Kind())
 }
 
+func TestNode_MergeKeysRejected(t *testing.T) {
+	n := mustParse(t, "base: &b\n  x: 1\nother:\n  <<: *b\n  y: 2")
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	_, err = entries[1].value.mappingEntries()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "merge keys")
+}
+
 func TestError_Format(t *testing.T) {
 	err := &Error{Path: "transport.endpoint", Line: 12, Err: errors.New("boom")}
 	require.Equal(t, "transport.endpoint (line 12): boom", err.Error())
