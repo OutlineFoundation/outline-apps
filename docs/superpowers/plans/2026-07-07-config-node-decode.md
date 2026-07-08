@@ -4,16 +4,16 @@
 
 **Goal:** Build the new `composer` core package (Outline Composer) — an opaque `Node` handle over the YAML AST, a convention-based `Decode` with required-by-default fields and sender-side `?` optionality, and a `TypeParser` on top — validated by a spike, and fully documented (wire-format spec + design-decision log).
 
-**Architecture:** A new package `client/go/composer` (Go import `localhost/client/go/composer`) coexists with the legacy `client/go/composeryaml` until a follow-up migration plan ports the parsers in `configregistry`, `reporting`, and `client.go`. `Node` wraps `github.com/goccy/go-yaml` AST nodes (never exposed in signatures) and carries a config path plus a document-wide anchor table for lazy alias resolution. `Node.Decode` walks the AST with reflection: struct fields are matched by normalized name (no struct tags), fields are required unless typed `composer.Optional[T]`, `$`-prefixed keys are reserved, and a `?` key suffix marks sender-side ignorable fields. Unknown non-ignorable fields and unknown `$type` values produce errors wrapping `errors.ErrUnsupported`, which the built-in `first-supported` combinator uses to fall through.
+**Architecture:** A new package `client/go/composer` (Go import `localhost/client/go/composer`) coexists with the legacy `client/go/configyaml` until a follow-up migration plan ports the parsers in `configregistry`, `reporting`, and `client.go`. `Node` wraps `github.com/goccy/go-yaml` AST nodes (never exposed in signatures) and carries a config path plus a document-wide anchor table for lazy alias resolution. `Node.Decode` walks the AST with reflection: struct fields are matched by normalized name (no struct tags), fields are required unless typed `composer.Optional[T]`, `$`-prefixed keys are reserved, and a `?` key suffix marks sender-side ignorable fields. Unknown non-ignorable fields and unknown `$type` values produce errors wrapping `errors.ErrUnsupported`, which the built-in `first-supported` combinator uses to fall through.
 
 **Tech Stack:** Go (repo module `localhost`), `github.com/goccy/go-yaml` v1.18.0 (`parser`, `ast`, `token` subpackages), `github.com/stretchr/testify/require` for tests.
 
 ## Global Constraints
 
 - Go per repo root `go.mod`; run all commands from the repo root `/Users/fortuna/code/outline-apps`.
-- New package directory: `client/go/composer`. Do NOT modify `client/go/composeryaml` or `client/go/outline/**` in this plan.
-- Tests use `github.com/stretchr/testify/require`, table-driven where natural, matching the style of `client/go/composeryaml/parse_test.go`.
-- Every Go file starts with the Apache 2.0 license header used across the repo (copy the 13-line header from `client/go/composeryaml/parse.go`, year 2026).
+- New package directory: `client/go/composer`. Do NOT modify `client/go/configyaml` or `client/go/outline/**` in this plan.
+- Tests use `github.com/stretchr/testify/require`, table-driven where natural, matching the style of `client/go/configyaml/parse_test.go`.
+- Every Go file starts with the Apache 2.0 license header used across the repo (copy the 13-line header from `client/go/configyaml/parse.go`, year 2026).
 - goccy AST types (`ast.Node` etc.) must never appear in any exported signature of package `composer`.
 - Format code with `gofmt -w` before each commit; `go vet ./client/go/composer/...` must pass.
 - Test command: `go test ./client/go/composer/... -v -run <TestName>`; full: `go test ./client/go/composer/...`.
@@ -2284,7 +2284,7 @@ package; it is destined for the Outline SDK and must stay app-agnostic.
 
 ## Status
 
-Built alongside the legacy `client/go/composeryaml`; the migration of
+Built alongside the legacy `client/go/configyaml`; the migration of
 `configregistry`, `reporting`, and `client.go` onto this package is a
 separate follow-up plan (see docs/superpowers/plans/). Do not add new
 parsers to `configyaml`.
@@ -2325,5 +2325,5 @@ Deliberately excluded here; write a second plan once this one lands:
 
 1. Porting `configregistry` parsers (shadowsocks incl. URL formats, websocket, iptable, block, dial endpoint, tcpudp, proxyless), `reporting`, and `client.go` to `composer` — carrying each parser's existing required-field validation into the types (fields it validates as required stay plain; the rest become `Optional[T]`).
 2. Separating app policy from parsers (ConnectionProviderInfo propagation, Outline DNS wrap, User-Agent injection) via injection/annotation.
-3. Deleting `client/go/composeryaml`.
+3. Deleting `client/go/configyaml`.
 4. The Outline SDK move and `x/configurl` reconciliation.
