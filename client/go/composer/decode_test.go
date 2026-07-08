@@ -15,6 +15,7 @@
 package composer
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -78,6 +79,90 @@ func TestDecode_Optional(t *testing.T) {
 	require.NoError(t, mustParse(t, "null").Decode(&absent))
 	_, ok = absent.Get()
 	require.False(t, ok, "explicit null leaves Optional absent")
+}
+
+type wsTestConfig struct {
+	URL      string
+	Endpoint Optional[Node]
+	Retries  Optional[int]
+}
+
+func TestDecodeStruct_Basic(t *testing.T) {
+	cfg := decodeAll[wsTestConfig](t, "url: wss://example.com\nendpoint: example.com:443")
+	require.Equal(t, "wss://example.com", cfg.URL)
+	ep, ok := cfg.Endpoint.Get()
+	require.True(t, ok)
+	require.Equal(t, KindScalar, ep.Kind())
+	require.Equal(t, 3, cfg.Retries.Or(3))
+}
+
+func TestDecodeStruct_RequiredMissing(t *testing.T) {
+	var cfg wsTestConfig
+	err := mustParse(t, "endpoint: example.com:443").Decode(&cfg)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "url")
+
+	// Explicit null does not satisfy a required field.
+	err = mustParse(t, "url: null").Decode(&cfg)
+	require.Error(t, err)
+}
+
+func TestDecodeStruct_NameMatching(t *testing.T) {
+	type legacyConfig struct {
+		ServerPort uint16
+	}
+	require.Equal(t, uint16(8388),
+		decodeAll[legacyConfig](t, "server_port: 8388").ServerPort)
+	require.Equal(t, uint16(8388),
+		decodeAll[legacyConfig](t, "serverport: 8388").ServerPort)
+}
+
+func TestDecodeStruct_ReservedAndIgnorable(t *testing.T) {
+	type cfg struct{ Cipher string }
+
+	// $ keys are skipped.
+	c := decodeAll[cfg](t, "$type: shadowsocks\ncipher: aes")
+	require.Equal(t, "aes", c.Cipher)
+
+	// Unknown field without ? is an ErrUnsupported error.
+	var out cfg
+	err := mustParse(t, "cipher: aes\npadding: 32").Decode(&out)
+	require.ErrorIs(t, err, errors.ErrUnsupported)
+	require.Contains(t, err.Error(), "padding")
+
+	// Unknown field with ? is skipped.
+	c = decodeAll[cfg](t, "cipher: aes\npadding?: 32")
+	require.Equal(t, "aes", c.Cipher)
+
+	// Known field with ? decodes normally.
+	c = decodeAll[cfg](t, "cipher?: aes")
+	require.Equal(t, "aes", c.Cipher)
+}
+
+func TestDecodeStruct_ConflictingKeys(t *testing.T) {
+	type cfg struct{ Cipher Optional[string] }
+	var out cfg
+	err := mustParse(t, "cipher: aes\ncipher?: chacha").Decode(&out)
+	require.Error(t, err)
+}
+
+func TestDecodeStruct_Nested(t *testing.T) {
+	type request struct {
+		URL    string
+		Method Optional[string]
+	}
+	type reporter struct {
+		Request  request
+		Interval Optional[string]
+	}
+	r := decodeAll[reporter](t, "request:\n  url: https://example.com\ninterval: 2h")
+	require.Equal(t, "https://example.com", r.Request.URL)
+	require.Equal(t, "2h", r.Interval.Or(""))
+}
+
+func TestDecodeStruct_NotAMapping(t *testing.T) {
+	var cfg wsTestConfig
+	require.Error(t, mustParse(t, "just-a-string").Decode(&cfg))
 }
 
 func TestDecode_ErrorHasPathAndLine(t *testing.T) {

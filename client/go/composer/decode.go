@@ -15,9 +15,11 @@
 package composer
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
 
 	"github.com/goccy/go-yaml/ast"
 )
@@ -126,9 +128,9 @@ func (n Node) decodeScalar(dst reflect.Value) error {
 		}
 		dst.SetUint(u)
 	case reflect.Float32, reflect.Float64:
-		switch n.ast.(type) {
+		switch t := n.ast.(type) {
 		case *ast.FloatNode:
-			dst.SetFloat(n.ast.(*ast.FloatNode).Value)
+			dst.SetFloat(t.Value)
 		case *ast.IntegerNode:
 			i, err := n.intValue()
 			if err != nil {
@@ -180,9 +182,81 @@ func (n Node) uintValue() (uint64, error) {
 	}
 }
 
-// decodeStruct is implemented in Task 7.
+const (
+	reservedPrefix  = "$"
+	ignorableSuffix = "?"
+)
+
+type structField struct {
+	index  int
+	goName string
+}
+
+// structFields indexes the exported fields of t by normalized name.
+func structFields(t reflect.Type) (map[string]structField, error) {
+	fields := make(map[string]structField)
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		norm := normalizeKey(f.Name)
+		if prev, ok := fields[norm]; ok {
+			return nil, fmt.Errorf("struct %v: fields %s and %s have colliding config names", t, prev.goName, f.Name)
+		}
+		fields[norm] = structField{index: i, goName: f.Name}
+	}
+	return fields, nil
+}
+
 func (n Node) decodeStruct(dst reflect.Value, depth int, st *decodeState) error {
-	return n.errorf("struct decoding not implemented")
+	entries, err := n.mappingEntries()
+	if err != nil {
+		return err
+	}
+	fields, err := structFields(dst.Type())
+	if err != nil {
+		return n.wrapErr(err)
+	}
+
+	seen := make(map[string]string) // normalized name -> config key as written
+	for _, entry := range entries {
+		key := entry.key
+		if strings.HasPrefix(key, reservedPrefix) {
+			// Reserved framework namespace ($type etc.); never a field.
+			continue
+		}
+		name := strings.TrimSuffix(key, ignorableSuffix)
+		ignorable := len(name) < len(key)
+		norm := normalizeKey(name)
+		if prev, dup := seen[norm]; dup {
+			return entry.value.errorf("field %q conflicts with earlier %q", key, prev)
+		}
+		seen[norm] = key
+		field, known := fields[norm]
+		if !known {
+			if ignorable {
+				continue
+			}
+			return entry.value.errorf("unknown field %q: %w", name, errors.ErrUnsupported)
+		}
+		if err := entry.value.decodeValue(dst.Field(field.index), depth+1, st); err != nil {
+			return err
+		}
+	}
+
+	// Fields not set by the config: allowed only for Optional ones.
+	for norm, field := range fields {
+		if _, ok := seen[norm]; ok {
+			continue
+		}
+		fv := dst.Field(field.index)
+		if _, isOpt := fv.Addr().Interface().(optionalField); isOpt {
+			continue
+		}
+		return n.errorf("required field %q is missing", wireName(field.goName))
+	}
+	return nil
 }
 
 // decodeSlice is implemented in Task 8.
