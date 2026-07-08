@@ -1,0 +1,106 @@
+# Copyright 2026 The Outline Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Layer 4 (QA plan): Android native-seam smoke on a real emulator — deep-link
+# add-key, real VpnService tunnel to a hermetic local Shadowsocks server,
+# consent dialog, disconnect. Driven by Maestro through the accessibility
+# tree (validated by the 2026-07 spike; see client/e2e/android/README.md).
+
+name: Nightly Android E2E
+
+concurrency:
+  group: '${{ github.head_ref || github.ref }} Android E2E'
+  cancel-in-progress: true
+
+on:
+  schedule:
+    - cron: '0 14 * * *' # Daily at 2PM UTC, after the 1PM debug build.
+  workflow_dispatch:
+
+jobs:
+  android_e2e:
+    name: Android Emulator E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Setup Java
+        run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build Android Client
+        run: npm run action client/src/cordova/build android -- --verbose
+
+      - name: Start Hermetic Shadowsocks Server
+        working-directory: client/go/e2etest
+        # The emulator reaches the host's loopback via 10.0.2.2.
+        run: |
+          go build -o /tmp/ss-server ./cmd/ss-server
+          nohup /tmp/ss-server -port 18388 -secret e2e-test-secret > /tmp/ss-server.log 2>&1 &
+
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Run Maestro Flows on Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: default
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -camera-back none
+          script: |
+            adb install client/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+            SS_URL="ss://$(printf 'chacha20-ietf-poly1305:e2e-test-secret' | basenc --base64url | tr -d '=')@10.0.2.2:18388/#E2E"
+            maestro test -e SS_URL="$SS_URL" --debug-output maestro-debug client/e2e/android/flows/
+
+      - name: Assert Tunnel Traffic Reached the Shadowsocks Server (Net.Web)
+        run: |
+          cat /tmp/ss-server.log
+          grep -q "tcp connection from" /tmp/ss-server.log
+
+      - name: Upload Maestro Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-debug-output
+          path: |
+            maestro-debug
+            /tmp/ss-server.log
+          if-no-files-found: ignore
