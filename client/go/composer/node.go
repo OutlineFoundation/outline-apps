@@ -25,7 +25,14 @@ import (
 // TypeKey is the reserved mapping key that selects a registered sub-parser.
 const TypeKey = "$type"
 
-const maxAliasDepth = 20
+const (
+	maxAliasDepth = 20
+	maxMergeDepth = 20
+)
+
+// mergeKey is the standard YAML merge key, which inserts the entries of
+// another mapping into the host mapping.
+const mergeKey = "<<"
 
 // Kind describes the shape of a config Node.
 type Kind int
@@ -183,10 +190,19 @@ type mapEntry struct {
 }
 
 // mappingEntries returns the key/value pairs of a mapping node in
-// document order. The MappingValueNode case is defensive: goccy v1.18
-// always produces MappingNode (see goccy_test.go), but older versions
-// used MappingValueNode for single-pair mappings.
+// document order, with YAML merge keys (<<) expanded: explicit keys win
+// over merged keys, and earlier merge sources win over later ones.
 func (n Node) mappingEntries() ([]mapEntry, error) {
+	return n.mappingEntriesDepth(0)
+}
+
+// The MappingValueNode case is defensive: goccy v1.18 always produces
+// MappingNode (see goccy_test.go), but older versions used
+// MappingValueNode for single-pair mappings.
+func (n Node) mappingEntriesDepth(depth int) ([]mapEntry, error) {
+	if depth > maxMergeDepth {
+		return nil, n.errorf("merge key nesting exceeds %d levels", maxMergeDepth)
+	}
 	var kvs []*ast.MappingValueNode
 	switch t := n.ast.(type) {
 	case *ast.MappingNode:
@@ -197,18 +213,70 @@ func (n Node) mappingEntries() ([]mapEntry, error) {
 		return nil, n.errorf("expected a map, found %s", n.describe())
 	}
 	entries := make([]mapEntry, 0, len(kvs))
+	haveKey := make(map[string]bool, len(kvs))
+	var merged []mapEntry
 	for _, kv := range kvs {
 		key := kv.Key.GetToken().Value
-		if key == "<<" {
-			return nil, n.errorf("YAML merge keys (<<) are not supported; use an anchor on the whole value instead")
+		if key == mergeKey {
+			source, err := n.childNode(kv.Value, n.path)
+			if err != nil {
+				return nil, err
+			}
+			sub, err := source.mergeSourceEntries(depth)
+			if err != nil {
+				return nil, err
+			}
+			merged = append(merged, sub...)
+			continue
 		}
 		child, err := n.childNode(kv.Value, joinPath(n.path, key))
 		if err != nil {
 			return nil, err
 		}
 		entries = append(entries, mapEntry{key: key, value: child})
+		haveKey[key] = true
+	}
+	// YAML merge semantics: keys explicitly present in the host mapping
+	// win over merged keys; among merge sources, earlier ones win.
+	for _, e := range merged {
+		if haveKey[e.key] {
+			continue
+		}
+		haveKey[e.key] = true
+		// Re-anchor the path at the host mapping so errors read
+		// naturally; line numbers still point at the definition site.
+		e.value.path = joinPath(n.path, e.key)
+		entries = append(entries, e)
 	}
 	return entries, nil
+}
+
+// mergeSourceEntries returns the entries provided by a merge-key value:
+// a mapping, or a sequence of mappings (earlier mappings win).
+func (n Node) mergeSourceEntries(depth int) ([]mapEntry, error) {
+	if n.Kind() != KindSequence {
+		return n.mappingEntriesDepth(depth + 1)
+	}
+	items, err := n.sequenceItems()
+	if err != nil {
+		return nil, err
+	}
+	var out []mapEntry
+	haveKey := make(map[string]bool)
+	for _, item := range items {
+		sub, err := item.mappingEntriesDepth(depth + 1)
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range sub {
+			if haveKey[e.key] {
+				continue
+			}
+			haveKey[e.key] = true
+			out = append(out, e)
+		}
+	}
+	return out, nil
 }
 
 // sequenceItems returns the elements of a sequence node.

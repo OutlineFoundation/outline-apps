@@ -86,13 +86,23 @@ mapstructure or goccy's decoder would need as much pre/post-processing
 code as a direct ~300-line AST walker, with less control. The legacy
 map→JSON→YAML round-trip (MapToAny) is retired.
 
-## D10. Anchors resolved by the framework; merge keys rejected
+## D10. Anchors and merge keys resolved by the framework
 
 ParseYAML builds a document-wide anchor table; nodes resolve aliases
 lazily (no upfront expansion, so no memory amplification). Decode
 enforces depth and node-count budgets against billion-laughs configs.
-Merge keys (`<<`) are rejected explicitly: rarely needed, complicate
-the unknown-field story, and anchors on whole values cover the use case.
+
+YAML merge keys (`<<`) are supported with standard YAML semantics:
+explicit keys in the host mapping win over merged keys, and earlier
+merge sources win over later ones. Merges are expanded when a mapping's
+entries are read, before any field matching, so they work uniformly for
+struct targets, map targets, and `$type` dispatch. Expansion is
+depth-limited (20 levels) so self-referential merges error instead of
+hanging. An earlier draft rejected merge keys, but the official
+access-key config documentation relies on them to de-duplicate config
+sections (e.g. sharing cipher/secret between the tcp and udp
+transports):
+https://developer.getoutline.org/vpn/reference/access-key-config/
 
 ## D11. Scalar shorthand stays in fallback handlers
 

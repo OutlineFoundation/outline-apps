@@ -18,8 +18,35 @@ A config value is one of:
   `field: null` and omitting `field` are equivalent.
 
 YAML anchors (`&name`) and aliases (`*name`) are supported and resolved
-by the framework, with limits (see Limits). YAML merge keys (`<<`) are
-NOT supported and produce an error; use anchors on whole values instead.
+by the framework, with limits (see Limits).
+
+### Merge keys
+
+The standard YAML merge key `<<` inserts the entries of another mapping
+into the host mapping, which de-duplicates shared config sections:
+
+```yaml
+tcp:
+  $type: shadowsocks
+  endpoint: ss.example.com:80
+  <<: &cipher
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET
+udp:
+  $type: shadowsocks
+  endpoint: ss.example.com:53
+  <<: *cipher
+```
+
+Semantics:
+
+- Keys explicitly present in the host mapping win over merged keys.
+- The value of `<<` may be a mapping (inline or via alias) or a
+  sequence of mappings; earlier mappings in the sequence win.
+- Merges are shallow (top-level keys only) and may be chained — a
+  merged mapping may itself contain `<<` — up to 20 levels.
+- Merges are expanded before any field matching, so they apply equally
+  to struct targets, map targets, and `$type` dispatch.
 
 ## Reserved key namespace: `$`
 
