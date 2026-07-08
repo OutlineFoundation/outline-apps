@@ -16,6 +16,8 @@ package composer
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -163,6 +165,70 @@ func TestDecodeStruct_Nested(t *testing.T) {
 func TestDecodeStruct_NotAMapping(t *testing.T) {
 	var cfg wsTestConfig
 	require.Error(t, mustParse(t, "just-a-string").Decode(&cfg))
+}
+
+func TestDecode_Slices(t *testing.T) {
+	type entry struct {
+		IPs    []string
+		Dialer Optional[Node]
+	}
+	type table struct{ Table []entry }
+	tbl := decodeAll[table](t, "table:\n  - ips: [\"1.1.1.1\", \"8.8.8.8/32\"]\n  - ips: [\"9.9.9.9\"]")
+	require.Len(t, tbl.Table, 2)
+	require.Equal(t, []string{"1.1.1.1", "8.8.8.8/32"}, tbl.Table[0].IPs)
+
+	var s []int
+	require.Error(t, mustParse(t, "not-a-list").Decode(&s))
+}
+
+func TestDecode_StringMap(t *testing.T) {
+	type req struct{ Headers map[string][]string }
+	r := decodeAll[req](t, "headers:\n  User-Agent: [outline]\n  $weird: [kept]")
+	// Map keys are verbatim: no $ skipping, no ? semantics.
+	require.Equal(t, []string{"outline"}, r.Headers["User-Agent"])
+	require.Equal(t, []string{"kept"}, r.Headers["$weird"])
+
+	var bad map[int]string
+	require.Error(t, mustParse(t, "1: a").Decode(&bad), "non-string map keys unsupported")
+}
+
+// deepMap is a recursive map type that lets Decode follow a mapping
+// chain of arbitrary depth.
+type deepMap map[string]deepMap
+
+func TestDecode_DepthLimit(t *testing.T) {
+	var sb strings.Builder
+	for i := 0; i < 150; i++ {
+		sb.WriteString(strings.Repeat("  ", i) + "a:\n")
+	}
+	sb.WriteString(strings.Repeat("  ", 150) + "a: 1")
+	var out deepMap
+	err := mustParse(t, sb.String()).Decode(&out)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "nesting exceeds")
+}
+
+// amp18 is 18 nested slice layers. With each alias level referencing the
+// previous one twice, decoding the payload below visits ~2^19 nodes if
+// unchecked — the billion-laughs shape the visit budget must stop.
+type amp18 = [][][][][][][][][][][][][][][][][][]string
+
+func TestDecode_AliasAmplificationBudget(t *testing.T) {
+	var sb strings.Builder
+	sb.WriteString("l0: &l0 [x, x]\n")
+	for i := 1; i < 18; i++ {
+		fmt.Fprintf(&sb, "l%d: &l%d [*l%d, *l%d]\n", i, i, i-1, i-1)
+	}
+	sb.WriteString("payload: *l17\n")
+	n := mustParse(t, sb.String())
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	payload := entries[len(entries)-1].value
+
+	var out amp18
+	err = payload.Decode(&out)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "100000")
 }
 
 func TestDecode_ErrorHasPathAndLine(t *testing.T) {

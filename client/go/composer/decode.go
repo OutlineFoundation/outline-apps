@@ -259,12 +259,39 @@ func (n Node) decodeStruct(dst reflect.Value, depth int, st *decodeState) error 
 	return nil
 }
 
-// decodeSlice is implemented in Task 8.
 func (n Node) decodeSlice(dst reflect.Value, depth int, st *decodeState) error {
-	return n.errorf("slice decoding not implemented")
+	items, err := n.sequenceItems()
+	if err != nil {
+		return err
+	}
+	out := reflect.MakeSlice(dst.Type(), len(items), len(items))
+	for i, item := range items {
+		if err := item.decodeValue(out.Index(i), depth+1, st); err != nil {
+			return err
+		}
+	}
+	dst.Set(out)
+	return nil
 }
 
-// decodeMap is implemented in Task 8.
+// decodeMap fills a map[string]T. Unlike structs, map targets are open:
+// keys are taken verbatim, with no $-reserved or ?-ignorable handling.
 func (n Node) decodeMap(dst reflect.Value, depth int, st *decodeState) error {
-	return n.errorf("map decoding not implemented")
+	if dst.Type().Key().Kind() != reflect.String {
+		return n.errorf("unsupported map key type %v", dst.Type().Key())
+	}
+	entries, err := n.mappingEntries()
+	if err != nil {
+		return err
+	}
+	out := reflect.MakeMapWithSize(dst.Type(), len(entries))
+	for _, entry := range entries {
+		val := reflect.New(dst.Type().Elem()).Elem()
+		if err := entry.value.decodeValue(val, depth+1, st); err != nil {
+			return err
+		}
+		out.SetMapIndex(reflect.ValueOf(entry.key), val)
+	}
+	dst.Set(out)
+	return nil
 }
