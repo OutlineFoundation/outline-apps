@@ -28,6 +28,8 @@
 // covered below by asserting on actual traffic through the tunnel.
 
 import {execFile} from 'child_process';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import {promisify} from 'util';
 
 import {
@@ -90,16 +92,14 @@ async function fetchTunnelTarget(
  * launch).
  */
 async function resetAppState(app: ElectronApplication, page: Page) {
-  await app.evaluate(({app: electronApp}) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs') as typeof import('fs');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require('path') as typeof import('path');
-    // The TunnelStore file (client/electron/tunnel_store.ts).
-    fs.rmSync(path.join(electronApp.getPath('userData'), 'connection_store'), {
-      force: true,
-    });
-  });
+  // The evaluate callback runs outside any CommonJS module scope, where
+  // `require` is not defined, so read the path out and delete the
+  // TunnelStore file (client/electron/tunnel_store.ts) from the test
+  // process, which runs as root.
+  const userDataPath = await app.evaluate(({app: electronApp}) =>
+    electronApp.getPath('userData')
+  );
+  await fs.rm(path.join(userDataPath, 'connection_store'), {force: true});
   await page.evaluate(() => {
     window.localStorage.clear();
     window.localStorage.setItem(
