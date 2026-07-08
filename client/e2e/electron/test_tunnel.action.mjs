@@ -79,10 +79,12 @@ export async function main(...parameters) {
     'tunnel',
     'setup_netns.sh'
   );
-  await spawnStream('bash', setupScript, 'up');
-
   let server;
   try {
+    // Inside the try so a partial namespace setup is always torn down by the
+    // finally, even on a reused workflow_dispatch runner.
+    await spawnStream('bash', setupScript, 'up');
+
     server = await startTunnelServer(serverBinary);
 
     await spawnStream(
@@ -116,6 +118,7 @@ function startTunnelServer(serverBinary) {
     const server = spawn('ip', ['netns', 'exec', NETNS, serverBinary], {
       stdio: ['ignore', 'pipe', 'inherit'],
     });
+    let ready = false;
     const timeout = setTimeout(() => {
       server.kill('SIGKILL');
       reject(new Error('e2eserver did not become ready within 30s'));
@@ -123,13 +126,21 @@ function startTunnelServer(serverBinary) {
     server.stdout.on('data', data => {
       process.stdout.write(`[e2eserver] ${data}`);
       if (data.toString().includes('READY')) {
+        ready = true;
         clearTimeout(timeout);
         resolve(server);
       }
     });
     server.on('exit', code => {
       clearTimeout(timeout);
-      reject(new Error(`e2eserver exited early with code ${code}`));
+      if (ready) {
+        // A crash mid-run can no longer reject the already-settled promise;
+        // surface it loudly so it isn't misread as an opaque test network
+        // failure.
+        console.error(`[e2eserver] exited mid-run with code ${code}`);
+      } else {
+        reject(new Error(`e2eserver exited early with code ${code}`));
+      }
     });
   });
 }

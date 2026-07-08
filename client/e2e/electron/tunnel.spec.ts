@@ -241,16 +241,21 @@ test('Vpn.AutoReconnect: the client reconnects on launch after an unclean shutdo
   // Connect, then simulate a crash/shutdown while connected: the saved
   // tunnel (TunnelStore) must make the next launch reconnect on its own.
   const first = await launchOutlineApp();
-  await resetAppState(first.app, first.page);
-  await connectToTunnelServer(first.page);
-  await expect
-    .poll(async () => (await probeTarget()).ok, {timeout: 20_000})
-    .toBe(true);
-
   const firstExited = new Promise<void>(resolve => {
     first.app.process().once('exit', () => resolve());
   });
-  first.app.process().kill('SIGKILL');
+  try {
+    await resetAppState(first.app, first.page);
+    await connectToTunnelServer(first.page);
+    await expect
+      .poll(async () => (await probeTarget()).ok, {timeout: 20_000})
+      .toBe(true);
+  } finally {
+    // Kill the first app before launching the second even if setup threw,
+    // so a leaked Electron process (and its VPN) can't conflict with the
+    // relaunch below or later tests.
+    first.app.process().kill('SIGKILL');
+  }
   await firstExited;
 
   const {app} = await launchOutlineApp();
