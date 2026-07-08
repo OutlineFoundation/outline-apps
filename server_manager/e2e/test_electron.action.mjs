@@ -20,34 +20,26 @@ import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 
 /**
- * @description Runs the Manager UI E2E suite (Playwright) against the
- * browser build. Extra parameters are forwarded to `playwright test`.
+ * @description Runs the Manager Electron E2E tests (Playwright driving the
+ * real Electron app; QA automation Layer 3). Extra parameters are forwarded
+ * to `playwright test`. On Linux, run under `xvfb-run`.
  *
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  await runAction('server_manager/www/build_install_script');
-
-  // Build the browser bundle (the same one `server_manager/www/start`
-  // serves). Output to an e2e-specific directory: the default output path
-  // is shared with the Electron renderer build, so building the Electron
-  // app (e.g. server_manager/e2e/test_electron) would otherwise clobber
-  // the bundle this suite serves.
-  await spawnStream(
-    'npx',
-    'webpack',
-    '--config',
-    path.join(getRootDir(), 'server_manager', 'browser.webpack.js'),
-    '--output-path',
-    path.join(getRootDir(), 'output', 'build', 'server_manager', 'e2e', 'www')
-  );
+  await runAction('server_manager/electron/build');
 
   await spawnStream(
     'npx',
     'playwright',
     'test',
     '--config',
-    path.join(getRootDir(), 'server_manager', 'e2e', 'playwright.config.ts'),
+    path.join(
+      getRootDir(),
+      'server_manager',
+      'e2e',
+      'electron.playwright.config.ts'
+    ),
     ...parameters
   );
 }

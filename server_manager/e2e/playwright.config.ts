@@ -16,6 +16,9 @@ import * as path from 'path';
 
 import {defineConfig, devices} from '@playwright/test';
 
+// Built by test.action.mjs; separate from the Electron renderer's output
+// path (output/build/server_manager/www/static) so the two builds cannot
+// clobber each other.
 const WWW_DIR = path.join(
   __dirname,
   '..',
@@ -23,8 +26,8 @@ const WWW_DIR = path.join(
   'output',
   'build',
   'server_manager',
-  'www',
-  'static'
+  'e2e',
+  'www'
 );
 
 /**
@@ -38,6 +41,9 @@ const WWW_DIR = path.join(
  */
 export default defineConfig({
   testDir: './tests',
+  // The Electron suite has its own config (electron.playwright.config.ts):
+  // it launches the app itself and doesn't use the web server.
+  testIgnore: '**/electron.spec.ts',
   outputDir: './test-results',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -48,6 +54,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:18624',
     trace: 'on-first-retry',
+    // The real-Shadowbox journey (Layer 2) talks to a container with a
+    // self-signed certificate.
+    ignoreHTTPSErrors: !!process.env.SHADOWBOX_API_URL,
   },
   webServer: {
     command: `npx http-server "${WWW_DIR}" --port 18624 --silent -c-1`,

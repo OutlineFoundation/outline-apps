@@ -153,6 +153,7 @@
         "server_manager/electron_main.webpack.mjs",
         "server_manager/electron_preload.webpack.mjs",
         "server_manager/e2e/test.action.mjs",
+        "server_manager/e2e/test_electron.action.mjs",
         ".prettierrc.js",
         "client/web/karma.conf.js"
       ],

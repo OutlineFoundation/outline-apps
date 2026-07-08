@@ -208,6 +208,14 @@ function main() {
   // prevent window being garbage collected
   let mainWindow: Electron.BrowserWindow;
 
+  // Redirect all persisted state (including the single-instance lock, which
+  // is scoped to the userData directory). Used by the E2E suite
+  // (server_manager/e2e) to isolate each test run from the user's real
+  // profile and any running Manager instance.
+  if (process.env.OUTLINE_MANAGER_USER_DATA_DIR) {
+    app.setPath('userData', process.env.OUTLINE_MANAGER_USER_DATA_DIR);
+  }
+
   app.userAgentFallback = `OutlineManager/${electron.app.getVersion()} ${app.userAgentFallback}`;
 
   // Mark secure to avoid mixed content warnings when loading DigitalOcean pages via https://.

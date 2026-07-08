@@ -74,18 +74,31 @@ initializes Sentry without a DSN, so no outgoing request exists to intercept
 until the `@sentry/browser` split in
 [#1311](https://github.com/Jigsaw-Code/outline-apps/issues/1311) lands).
 
-Phase 2 of this layer adds the DigitalOcean flows against an intercepted DO
-API (`ServerCreate.DigitalOcean`, `ServerConnect.DigitalOcean`,
-`ServerDestroy.DigitalOcean` — UI halves), which requires mocking the
-droplet-creation/polling surface of the DO REST API. GCP similarly, with a
-larger mocked surface (OAuth token exchange, Compute, Billing).
+The DigitalOcean flows run against an intercepted DO API
+(`server_manager/e2e/tests/fake_digitalocean.ts`): the browser build's OAuth
+stub asks for the token via `window.prompt` (answered through Playwright's
+dialog handler), and everything after that — account status, region listing,
+droplet creation, install-tag polling, destruction — is the app's real
+DigitalOcean code over the intercepted REST API. Covers
+`ServerCreate.DigitalOcean`, `ServerConnect.DigitalOcean`,
+`ServerDestroy.DigitalOcean` (UI halves; the full-stack halves are Layer 4).
+
+GCP is the remaining provider. It needs (a) a `runGcpOauth` stub in
+`browser_main.ts` (the browser build currently has none, so the GCP intro
+card is unusable outside Electron), and (b) a substantially larger
+intercepted surface than DigitalOcean: the OAuth token exchange, Compute
+(instances, static IPs, guest attributes, firewalls, zones, operation
+polling), Resource Manager (project create/list + operations), Service Usage
+(list/batchEnable + operations) and Cloud Billing. Deferred to its own
+phase.
 
 ### Layer 2 — Real-Shadowbox integration (hermetic server, nightly)
 
-The manual-server tests from Layer 1 re-run against a *real* Shadowbox: a
-`docker run outline/shadowbox` container started on the runner, with the
-route-interception layer disabled. This proves the management-API contract
-(the Layer 1 fake and the real server can drift; this layer catches it).
+The manual-server journey re-runs against a *real* Shadowbox: a container
+started on the runner (`npm run action server_manager/e2e/test_real`), set
+up the way `install_server.sh` does it — self-signed TLS certificate, API
+prefix, first access key. This proves the management-API contract (the
+Layer 1 fake and the real server can drift; this layer catches it).
 
 It also completes `Key.Share`: the acceptance criterion is that the Outline
 *Client* can connect with the shared key. The generated access key is handed
@@ -98,14 +111,20 @@ Covers: `ServerCreate.Manual` / `Key.*` (full-stack halves), `Key.Share`
 
 ### Layer 3 — Desktop E2E (Playwright Electron, Windows + Linux + macOS)
 
-Playwright's `_electron.launch()` drives the real main process and renderer:
-app starts, window opens, servers persist across a real app restart, the app
-quits cleanly (no orphan process), and the OAuth windows open. The
-Shadowbox fake from Layer 1 cannot intercept here, so these tests either run
-UI-only flows or point at the Layer 2 container.
+Playwright's `_electron.launch()` drives the real main process and renderer
+(`npm run action server_manager/e2e/test_electron`): app starts, window
+opens, servers persist across a real app restart, and the app quits cleanly
+(no orphan process). Groundwork: `OUTLINE_MANAGER_USER_DATA_DIR` redirects
+the app's state (and the single-instance lock, which is scoped to userData)
+so tests are isolated from the user's real profile and any running Manager.
+Playwright-fulfilled responses reach this app's renderer with `status: 0`
+(its pages live on the custom `outline://` scheme), so the Shadowbox fake
+serves over a real local HTTPS socket here and the app launches with
+`--ignore-certificate-errors`.
 
-Covers: `App.Start`, `App.Terminate`, `ServerConnect.Manual` (real restart),
-`Ui.MainIcon` (partial: window/dock icon present).
+Covers: `App.Start`, `App.Terminate`, `ServerConnect.Manual` (real restart).
+Later: OAuth window smoke, `Ui.MainIcon` (partial: window/dock icon
+present).
 
 ### Layer 4 — Cloud-provider canary (real DO/GCP, release gate)
 
@@ -167,12 +186,15 @@ explicitly. Shared with the client plan's Phase 5 tooling.
 
 ## Phasing & status
 
-- [ ] **Phase 0 — groundwork**
-  - [x] Route-intercepted Shadowbox management API fake
-        (`server_manager/e2e/tests/fake_shadowbox.ts`)
+- [x] **Phase 0 — groundwork**
+  - [x] Shadowbox management API fake, mountable as Playwright routes or a
+        real local HTTPS server (`server_manager/e2e/tests/fake_shadowbox.ts`)
   - [x] `data-testid` attributes on key components (intro, manual entry,
         server list, access-key table/controls, help bubbles)
-  - [ ] Shadowbox container harness for Layer 2
+  - [x] Shadowbox container harness for Layer 2
+        (`server_manager/e2e/test_real.action.sh`)
+  - [x] `OUTLINE_MANAGER_USER_DATA_DIR` profile isolation for Electron
+        (`server_manager/electron/index.ts`)
 - [ ] **Phase 1 — per-PR suite**
   - [x] Playwright Manager UI suite, tagged with checklist IDs
         (`server_manager/e2e`; covers App.Start, ServerCreate.Manual,
@@ -181,15 +203,23 @@ explicitly. Shared with the client plan's Phase 5 tooling.
         Report.UserFeedback (UI))
   - [x] Wire the suite into per-PR CI (`manager_e2e_test` job in
         build_and_test_debug_manager.yml)
-  - [ ] DigitalOcean flows against an intercepted DO API
-  - [ ] GCP flows against an intercepted GCP API
+  - [x] DigitalOcean flows against an intercepted DO API
+        (`fake_digitalocean.ts`; ServerCreate/ServerConnect/ServerDestroy
+        .DigitalOcean)
+  - [ ] GCP flows against an intercepted GCP API (needs a browser
+        `runGcpOauth` stub first; see the Layer 1 section)
 - [ ] **Phase 2 — hermetic real server**
-  - [ ] Nightly job running the manual-server suite against a Shadowbox
-        container
+  - [x] Real-Shadowbox journey + nightly job
+        (`server_manager/e2e/test_real`, `real_shadowbox_e2e` in
+        nightly_manager_e2e.yml)
   - [ ] Key.Share connect check via the client Go library
 - [ ] **Phase 3 — desktop E2E**
-  - [ ] Playwright Electron on Linux and Windows
-  - [ ] macOS run (hosted runner)
+  - [x] Playwright Electron suite (`server_manager/e2e/test_electron`;
+        App.Start, App.Terminate, restart persistence) + nightly Linux job
+        (`linux_electron_e2e` in nightly_manager_e2e.yml); also runs
+        locally on macOS
+  - [ ] Windows Electron job
+  - [ ] OAuth window smoke, Ui.MainIcon partial
 - [ ] **Phase 4 — release gate**
   - [ ] Cloud canary workflow (real DO/GCP, secrets, auto-destroy)
   - [ ] Installer/signature scripts (shared with client Layer 5)

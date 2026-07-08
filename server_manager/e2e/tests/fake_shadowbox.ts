@@ -12,21 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {execSync} from 'child_process';
+import * as fs from 'fs';
+import * as https from 'https';
+import * as os from 'os';
+import * as path from 'path';
+
 import type {Page, Route} from '@playwright/test';
 
 /**
- * A fake Shadowbox management API, mounted into the page with
- * `page.route()`.
+ * A fake Shadowbox management API.
  *
  * Manual servers added without a certificate fingerprint use plain
- * `window.fetch` (see server_manager/www/fetcher.ts), so intercepting
- * requests to the API URL lets the whole app — repository, storage and UI —
- * run real code against a scriptable server. The URL must be `https:` to
- * satisfy the page's CSP; the interception happens before any network
- * access, so the host never needs to resolve.
+ * `window.fetch` (see server_manager/www/fetcher.ts), so impersonating the
+ * API URL lets the whole app — repository, storage and UI — run real code
+ * against a scriptable server. The endpoint surface mirrors what
+ * ShadowboxServer (server_manager/www/shadowbox_server.ts) calls.
  *
- * The endpoint surface mirrors what ShadowboxServer
- * (server_manager/www/shadowbox_server.ts) calls.
+ * Two ways to mount it:
+ *
+ * - `install(page)` — Playwright route interception, for the browser suite.
+ *   The URL must be `https:` to satisfy the page's CSP; interception
+ *   happens before any network access, so the host never resolves.
+ * - `serve()` — a real local HTTPS server with a self-signed certificate,
+ *   for the Electron suite: responses fulfilled through CDP reach that
+ *   app's renderer with `status: 0` (its pages live on the custom
+ *   `outline://` scheme), so the requests have to hit a real socket. Launch
+ *   the app with `--ignore-certificate-errors`.
  */
 
 export interface FakeAccessKey {
@@ -43,29 +55,51 @@ interface FakeShadowboxOptions {
   bytesTransferredByKeyId?: {[keyId: string]: number};
 }
 
+interface ApiResponse {
+  status: number;
+  /** JSON-encoded body; empty responses omit it. */
+  body?: string;
+}
+
+// Every response carries CORS headers: in Electron the app's origin is
+// outline://web_app and the renderer enforces CORS on the management API
+// responses (the browser harness bypasses CORS for intercepted requests).
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'Content-Type',
+};
+
 export class FakeShadowbox {
-  readonly apiUrl: string;
+  private _apiUrl: string;
   private name: string;
   private readonly version: string;
   private metricsEnabled = false;
   private readonly keys: FakeAccessKey[] = [];
   private nextKeyId = 0;
   private readonly bytesTransferredByKeyId: {[keyId: string]: number};
+  private server?: https.Server;
 
   constructor(options: FakeShadowboxOptions = {}) {
     // `.invalid` (RFC 2606) can never resolve, so a routing mistake fails
     // fast instead of hitting a real host.
-    this.apiUrl = options.apiUrl ?? 'https://fake-shadowbox.invalid/TestApiKey';
+    this._apiUrl =
+      options.apiUrl ?? 'https://fake-shadowbox.invalid/TestApiKey';
     this.name = options.name ?? 'Fake Shadowbox';
     this.version = options.version ?? '1.6.0';
     this.bytesTransferredByKeyId = options.bytesTransferredByKeyId ?? {};
-    // A freshly installed Shadowbox always has one key.
+    // A freshly installed Shadowbox always has one key (created by
+    // install_server.sh's create_first_user).
     this.createKey();
+  }
+
+  get apiUrl(): string {
+    return this._apiUrl;
   }
 
   /** The value to paste into the manual server entry screen. */
   get config(): string {
-    return JSON.stringify({apiUrl: this.apiUrl});
+    return JSON.stringify({apiUrl: this._apiUrl});
   }
 
   listKeys(): readonly FakeAccessKey[] {
@@ -85,22 +119,96 @@ export class FakeShadowbox {
 
   /** Starts intercepting this fake's API URL on `page`. */
   async install(page: Page): Promise<void> {
-    await page.route(`${this.apiUrl}/**`, route => this.handle(route));
+    await page.route(`${this._apiUrl}/**`, route => this.handleRoute(route));
   }
 
-  private handle(route: Route): Promise<void> {
+  /**
+   * Starts a real local HTTPS server (self-signed certificate) and points
+   * this fake's API URL at it. Callers must `stop()` when done.
+   */
+  async serve(): Promise<void> {
+    const certDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-shadowbox-'));
+    const keyFile = path.join(certDir, 'key.pem');
+    const certFile = path.join(certDir, 'cert.pem');
+    execSync(
+      "openssl req -x509 -nodes -days 1 -newkey rsa:2048 -subj '/CN=localhost' " +
+        `-keyout "${keyFile}" -out "${certFile}" 2> /dev/null`
+    );
+    this.server = https.createServer(
+      {key: fs.readFileSync(keyFile), cert: fs.readFileSync(certFile)},
+      (request, response) => {
+        const chunks: Buffer[] = [];
+        request.on('data', chunk => chunks.push(chunk));
+        request.on('end', () => {
+          const requestPath = new URL(request.url ?? '/', this._apiUrl).pathname
+            .substring(new URL(this._apiUrl).pathname.length)
+            .replace(/^\//, '');
+          const {status, body} = this.handleApi(
+            request.method ?? 'GET',
+            requestPath,
+            Buffer.concat(chunks).toString() || null
+          );
+          response.writeHead(status, {
+            ...CORS_HEADERS,
+            ...(body ? {'content-type': 'application/json'} : {}),
+          });
+          response.end(body ?? '');
+        });
+      }
+    );
+    await new Promise<void>(resolve =>
+      this.server.listen(0, '127.0.0.1', resolve)
+    );
+    const address = this.server.address();
+    if (typeof address === 'string' || !address) {
+      throw new Error('unexpected server address');
+    }
+    this._apiUrl = `https://127.0.0.1:${address.port}/TestApiKey`;
+  }
+
+  async stop(): Promise<void> {
+    if (this.server) {
+      await new Promise<void>(resolve => this.server.close(() => resolve()));
+      this.server = undefined;
+    }
+  }
+
+  private handleRoute(route: Route): Promise<void> {
     const request = route.request();
-    const url = new URL(request.url());
-    // Path relative to the base API URL, e.g. 'access-keys/3/name'.
-    const path = url.pathname
-      .substring(new URL(this.apiUrl).pathname.length)
+    const requestPath = new URL(request.url()).pathname
+      .substring(new URL(this._apiUrl).pathname.length)
       .replace(/^\//, '');
-    const method = request.method();
+    const {status, body} = this.handleApi(
+      request.method(),
+      requestPath,
+      request.postData()
+    );
+    return route.fulfill({
+      status,
+      body: body ?? '',
+      headers: {
+        ...CORS_HEADERS,
+        ...(body ? {'content-type': 'application/json'} : {}),
+      },
+    });
+  }
 
-    const json = (body: unknown, status = 200) =>
-      route.fulfill({status, json: body});
-    const noContent = () => route.fulfill({status: 204, body: ''});
+  /** Transport-agnostic core: relative path in, status/JSON body out. */
+  private handleApi(
+    method: string,
+    path: string,
+    postData: string | null
+  ): ApiResponse {
+    const json = (body: unknown, status = 200): ApiResponse => ({
+      status,
+      body: JSON.stringify(body),
+    });
+    const noContent = (): ApiResponse => ({status: 204});
 
+    if (method === 'OPTIONS') {
+      // CORS preflight.
+      return noContent();
+    }
     if (path === 'server' && method === 'GET') {
       return json({
         name: this.name,
@@ -113,7 +221,7 @@ export class FakeShadowbox {
       });
     }
     if (path === 'name' && method === 'PUT') {
-      this.name = request.postDataJSON().name;
+      this.name = JSON.parse(postData ?? '{}').name;
       return noContent();
     }
     if (path === 'access-keys' && method === 'GET') {
@@ -128,7 +236,7 @@ export class FakeShadowbox {
       if (!key) {
         return json({message: 'not found'}, 404);
       }
-      key.name = new URLSearchParams(request.postData() ?? '').get('name');
+      key.name = new URLSearchParams(postData ?? '').get('name');
       return noContent();
     }
     const keyMatch = path.match(/^access-keys\/([^/]+)$/);
@@ -148,7 +256,7 @@ export class FakeShadowbox {
       return json({message: 'not found'}, 404);
     }
     if (path === 'metrics/enabled' && method === 'PUT') {
-      this.metricsEnabled = request.postDataJSON().metricsEnabled;
+      this.metricsEnabled = JSON.parse(postData ?? '{}').metricsEnabled;
       return noContent();
     }
     if (path === 'server/hostname-for-access-keys' && method === 'PUT') {
