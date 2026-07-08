@@ -1,0 +1,73 @@
+# Copyright 2026 The Outline Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Android native-seam smoke: real VpnService tunnel on the emulator.
+# Covers checklist IDs: Vpn.AddKey (via ss:// deep link), Vpn.Connect,
+# Vpn.Disconnect. Net.Web is asserted server-side: the hermetic Shadowsocks
+# server (client/go/e2etest/cmd/ss-server) logs the client's connectivity
+# probes, which only arrive if the tunnel is actually up.
+#
+# Requires SS_URL, e.g.:
+#   maestro test -e SS_URL='ss://<base64url(cipher:secret)>@10.0.2.2:18388/#Spike' vpn-smoke.yaml
+#
+# Matching notes (from the 2026-07 spike):
+# - The Cordova webview's button text IS exposed through the accessibility
+#   tree (no aria labels needed), but CSS text-transform uppercases it, so
+#   match case-insensitively.
+# - Text is localized; CI emulators default to en-US. Pin the locale if that
+#   ever changes.
+appId: org.outline.android.client
+name: android-vpn-smoke
+---
+- launchApp
+# First-run privacy notice (webview); absent on relaunch.
+- tapOn:
+    text: "(?i)got it"
+    optional: true
+# Vpn.AddKey — deep-link seam: the ss:// key opens the add-server dialog.
+- openLink: ${SS_URL}
+- extendedWaitUntil:
+    visible:
+      text: "(?i)^confirm$"
+    timeout: 15000
+- tapOn:
+    text: "(?i)^confirm$"
+# Vpn.Connect — webview button, then the native OS consent dialog
+# (first connect on a fresh device only).
+- extendedWaitUntil:
+    visible:
+      text: "(?i)^connect$"
+    timeout: 15000
+- tapOn:
+    text: "(?i)^connect$"
+- tapOn:
+    text: "(?i)^ok$"
+    optional: true
+# First-connect "Stay protected, always" tip covers the card; dismiss it.
+- tapOn:
+    text: "(?i)got it"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      text: "(?i)^disconnect$"
+    timeout: 30000
+- takeScreenshot: vpn-connected
+# Vpn.Disconnect — back to the disconnected state.
+- tapOn:
+    text: "(?i)^disconnect$"
+- extendedWaitUntil:
+    visible:
+      text: "(?i)^connect$"
+    timeout: 20000
+- takeScreenshot: vpn-disconnected

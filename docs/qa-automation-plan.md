@@ -98,9 +98,12 @@ Covers: `App.Start`, `App.Terminate`, `Vpn.Connect`, `Vpn.Disconnect`,
   connect + `Net.Web` checks are automatable.
 - Deep links via `adb shell am start` / Maestro `openLink`.
 - `Vpn.AutoReconnect` via `adb shell svc wifi disable/enable`.
-- Spike required: Maestro sees webview content through the accessibility tree;
-  Cordova/Polymer content may need accessibility labels. Fallback: Appium
-  (UiAutomator2) with hybrid-context switching into the webview DOM.
+- ~~Spike required~~ **Spike done (2026-07): Maestro confirmed.** The webview's
+  button text is exposed through the accessibility tree as-is — no labeling
+  pass needed (text is uppercased by CSS and localized; flows match
+  case-insensitively in en-US). Full deep-link → consent → real tunnel →
+  disconnect cycle validated on emulator against the hermetic ss-server; see
+  `client/e2e/android/README.md`. Appium remains the documented fallback.
 
 **iOS — split UI tests from tunnel tests.** `NEPacketTunnelProvider` does not
 run on the iOS Simulator, so:
@@ -166,7 +169,9 @@ explicitly.
         add-key dialog, server cards, rename dialog)
   - [x] Hermetic Shadowsocks harness (`client/go/e2etest`: a real
         `tunnel-server` service running in-process on loopback)
-  - [ ] Maestro-on-Cordova-webview spike (Android)
+  - [x] Maestro-on-Cordova-webview spike (Android): webview text is
+        a11y-visible, full tunnel cycle automated locally — Maestro selected
+        (see `client/e2e/android/README.md`)
 - [ ] **Phase 1 — per-PR suites**
   - [x] Playwright shared-UI suite, tagged with checklist IDs
         (`client/e2e`; covers App.Start, Vpn.Default.Clean, Vpn.AddKey,
@@ -190,7 +195,13 @@ explicitly.
   - [ ] Playwright Electron on Windows
   - [ ] Windows installer/signature scripts on the release gate
 - [ ] **Phase 3 — Android**
-  - [ ] Maestro flows on emulator in nightly CI (real VPN + Net.Web)
+  - [x] Maestro smoke flow (deep-link add-key, real VpnService connect,
+        consent dialog, disconnect; Net.Web asserted via ss-server logs) —
+        `client/e2e/android/flows/`
+  - [x] Validate `nightly_android_e2e.yml` on CI runners — green on
+        ubuntu-latest (x86_64 emulator under KVM, ~8 min end-to-end, real
+        tunnel traffic asserted server-side)
+  - [ ] `Vpn.AutoReconnect` flow if emulator network toggling proves reliable
 - [ ] **Phase 4 — Apple platforms**
   - [ ] iOS simulator UI suite (mocked VPN)
   - [ ] macOS Catalyst XCUITest suite
