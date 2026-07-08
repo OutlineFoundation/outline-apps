@@ -153,6 +153,51 @@ jobs:
           path: client/e2e/playwright-report-electron/
           retention-days: 7
 
+  windows_electron_e2e_test:
+    name: Windows Electron E2E Test
+    # windows-2022 instead of windows-2025 for the same node-gyp reason as
+    # the Windows debug builds below.
+    runs-on: windows-2022
+    timeout-minutes: 40
+    steps:
+      - name: Support longpaths
+        run: git config --system core.longpaths true
+
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Install zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.13.0
+          use-cache: false
+
+      - name: Run Electron E2E Suite
+        run: npm run action client/e2e/electron/test
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-electron-windows
+          path: client/e2e/playwright-report-electron/
+          retention-days: 7
+
   electron_debug_build:
     name: ${{ matrix.name }} Debug Build
     runs-on: ${{ matrix.runner }}
@@ -357,6 +402,7 @@ jobs:
       [
         shared_ui_e2e_test,
         electron_e2e_test,
+        windows_electron_e2e_test,
         electron_debug_build,
         macos_debug_build,
         ios_debug_build,

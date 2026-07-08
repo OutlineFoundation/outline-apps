@@ -7,9 +7,10 @@ Playwright suites from the automated QA plan
   Capacitor browser build) against the browser method channel and the fake
   VPN API.
 - **Electron desktop suite** (`electron/`, Layer 3): launches the real
-  Electron app — main process, preload, Go backend over koffi, real renderer
-  — with Playwright's `_electron` driver. Linux-only (the Electron client
-  does not run on macOS); runs in CI on ubuntu:
+  Electron app — main process, preload, Go backend over koffi (libbackend.so
+  on Linux, backend.dll on Windows), real renderer — with Playwright's
+  `_electron` driver. Linux and Windows only (the Electron client does not
+  run on macOS); runs in CI on ubuntu and windows runners:
 
   ```sh
   npm run action client/e2e/electron/test
