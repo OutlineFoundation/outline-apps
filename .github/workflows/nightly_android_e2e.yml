@@ -78,6 +78,7 @@ jobs:
         run: |
           go build -o /tmp/ss-server ./cmd/ss-server
           nohup /tmp/ss-server -port 18388 -secret e2e-test-secret > /tmp/ss-server.log 2>&1 &
+          echo "SS_URL=ss://$(printf 'chacha20-ietf-poly1305:e2e-test-secret' | basenc --base64url | tr -d '=')@10.0.2.2:18388/#E2E" >> "$GITHUB_ENV"
 
       - name: Install Maestro
         run: |
@@ -92,10 +93,11 @@ jobs:
           target: default
           disable-animations: true
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -camera-back none
+          # Each script line runs as its own `sh -c`, so no state (like shell
+          # variables) survives between lines; SS_URL comes in via GITHUB_ENV.
           script: |
             adb install client/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-            SS_URL="ss://$(printf 'chacha20-ietf-poly1305:e2e-test-secret' | basenc --base64url | tr -d '=')@10.0.2.2:18388/#E2E"
-            maestro test -e SS_URL="$SS_URL" --debug-output maestro-debug client/e2e/android/flows/
+            maestro test -e SS_URL="$SS_URL" --debug-output "$GITHUB_WORKSPACE/maestro-debug" client/e2e/android/flows/
 
       - name: Assert Tunnel Traffic Reached the Shadowsocks Server (Net.Web)
         run: |
