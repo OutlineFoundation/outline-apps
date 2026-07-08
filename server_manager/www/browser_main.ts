@@ -12,12 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// The browser cannot pin certificates, so fall back to a plain fetch. This
+// keeps managed (DigitalOcean/GCP) servers usable in the browser build: the
+// request still fails against a real server's self-signed certificate, but
+// it succeeds when the management API is reachable with valid TLS — or
+// intercepted, as in the E2E suite (see server_manager/e2e).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).fetchWithPin = (
-  _request: HttpRequest,
+(window as any).fetchWithPin = async (
+  request: HttpRequest,
   _fingerprint: string
-) => {
-  return Promise.reject(new Error('Fingerprint pins are not supported'));
+): Promise<HttpResponse> => {
+  console.warn(
+    'fetchWithPin: certificate pinning is not supported in the browser; ' +
+      `fetching ${request.url} without the pin`
+  );
+  const response = await fetch(request.url, request);
+  return {
+    status: response.status,
+    body: await response.text(),
+  };
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

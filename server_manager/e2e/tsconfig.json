@@ -5,6 +5,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["playwright.config.ts", "tests"],
+  "include": [
+    "playwright.config.ts",
+    "electron.playwright.config.ts",
+    "tests"
+  ],
   "exclude": ["node_modules"]
 }
