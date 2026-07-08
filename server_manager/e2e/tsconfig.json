@@ -5,6 +5,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["playwright.config.ts", "test.action.mjs", "tests"],
+  "include": ["playwright.config.ts", "tests"],
   "exclude": ["node_modules"]
 }
