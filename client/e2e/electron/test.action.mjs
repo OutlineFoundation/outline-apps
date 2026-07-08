@@ -22,25 +22,29 @@ import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import {prepareElectronApp} from './prepare_app.mjs';
 
 /**
- * @description Builds the Electron app for Linux and runs the desktop E2E
- * suite (Playwright _electron) against it. Extra parameters are forwarded to
- * `playwright test`. Linux-only: the Electron client does not run on macOS.
+ * @description Builds the Electron app for the current platform and runs the
+ * desktop E2E suite (Playwright _electron) against it. Extra parameters are
+ * forwarded to `playwright test`. Linux and Windows only: the Electron
+ * client does not run on macOS.
  *
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  if (os.platform() !== 'linux') {
+  if (os.platform() !== 'linux' && os.platform() !== 'win32') {
     throw new Error(
-      'The Electron E2E suite only runs on Linux (the Electron client ' +
-        'does not support macOS). It runs in CI on ubuntu runners.'
+      'The Electron E2E suite only runs on Linux and Windows (the Electron ' +
+        'client does not support macOS). It runs in CI on ubuntu and ' +
+        'windows runners.'
     );
   }
 
   await prepareElectronApp();
 
+  // Invoke the Playwright CLI through node rather than `npx`: spawning the
+  // `npx` .cmd shim without a shell fails on Windows.
   await spawnStream(
-    'npx',
-    'playwright',
+    process.execPath,
+    path.join(getRootDir(), 'node_modules', '@playwright', 'test', 'cli.js'),
     'test',
     '--config',
     path.join(getRootDir(), 'client', 'e2e', 'electron.playwright.config.ts'),

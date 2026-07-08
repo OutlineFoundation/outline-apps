@@ -22,22 +22,26 @@ import {runAction} from '@outline/infrastructure/build/run_action.mjs';
 import {stageRuntimeAssets} from '../../electron/stage_runtime_assets.mjs';
 
 /**
- * Builds the Electron app for the current Linux architecture and stages every
- * runtime asset the unpackaged launch needs, exactly as a packaged build
- * would lay them out. Shared by the Electron E2E test actions.
+ * Builds the Electron app for the current platform and architecture and
+ * stages every runtime asset the unpackaged launch needs, exactly as a
+ * packaged build would lay them out. Shared by the Electron E2E test
+ * actions. Linux and Windows only — the platforms the Electron client
+ * supports.
  *
  * @returns {Promise<string>} Absolute path to the launchable app directory.
  */
 export async function prepareElectronApp() {
+  const platform = os.platform() === 'win32' ? 'windows' : 'linux';
   // Node's os.arch() values ('x64', 'arm64') match the --arch values the
   // build actions accept; the Go toolchain names them differently.
   const arch = os.arch();
   const goArch = {x64: 'amd64', arm64: 'arm64', ia32: '386'}[arch] ?? arch;
 
-  // Compiles libbackend.so + tun2socks for the current linux arch.
-  await runAction('client/go/build', 'linux', `--arch=${arch}`);
+  // Compiles the backend library (libbackend.so / backend.dll) + tun2socks
+  // for the current platform and arch.
+  await runAction('client/go/build', platform, `--arch=${arch}`);
   // Builds the web UI and webpacks the Electron main process + preload.
-  await runAction('client/electron/build_main', 'linux', `--arch=${arch}`);
+  await runAction('client/electron/build_main', platform, `--arch=${arch}`);
 
   const appPath = path.join(getRootDir(), 'output', 'client', 'electron');
 
@@ -46,11 +50,12 @@ export async function prepareElectronApp() {
   // action does (this build skips electron-builder packaging).
   await stageRuntimeAssets(appPath);
 
-  // Stage the Go backend (libbackend.so + tun2socks) at the path
+  // Stage the Go backend (backend library + tun2socks) at the path
   // app_paths.ts#pathToBackendLibrary resolves it: <appPath>/output/client/
-  // linux-<goArch>. In a packaged build electron-builder bundles this dir; the
-  // unpackaged E2E launch has to mirror it so the real backend loads.
-  const backendDir = path.join('output', 'client', `linux-${goArch}`);
+  // <platform>-<goArch>. In a packaged build electron-builder bundles this
+  // dir; the unpackaged E2E launch has to mirror it so the real backend
+  // loads.
+  const backendDir = path.join('output', 'client', `${platform}-${goArch}`);
   await fs.cp(
     path.join(getRootDir(), backendDir),
     path.join(appPath, backendDir),

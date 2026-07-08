@@ -33,6 +33,10 @@ export const SUPPORTED_BUILDS = [
   {platform: 'linux', arch: 'arm64', goArch: 'arm64'},
   {platform: 'windows', arch: 'ia32', goArch: '386'},
   {platform: 'windows', arch: 'arm64', goArch: 'arm64'},
+  // The shipped Windows installers are ia32/arm64 (above); x64 exists for
+  // the Electron E2E suite, which runs the x64 dev Electron binary on x64
+  // CI runners and needs a matching backend.dll to load.
+  {platform: 'windows', arch: 'x64', goArch: 'amd64'},
 ];
 
 const BUILDS_BY_PLATFORM = Map.groupBy(SUPPORTED_BUILDS, b => b.platform);

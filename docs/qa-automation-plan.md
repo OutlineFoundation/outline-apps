@@ -193,7 +193,13 @@ explicitly.
         is verified as traffic recovery after an interface bounce plus
         reconnect-on-launch after an unclean shutdown — no transient
         "reconnecting" UI state exists on Linux for network drops.
-  - [ ] Playwright Electron on Windows
+  - [x] Playwright Electron on Windows, UI level against the real app + Go
+        backend (the same `client/e2e/electron` suite, loading the real
+        backend.dll; runs in the `windows_electron_e2e_test` CI job on
+        windows-2022). Real-tunnel Windows (TAP device + OutlineService)
+        stays on the nightly/release-gate tier, mirroring the Linux split.
+  - [ ] Playwright Electron on Windows — real tunnel (TAP + OutlineService
+        install; nightly/gated job)
   - [ ] Windows installer/signature scripts on the release gate
 - [ ] **Phase 3 — Android**
   - [ ] Maestro flows on emulator in nightly CI (real VPN + Net.Web)
