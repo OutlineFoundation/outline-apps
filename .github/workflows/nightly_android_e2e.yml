@@ -27,6 +27,13 @@ on:
   schedule:
     - cron: '0 14 * * *' # Daily at 2PM UTC, after the 1PM debug build.
   workflow_dispatch:
+  # Also run when the Android E2E assets themselves change, so PRs like the
+  # one introducing this suite validate it without waiting for a nightly.
+  pull_request:
+    paths:
+      - .github/workflows/nightly_android_e2e.yml
+      - client/e2e/android/**
+      - client/go/e2etest/**
 
 jobs:
   android_e2e:
