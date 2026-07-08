@@ -1,0 +1,120 @@
+# Copyright 2026 The Outline Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Nightly desktop E2E tier (QA automation Layer 3, see
+# docs/qa-automation-plan.md): suites that are too slow or too privileged for
+# per-PR CI. The Linux real-tunnel job installs a real VPN on the runner —
+# TUN device, NetworkManager routing table changes, root — which is fine on a
+# throwaway runner but must never gate pull requests.
+#
+# `workflow_dispatch` exists so changes can be validated on a branch: GitHub
+# only runs `schedule` triggers from the default branch.
+
+name: Nightly Client E2E
+
+concurrency:
+  group: '${{ github.head_ref || github.ref }} Nightly Client E2E'
+  cancel-in-progress: true
+
+on:
+  schedule:
+    - cron: '0 14 * * *' # Daily at 2PM UTC, after the 1PM Build and Test run.
+  workflow_dispatch: {}
+
+jobs:
+  linux_electron_tunnel_e2e:
+    name: Linux Electron Real-Tunnel E2E
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm set cache .npm && npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Install zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.13.0
+          use-cache: false
+
+      - name: Install System Dependencies
+        run: npx playwright install-deps chromium
+
+      - name: Run Real-Tunnel E2E Suite
+        # Root: the suite creates a TUN device, a network namespace, and
+        # NetworkManager connections (see client/e2e/electron/tunnel/).
+        # `-E env PATH=...` keeps the runner-provisioned node/go toolchains
+        # visible to the root shell.
+        run: |
+          sudo -E env "PATH=$PATH" xvfb-run --auto-servernum -- \
+            npm run action client/e2e/electron/test_tunnel
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-electron-tunnel
+          path: client/e2e/playwright-report-electron-tunnel/
+          retention-days: 7
+
+  notify_scheduled_failure:
+    name: Report Scheduled Failure
+    runs-on: ubuntu-22.04
+    needs: [linux_electron_tunnel_e2e]
+    # Only scheduled runs file an issue; dispatch failures are visible to
+    # whoever dispatched them.
+    if: failure() && github.event_name == 'schedule'
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          label="ci-nightly-failure"
+          {
+            echo "The scheduled \"Nightly Client E2E\" workflow failed."
+            echo
+            echo "- Branch: \`$REF\`"
+            echo "- Commit: $SHA"
+            echo "- Run: $RUN_URL"
+          } > body.md
+          # Reuse an existing open issue so repeated failures don't spam new ones.
+          existing=$(gh issue list --repo "$REPO" --label "$label" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body-file body.md
+          else
+            gh label create "$label" --repo "$REPO" --color b60205 \
+              --description "Scheduled CI failure" 2>/dev/null || true
+            gh issue create --repo "$REPO" --title "Scheduled client CI failed" \
+              --label "$label" --body-file body.md
+          fi

@@ -6,6 +6,7 @@
   "include": [
     "playwright.config.ts",
     "electron.playwright.config.ts",
+    "electron_tunnel.playwright.config.ts",
     "test.action.mjs",
     "tests",
     "electron"

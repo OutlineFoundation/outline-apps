@@ -26,6 +26,9 @@ import {defineConfig} from '@playwright/test';
  */
 export default defineConfig({
   testDir: './electron',
+  // The real-tunnel suite needs root and a prepared network namespace; it
+  // runs on the nightly tier via electron_tunnel.playwright.config.ts.
+  testIgnore: 'tunnel.spec.ts',
   outputDir: './test-results-electron',
   // One Electron instance at a time.
   workers: 1,
