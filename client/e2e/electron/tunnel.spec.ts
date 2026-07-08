@@ -175,17 +175,24 @@ test('Vpn.Connect & Net.Web & Vpn.Disconnect: a real tunnel routes traffic to th
     expect((await probeTarget()).body).toBe(TARGET_RESPONSE_BODY);
 
     // Vpn.Disconnect: the connect toggle tears the tunnel down and the
-    // target becomes unreachable again. The app throttles connection state
-    // changes for 600ms and silently ignores clicks inside that window
-    // (see DEFAULT_SERVER_CONNECTION_STATUS_CHANGE_TIMEOUT in
-    // client/web/app/app.ts), so click until the state transitions.
+    // target becomes unreachable again. Only click while still 'connected':
+    // the app throttles connection state changes for 600ms and silently
+    // ignores clicks inside that window (see
+    // DEFAULT_SERVER_CONNECTION_STATUS_CHANGE_TIMEOUT in
+    // client/web/app/app.ts), so the first click can be dropped and needs
+    // retrying — but a real tunnel takes seconds to tear down, and clicking
+    // again once it has left the 'connected' state would toggle it back into
+    // reconnecting. So click only when still connected, then just wait.
     const card = serverCard(page);
     const indicator = card.locator('server-connection-indicator').first();
     await expect
       .poll(
         async () => {
-          await card.getByTestId('server-connect-button').click();
-          return indicator.getAttribute('connection-state');
+          const state = await indicator.getAttribute('connection-state');
+          if (state === 'connected') {
+            await card.getByTestId('server-connect-button').click();
+          }
+          return state;
         },
         {timeout: 30_000}
       )
