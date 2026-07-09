@@ -140,27 +140,19 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 	}
 
-	result := (&ClientConfig{
+	parsed, err := (&ClientConfig{
 		DataDir: GetBackendConfig().DataDir,
-	}).New("", string(clientConfigBytes))
-	if result.Error != nil {
-		return &InvokeMethodResult{
-			Error: result.Error,
-		}
+	}).ParseConfig("", string(clientConfigBytes))
+	if err != nil {
+		return &InvokeMethodResult{Error: platerrors.ToPlatformError(err)}
 	}
 	response := firstHopAndTunnelConfigJSON{
 		Client: string(clientConfigBytes),
 	}
-
-	streamFirstHop := result.Client.sdInfo.FirstHop
-	packetFirstHop := result.Client.prInfo.FirstHop
-	if streamFirstHop == packetFirstHop {
-		response.FirstHop = streamFirstHop
+	if parsed.Info.Stream.FirstHop == parsed.Info.Packet.FirstHop {
+		response.FirstHop = parsed.Info.Stream.FirstHop
 	}
-
-	streamConnType := result.Client.sdInfo.ConnType
-	packetConnType := result.Client.prInfo.ConnType
-	response.ConnectionType = combinedConnectionType(streamConnType, packetConnType)
+	response.ConnectionType = combinedConnectionType(parsed.Info.Stream.ConnType, parsed.Info.Packet.ConnType)
 
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
