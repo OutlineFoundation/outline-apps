@@ -112,12 +112,17 @@ TypeParser's fallback handler, as in the legacy design.
 
 ## D12. Coexistence and migration
 
-The package is built alongside `configyaml` and adopted by porting one
-parser chain at a time in a follow-up plan; `configyaml` is deleted at
-the end. Long-term destination: the Outline SDK (this package has no
-Outline-app dependencies by design — app policy like
-ConnectionProviderInfo, DNS interception, and User-Agent stays in the
-app layer).
+The package was built alongside `configyaml` and adopted by porting one
+parser chain at a time in a follow-up plan; `configyaml` was deleted at
+the end. Migration complete 2026-07-09: `client/go/netconfig` is now
+the transport-config layer (config interfaces, concrete config types,
+protocol parsers), and `client/go/outline/configregistry` is the app
+layer that registers netconfig's parsers, attaches connection metadata
+via `client/go/outline/connmeta`, and applies Outline policy (DNS
+interception, User-Agent) at the boundary. Long-term destination: the
+Outline SDK (this package has no Outline-app dependencies by design —
+app policy like ConnectionProviderInfo, DNS interception, and
+User-Agent stays in the app layer, never in `composer` or `netconfig`).
 
 ## D13. Package name: `composer`
 
