@@ -23,13 +23,13 @@ import (
 	"path"
 	"runtime"
 
-	"localhost/client/go/configyaml"
-	"localhost/client/go/outline/configregistry"
-	"localhost/client/go/outline/platerrors"
-	"localhost/client/go/outline/reporting"
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
-	"github.com/goccy/go-yaml"
+	"localhost/client/go/composer"
+	"localhost/client/go/outline/configregistry"
+	"localhost/client/go/outline/connmeta"
+	"localhost/client/go/outline/platerrors"
+	"localhost/client/go/outline/reporting"
 )
 
 // Client provides a transparent container for [transport.StreamDialer] and [transport.PacketListener]
@@ -37,19 +37,19 @@ import (
 // It's used by the connectivity test and the tun2socks handlers.
 // TODO(fortuna):
 //   - Add connectivity test to StartSession()
-//   - Add NotifyNetworkChange() method. Needs to hold a packetrelay.PacketRelay instead of configregistry.PacketListener
-//     to handle that.
-//   - Refactor so that StartSession returns a Client
 type Client struct {
-	sd            *configregistry.Dialer[transport.StreamConn]
-	pr            *configregistry.PacketRelay
-	reporter      reporting.Reporter
-	sessionCancel context.CancelFunc
+	sd                   transport.StreamDialer
+	sdInfo               configregistry.ConnectionProviderInfo
+	pr                   packetrelay.PacketRelay
+	prInfo               configregistry.ConnectionProviderInfo
+	notifyNetworkChanged func()
+	reporter             reporting.Reporter
+	sessionCancel        context.CancelFunc
 }
 
 // DialStream implements StreamDialer.DialStream.
 func (c *Client) DialStream(ctx context.Context, address string) (transport.StreamConn, error) {
-	return c.sd.Dial(ctx, address)
+	return c.sd.DialStream(ctx, address)
 }
 
 // NewAssociation implements packetrelay.PacketRelay.NewAssociation.
@@ -58,8 +58,8 @@ func (c *Client) NewAssociation() (packetrelay.PacketSender, packetrelay.PacketR
 }
 
 func (c *Client) NotifyNetworkChanged() {
-	if c.pr.NotifyNetworkChanged != nil {
-		c.pr.NotifyNetworkChanged()
+	if c.notifyNetworkChanged != nil {
+		c.notifyNetworkChanged()
 	}
 }
 
@@ -80,12 +80,6 @@ func (c *Client) EndSession() error {
 	return nil
 }
 
-// ProviderClientConfig is the session config from the service provider.
-type ProviderClientConfig struct {
-	Transport configyaml.ConfigNode
-	Reporter  configyaml.ConfigNode
-}
-
 // NewClientResult represents the result of [NewClientAndReturnError].
 //
 // We use a struct instead of a tuple to preserve a strongly typed error that gobind recognizes.
@@ -97,93 +91,121 @@ type NewClientResult struct {
 // ClientConfig is used to create a session Client.
 type ClientConfig struct {
 	DataDir         string
-	TransportParser *configyaml.TypeParser[*configregistry.TransportPair]
+	TransportParser *composer.TypeParser[configregistry.TransportPairConfig]
+}
+
+// ParsedClient is the result of parsing a provider client config. It
+// holds everything needed to build a [Client], without yet having
+// built any network resources.
+type ParsedClient struct {
+	Transport    configregistry.TransportPairConfig
+	Info         configregistry.TransportPairInfo
+	reporterNode composer.Node
+	keyID        string
+	dataDir      string
+}
+
+// ParseConfig parses providerClientConfigText into a [ParsedClient],
+// without building any network resources.
+func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*ParsedClient, error) {
+	parser := c.TransportParser
+	if parser == nil {
+		tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
+		udpDialer := &transport.UDPDialer{}
+		parser = configregistry.NewComposerTransportParser(tcpDialer, udpDialer)
+	}
+	dataDir := c.DataDir
+	if dataDir == "" && runtime.GOOS != "android" && runtime.GOOS != "ios" {
+		if userDir, err := os.UserConfigDir(); err == nil {
+			dataDir = path.Join(userDir, "org.getoutline.client")
+		} else {
+			slog.Error("failed to get user config dir", "err", err)
+		}
+	}
+
+	root, err := composer.ParseYAML([]byte(providerClientConfigText))
+	if err != nil {
+		return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
+			Message: "config is not valid YAML", Cause: platerrors.ToPlatformError(err)}
+	}
+	var providerConfig struct {
+		Transport composer.Node
+		Reporter  composer.Optional[composer.Node]
+	}
+	if err := root.Decode(&providerConfig); err != nil {
+		return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
+			Message: "invalid config", Cause: platerrors.ToPlatformError(err)}
+	}
+
+	ctx, table := connmeta.WithTable(context.Background())
+	transportCfg, err := parser.Parse(ctx, providerConfig.Transport)
+	if err != nil {
+		code := platerrors.InvalidConfig
+		msg := "failed to create transport"
+		if errors.Is(err, errors.ErrUnsupported) {
+			msg = "unsupported config"
+		}
+		return nil, &platerrors.PlatformError{Code: code, Message: msg, Cause: platerrors.ToPlatformError(err)}
+	}
+	info, ok := connmeta.Get[configregistry.TransportPairInfo](table, transportCfg)
+	if !ok {
+		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
+			Message: "missing connection info for transport config"}
+	}
+	reporterNode, _ := providerConfig.Reporter.Get()
+	return &ParsedClient{Transport: transportCfg, Info: info,
+		reporterNode: reporterNode, keyID: keyID, dataDir: dataDir}, nil
+}
+
+// NewClient builds a [Client] from a [ParsedClient], creating the
+// network resources (dialers, listeners, reporters).
+func (p *ParsedClient) NewClient() (*Client, error) {
+	parts, err := p.Transport.NewTransportPair(context.Background())
+	if err != nil {
+		return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
+			Message: "failed to create transport", Cause: platerrors.ToPlatformError(err)}
+	}
+	sd, relay, onNetworkChanged, err := configregistry.NewOutlineDNSTransport(parts.StreamDialer, parts.PacketListener)
+	if err != nil {
+		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
+			Message: "failed to set up DNS handling", Cause: platerrors.ToPlatformError(err)}
+	}
+	client := &Client{sd: sd, sdInfo: p.Info.Stream, pr: relay, prInfo: p.Info.Packet,
+		notifyNetworkChanged: onNetworkChanged}
+
+	if !p.reporterNode.IsAbsent() {
+		cookieFilename := ""
+		if p.dataDir != "" {
+			cookieFilename = path.Join(p.dataDir, "services", p.keyID, "cookies.json")
+		}
+		reporter, err := NewReporterParser(cookieFilename, client).Parse(context.Background(), p.reporterNode)
+		if err != nil {
+			return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
+				Message: "invalid reporter config", Cause: platerrors.ToPlatformError(err)}
+		}
+		client.reporter = reporter
+	}
+	return client, nil
 }
 
 // New creates a new session client. It's used by the native code, so it returns a NewClientResult.
 func (c *ClientConfig) New(keyID string, providerClientConfigText string) *NewClientResult {
-	client, err := c.new(keyID, providerClientConfigText)
+	parsed, err := c.ParseConfig(keyID, providerClientConfigText)
+	if err != nil {
+		return &NewClientResult{Error: platerrors.ToPlatformError(err)}
+	}
+	client, err := parsed.NewClient()
 	if err != nil {
 		return &NewClientResult{Error: platerrors.ToPlatformError(err)}
 	}
 	return &NewClientResult{Client: client}
 }
 
-// new creates a new session client.
-func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Client, error) {
-	// Make a copy of the config so we can change it.
-	clientConfig := *c
-	if clientConfig.TransportParser == nil {
-		tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
-		udpDialer := &transport.UDPDialer{}
-		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcpDialer, udpDialer)
-	}
-	if clientConfig.DataDir == "" {
-		if runtime.GOOS != "android" && runtime.GOOS != "ios" {
-			userDir, err := os.UserConfigDir()
-			if err != nil {
-				slog.Error("failed to get user config dir", "err", err)
-			} else {
-				clientConfig.DataDir = path.Join(userDir, "org.getoutline.client")
-			}
-		}
-	}
-
-	var providerClientConfig ProviderClientConfig
-	if err := yaml.Unmarshal([]byte(providerClientConfigText), &providerClientConfig); err != nil {
-		return nil, &platerrors.PlatformError{
-			Code:    platerrors.InvalidConfig,
-			Message: "config is not valid YAML",
-			Cause:   platerrors.ToPlatformError(err),
-		}
-	}
-
-	transportPair, err := clientConfig.TransportParser.Parse(context.Background(), providerClientConfig.Transport)
-	if err != nil {
-		if errors.Is(err, errors.ErrUnsupported) {
-			return nil, &platerrors.PlatformError{
-				Code:    platerrors.InvalidConfig,
-				Message: "unsupported config",
-				Cause:   platerrors.ToPlatformError(err),
-			}
-		} else {
-			return nil, &platerrors.PlatformError{
-				Code:    platerrors.InvalidConfig,
-				Message: "failed to create transport",
-				Cause:   platerrors.ToPlatformError(err),
-			}
-		}
-	}
-
-	client := &Client{sd: transportPair.StreamDialer, pr: transportPair.PacketRelay}
-
-	// TODO: figure out a better way to handle parse calls.
-	if providerClientConfig.Reporter != nil {
-		// TODO(fortuna): encapsulate service storage.
-		cookieFilename := ""
-		if c.DataDir != "" {
-			serviceDir := path.Join(c.DataDir, "services", keyID)
-			cookieFilename = path.Join(serviceDir, "cookies.json")
-		}
-		reporter, err := NewReporterParser(cookieFilename, client).Parse(context.Background(), providerClientConfig.Reporter)
-		if err != nil {
-			return nil, &platerrors.PlatformError{
-				Code:    platerrors.InvalidConfig,
-				Message: "invalid reporter config",
-				Cause:   platerrors.ToPlatformError(err),
-			}
-		}
-		client.reporter = reporter
-	}
-
-	return client, nil
-}
-
-func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *configyaml.TypeParser[reporting.Reporter] {
-	parser := configyaml.NewTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (reporting.Reporter, error) {
+func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *composer.TypeParser[reporting.Reporter] {
+	parser := composer.NewTypeParser(func(ctx context.Context, node composer.Node) (reporting.Reporter, error) {
 		return nil, errors.New("parser not specified")
 	})
-	parser.RegisterSubParser("first-supported", configregistry.NewFirstSupportedSubParser(parser.Parse))
+	// first-supported is built into composer.NewTypeParser.
 	parser.RegisterSubParser("http", reporting.NewHTTPReporterConfigParser(cookiesFilename, streamDialer))
 	return parser
 }

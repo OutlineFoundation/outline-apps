@@ -26,9 +26,10 @@ import (
 )
 
 // providerConfig is the config fetched from the provider. It may be either an error, or a tunnel configregistry.
+// Only the Error field is read (see doParseTunnelConfig); goccy ignores
+// unknown fields (e.g. transport) by default.
 type providerConfig struct {
-	ProviderErrorConfig  `yaml:",inline"`
-	ProviderTunnelConfig `yaml:",inline"`
+	ProviderErrorConfig `yaml:",inline"`
 }
 
 // ProviderErrorConfig is config returned by the provider with a custom error to
@@ -40,15 +41,10 @@ type ProviderErrorConfig struct {
 	}
 }
 
-// ProviderTunnelConfig is the config to fully configure the VPN.
-type ProviderTunnelConfig struct {
-	ProviderClientConfig `yaml:",inline"`
-}
-
 // firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in configregistry.ts.
 type firstHopAndTunnelConfigJSON struct {
-	Client         string          `json:"client"`
-	FirstHop       string          `json:"firstHop"`
+	Client         string                  `json:"client"`
+	FirstHop       string                  `json:"firstHop"`
 	ConnectionType configregistry.ConnType `json:"connectionType"`
 }
 
@@ -156,14 +152,14 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		Client: string(clientConfigBytes),
 	}
 
-	streamFirstHop := result.Client.sd.ConnectionProviderInfo.FirstHop
-	packetFirstHop := result.Client.pr.ConnectionProviderInfo.FirstHop
+	streamFirstHop := result.Client.sdInfo.FirstHop
+	packetFirstHop := result.Client.prInfo.FirstHop
 	if streamFirstHop == packetFirstHop {
 		response.FirstHop = streamFirstHop
 	}
 
-	streamConnType := result.Client.sd.ConnectionProviderInfo.ConnType
-	packetConnType := result.Client.pr.ConnectionProviderInfo.ConnType
+	streamConnType := result.Client.sdInfo.ConnType
+	packetConnType := result.Client.prInfo.ConnType
 	response.ConnectionType = combinedConnectionType(streamConnType, packetConnType)
 
 	responseBytes, err := json.Marshal(response)

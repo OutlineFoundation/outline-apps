@@ -27,29 +27,29 @@ import (
 	"strings"
 	"time"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
 	persistentcookiejar "go.nhat.io/cookiejar"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
 )
 
 type HTTPRequestConfig struct {
 	URL     string
-	Method  string
-	Headers map[string][]string
-	Body    string
+	Method  composer.Optional[string]
+	Headers composer.Optional[map[string][]string]
+	Body    composer.Optional[string]
 }
 
 // HTTPReporterConfig is the format for the HTTPReporter config.
 type HTTPReporterConfig struct {
-	Request        HTTPRequestConfig
-	Interval       string
-	Enable_Cookies bool
+	Request       HTTPRequestConfig
+	Interval      composer.Optional[string]
+	EnableCookies composer.Optional[bool]
 }
 
-func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) func(ctx context.Context, input map[string]any) (Reporter, error) {
-	return func(ctx context.Context, input map[string]any) (Reporter, error) {
+func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) composer.ParseFunc[Reporter] {
+	return func(ctx context.Context, node composer.Node) (Reporter, error) {
 		var config HTTPReporterConfig
-		if err := configyaml.MapToAny(input, &config); err != nil {
+		if err := node.Decode(&config); err != nil {
 			return nil, fmt.Errorf("invalid config format: %w", err)
 		}
 
@@ -72,7 +72,7 @@ func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.
 			},
 		}
 
-		if config.Enable_Cookies {
+		if config.EnableCookies.Or(false) {
 			if cookiesFilename == "" {
 				return nil, fmt.Errorf("cookies filename is required for cookies: %w", errors.ErrUnsupported)
 			}
@@ -89,19 +89,16 @@ func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.
 		// Create request factory.
 
 		newRequest := func() (*http.Request, error) {
-			method := config.Request.Method
-			if method == "" {
-				method = "POST"
-			}
+			method := config.Request.Method.Or("POST")
 			var body io.Reader
-			if config.Request.Body != "" {
-				body = strings.NewReader(config.Request.Body)
+			if b, ok := config.Request.Body.Get(); ok {
+				body = strings.NewReader(b)
 			}
 			req, err := http.NewRequest(method, config.Request.URL, body)
 			if err != nil {
 				return nil, err
 			}
-			for k, v := range config.Request.Headers {
+			for k, v := range config.Request.Headers.Or(nil) {
 				req.Header[k] = v
 			}
 			return req, nil
@@ -109,15 +106,15 @@ func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.
 
 		reporter := &HTTPReporter{NewRequest: newRequest, HttpClient: httpClient}
 
-		if config.Interval != "" {
-			interval, err := time.ParseDuration(config.Interval)
+		if interval, ok := config.Interval.Get(); ok {
+			d, err := time.ParseDuration(interval)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse interval: %w", err)
 			}
-			if interval < 1*time.Hour {
+			if d < 1*time.Hour {
 				return nil, fmt.Errorf("interval must be at least 1h")
 			}
-			reporter.Interval = interval
+			reporter.Interval = d
 		}
 
 		return reporter, nil
