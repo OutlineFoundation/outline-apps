@@ -17,27 +17,18 @@ package configregistry
 import (
 	"context"
 	"fmt"
-	"math/rand"
 
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/tlsfrag"
 	"localhost/client/go/configyaml"
 )
 
-const (
-	MIN_SPLIT int = 6
-	MAX_SPLIT int = 64
-)
+// minSplit, maxSplit, and randomSplitLength moved to transport_configs.go
+// (Task 8), which this legacy parser still shares since both live in
+// package configregistry.
 
 type BasicAccessConfig struct {
 	// TODO: for now we do not parse any config, once DNS is implemented we will parse it.
-}
-
-// Random number in the range [MIN_SPLIT, MAX_SPLIT]
-// splitLength includes 5 bytes of TLS header
-func randomSplitLength() int {
-	splitLength := MIN_SPLIT + rand.Intn(MAX_SPLIT+1-MIN_SPLIT)
-	return splitLength
 }
 
 func NewProxylessTransportPairSubParser(parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*TransportPair, error) {
