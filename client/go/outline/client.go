@@ -128,17 +128,23 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
 			Message: "config is not valid YAML", Cause: platerrors.ToPlatformError(err)}
 	}
-	var providerConfig struct {
-		Transport composer.Node
-		Reporter  composer.Optional[composer.Node]
+	// Decode the envelope as an open map, not a strict struct: the legacy
+	// parser silently ignored unknown top-level keys (e.g. provider
+	// metadata, or an `error: null` key passed through by
+	// doParseTunnelConfig), and composer map targets preserve that
+	// behavior by taking keys verbatim with no unknown-field checks.
+	envelope := map[string]composer.Node{}
+	if !root.IsAbsent() {
+		if err := root.Decode(&envelope); err != nil {
+			return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
+				Message: "invalid config", Cause: platerrors.ToPlatformError(err)}
+		}
 	}
-	if err := root.Decode(&providerConfig); err != nil {
-		return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
-			Message: "invalid config", Cause: platerrors.ToPlatformError(err)}
-	}
+	transportNode := envelope["transport"]
+	reporterNode := envelope["reporter"]
 
 	ctx, table := connmeta.WithTable(context.Background())
-	transportCfg, err := parser.Parse(ctx, providerConfig.Transport)
+	transportCfg, err := parser.Parse(ctx, transportNode)
 	if err != nil {
 		code := platerrors.InvalidConfig
 		msg := "failed to create transport"
@@ -152,7 +158,6 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
 			Message: "missing connection info for transport config"}
 	}
-	reporterNode, _ := providerConfig.Reporter.Get()
 	return &ParsedClient{Transport: transportCfg, Info: info,
 		reporterNode: reporterNode, keyID: keyID, dataDir: dataDir}, nil
 }

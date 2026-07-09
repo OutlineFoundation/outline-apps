@@ -249,6 +249,57 @@ transport:
 	require.Equal(t, configregistry.ConnTypeDirect, result.Client.prInfo.ConnType)
 }
 
+// Test_NewTransport_UnknownTopLevelKey verifies that, like the legacy
+// yaml.Unmarshal-based parser, unknown top-level keys in the provider
+// client config (e.g. provider metadata) are silently ignored.
+func Test_NewTransport_UnknownTopLevelKey(t *testing.T) {
+	config := `
+metadata:
+  contact: x@example.com
+transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/`
+	firstHop := "example.com:4321"
+
+	result := (&ClientConfig{}).New("", config)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
+	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
+}
+
+// Test_NewTransport_ErrorNullKey mirrors the passthrough performed by
+// doParseTunnelConfig, which can add an `error: null` key alongside the
+// transport. The legacy parser tolerated it; so must the composer one.
+func Test_NewTransport_ErrorNullKey(t *testing.T) {
+	config := `
+error: null
+transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/`
+	firstHop := "example.com:4321"
+
+	result := (&ClientConfig{}).New("", config)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
+	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
+}
+
+// Test_NewTransport_MissingTransport verifies that an empty/absent
+// transport key still fails, with the transport-missing error.
+func Test_NewTransport_MissingTransport(t *testing.T) {
+	tests := []struct {
+		name   string
+		config string
+	}{
+		{name: "empty config", config: ""},
+		{name: "no transport key", config: "metadata:\n  contact: x@example.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := (&ClientConfig{}).New("", tt.config)
+			require.NotNil(t, result.Error)
+			require.Nil(t, result.Client)
+			require.Contains(t, result.Error.Error(), "transport config missing")
+		})
+	}
+}
+
 func Test_NewClientFromJSON_Errors(t *testing.T) {
 	tests := []struct {
 		name  string

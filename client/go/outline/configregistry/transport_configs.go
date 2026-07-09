@@ -142,6 +142,11 @@ func NewComposerTransportParser(directSD transport.StreamDialer, directPD transp
 		if err != nil {
 			return nil, err
 		}
+		// For the Shadowsocks transport form, the prefix only applies to TCP. To use a
+		// prefix with UDP, one needs to specify it in the PacketListener config
+		// explicitly (via a `$type: shadowsocks` packet-listener config). This is to
+		// ensure backwards-compatibility with the legacy Shadowsocks transport config.
+		pl.SaltGenerator = nil
 		return &ShadowsocksTransportConfig{StreamDialer: sd, PacketListener: pl}, nil
 	}
 	ssTransportInfo := func(ctx context.Context, cfg *ShadowsocksTransportConfig) (TransportPairInfo, error) {

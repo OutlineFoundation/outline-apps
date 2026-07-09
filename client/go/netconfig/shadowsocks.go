@@ -247,10 +247,17 @@ func parseShadowsocksNode(node composer.Node) (*ssParams, error) {
 	return params, nil
 }
 
+// ShadowsocksStreamDialerConfig is a parsed Shadowsocks stream dialer
+// config. It's built from a composer config node, but is plain data:
+// callers (e.g. configregistry) may inspect and mutate its exported
+// fields before calling NewStreamDialer.
 type ShadowsocksStreamDialerConfig struct {
-	Endpoint      StreamEndpointConfig
-	key           *shadowsocks.EncryptionKey
-	saltGenerator shadowsocks.SaltGenerator
+	Endpoint StreamEndpointConfig
+	key      *shadowsocks.EncryptionKey
+	// SaltGenerator overrides the salt generator used by the stream
+	// dialer (e.g. from a `prefix` config field). Nil means the
+	// default (random) salt generator is used.
+	SaltGenerator shadowsocks.SaltGenerator
 }
 
 func (c *ShadowsocksStreamDialerConfig) NewStreamDialer(ctx context.Context) (transport.StreamDialer, error) {
@@ -262,16 +269,23 @@ func (c *ShadowsocksStreamDialerConfig) NewStreamDialer(ctx context.Context) (tr
 	if err != nil {
 		return nil, fmt.Errorf("failed to create StreamDialer: %w", err)
 	}
-	if c.saltGenerator != nil {
-		sd.SaltGenerator = c.saltGenerator
+	if c.SaltGenerator != nil {
+		sd.SaltGenerator = c.SaltGenerator
 	}
 	return sd, nil
 }
 
+// ShadowsocksPacketListenerConfig is a parsed Shadowsocks packet
+// listener config. It's built from a composer config node, but is
+// plain data: callers (e.g. configregistry) may inspect and mutate
+// its exported fields before calling NewPacketListener.
 type ShadowsocksPacketListenerConfig struct {
-	Endpoint      PacketEndpointConfig
-	key           *shadowsocks.EncryptionKey
-	saltGenerator shadowsocks.SaltGenerator
+	Endpoint PacketEndpointConfig
+	key      *shadowsocks.EncryptionKey
+	// SaltGenerator overrides the salt generator used by the packet
+	// listener (e.g. from a `prefix` config field). Nil means the
+	// default (random) salt generator is used.
+	SaltGenerator shadowsocks.SaltGenerator
 }
 
 func (c *ShadowsocksPacketListenerConfig) NewPacketListener(ctx context.Context) (transport.PacketListener, error) {
@@ -283,8 +297,8 @@ func (c *ShadowsocksPacketListenerConfig) NewPacketListener(ctx context.Context)
 	if err != nil {
 		return nil, err
 	}
-	if c.saltGenerator != nil {
-		pl.SetSaltGenerator(c.saltGenerator)
+	if c.SaltGenerator != nil {
+		pl.SetSaltGenerator(c.SaltGenerator)
 	}
 	return pl, nil
 }
@@ -315,7 +329,7 @@ func NewShadowsocksStreamDialerParser(parseSE composer.ParseFunc[StreamEndpointC
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse StreamEndpoint: %w", err)
 		}
-		return &ShadowsocksStreamDialerConfig{Endpoint: se, key: params.key, saltGenerator: params.saltGenerator}, nil
+		return &ShadowsocksStreamDialerConfig{Endpoint: se, key: params.key, SaltGenerator: params.saltGenerator}, nil
 	}
 }
 
@@ -333,7 +347,7 @@ func NewShadowsocksPacketListenerParser(parsePE composer.ParseFunc[PacketEndpoin
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse PacketEndpoint: %w", err)
 		}
-		return &ShadowsocksPacketListenerConfig{Endpoint: pe, key: params.key, saltGenerator: params.saltGenerator}, nil
+		return &ShadowsocksPacketListenerConfig{Endpoint: pe, key: params.key, SaltGenerator: params.saltGenerator}, nil
 	}
 }
 
