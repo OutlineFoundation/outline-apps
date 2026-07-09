@@ -16,6 +16,7 @@ package configregistry
 
 import (
 	"context"
+	"fmt"
 	"net/netip"
 	"testing"
 
@@ -25,6 +26,17 @@ import (
 	"localhost/client/go/netconfig"
 	"localhost/client/go/outline/connmeta"
 )
+
+// errorStreamDialer is a fake transport.StreamDialer that always fails,
+// identifying itself by name in the error. Used to verify which dialer a
+// dial-dispatch test routed to.
+type errorStreamDialer struct {
+	name string
+}
+
+func (d *errorStreamDialer) DialStream(ctx context.Context, addr string) (transport.StreamConn, error) {
+	return nil, fmt.Errorf("dialer '%s' called for address '%s'", d.name, addr)
+}
 
 // parseSDErr is like the parseSD helper in composer_registry_test.go, but
 // returns the parse error instead of requiring success. Needed here

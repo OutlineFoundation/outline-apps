@@ -15,11 +15,7 @@
 package configregistry
 
 import (
-	"context"
 	"encoding/json"
-
-	"golang.getoutline.org/sdk/network/packetrelay"
-	"golang.getoutline.org/sdk/transport"
 )
 
 // ConnType is the type of the connections returned by Dialers and Endpoints.
@@ -64,49 +60,4 @@ type ConnectionProviderInfo struct {
 	ConnType ConnType
 	// The address of the first hop.
 	FirstHop string
-}
-
-// PacketListener is a [transport.PacketListener] with embedded ConnectionProviderInfo.
-type PacketListener struct {
-	ConnectionProviderInfo
-	transport.PacketListener
-}
-
-// PacketRelay is a [packetrelay.PacketRelay] with embedded ConnectionProviderInfo.
-type PacketRelay struct {
-	ConnectionProviderInfo
-	packetrelay.PacketRelay
-	NotifyNetworkChanged func()
-}
-
-// DialFunc is a generic dialing function that can return any type of connction given a context and address.
-type DialFunc[ConnType any] func(ctx context.Context, address string) (ConnType, error)
-
-// Dialer has a generic Dial function and embedded ConnectionProviderInfo.
-// Useful to represent and share logic between Stream and Packet Dialers.
-type Dialer[ConnType any] struct {
-	ConnectionProviderInfo
-	Dial DialFunc[ConnType]
-}
-
-// ConnectFunc is a generic connect function that can return any type of connction given a context.
-type ConnectFunc[ConnType any] func(ctx context.Context) (ConnType, error)
-
-// Endpoint has a generic Connect function and embedded ConnectionProviderInfo.
-// Useful to represent and share logic between Stream and Packet Endpoints.
-type Endpoint[ConnType any] struct {
-	ConnectionProviderInfo
-	Connect ConnectFunc[ConnType]
-}
-
-// TransportPair provides a StreamDialer and PacketListener, to use as the transport in a Tun2Socks VPN.
-type TransportPair struct {
-	StreamDialer *Dialer[transport.StreamConn]
-	PacketRelay  *PacketRelay
-}
-
-var _ transport.StreamDialer = (*TransportPair)(nil)
-
-func (t *TransportPair) DialStream(ctx context.Context, address string) (transport.StreamConn, error) {
-	return t.StreamDialer.Dial(ctx, address)
 }
