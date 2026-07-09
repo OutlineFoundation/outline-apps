@@ -248,6 +248,9 @@ func newRegistryTables(directSD transport.StreamDialer, directPD transport.Packe
 	t.packetListeners.RegisterSubParser("shadowsocks",
 		asPacketListener(withInfo(netconfig.NewShadowsocksPacketListenerParser(t.packetEndpoints.Parse), ssListenerInfo)))
 
+	t.streamDialers.RegisterSubParser("iptable",
+		asStreamDialer(withInfo(newIPTableParser(t.streamDialers.Parse), ipTableInfo)))
+
 	return t
 }
 
