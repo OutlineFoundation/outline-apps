@@ -25,6 +25,11 @@
     <allow-intent href="https://*/*" />
     <preference name="android-minSdkVersion" value="29" />
     <preference name="android-targetSdkVersion" value="35" />
+    <!-- Match the Android Gradle Plugin version used by the Capacitor client
+         (client/capacitor/android). Keep in sync with the AGP version declared
+         in client/src/cordova/android/OutlineAndroidLib/build.gradle, which is
+         part of the same Gradle composite build. -->
+    <preference name="AndroidGradlePluginVersion" value="8.9.1" />
     <preference name="AndroidLaunchMode" value="singleInstance" />
     <preference name="ShowSplashScreenSpinner" value="false" />
     <preference name="Orientation" value="portrait" />
