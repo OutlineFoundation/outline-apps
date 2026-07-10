@@ -8,20 +8,20 @@ The main entrypoint to Android's Java code is `client/src/cordova/plugin/android
 
 Install these pre-requisites:
 
-- [Java Development Kit (JDK) 17+](https://jdk.java.net/archive/). On macOS:
+- [Java Development Kit (JDK) 21+](https://jdk.java.net/archive/). On macOS:
 
   ```shell
-  brew install openjdk@17
+  brew install openjdk@21
 
   # Make it visible to `java_home`
-  sudo ln -sfn "$(realpath "$(brew --prefix)")/opt/openjdk@17/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+  sudo ln -sfn "$(realpath "$(brew --prefix)")/opt/openjdk@21/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-21.jdk
 
-  export JAVA_HOME=$(/usr/libexec/java_home -v 17.0)
+  export JAVA_HOME=$(/usr/libexec/java_home -v 21)
   ```
 
 - [Gradle 8.7+](https://gradle.org/install/). On macOS: `brew install gradle`.
 
-Then we need to install and configure the Android components. You can follow the [Cordova Android Platform Guide](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html), which uses Android Studio to configure the environment. You need an Android Studio compatible with the Android Gradle Plugin 8.3.0 (see [build.gradle](client/src/cordova/android/OutlineAndroidLib/build.gradle)) we use ([compatibility table](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility)).
+Then we need to install and configure the Android components. You can follow the [Cordova Android Platform Guide](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html), which uses Android Studio to configure the environment. You need an Android Studio compatible with the Android Gradle Plugin 8.9.1 (see [build.gradle](client/src/cordova/android/OutlineAndroidLib/build.gradle)) we use ([compatibility table](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility)).
 
 Alternatively, you can do it on the command-line:
 
@@ -72,11 +72,11 @@ npx cordova requirements android
 |---|---|---|---|
 | Android API Level | 35+ | [Play Store](https://developer.android.com/google/play/requirements/target-sdk) | [config.xml](../../../config.xml), [build.gradle](./OutlineAndroidLib/outline/build.gradle) |
 | cordova-android | 14 | Android API Level | [package.json](../../../package.json) |
-| JDK | 17 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instruction |
+| JDK | 21 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instruction |
 | Gradle | 8.13+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [gradle-wrapper.properties](./OutlineAndroidLib/gradle/wrapper/gradle-wrapper.properties) |
-| Android Gradle Plugin (AGP) | 8.7.3 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [build.gradle](../android/OutlineAndroidLib/build.gradle) |
+| Android Gradle Plugin (AGP) | 8.9.1 | [Capacitor client](../../../capacitor/android/build.gradle) | [config.xml](../../../config.xml), [build.gradle](../android/OutlineAndroidLib/build.gradle) |
 | Android Build Tools | 35.0.0+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instructions |
-| Android Studio | 2024.2.2 (Ladybug Feature Drop) | [AGP](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility) | |
+| Android Studio | 2024.3.1 (Meerkat) | [AGP](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility) | |
 
 ## Build the app
 
