@@ -27,10 +27,15 @@ goccy types never appear in exported signatures.
 ## D3. No struct tags; naming by convention
 
 Struct tags would couple config structs to the decoding library; change
-the decoder, rewrite every struct. Instead the wire name is derived from
-the Go field name (CamelCase → snake_case, acronym runs as one word) and
-matching is normalization-based (lowercase, strip underscores). The
-struct alone is the schema.
+the decoder, rewrite every struct. Instead matching is
+normalization-based (lowercase, strip underscores), so any spelling that
+normalizes to the Go field name works on the wire; `snake_case` is the
+documented convention, not something the code derives. The struct alone
+is the schema. An earlier revision derived a canonical snake_case
+spelling from Go names (CamelCase → snake_case) for error messages, but
+acronym/plural handling made it heuristic ("IPs"); it was dropped in
+favor of naming fields by their normalized form, which is always itself
+a valid spelling precisely because matching normalizes.
 
 ## D4. Required by default; `Optional[T]` for optional fields
 

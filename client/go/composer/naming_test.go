@@ -26,19 +26,8 @@ func TestNormalizeKey(t *testing.T) {
 		"ServerPort":     "serverport",
 		"URL":            "url",
 		"Enable_Cookies": "enablecookies",
+		"IPs":            "ips",
 	} {
 		require.Equal(t, want, normalizeKey(in), "normalizeKey(%q)", in)
-	}
-}
-
-func TestWireName(t *testing.T) {
-	for in, want := range map[string]string{
-		"URL":             "url",
-		"Endpoint":        "endpoint",
-		"ServerPort":      "server_port",
-		"EnableHTTPProxy": "enable_http_proxy",
-		"IPs":             "ips",
-	} {
-		require.Equal(t, want, wireName(in), "wireName(%q)", in)
 	}
 }

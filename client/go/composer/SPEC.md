@@ -64,8 +64,10 @@ never treated as fields:
 
 Field names are lowercase `snake_case` (e.g. `server_port`). Matching is
 tolerant: keys are compared case-insensitively with underscores removed,
-so `serverport` and `Server_Port` match the same field. The canonical
-spelling used in documentation and error messages is `snake_case`.
+so `serverport` and `Server_Port` match the same field. `snake_case` is
+the spelling convention for documentation and examples; error messages
+name fields in the normalized form (e.g. `serverport`), which is always
+itself a valid spelling.
 
 ## Sender-side optional fields: the `?` suffix
 

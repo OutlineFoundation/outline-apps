@@ -269,6 +269,8 @@ func (n Node) decodeStruct(dst reflect.Value, depth int, st *decodeState) error 
 	}
 
 	// Fields not set by the config: allowed only for Optional ones.
+	// The normalized name is itself a valid wire spelling of the field
+	// (matching is normalization-based), so it is safe to suggest.
 	for norm, field := range fields {
 		if _, ok := seen[norm]; ok {
 			continue
@@ -277,7 +279,7 @@ func (n Node) decodeStruct(dst reflect.Value, depth int, st *decodeState) error 
 		if _, isOpt := fv.Addr().Interface().(optionalField); isOpt {
 			continue
 		}
-		return n.errorf("required field %q is missing", wireName(field.goName))
+		return n.errorf("required field %q is missing", norm)
 	}
 	return nil
 }

@@ -14,36 +14,14 @@
 
 package composer
 
-import (
-	"strings"
-	"unicode"
-)
+import "strings"
 
 // normalizeKey returns the form used to match config keys against Go
 // field names: lowercase with underscores removed. "server_port",
-// "ServerPort" and "serverport" all normalize identically.
+// "ServerPort" and "serverport" all normalize identically. Because
+// matching is normalization-based, the normalized form is itself a
+// valid wire spelling of the field, which is why error messages can
+// use it directly.
 func normalizeKey(key string) string {
 	return strings.ToLower(strings.ReplaceAll(key, "_", ""))
-}
-
-// wireName converts a Go field name to its canonical snake_case wire
-// name. Acronym runs count as one word, including plural acronyms:
-// URL -> url, EnableHTTPProxy -> enable_http_proxy, IPs -> ips.
-func wireName(goName string) string {
-	var b strings.Builder
-	runes := []rune(goName)
-	for i, r := range runes {
-		if unicode.IsUpper(r) && i > 0 {
-			afterAcronym := unicode.IsUpper(runes[i-1]) &&
-				i+1 < len(runes) && unicode.IsLower(runes[i+1])
-			// "IPs": a lone trailing 's' pluralizes the acronym; it does
-			// not start a new word.
-			pluralAcronym := afterAcronym && i+2 == len(runes) && runes[i+1] == 's'
-			if (!unicode.IsUpper(runes[i-1]) || afterAcronym) && !pluralAcronym {
-				b.WriteByte('_')
-			}
-		}
-		b.WriteRune(unicode.ToLower(r))
-	}
-	return b.String()
 }
