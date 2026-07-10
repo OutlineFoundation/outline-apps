@@ -22,7 +22,7 @@ import (
 
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/netconfig"
+	"localhost/client/go/composer/netconfig"
 	"localhost/client/go/outline/iptable"
 )
 

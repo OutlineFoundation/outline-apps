@@ -23,7 +23,7 @@ import (
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/tlsfrag"
 	"localhost/client/go/composer"
-	"localhost/client/go/netconfig"
+	"localhost/client/go/composer/netconfig"
 )
 
 // TransportPairInfo is the app metadata for a whole transport config.

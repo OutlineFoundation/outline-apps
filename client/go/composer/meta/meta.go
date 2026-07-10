@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package connmeta associates application metadata with parsed config
+// Package meta associates application metadata with parsed config
 // objects, keyed by pointer identity — the go/types.Info pattern. A
 // Table is created per parse call and carried in the context; parser
 // wrappers record metadata as configs are composed, and the app reads
 // it back after parsing.
-package connmeta
+package meta
 
 import "context"
 

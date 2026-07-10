@@ -119,11 +119,11 @@ TypeParser's fallback handler, as in the legacy design.
 
 The package was built alongside `configyaml` and adopted by porting one
 parser chain at a time in a follow-up plan; `configyaml` was deleted at
-the end. Migration complete 2026-07-09: `client/go/netconfig` is now
+the end. Migration complete 2026-07-09: `client/go/composer/netconfig` is now
 the transport-config layer (config interfaces, concrete config types,
 protocol parsers), and `client/go/outline/configregistry` is the app
 layer that registers netconfig's parsers, attaches connection metadata
-via `client/go/outline/connmeta`, and applies Outline policy (DNS
+via `client/go/composer/meta`, and applies Outline policy (DNS
 interception, User-Agent) at the boundary. Long-term destination: the
 Outline SDK (this package has no Outline-app dependencies by design —
 app policy like ConnectionProviderInfo, DNS interception, and
@@ -138,6 +138,32 @@ music." Rejected: `config` (too generic, and it collides with the
 ubiquitous `config` local-variable name at call sites) and `configyaml`
 (ties the name to one serialization format when the core is
 format-agnostic).
+
+## D14. Package layout: one `composer/` root for everything SDK-bound
+
+The Composer system lives under a single package tree — `composer`
+(format core), `composer/meta` (identity-keyed config-metadata table),
+`composer/netconfig` (strategy config vocabulary) — following the
+stdlib `go/` family pattern (`go/ast`, `go/parser`, `go/types`:
+siblings under one root, distinct APIs, the core imports none of them).
+The rule that makes the umbrella meaningful: everything under
+`composer/` is SDK-bound and app-agnostic; everything Outline-specific
+(registry wiring, `$type` names and fallback compat, policy values,
+`ConnectionProviderInfo` semantics) stays in the app layer under
+`client/go/outline/`, and must never move under the umbrella.
+
+Audience map: config authors read SPEC.md, never Go; strategy
+developers work in `composer/netconfig` plus one registration line in
+the app registry; app developers read `composer/netconfig` +
+`composer/meta` with `outline/configregistry` as the worked example;
+tooling developers need only the core + SPEC.md.
+
+`meta` graduated from `client/go/outline/connmeta`: nothing in it was
+connection- or Outline-specific, and its invariants (post-order
+availability, pointer-identity keys, per-parse scoping, mutate-don't-
+copy) are documented next to the machinery that creates them. It
+remains a sibling package, not part of the core: the core cannot
+enforce those invariants and its API freezes at SDK time.
 
 ## Spike findings (2026-07, goccy/go-yaml v1.18.0)
 

@@ -20,13 +20,13 @@ package; it is destined for the Outline SDK and must stay app-agnostic.
 ## Status
 
 Complete. The legacy `client/go/configyaml` package has been deleted;
-every parser now lives on top of `composer`. `client/go/netconfig` is
+every parser now lives on top of `composer`. `client/go/composer/netconfig` is
 the transport layer built on this package — config interfaces
 (`StreamDialerConfig` etc.), concrete config types, and their parsers,
 kept free of Outline application policy so it can move to the Outline
 SDK. `client/go/outline/configregistry` is the app layer: it registers
 netconfig's parsers under `$type` names, wraps them with connection
-metadata (`client/go/outline/connmeta`), and applies Outline-specific
+metadata (`client/go/composer/meta`), and applies Outline-specific
 policy (User-Agent, DNS interception) that must not live in this
 package or in netconfig. See netconfig/AGENTS.md and
 configregistry/README.md.

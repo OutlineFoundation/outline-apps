@@ -21,16 +21,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/netconfig"
-	"localhost/client/go/outline/connmeta"
+	"localhost/client/go/composer/meta"
+	"localhost/client/go/composer/netconfig"
 )
 
-func parseSD(t *testing.T, text string) (netconfig.StreamDialerConfig, *connmeta.Table) {
+func parseSD(t *testing.T, text string) (netconfig.StreamDialerConfig, *meta.Table) {
 	t.Helper()
 	tables := newRegistryTables(&transport.TCPDialer{}, &transport.UDPDialer{})
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, table := connmeta.WithTable(context.Background())
+	ctx, table := meta.WithTable(context.Background())
 	cfg, err := tables.streamDialers.Parse(ctx, node)
 	require.NoError(t, err)
 	return cfg, table
@@ -38,7 +38,7 @@ func parseSD(t *testing.T, text string) (netconfig.StreamDialerConfig, *connmeta
 
 func TestRegistry_DirectFallbackInfo(t *testing.T) {
 	cfg, table := parseSD(t, "")
-	info, ok := connmeta.Get[ConnectionProviderInfo](table, cfg)
+	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
 	require.True(t, ok)
 	require.Equal(t, ConnectionProviderInfo{ConnTypeDirect, ""}, info)
 }
@@ -50,7 +50,7 @@ endpoint: example.com:1234
 cipher: chacha20-ietf-poly1305
 secret: SECRET
 `)
-	info, ok := connmeta.Get[ConnectionProviderInfo](table, cfg)
+	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
 	require.True(t, ok)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	require.Equal(t, "example.com:1234", info.FirstHop)
@@ -65,7 +65,7 @@ endpoint:
   $type: websocket
   url: wss://cdn.example.com/tcp
 `)
-	info, ok := connmeta.Get[ConnectionProviderInfo](table, cfg)
+	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
 	require.True(t, ok)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	// Websocket copies its inner (direct dial) endpoint's info: the
@@ -94,14 +94,14 @@ options:
   - $type: warp-drive
   - $type: block
 `)
-	info, ok := connmeta.Get[ConnectionProviderInfo](table, cfg)
+	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
 	require.True(t, ok)
 	require.Equal(t, ConnTypeBlocked, info.ConnType)
 }
 
 func TestRegistry_SSURLStringFallback(t *testing.T) {
 	cfg, table := parseSD(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
-	info, ok := connmeta.Get[ConnectionProviderInfo](table, cfg)
+	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
 	require.True(t, ok)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	require.Equal(t, "example.com:1234", info.FirstHop)

@@ -6,7 +6,7 @@
 a provider client config (YAML) into a running client. The wire format
 and parsing mechanics are Outline Composer (`client/go/composer`); the
 transport strategies (Shadowsocks, websocket, direct, block, dialing,
-iptable routing) are `client/go/netconfig`. This package sits above
+iptable routing) are `client/go/composer/netconfig`. This package sits above
 both — it registers netconfig's parsers under `$type` names, attaches
 Outline-specific connection metadata to every parsed config, and
 applies Outline policy (DNS interception, User-Agent) that must not
@@ -47,10 +47,10 @@ adds it in two ways:
   tunneled, and what's the first hop address" — used by the TypeScript
   UI (`client/web/app/outline_server_repository/config.ts`) and by
   `parse.go`. It's computed per config object as parsing happens and
-  stored in a [`connmeta.Table`](../connmeta) keyed by the config's
+  stored in a [`meta.Table`](../meta) keyed by the config's
   pointer identity (the same pattern as Go's own `go/ast` +
-  `go/types.Info`): a `connmeta.Table` is created per parse call
-  (`connmeta.WithTable`) and carried in `ctx`; each registered parser is
+  `go/types.Info`): a `meta.Table` is created per parse call
+  (`meta.WithTable`) and carried in `ctx`; each registered parser is
   wrapped with [`withInfo`](./composer_registry.go) (or
   [`withTransportInfo`](./transport_configs.go) for whole-transport
   configs), which runs the netconfig parser, computes
@@ -63,7 +63,7 @@ adds it in two ways:
   chosen option's config unchanged, so pointer identity carries its
   metadata through automatically.
 - **DNS interception and User-Agent** are the other two pieces of
-  policy netconfig can't hold (see `client/go/netconfig/AGENTS.md`).
+  policy netconfig can't hold (see `client/go/composer/netconfig/AGENTS.md`).
   The Outline User-Agent is injected as a generic HTTP header option
   when the websocket parser is constructed
   (`netconfig.WithWebsocketHeaders`, wired in
@@ -92,13 +92,13 @@ package.
 
 ## Adding a new strategy
 
-Most new strategies belong in `client/go/netconfig`, not here — see
-`client/go/netconfig/AGENTS.md` for "here vs. the app layer". Add code
+Most new strategies belong in `client/go/composer/netconfig`, not here — see
+`client/go/composer/netconfig/AGENTS.md` for "here vs. the app layer". Add code
 in this package only for the registration/wiring step, or for a
 strategy that genuinely needs Outline app state (like `iptable`).
 
 1. **Write the netconfig config type and parser** per
-   `client/go/netconfig/AGENTS.md` (a `New*(ctx)`-bearing config struct
+   `client/go/composer/netconfig/AGENTS.md` (a `New*(ctx)`-bearing config struct
    plus a `composer.ParseFunc` or parser constructor). Skip this step if
    you're only wiring up an existing netconfig type.
 2. **Write an info function** if the strategy carries connection

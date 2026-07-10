@@ -26,8 +26,8 @@ import (
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
+	"localhost/client/go/composer/meta"
 	"localhost/client/go/outline/configregistry"
-	"localhost/client/go/outline/connmeta"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
 )
@@ -143,7 +143,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 	transportNode := envelope["transport"]
 	reporterNode := envelope["reporter"]
 
-	ctx, table := connmeta.WithTable(context.Background())
+	ctx, table := meta.WithTable(context.Background())
 	transportCfg, err := parser.Parse(ctx, transportNode)
 	if err != nil {
 		code := platerrors.InvalidConfig
@@ -153,7 +153,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		}
 		return nil, &platerrors.PlatformError{Code: code, Message: msg, Cause: platerrors.ToPlatformError(err)}
 	}
-	info, ok := connmeta.Get[configregistry.TransportPairInfo](table, transportCfg)
+	info, ok := meta.Get[configregistry.TransportPairInfo](table, transportCfg)
 	if !ok {
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
 			Message: "missing connection info for transport config"}

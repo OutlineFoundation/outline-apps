@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/outline/connmeta"
+	"localhost/client/go/composer/meta"
 )
 
 // TestCorpus_DocumentedConfigs parses every config example documented at
@@ -382,7 +382,7 @@ secret: SECRET
 			parser := NewComposerTransportParser(&transport.TCPDialer{}, &transport.UDPDialer{})
 			node, err := composer.ParseYAML([]byte(tc.yaml))
 			require.NoError(t, err)
-			ctx, _ := connmeta.WithTable(context.Background())
+			ctx, _ := meta.WithTable(context.Background())
 			_, err = parser.Parse(ctx, node)
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.wantErrContains)

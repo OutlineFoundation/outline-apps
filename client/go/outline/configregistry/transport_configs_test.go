@@ -21,24 +21,24 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/netconfig"
-	"localhost/client/go/outline/connmeta"
+	"localhost/client/go/composer/netconfig"
+	"localhost/client/go/composer/meta"
 )
 
-func parseTransport(t *testing.T, text string) (TransportPairConfig, *connmeta.Table) {
+func parseTransport(t *testing.T, text string) (TransportPairConfig, *meta.Table) {
 	t.Helper()
 	parser := NewComposerTransportParser(&transport.TCPDialer{}, &transport.UDPDialer{})
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, table := connmeta.WithTable(context.Background())
+	ctx, table := meta.WithTable(context.Background())
 	cfg, err := parser.Parse(ctx, node)
 	require.NoError(t, err)
 	return cfg, table
 }
 
-func requirePairInfo(t *testing.T, table *connmeta.Table, cfg TransportPairConfig) TransportPairInfo {
+func requirePairInfo(t *testing.T, table *meta.Table, cfg TransportPairConfig) TransportPairInfo {
 	t.Helper()
-	info, ok := connmeta.Get[TransportPairInfo](table, cfg)
+	info, ok := meta.Get[TransportPairInfo](table, cfg)
 	require.True(t, ok, "transport pair info missing")
 	return info
 }

@@ -24,7 +24,7 @@ first-hop endpoint address — without building anything.
 
 `New*` methods take pointer receivers, so only `*T` satisfies the
 config interfaces. This is required, not stylistic: the app layer's
-`connmeta` side table (see the configregistry README) keys metadata off
+`composer/meta` side table (see the configregistry README) keys metadata off
 a config's pointer identity, which only holds if parsing always
 produces the same `*T`.
 

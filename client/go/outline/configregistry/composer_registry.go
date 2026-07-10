@@ -24,18 +24,18 @@ import (
 
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/netconfig"
-	"localhost/client/go/outline/connmeta"
+	"localhost/client/go/composer/meta"
+	"localhost/client/go/composer/netconfig"
 	"localhost/client/go/outline/useragent"
 )
 
-// setInfo records metadata for cfg in the context's connmeta table.
+// setInfo records metadata for cfg in the context's meta table.
 // A missing table is a wiring bug: parsing must be started via
-// connmeta.WithTable.
+// meta.WithTable.
 func setInfo(ctx context.Context, cfg any, info any) error {
-	t := connmeta.FromContext(ctx)
+	t := meta.FromContext(ctx)
 	if t == nil {
-		return errors.New("internal error: no connmeta table in context")
+		return errors.New("internal error: no meta table in context")
 	}
 	t.Set(cfg, info)
 	return nil
@@ -45,7 +45,7 @@ func setInfo(ctx context.Context, cfg any, info any) error {
 // are always parsed (and recorded) before their parent's info function
 // runs.
 func requireInfo(ctx context.Context, cfg any) (ConnectionProviderInfo, error) {
-	info, ok := connmeta.Get[ConnectionProviderInfo](connmeta.FromContext(ctx), cfg)
+	info, ok := meta.Get[ConnectionProviderInfo](meta.FromContext(ctx), cfg)
 	if !ok {
 		return ConnectionProviderInfo{}, fmt.Errorf("internal error: no connection info for %T", cfg)
 	}

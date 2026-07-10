@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/netconfig"
-	"localhost/client/go/outline/connmeta"
+	"localhost/client/go/composer/netconfig"
+	"localhost/client/go/composer/meta"
 )
 
 // errorStreamDialer is a fake transport.StreamDialer that always fails,
@@ -41,12 +41,12 @@ func (d *errorStreamDialer) DialStream(ctx context.Context, addr string) (transp
 // parseSDErr is like the parseSD helper in composer_registry_test.go, but
 // returns the parse error instead of requiring success. Needed here
 // because iptable has several config-time error cases.
-func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, *connmeta.Table, error) {
+func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, *meta.Table, error) {
 	t.Helper()
 	tables := newRegistryTables(&transport.TCPDialer{}, &transport.UDPDialer{})
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, table := connmeta.WithTable(context.Background())
+	ctx, table := meta.WithTable(context.Background())
 	cfg, err := tables.streamDialers.Parse(ctx, node)
 	return cfg, table, err
 }
@@ -202,7 +202,7 @@ table:
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg, table := parseSD(t, "$type: iptable\n"+tc.configYAML)
-			info, ok := connmeta.Get[ConnectionProviderInfo](table, cfg)
+			info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
 			require.True(t, ok)
 			require.Equal(t, tc.expectedConnType, info.ConnType)
 		})
