@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import {constants} from 'fs';
-import {access} from 'fs/promises';
-import {dirname, resolve} from 'path';
+import {access, mkdtemp, rm, writeFile} from 'fs/promises';
+import {tmpdir} from 'os';
+import {dirname, join, resolve} from 'path';
 import {fileURLToPath, pathToFileURL} from 'url';
 import {format} from 'util';
 
@@ -135,41 +136,53 @@ async function signWindowsExecutable(exeFile, algorithm, options) {
 
   const password = getOptionValue(options, 'password', 'WINDOWS_SIGNING_CERT_PASSWORD', true);
 
-  let jsignArgs = [
-    '--alg',
-    algorithm === 'sha256' ? 'SHA-256' : 'SHA-1',
-    '--tsaurl',
-    'http://timestamp.digicert.com',
-    '--storepass',
-    password,
-  ];
+  // Hand the password (which may be a short-lived GCP access token) to jsign
+  // through a private temp file rather than argv, where it would be visible
+  // to other local processes (`ps`) for the duration of the signing.
+  const passwordDir = await mkdtemp(join(tmpdir(), 'outline-jsign-'));
+  const passwordFile = join(passwordDir, 'storepass');
 
-  switch (type) {
-    case 'pfx':
-      jsignArgs = concatPfxJsignArgs(jsignArgs, options);
-      break;
-    case 'digicert-usb':
-      jsignArgs = concatDigicertUsbJsignArgs(jsignArgs, options);
-      break;
-    case 'gcp-hsm':
-      jsignArgs = concatGcpHsmJsignArgs(jsignArgs, options);
-      break;
-    default:
-      throw new Error(`cert type ${type} is not supported`);
-  }
-
-  var exitCode;
   try {
-    exitCode = await jsign(exeFile, jsignArgs);
-  } catch (err) {
-    throw new Error('failed to run jsign', {cause: err});
-  }
+    await writeFile(passwordFile, password, {mode: 0o600});
 
-  if (exitCode === 0) {
-    console.info(`successfully signed "${exeFile}"`);
-  } else {
-    console.error(`jsign exited with error code ${exitCode}`);
-    throw new Error(`failed to sign "${exeFile}"`);
+    let jsignArgs = [
+      '--alg',
+      algorithm === 'sha256' ? 'SHA-256' : 'SHA-1',
+      '--tsaurl',
+      'http://timestamp.digicert.com',
+      '--storepass',
+      `file:${passwordFile}`,
+    ];
+
+    switch (type) {
+      case 'pfx':
+        jsignArgs = concatPfxJsignArgs(jsignArgs, options);
+        break;
+      case 'digicert-usb':
+        jsignArgs = concatDigicertUsbJsignArgs(jsignArgs, options);
+        break;
+      case 'gcp-hsm':
+        jsignArgs = concatGcpHsmJsignArgs(jsignArgs, options);
+        break;
+      default:
+        throw new Error(`cert type ${type} is not supported`);
+    }
+
+    var exitCode;
+    try {
+      exitCode = await jsign(exeFile, jsignArgs);
+    } catch (err) {
+      throw new Error('failed to run jsign', {cause: err});
+    }
+
+    if (exitCode === 0) {
+      console.info(`successfully signed "${exeFile}"`);
+    } else {
+      console.error(`jsign exited with error code ${exitCode}`);
+      throw new Error(`failed to sign "${exeFile}"`);
+    }
+  } finally {
+    await rm(passwordDir, {recursive: true, force: true});
   }
 }
 
