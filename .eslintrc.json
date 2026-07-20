@@ -151,6 +151,7 @@
         "server_manager/www/karma.conf.js",
         "server_manager/electron_main.webpack.mjs",
         "server_manager/electron_preload.webpack.mjs",
+        "server_manager/electron/windows/sign_windows_executable.mjs",
         ".prettierrc.js",
         "client/web/karma.conf.js"
       ],

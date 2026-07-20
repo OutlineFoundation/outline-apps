@@ -175,7 +175,7 @@ async function signWindowsExecutable(exeFile, algorithm, options) {
         throw new Error(`cert type ${type} is not supported`);
     }
 
-    var exitCode;
+    let exitCode;
     try {
       exitCode = await jsign(exeFile, jsignArgs);
     } catch (err) {
@@ -193,7 +193,10 @@ async function signWindowsExecutable(exeFile, algorithm, options) {
       await rm(passwordDir, {recursive: true, force: true});
     } catch (cleanupErr) {
       // don't let a cleanup failure mask the signing error
-      console.error(`failed to remove temporary password directory "${passwordDir}"`, cleanupErr);
+      console.error(
+        `failed to remove temporary password directory "${passwordDir}"`,
+        cleanupErr
+      );
     }
   }
 }
