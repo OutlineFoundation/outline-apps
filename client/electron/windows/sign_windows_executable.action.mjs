@@ -136,6 +136,13 @@ async function signWindowsExecutable(exeFile, algorithm, options) {
 
   const password = getOptionValue(options, 'password', 'WINDOWS_SIGNING_CERT_PASSWORD', true);
 
+  // jsign trims file-sourced passwords, so surrounding whitespace would be
+  // silently altered before authentication; fail fast instead.
+  assert(
+    password === password.trim(),
+    'signing passwords with leading or trailing whitespace are not supported'
+  );
+
   // Hand the password (which may be a short-lived GCP access token) to jsign
   // through a private temp file rather than argv, where it would be visible
   // to other local processes (`ps`) for the duration of the signing.
@@ -182,7 +189,12 @@ async function signWindowsExecutable(exeFile, algorithm, options) {
       throw new Error(`failed to sign "${exeFile}"`);
     }
   } finally {
-    await rm(passwordDir, {recursive: true, force: true});
+    try {
+      await rm(passwordDir, {recursive: true, force: true});
+    } catch (cleanupErr) {
+      // don't let a cleanup failure mask the signing error
+      console.error(`failed to remove temporary password directory "${passwordDir}"`, cleanupErr);
+    }
   }
 }
 
