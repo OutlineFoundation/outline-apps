@@ -15,21 +15,10 @@
 import {constants} from 'fs';
 import {access, mkdtemp, rm, writeFile} from 'fs/promises';
 import {tmpdir} from 'os';
-import {dirname, join, resolve} from 'path';
-import {fileURLToPath, pathToFileURL} from 'url';
+import {join, resolve} from 'path';
 import {format} from 'util';
 
-import minimist from 'minimist';
-
-import {jsign} from '../../../third_party/jsign/index.mjs';
-
-/**
- * Get the parent folder path of this script.
- * @returns the folder path containing the current script.
- */
-function currentDirname() {
-  return dirname(fileURLToPath(import.meta.url));
-}
+import {jsign} from '../../third_party/jsign/index.mjs';
 
 function assert(condition, msg) {
   if (!condition) {
@@ -42,6 +31,15 @@ async function assertFileExists(file, msg) {
     await access(file, constants.R_OK | constants.W_OK);
   } catch (err) {
     throw new Error(format(msg, file), {cause: err});
+  }
+}
+
+async function fileExists(file) {
+  try {
+    await access(file, constants.R_OK);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -75,7 +73,18 @@ function appendPfxJsignArgs(args, options) {
   args.push('--keystore', pfxCert);
 }
 
-function appendDigicertUsbJsignArgs(args, options) {
+// SafeNet Authentication Client PKCS#11 libraries, in probing order. The
+// macOS driver has installed either name depending on its version, and both
+// were in use across our release machines.
+const SAFENET_PKCS11_LIBRARIES = {
+  win32: ['c:\\WINDOWS\\system32\\eTPKCS11.dll'],
+  darwin: [
+    '/usr/local/lib/libeToken.dylib',
+    '/usr/local/lib/libeTPkcs11.dylib',
+  ],
+};
+
+async function appendDigicertUsbJsignArgs(args, options, tempDir) {
   // extended validation certificate stored in USB drive
   args.push('--storetype', 'PKCS11');
 
@@ -89,25 +98,28 @@ function appendDigicertUsbJsignArgs(args, options) {
     args.push('--alias', subject);
   }
 
-  let eTokenCfg;
-  switch (process.platform) {
-    case 'win32':
-      eTokenCfg = resolve(
-        currentDirname(),
-        'digicert-usb-config',
-        'eToken-windows.cfg'
-      );
+  const libraries = SAFENET_PKCS11_LIBRARIES[process.platform];
+  assert(!!libraries, `we do not support ev signing on ${process.platform}`);
+
+  let library;
+  for (const candidate of libraries) {
+    if (await fileExists(candidate)) {
+      library = candidate;
       break;
-    case 'darwin':
-      eTokenCfg = resolve(
-        currentDirname(),
-        'digicert-usb-config',
-        'eToken-macos.cfg'
-      );
-      break;
-    default:
-      throw new Error(`we do not support ev signing on ${process.platform}`);
+    }
   }
+  assert(
+    !!library,
+    `no SafeNet PKCS#11 library found, checked: ${libraries.join(', ')}`
+  );
+
+  const eTokenCfg = join(tempDir, 'eToken.cfg');
+  await writeFile(
+    eTokenCfg,
+    'name=eToken\n' +
+      'description=SunPKCS11 via Digicert SafeNet Authentication Client\n' +
+      `library=${library}\n`
+  );
   args.push('--keystore', eTokenCfg);
 }
 
@@ -169,11 +181,10 @@ export async function signWindowsExecutable(exeFile, algorithm, options) {
   exeFile = resolve(exeFile);
   await assertFileExists(exeFile, 'executable file "%s" does not exist');
 
-  const password = getOptionValue(
-    options,
-    'password',
-    'WINDOWS_SIGNING_CERT_PASSWORD',
-    true
+  // String() because minimist parses an all-digit CLI password (such as a
+  // token PIN) as a number.
+  const password = String(
+    getOptionValue(options, 'password', 'WINDOWS_SIGNING_CERT_PASSWORD', true)
   );
 
   // jsign trims file-sourced passwords, so surrounding whitespace would be
@@ -186,8 +197,8 @@ export async function signWindowsExecutable(exeFile, algorithm, options) {
   // Hand the password (which may be a short-lived GCP access token) to jsign
   // through a private temp file rather than argv, where it would be visible
   // to other local processes (`ps`) for the duration of the signing.
-  const passwordDir = await mkdtemp(join(tmpdir(), 'outline-jsign-'));
-  const passwordFile = join(passwordDir, 'storepass');
+  const tempDir = await mkdtemp(join(tmpdir(), 'outline-jsign-'));
+  const passwordFile = join(tempDir, 'storepass');
 
   try {
     await writeFile(passwordFile, password, {mode: 0o600});
@@ -206,7 +217,7 @@ export async function signWindowsExecutable(exeFile, algorithm, options) {
         appendPfxJsignArgs(jsignArgs, options);
         break;
       case 'digicert-usb':
-        appendDigicertUsbJsignArgs(jsignArgs, options);
+        await appendDigicertUsbJsignArgs(jsignArgs, options, tempDir);
         break;
       case 'gcp-hsm':
         appendGcpHsmJsignArgs(jsignArgs, options);
@@ -230,49 +241,13 @@ export async function signWindowsExecutable(exeFile, algorithm, options) {
     }
   } finally {
     try {
-      await rm(passwordDir, {recursive: true, force: true});
+      await rm(tempDir, {recursive: true, force: true});
     } catch (cleanupErr) {
       // don't let a cleanup failure mask the signing error
       console.error(
-        `failed to remove temporary password directory "${passwordDir}"`,
+        `failed to remove temporary signing directory "${tempDir}"`,
         cleanupErr
       );
     }
-  }
-}
-
-async function main() {
-  const {target, algorithm, ...options} = minimist(process.argv);
-  await signWindowsExecutable(target, algorithm, options);
-}
-
-// Call this script through CLI to sign a Windows executable:
-//   node sign_windows_executable.mjs
-//     --target <exe-path-to-sign>
-//     --algorithm <sha1|sha256>
-//     --certtype <none|pfx|digicert-usb|gcp-hsm>
-//     --password <cert-store-password|gcp-access-token>
-// The following options are for --certtype == pfx
-//     --pfx <pfx-cert-path>
-// The following options are for --certtype == digicert-usb
-//     [--subject <cert-subject-name>]
-// The following options are for --certtype == gcp-hsm
-//     --gcp-keyring <full-id: https://cloud.google.com/kms/docs/resource-hierarchy#retrieve_resource_id>
-//     --gcp-private-key <name-of-the-key-in-key-ring>
-//     --gcp-public-cert <full-path-of-the-public-certificate-file>
-//
-// You can also use environment variables to specify some arguments:
-//   WINDOWS_SIGNING_CERT_TYPE       <=> --certtype
-//   WINDOWS_SIGNING_CERT_PASSWORD   <=> --password
-//   WINDOWS_SIGNING_PFX_CERT        <=> --pfx
-//   WINDOWS_SIGNING_EV_CERT_SUBJECT <=> --subject
-//   WINDOWS_SIGNING_GCP_KEYRING     <=> --gcp-keyring
-//   WINDOWS_SIGNING_GCP_PRIVATE_KEY <=> --gcp-private-key
-//   WINDOWS_SIGNING_GCP_PUBLIC_CERT <=> --gcp-public-cert
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  try {
-    await main();
-  } catch (err) {
-    console.error(err);
   }
 }
