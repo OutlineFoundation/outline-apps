@@ -22,30 +22,31 @@ import (
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
 	"localhost/client/go/composer/netconfig"
-	"localhost/client/go/composer/meta"
+	"localhost/client/go/composer/registry"
 )
 
-func parseTransport(t *testing.T, text string) (TransportPairConfig, *meta.Table) {
+func parseTransport(t *testing.T, text string) TransportPairConfig {
 	t.Helper()
-	parser := NewComposerTransportParser(&transport.TCPDialer{}, &transport.UDPDialer{})
+	r := registry.New()
+	require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
+	parse := registry.Parser(r, TransportPairKind)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, table := meta.WithTable(context.Background())
-	cfg, err := parser.Parse(ctx, node)
+	cfg, err := parse(context.Background(), node)
 	require.NoError(t, err)
-	return cfg, table
+	return cfg
 }
 
-func requirePairInfo(t *testing.T, table *meta.Table, cfg TransportPairConfig) TransportPairInfo {
+func requirePairInfo(t *testing.T, cfg TransportPairConfig) TransportPairInfo {
 	t.Helper()
-	info, ok := meta.Get[TransportPairInfo](table, cfg)
-	require.True(t, ok, "transport pair info missing")
+	info, err := (ConnectionAnalyzer{}).AnalyzeTransport(cfg)
+	require.NoError(t, err)
 	return info
 }
 
 func TestTransport_LegacySSURL(t *testing.T) {
-	cfg, table := parseTransport(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
-	info := requirePairInfo(t, table, cfg)
+	cfg := parseTransport(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
+	info := requirePairInfo(t, cfg)
 	require.Equal(t, ConnTypeTunneled, info.Stream.ConnType)
 	require.Equal(t, "example.com:1234", info.Stream.FirstHop)
 	require.Equal(t, ConnTypeTunneled, info.Packet.ConnType)
@@ -57,19 +58,19 @@ func TestTransport_LegacySSURL(t *testing.T) {
 }
 
 func TestTransport_LegacyMappingNoType(t *testing.T) {
-	cfg, table := parseTransport(t, `
+	cfg := parseTransport(t, `
 server: example.com
 server_port: 1234
 method: chacha20-ietf-poly1305
 password: SECRET
 `)
-	info := requirePairInfo(t, table, cfg)
+	info := requirePairInfo(t, cfg)
 	require.Equal(t, "example.com:1234", info.Stream.FirstHop)
 	_ = cfg
 }
 
 func TestTransport_TCPUDP(t *testing.T) {
-	cfg, table := parseTransport(t, `
+	cfg := parseTransport(t, `
 $type: tcpudp
 tcp:
   $type: shadowsocks
@@ -82,22 +83,22 @@ udp:
   cipher: chacha20-ietf-poly1305
   secret: SECRET
 `)
-	info := requirePairInfo(t, table, cfg)
+	info := requirePairInfo(t, cfg)
 	require.Equal(t, "example.com:1234", info.Stream.FirstHop)
 	require.Equal(t, "example.com:5678", info.Packet.FirstHop)
 }
 
 func TestTransport_TCPUDP_DefaultsToDirect(t *testing.T) {
-	cfg, table := parseTransport(t, "$type: tcpudp")
-	info := requirePairInfo(t, table, cfg)
+	cfg := parseTransport(t, "$type: tcpudp")
+	info := requirePairInfo(t, cfg)
 	require.Equal(t, ConnTypeDirect, info.Stream.ConnType)
 	require.Equal(t, ConnTypeDirect, info.Packet.ConnType)
 	_ = cfg
 }
 
 func TestTransport_BasicAccess(t *testing.T) {
-	cfg, table := parseTransport(t, "$type: basic-access")
-	info := requirePairInfo(t, table, cfg)
+	cfg := parseTransport(t, "$type: basic-access")
+	info := requirePairInfo(t, cfg)
 	require.Equal(t, ConnTypeDirect, info.Stream.ConnType)
 	parts, err := cfg.NewTransportPair(context.Background())
 	require.NoError(t, err)
@@ -109,7 +110,7 @@ func TestTransport_BasicAccess(t *testing.T) {
 // $type), a `prefix` applies only to TCP: the packet listener's salt
 // generator must NOT be set, even though the stream dialer's is.
 func TestTransport_ShadowsocksPrefixTCPOnly_URL(t *testing.T) {
-	cfg, _ := parseTransport(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234?prefix=POST%20"`)
+	cfg := parseTransport(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234?prefix=POST%20"`)
 	ssCfg, ok := cfg.(*ShadowsocksTransportConfig)
 	require.True(t, ok, "expected *ShadowsocksTransportConfig, got %T", cfg)
 	require.NotNil(t, ssCfg.StreamDialer.SaltGenerator, "prefix must apply to TCP")
@@ -117,7 +118,7 @@ func TestTransport_ShadowsocksPrefixTCPOnly_URL(t *testing.T) {
 }
 
 func TestTransport_ShadowsocksPrefixTCPOnly_Mapping(t *testing.T) {
-	cfg, _ := parseTransport(t, `
+	cfg := parseTransport(t, `
 endpoint: example.com:1234
 cipher: chacha20-ietf-poly1305
 secret: SECRET
@@ -135,7 +136,7 @@ prefix: "POST "
 // prefix with UDP, one needs to specify it in the PacketListener config
 // explicitly."
 func TestTransport_ShadowsocksPrefixExplicitPacketListener(t *testing.T) {
-	cfg, _ := parseTransport(t, `
+	cfg := parseTransport(t, `
 $type: tcpudp
 tcp:
   $type: shadowsocks
@@ -157,13 +158,13 @@ udp:
 }
 
 func TestTransport_FirstSupported(t *testing.T) {
-	cfg, table := parseTransport(t, `
+	cfg := parseTransport(t, `
 $type: first-supported
 options:
   - $type: warp-drive
   - $type: tcpudp
 `)
-	info := requirePairInfo(t, table, cfg)
+	info := requirePairInfo(t, cfg)
 	require.Equal(t, ConnTypeDirect, info.Stream.ConnType)
 	_ = cfg
 }

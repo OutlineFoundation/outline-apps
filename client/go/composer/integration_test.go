@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// A miniature transport model mirroring configregistry's shape:
+// A miniature transport model mirroring Outline's app registry shape:
 // endpoints wrap dialers, transports wrap endpoints.
 type endpoint struct {
 	desc string

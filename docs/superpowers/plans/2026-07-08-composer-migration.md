@@ -1,5 +1,13 @@
 # Composer Migration Implementation Plan
 
+> Historical plan: completed and subsequently superseded in part. The
+> current architecture uses `composer/registry`, optional caller-named
+> `netconfig.Register…` helpers, and post-parse
+> `configregistry.ConnectionAnalyzer`; it does not use the metadata
+> side table or registration wrappers described below. See
+> `client/go/composer/DESIGN.md` and
+> `client/go/outline/configregistry/README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Migrate the client's config system from `configyaml`/legacy `configregistry` parsers onto the `composer` core, per the approved design in `docs/superpowers/specs/2026-07-08-app-policy-separation-design.md`: SDK-ready parsers in a new `netconfig` package, app policy attached via a `connmeta` side table and registration wrappers, DNS/UA policy relocated, then legacy deletion.

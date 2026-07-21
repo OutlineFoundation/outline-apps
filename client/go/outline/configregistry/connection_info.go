@@ -1,4 +1,4 @@
-// Copyright 2024 The Outline Authors
+// Copyright 2026 The Outline Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,46 +18,44 @@ import (
 	"encoding/json"
 )
 
-// ConnType is the type of the connections returned by Dialers and Endpoints.
-// Useful for knowing if it's tunneled or direct.
+// ConnType is the type of the connections returned by dialers and endpoints.
 type ConnType int
 
 const (
-	// Proxyless
 	ConnTypeDirect ConnType = iota
-	// Proxy
 	ConnTypeTunneled
-	// Mixed
 	ConnTypePartial
 	ConnTypeBlocked
 )
 
-// This is the format used for sending ConnType between go and typescript
-// Keep this in sync with
-// client/web/app/outline_server_repository/config.ts#ConnectionType
+// MarshalJSON keeps ConnType's Go-to-TypeScript wire representation in sync
+// with client/web/app/outline_server_repository/config.ts#ConnectionType.
 func (c ConnType) MarshalJSON() ([]byte, error) {
-	var s string
+	var value string
 	switch c {
 	case ConnTypeDirect:
-		s = "direct"
+		value = "direct"
 	case ConnTypeTunneled:
-		s = "tunneled"
+		value = "tunneled"
 	case ConnTypePartial:
-		s = "partial"
+		value = "partial"
 	case ConnTypeBlocked:
-		s = "blocked"
+		value = "blocked"
 	default:
-		return nil, &json.UnsupportedValueError{
-			Str: "invalid ConnType",
-		}
+		return nil, &json.UnsupportedValueError{Str: "invalid ConnType"}
 	}
-	return json.Marshal(s)
+	return json.Marshal(value)
 }
 
-// ConnProviderConfig represents a dialer or endpoint that can create connections.
+// ConnectionProviderInfo describes the connections created by a dialer or
+// endpoint.
 type ConnectionProviderInfo struct {
-	// The type of the connections that are provided
 	ConnType ConnType
-	// The address of the first hop.
 	FirstHop string
+}
+
+// TransportPairInfo describes both halves of a transport config.
+type TransportPairInfo struct {
+	Stream ConnectionProviderInfo
+	Packet ConnectionProviderInfo
 }

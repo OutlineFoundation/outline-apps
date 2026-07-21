@@ -1,7 +1,13 @@
 # App-Policy Separation for Composer Parsers — Design
 
-Status: Approved design, pending implementation plan.
+Status: Historical design, superseded 2026-07-20.
 Depends on: the `composer` core (`client/go/composer`, PR #2801).
+
+> This document records the initial side-table design. The implemented
+> architecture instead performs Outline-owned post-parse analysis with
+> `configregistry.ConnectionAnalyzer`; it has no metadata table or
+> parser decoration. See `client/go/composer/DESIGN.md` and
+> `client/go/outline/configregistry/README.md` for the current design.
 
 ## Problem
 

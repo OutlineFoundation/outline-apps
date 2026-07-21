@@ -24,9 +24,32 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"localhost/client/go/composer"
+	"localhost/client/go/composer/registry"
 	"localhost/client/go/outline/configregistry"
+	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
 )
+
+type unknownTransportConfig struct{}
+
+func (*unknownTransportConfig) NewTransportPair(context.Context) (*configregistry.TransportPairParts, error) {
+	return nil, nil
+}
+
+func TestParseConfig_UnknownAnalysisTypeIsInternalError(t *testing.T) {
+	r := registry.New()
+	err := registry.Register(r, configregistry.TransportPairKind, "unknown",
+		func(context.Context, composer.Node) (configregistry.TransportPairConfig, error) {
+			return &unknownTransportConfig{}, nil
+		})
+	require.NoError(t, err)
+
+	_, err = (&ClientConfig{Composer: r}).ParseConfig("", "transport:\n  $type: unknown")
+	var platformErr *platerrors.PlatformError
+	require.ErrorAs(t, err, &platformErr)
+	require.Equal(t, platerrors.InternalError, platformErr.Code)
+	require.Equal(t, "failed to analyze transport config", platformErr.Message)
+}
 
 func Test_NewTransport_SS_URL(t *testing.T) {
 	config := "transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/"

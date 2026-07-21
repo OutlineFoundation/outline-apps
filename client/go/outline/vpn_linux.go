@@ -23,7 +23,6 @@ import (
 	"sync"
 
 	"localhost/client/go/outline/callback"
-	"localhost/client/go/outline/configregistry"
 	perrs "localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/vpn"
 )
@@ -63,7 +62,15 @@ func (api *vpnAPI) Establish(configStr string) (err error) {
 	clientConfig := ClientConfig{}
 	tcp := newFWMarkProtectedTCPDialer(conf.VPN.ProtectionMark)
 	udp := newFWMarkProtectedUDPDialer(conf.VPN.ProtectionMark)
-	clientConfig.TransportParser = configregistry.NewComposerTransportParser(tcp, udp)
+	clientComposer, err := NewClientComposer(tcp, udp)
+	if err != nil {
+		return perrs.PlatformError{
+			Code:    perrs.InternalError,
+			Message: "failed to create client composer",
+			Cause:   perrs.ToPlatformError(err),
+		}
+	}
+	clientConfig.Composer = clientComposer
 	result := clientConfig.New(conf.VPN.ID, conf.Client)
 	if result.Error != nil {
 		return result.Error

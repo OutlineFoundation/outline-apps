@@ -25,7 +25,7 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-// providerConfig is the config fetched from the provider. It may be either an error, or a tunnel configregistry.
+// providerConfig is the config fetched from the provider. It may contain either an error or a tunnel config.
 // Only the Error field is read (see doParseTunnelConfig); goccy ignores
 // unknown fields (e.g. transport) by default.
 type providerConfig struct {
@@ -41,7 +41,7 @@ type ProviderErrorConfig struct {
 	}
 }
 
-// firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in configregistry.ts.
+// firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in config.ts.
 type firstHopAndTunnelConfigJSON struct {
 	Client         string                  `json:"client"`
 	FirstHop       string                  `json:"firstHop"`
@@ -80,7 +80,7 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	var stringValue string
 	var clientConfigMap map[string]any
 	if err := yaml.Unmarshal([]byte(input), &stringValue); err == nil {
-		// Legacy URL format. Input is the transport configregistry.
+		// Legacy URL format. Input is the transport config.
 		clientConfigMap = map[string]any{"transport": stringValue}
 	} else {
 		var yamlValue map[string]any
@@ -119,10 +119,10 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 				return &InvokeMethodResult{Error: platErr}
 			}
 
-			// Extract client configregistry.
+			// Extract the client config.
 			clientConfigMap = yamlValue
 		} else {
-			// Legacy JSON format. Input is the transport configregistry.
+			// Legacy JSON format. Input is the transport config.
 			clientConfigMap = map[string]any{"transport": yamlValue}
 		}
 	}

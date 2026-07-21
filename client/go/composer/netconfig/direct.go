@@ -21,8 +21,7 @@ import (
 )
 
 // DirectStreamDialerConfig wraps a base dialer captured at registry
-// construction. Its identity (the pointer) is how apps recognize
-// direct access in a parsed tree.
+// construction.
 type DirectStreamDialerConfig struct {
 	dialer transport.StreamDialer
 }

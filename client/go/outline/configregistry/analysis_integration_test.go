@@ -21,43 +21,44 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/composer/meta"
 	"localhost/client/go/composer/netconfig"
+	"localhost/client/go/composer/registry"
 )
 
-func parseSD(t *testing.T, text string) (netconfig.StreamDialerConfig, *meta.Table) {
+func parseSD(t *testing.T, text string) netconfig.StreamDialerConfig {
 	t.Helper()
-	tables := newRegistryTables(&transport.TCPDialer{}, &transport.UDPDialer{})
+	r := registry.New()
+	err := Register(r, &transport.TCPDialer{}, &transport.UDPDialer{})
+	require.NoError(t, err)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, table := meta.WithTable(context.Background())
-	cfg, err := tables.streamDialers.Parse(ctx, node)
+	cfg, err := registry.Parser(r, netconfig.StreamDialerKind)(context.Background(), node)
 	require.NoError(t, err)
-	return cfg, table
+	return cfg
 }
 
-func TestRegistry_DirectFallbackInfo(t *testing.T) {
-	cfg, table := parseSD(t, "")
-	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
-	require.True(t, ok)
+func TestConnectionInfo_DirectFallback(t *testing.T) {
+	cfg := parseSD(t, "")
+	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	require.NoError(t, err)
 	require.Equal(t, ConnectionProviderInfo{ConnTypeDirect, ""}, info)
 }
 
-func TestRegistry_ShadowsocksInfo(t *testing.T) {
-	cfg, table := parseSD(t, `
+func TestConnectionInfo_Shadowsocks(t *testing.T) {
+	cfg := parseSD(t, `
 $type: shadowsocks
 endpoint: example.com:1234
 cipher: chacha20-ietf-poly1305
 secret: SECRET
 `)
-	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
-	require.True(t, ok)
+	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	require.NoError(t, err)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	require.Equal(t, "example.com:1234", info.FirstHop)
 }
 
-func TestRegistry_WebsocketOverShadowsocks(t *testing.T) {
-	cfg, table := parseSD(t, `
+func TestConnectionInfo_WebsocketOverShadowsocks(t *testing.T) {
+	cfg := parseSD(t, `
 $type: shadowsocks
 cipher: chacha20-ietf-poly1305
 secret: SECRET
@@ -65,8 +66,8 @@ endpoint:
   $type: websocket
   url: wss://cdn.example.com/tcp
 `)
-	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
-	require.True(t, ok)
+	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	require.NoError(t, err)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	// Websocket copies its inner (direct dial) endpoint's info: the
 	// first hop is the CDN address.
@@ -87,31 +88,33 @@ func findWebsocket(cfg netconfig.StreamDialerConfig) *netconfig.WebsocketEndpoin
 	return ws
 }
 
-func TestRegistry_FirstSupportedPassthrough(t *testing.T) {
-	cfg, table := parseSD(t, `
+func TestConnectionInfo_FirstSupportedPassthrough(t *testing.T) {
+	cfg := parseSD(t, `
 $type: first-supported
 options:
   - $type: warp-drive
   - $type: block
 `)
-	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
-	require.True(t, ok)
+	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	require.NoError(t, err)
 	require.Equal(t, ConnTypeBlocked, info.ConnType)
 }
 
-func TestRegistry_SSURLStringFallback(t *testing.T) {
-	cfg, table := parseSD(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
-	info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
-	require.True(t, ok)
+func TestConnectionInfo_SSURLStringFallback(t *testing.T) {
+	cfg := parseSD(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
+	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	require.NoError(t, err)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	require.Equal(t, "example.com:1234", info.FirstHop)
 	_ = cfg
 }
 
-func TestRegistry_MissingTableErrors(t *testing.T) {
-	tables := newRegistryTables(&transport.TCPDialer{}, &transport.UDPDialer{})
+func TestParsingNeedsNoMetadataContext(t *testing.T) {
+	r := registry.New()
+	err := Register(r, &transport.TCPDialer{}, &transport.UDPDialer{})
+	require.NoError(t, err)
 	node, err := composer.ParseYAML([]byte("$type: block"))
 	require.NoError(t, err)
-	_, err = tables.streamDialers.Parse(context.Background(), node) // no table in ctx
-	require.Error(t, err)
+	_, err = registry.Parser(r, netconfig.StreamDialerKind)(context.Background(), node)
+	require.NoError(t, err)
 }

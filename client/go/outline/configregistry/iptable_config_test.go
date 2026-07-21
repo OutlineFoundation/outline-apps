@@ -24,7 +24,7 @@ import (
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
 	"localhost/client/go/composer/netconfig"
-	"localhost/client/go/composer/meta"
+	"localhost/client/go/composer/registry"
 )
 
 // errorStreamDialer is a fake transport.StreamDialer that always fails,
@@ -38,17 +38,18 @@ func (d *errorStreamDialer) DialStream(ctx context.Context, addr string) (transp
 	return nil, fmt.Errorf("dialer '%s' called for address '%s'", d.name, addr)
 }
 
-// parseSDErr is like the parseSD helper in composer_registry_test.go, but
+// parseSDErr is like the parseSD helper in analysis_integration_test.go, but
 // returns the parse error instead of requiring success. Needed here
 // because iptable has several config-time error cases.
-func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, *meta.Table, error) {
+func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, error) {
 	t.Helper()
-	tables := newRegistryTables(&transport.TCPDialer{}, &transport.UDPDialer{})
+	r := registry.New()
+	err := Register(r, &transport.TCPDialer{}, &transport.UDPDialer{})
+	require.NoError(t, err)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, table := meta.WithTable(context.Background())
-	cfg, err := tables.streamDialers.Parse(ctx, node)
-	return cfg, table, err
+	cfg, err := registry.Parser(r, netconfig.StreamDialerKind)(context.Background(), node)
+	return cfg, err
 }
 
 // fakeSDConfig is a fake netconfig.StreamDialerConfig used to build
@@ -201,16 +202,17 @@ table:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, table := parseSD(t, "$type: iptable\n"+tc.configYAML)
-			info, ok := meta.Get[ConnectionProviderInfo](table, cfg)
-			require.True(t, ok)
+			cfg := parseSD(t, "$type: iptable\n"+tc.configYAML)
+			info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+			require.NoError(t, err)
 			require.Equal(t, tc.expectedConnType, info.ConnType)
+			require.Empty(t, info.FirstHop)
 		})
 	}
 }
 
 func TestIPTableBareIPBecomesHostPrefix(t *testing.T) {
-	cfg, _ := parseSD(t, `
+	cfg := parseSD(t, `
 $type: iptable
 table:
   - ips:
@@ -307,7 +309,7 @@ fallback:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := parseSDErr(t, tc.configYAML)
+			_, err := parseSDErr(t, tc.configYAML)
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.expectErr)
 		})

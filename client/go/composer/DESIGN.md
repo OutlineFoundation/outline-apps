@@ -119,14 +119,15 @@ TypeParser's fallback handler, as in the legacy design.
 
 The package was built alongside `configyaml` and adopted by porting one
 parser chain at a time in a follow-up plan; `configyaml` was deleted at
-the end. Migration complete 2026-07-09: `client/go/composer/netconfig` is now
-the transport-config layer (config interfaces, concrete config types,
-protocol parsers), and `client/go/outline/configregistry` is the app
-layer that registers netconfig's parsers, attaches connection metadata
-via `client/go/composer/meta`, and applies Outline policy (DNS
-interception, User-Agent) at the boundary. Long-term destination: the
-Outline SDK (this package has no Outline-app dependencies by design —
-app policy like ConnectionProviderInfo, DNS interception, and
+the end. Migration complete 2026-07-09: `client/go/composer/netconfig`
+is now the transport-config layer (config interfaces, concrete config
+types, protocol parsers, and optional registration helpers), and
+`client/go/outline/configregistry` is the app layer that chooses wire
+names and fallbacks, analyzes parsed graphs for connection metadata,
+and applies Outline policy (DNS interception, User-Agent) at the
+boundary. Long-term destination: the Outline SDK (this package has no
+Outline-app dependencies by design — app policy like
+`ConnectionProviderInfo`, DNS interception, and
 User-Agent stays in the app layer, never in `composer` or `netconfig`).
 
 ## D13. Package name: `composer`
@@ -142,7 +143,7 @@ format-agnostic).
 ## D14. Package layout: one `composer/` root for everything SDK-bound
 
 The Composer system lives under a single package tree — `composer`
-(format core), `composer/meta` (identity-keyed config-metadata table),
+(format core), `composer/registry` (typed extension points), and
 `composer/netconfig` (strategy config vocabulary) — following the
 stdlib `go/` family pattern (`go/ast`, `go/parser`, `go/types`:
 siblings under one root, distinct APIs, the core imports none of them).
@@ -153,17 +154,216 @@ The rule that makes the umbrella meaningful: everything under
 `client/go/outline/`, and must never move under the umbrella.
 
 Audience map: config authors read SPEC.md, never Go; strategy
-developers work in `composer/netconfig` plus one registration line in
-the app registry; app developers read `composer/netconfig` +
-`composer/meta` with `outline/configregistry` as the worked example;
-tooling developers need only the core + SPEC.md.
+developers work in `composer/netconfig` plus an optional registration
+helper; app developers read `composer/netconfig` with
+`outline/configregistry` as the worked example; tooling developers need
+only the core + SPEC.md.
 
-`meta` graduated from `client/go/outline/connmeta`: nothing in it was
-connection- or Outline-specific, and its invariants (post-order
-availability, pointer-identity keys, per-parse scoping, mutate-don't-
-copy) are documented next to the machinery that creates them. It
-remains a sibling package, not part of the core: the core cannot
-enforce those invariants and its API freezes at SDK time.
+## D15. Multi-category registry and registration helpers
+
+The multi-category registry lives in `composer/registry`, one layer
+above the YAML node and `TypeParser` mechanics in `composer`. Keeping
+the layers in separate packages avoids overloading the existing
+`composer.Kind` YAML-node-shape type with the unrelated typed extension
+point identity. The rest of this section uses `registry` for the
+`composer/registry` package.
+
+The fundamental extension operation is a strongly typed registration:
+
+```go
+registry.Register(registrar, kind, typeName, parseFunc)
+```
+
+`registry.Kind[T]` identifies an extension point and carries its result
+type; `composer.ParseFunc[T]` must match it. This relationship provides
+the important compiler check. Parser dependencies are obtained with the
+same strong typing:
+
+```go
+parseStreamDialer := registry.Parser(registrar, StreamDialerKind)
+```
+
+The returned parser is passed to a parser constructor and captured for
+later use. It is late-bound so registration order does not matter and
+recursive categories work.
+
+Direct registration is the fundamental API. Packages may offer small
+convenience functions that bundle the registrations needed for one
+reusable config type. Such helpers take the registrar and the caller's
+chosen name; they contain no canonical name, fallback, metadata, or app
+policy. For example:
+
+```go
+func RegisterMyEndpoint(r registry.Registrar, name registry.TypeName) error {
+    parseDialer := registry.Parser(r, netconfig.StreamDialerKind)
+    parse := NewMyEndpointParser(parseDialer)
+    return registry.Register(
+        r, netconfig.StreamEndpointKind, name,
+        func(ctx context.Context, node composer.Node) (
+            netconfig.StreamEndpointConfig, error,
+        ) {
+            return parse(ctx, node)
+        })
+}
+```
+
+An application may use the helper more than once with different names
+or options, or bypass it and register an individual parser directly:
+
+```go
+r := registry.New()
+netconfig.RegisterWebsocket(r, "websocket",
+    netconfig.WithWebsocketHeaders(outlineHeaders))
+netconfig.RegisterWebsocket(r, "other-websocket",
+    netconfig.WithWebsocketHeaders(otherHeaders))
+```
+
+Composer has no plugin object, `AddPlugin`, installation lifecycle, or
+metadata decoration API. Those abstractions should be added only if a
+real requirement introduces identity, manifests, transactional
+installation, enable/disable, permissions, or lifecycle callbacks.
+
+`registry.Composer` and `registry.Registrar` are two interface views of
+the same concrete registry; they are not separate objects and do not
+imply a freeze step. `Registrar` is used in registration signatures and
+can both add a strategy and provide its typed parser dependencies.
+`Composer` is the registration-free view used by code that only obtains
+parsers and composes configs. The separation is about capability and
+API intent, not concurrent registration and parsing.
+
+The typed public surface is:
+
+```go
+func NewKind[T any](name string) Kind[T]
+func New() Registrar
+func Parser[T any](Composer, Kind[T]) composer.ParseFunc[T]
+func Register[T any](Registrar, Kind[T], TypeName, composer.ParseFunc[T]) error
+func RegisterFallback[T any](Registrar, Kind[T], composer.ParseFunc[T]) error
+```
+
+`RegisterFallback` explicitly preserves each category's application-
+specific `$type`-less behavior; an empty `TypeName` is not a magic
+fallback name. Duplicate type or fallback registration returns an
+error. Registration is deliberately non-transactional: a helper that
+registers several Kinds may leave earlier registrations installed if a
+later one fails. Helpers should validate their own arguments before the
+first registration, but rollback is not part of the registry contract.
+
+Go does not support independently generic interface methods. The
+`Composer.Compose(ParseRequest)` and `Registrar.Register(Registration)`
+methods therefore carry opaque type-erased requests. Their inspection
+methods let an external wrapper observe and delegate composition or
+registration, but constructing and extracting results stays inside the
+generic free functions. Values are erased into private typed boxes, so
+nil interface results and the association between a `Kind[T]` and
+`ParseFunc[T]` survive the seam. Each kind's dispatcher reuses
+`composer.TypeParser[any]`, including its built-in `first-supported`
+semantics; ordinary registration code never handles `any`.
+
+There is no `Use` middleware or separate `RegisterConfig` operation.
+Parsers can be wrapped explicitly before registration, and decode-then-
+build behavior can be a parser-construction helper if it is useful. A
+global decoration API should wait for concrete annotation and telemetry
+requirements.
+
+The production Outline wiring validates this design.
+`composer/netconfig` owns the five typed networking Kinds alongside the
+config interfaces they describe, parser constructors, and optional
+`Register…` helpers. `outline/configregistry.Register` chooses Outline's
+names and options, installs compatibility fallbacks directly, and
+registers app-only IP-table and whole-transport parsers.
+
+The resulting lifecycle has four distinct stages:
+
+1. **Strategy definition:** registration installs long-lived
+   parser functions. A parser may capture other typed parser functions.
+2. **Config instance:** each parse or dynamic-config refresh invokes
+   those functions to create a new typed config graph. Child parser
+   calls produce child config objects.
+3. **Application analysis:** Outline recursively inspects the completed
+   graph to derive `ConnectionProviderInfo` and apply its direct-address
+   resolution policy. Parsing itself carries no metadata context.
+4. **Runtime instance:** the config graph's `New*` methods recursively
+   build the actual dialers, endpoints, and listeners for a client or
+   session.
+
+The same registry and registered strategy definitions can be reused
+across config refreshes; only the config and runtime graphs need to be
+recreated.
+
+## Open design: fetched config values and dynamic access keys
+
+This section records a direction to explore, not a settled wire-format
+decision. In particular, `$ref` syntax and general reference, selection,
+merge, and overlay semantics remain deferred.
+
+We want an explicit config representation for fetching another config
+value. A possible shape is:
+
+```yaml
+$type: fetch
+url: https://config.example/stream-dialer.yaml
+```
+
+`fetch` would replace the complete value at the point where it appears.
+The surrounding parser supplies the expected type, so the fetched
+document could be a whole transport, a stream dialer, or another typed
+extension point. Reusable partial values such as IP-prefix or domain
+sets may become their own parser categories, allowing the same fetch
+representation there without introducing an untyped reference system.
+Fetch would not initially select a path within a document or merge
+local fields into the fetched value.
+
+Dynamic Access Keys should use this same representation rather than a
+separate fetch mechanism. The current URL form can remain a compact
+shorthand that normalizes to a fetch config. A future dynamic key may
+instead carry a short JSON/YAML config blurb, which would allow fetch
+behavior to be extended without adding a new access-key syntax for each
+fetch option. The exact encoding of a structured blurb inside an access
+key, including escaping and versioning, is still open.
+
+The capability used to execute a fetch is deliberately undecided. The
+host application should inject it rather than Composer constructing its
+own default HTTP client. Candidates include a dedicated fetch function
+or interface, an `http.RoundTripper`-like capability, or an existing
+Composer transport/dialer so fetching can inherit application routing
+and protection behavior. This must fit the registration API: a fetch
+helper consumes the injected capability and may register the fetch form
+for multiple parser categories. We should decide the capability
+boundary only after working through redirects, authentication, proxy
+routing, platform socket protection, and testability.
+
+Caching is required but its API and owner remain open with the fetch
+capability. The design should be able to use HTTP freshness and
+validation semantics, including conditional requests, while treating
+the URL and fetched body as credential-bearing data. Any persistent
+cache must be scoped to the service, safe for credentials at rest,
+removed with that service's storage, and must not expose URLs, headers,
+or response bodies through logs or cache filenames. An in-memory-only
+cache is the safe fallback until credential-safe persistence exists.
+
+Resolution also needs explicit limits and provenance: cancellation and
+deadlines, response and aggregate byte limits, recursion depth, cycle
+detection, redirect policy, relative-URL bases, and source-aware errors
+for fetched documents. Fetch or network failures are operational errors;
+they should not become `errors.ErrUnsupported`. An unsupported type in
+the successfully fetched value may retain `ErrUnsupported`, allowing an
+enclosing `first-supported` to continue according to its existing
+rules.
+
+Questions to settle in a follow-up design session:
+
+- What is the smallest injected capability that works across the native
+  apps and the future SDK: fetcher, HTTP round tripper, or Composer
+  dialer/transport?
+- Is fetch enabled for every declared parser category or opted into per
+  category?
+- What is the canonical structured Dynamic Access Key representation,
+  and how does the existing `ssconf://` URL shorthand normalize to it?
+- Which component owns HTTP cache policy and credential-safe persistent
+  storage, and what are the stale/offline semantics?
+- How do fetched source identity and selection information appear in
+  annotations, diagnostics, and telemetry without leaking credentials?
 
 ## Spike findings (2026-07, goccy/go-yaml v1.18.0)
 

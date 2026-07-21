@@ -60,6 +60,13 @@ never treated as fields:
   elsewhere in the document; parsers ignore its content.
 - All other `$` keys are reserved for future use and ignored.
 
+`$type` names and fallback rules are scoped to the expected config
+category, not global to the document. For example, `shadowsocks` may be
+registered independently as a stream dialer and a packet listener, while
+the same name need not be valid for a whole transport. The parser that
+delegates a field determines its expected category. A `$type` registered
+for another category is unsupported at that location.
+
 ## Field naming
 
 Field names are lowercase `snake_case` (e.g. `server_port`). Matching is

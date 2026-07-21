@@ -128,7 +128,7 @@ prefix: "POST "
 	require.NotNil(t, pd)
 }
 
-// --- Ported from client/go/outline/configregistry/config_shadowsocks_test.go
+// --- Ported from the former app-layer Shadowsocks parser tests.
 // (TestParseShadowsocksConfig_URL). These exercise the moved URL/prefix
 // helpers directly, since ssParams (the output of parseShadowsocksNode)
 // intentionally folds cipher+secret into an opaque *shadowsocks.EncryptionKey

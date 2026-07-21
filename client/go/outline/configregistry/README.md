@@ -1,141 +1,76 @@
 # Outline Config Registry
 
-## Overview
+`configregistry` is the Outline-owned layer above Composer and
+`composer/netconfig`. It chooses Outline's `$type` names and compatibility
+fallbacks, defines app-only transport configs, analyzes parsed graphs for
+connection information, and applies Outline transport policy.
 
-`configregistry` is the app layer of Outline's config system: it turns
-a provider client config (YAML) into a running client. The wire format
-and parsing mechanics are Outline Composer (`client/go/composer`); the
-transport strategies (Shadowsocks, websocket, direct, block, dialing,
-iptable routing) are `client/go/composer/netconfig`. This package sits above
-both — it registers netconfig's parsers under `$type` names, attaches
-Outline-specific connection metadata to every parsed config, and
-applies Outline policy (DNS interception, User-Agent) that must not
-leak into the app-agnostic layers below it.
+The reusable layers below this package do not know Outline's names,
+`ConnectionProviderInfo`, DNS interception, or platform address-resolution
+policy.
 
-This framework underpins how the Outline client understands and
-establishes connections through various proxy protocols and
-combinations, including composed ones (Shadowsocks-over-Websocket,
-iptable-routed multi-strategy configs, etc.).
+## Lifecycle
 
-## Core concepts
+The client config lifecycle is:
 
-Read `client/go/composer/SPEC.md` (wire format) and
-`client/go/composer/AGENTS.md` (parser mechanics) first; this section
-only covers what's specific to this package.
+```text
+YAML → typed config graph → Outline analysis/policy → runtime build
+```
 
-Parsing is two-phase, split across `client/go/outline/client.go`:
+1. `ClientConfig.ParseConfig` parses YAML with a `registry.Composer` and gets a
+   `TransportPairConfig`. Parsing uses an ordinary `context.Context`; there is
+   no metadata table or pointer-identity requirement.
+2. `ConnectionAnalyzer.AnalyzeTransport` recursively inspects the concrete
+   config graph. It returns `TransportPairInfo` and sets
+   `ResolveAddressFirst` on direct dial endpoints according to Outline's
+   platform policy. Unknown concrete configs are internal wiring errors.
+3. `ParsedClient.NewClient` recursively builds the runtime dialers and
+   listeners, then applies Outline's DNS interception.
 
-1. **Parse** (`ClientConfig.ParseConfig`) decodes the YAML into a
-   `composer.Node` tree and runs it through the registered
-   `composer.TypeParser[TransportPairConfig]`. This produces a typed
-   config tree only — no dialing, no sockets, no client. It's pure
-   enough that `parse.go`-style callers can read the first-hop endpoint
-   off the result without building anything.
-2. **Build** (`ParsedClient.NewClient`) calls `NewTransportPair` on the
-   parsed config, which recursively calls every child config's
-   `New*(ctx)` method (`NewStreamDialer`, `NewStreamEndpoint`, ...) to
-   construct the real `transport.StreamDialer` / `transport.PacketListener`.
-   Outline policy that must run at build time — DNS interception,
-   cookie-jar paths — is applied here, after the netconfig types hand
-   back plain dialers/listeners.
+Analysis is deliberately separate from parsing. Reusable protocol parsers stay
+focused on syntax and config construction, while Outline can make app-specific
+decisions after the whole graph is known. `first-supported` needs no special
+analysis case because parsing has already returned its chosen concrete config.
 
-netconfig's config types carry no Outline-specific data; this package
-adds it in two ways:
+## Registration
 
-- **Connection metadata** (`ConnectionProviderInfo`: `ConnType` +
-  `FirstHop`, in [types.go](./types.go)) answers "is this direct or
-  tunneled, and what's the first hop address" — used by the TypeScript
-  UI (`client/web/app/outline_server_repository/config.ts`) and by
-  `parse.go`. It's computed per config object as parsing happens and
-  stored in a [`meta.Table`](../meta) keyed by the config's
-  pointer identity (the same pattern as Go's own `go/ast` +
-  `go/types.Info`): a `meta.Table` is created per parse call
-  (`meta.WithTable`) and carried in `ctx`; each registered parser is
-  wrapped with [`withInfo`](./composer_registry.go) (or
-  [`withTransportInfo`](./transport_configs.go) for whole-transport
-  configs), which runs the netconfig parser, computes
-  `ConnectionProviderInfo` from the already-recorded metadata of any
-  child configs (parsing is post-order, so children are always present
-  first), and records it under the parsed config's pointer via
-  `setInfo`/`requireInfo`. A lookup miss at the root is a wiring bug —
-  it must never silently default to "direct", since that mislabels
-  tunneled traffic. `first-supported` needs no wrapper: it returns the
-  chosen option's config unchanged, so pointer identity carries its
-  metadata through automatically.
-- **DNS interception and User-Agent** are the other two pieces of
-  policy netconfig can't hold (see `client/go/composer/netconfig/AGENTS.md`).
-  The Outline User-Agent is injected as a generic HTTP header option
-  when the websocket parser is constructed
-  (`netconfig.WithWebsocketHeaders`, wired in
-  [composer_registry.go](./composer_registry.go)). DNS interception
-  (`NewOutlineDNSTransport` in [outline_dns.go](./outline_dns.go)) wraps
-  the built `StreamDialer`/`PacketListener` *after* `NewTransportPair`
-  returns, in `client.go`, not inside any parser.
+`Register` installs the vocabulary used by the Outline client:
 
-`TransportPairConfig` (in [transport_configs.go](./transport_configs.go))
-is the app-level aggregate: `NewTransportPair(ctx)` returns a
-`TransportPairParts{StreamDialer, PacketListener}`, still undecorated
-by DNS policy. Two forms are registered: `tcpudp` (independent TCP and
-UDP strategies) and `basic-access` (direct TCP with TLS fragmentation,
-plain UDP). A `$type`-less config falls back to the legacy Shadowsocks
-form (one Shadowsocks config used for both TCP and UDP), matching the
-documented access-key format.
+- It registers the named `$type` values `basic-access`, `block`, `dial`,
+  `direct`, `iptable`, `shadowsocks`, `tcpudp`, and `websocket`. The source
+  registrations stay sorted by this wire name for readability.
+- It calls the optional `netconfig.Register…` helpers for WebSocket, dial
+  endpoints, Shadowsocks, block, and direct configs. Outline supplies every
+  wire name and the WebSocket User-Agent option, while app-only IP-table,
+  TCP/UDP, and Basic Access parsers are registered directly.
+- It installs Outline's absent-direct, scalar-Shadowsocks, endpoint, and legacy
+  top-level transport fallbacks directly.
 
-[iptable_config.go](./iptable_config.go) defines the `iptable`
-stream-dialer strategy (registered alongside the others in
-`newRegistryTables`), which routes by destination IP prefix to
-per-entry dialers with an optional fallback. Its `ConnectionProviderInfo`
-aggregates its entries: all-direct, all-tunneled, all-blocked, or
-`ConnTypePartial` for a mix. It stays in the app layer (not netconfig)
-because its dialer implementation depends on the app-local `iptable`
-package.
+The `netconfig` helpers are only convenience functions over exported parser
+constructors and `registry.Register`. They register named entries only, can be
+called again with a different name or options, and do not attach metadata or
+install fallbacks. Advanced consumers can always register individual parsers.
+Registration is non-transactional, matching `composer/registry`.
 
-## Adding a new strategy
+## Adding a config type
 
-Most new strategies belong in `client/go/composer/netconfig`, not here — see
-`client/go/composer/netconfig/AGENTS.md` for "here vs. the app layer". Add code
-in this package only for the registration/wiring step, or for a
-strategy that genuinely needs Outline app state (like `iptable`).
+Generic protocol configs and parser constructors belong in
+`composer/netconfig`. Add an optional registration helper there if it removes
+repeated mechanical registration across Kinds; keep its name and options
+caller-controlled.
 
-1. **Write the netconfig config type and parser** per
-   `client/go/composer/netconfig/AGENTS.md` (a `New*(ctx)`-bearing config struct
-   plus a `composer.ParseFunc` or parser constructor). Skip this step if
-   you're only wiring up an existing netconfig type.
-2. **Write an info function** if the strategy carries connection
-   metadata: `func(ctx context.Context, cfg *MyConfig)
-   (ConnectionProviderInfo, error)`. Read children's info via
-   `requireInfo(ctx, childCfg)`; a leaf strategy just returns a literal
-   `ConnectionProviderInfo{ConnType: ...}`.
-3. **Register it** in `newRegistryTables` (for a dialer/endpoint/listener
-   strategy, [composer_registry.go](./composer_registry.go)) or in
-   `NewComposerTransportParser` (for a whole-transport strategy,
-   [transport_configs.go](./transport_configs.go)):
-
-   ```go
-   t.streamDialers.RegisterSubParser("my-strategy",
-       asStreamDialer(withInfo(netconfig.NewMyStrategyParser(t.streamEndpoints.Parse), myStrategyInfo)))
-   ```
-
-   The `as*` adapters exist because Go won't implicitly convert
-   `composer.ParseFunc[*MyConfig]` to `composer.ParseFunc[SomeInterface]`;
-   `withInfo`/`withTransportInfo` attach the metadata wrapper described
-   above. The string you register (`"my-strategy"`) is the `$type` value
-   config authors write in YAML.
-
-Every registered leaf, wrapped or not, must end up with metadata in the
-table — `withInfo`/`withTransportInfo` guarantee this for anything that
-goes through them; a strategy that bypasses them (like the `direct`
-registrations and the `KindAbsent` fallbacks, which are trivial enough
-to call `setInfo` inline) must call `setInfo` itself.
+Outline-only configs or compatibility behavior belong here. Register their
+parsers directly in `Register`, then add an exhaustive concrete-type case to
+the relevant `ConnectionAnalyzer` method. Analyzer cases must reject typed nil
+pointers and recursively analyze child configs. Dial endpoints must assign
+`ResolveAddressFirst` on every analysis so repeated analysis is idempotent and
+stale values are cleared.
 
 ## Testing
 
-[corpus_test.go](./corpus_test.go) parses every documented example
-config from
-https://developer.getoutline.org/vpn/reference/access-key-config/ plus
-known-deployed forms, guarding against silent regressions in the public
-config surface. [composer_registry_test.go](./composer_registry_test.go),
-[transport_configs_test.go](./transport_configs_test.go), and
-[iptable_config_test.go](./iptable_config_test.go) cover metadata
-computation (including composition through websocket-over-shadowsocks
-and `first-supported`) and the missing-table wiring-bug case.
+- `analysis_test.go` covers every analyzer category, composition, resolution
+  policy, nil/unknown configs, and repeated analysis.
+- `analysis_integration_test.go` and `transport_test.go` cover the full
+  parse-then-analyze path and compatibility forms.
+- `corpus_test.go` preserves the documented config corpus and known gaps.
+- `iptable_config_test.go` preserves aggregation and dispatch behavior.

@@ -30,7 +30,6 @@ import (
 	_ "github.com/eycorsican/go-tun2socks/common/log/simple" // Register a simple logger.
 	"github.com/eycorsican/go-tun2socks/tun"
 	"localhost/client/go/outline"
-	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/connectivity"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/vpn"
@@ -130,7 +129,11 @@ func main() {
 		if err != nil {
 			printErrorAndExit(err, exitCodeFailure)
 		}
-		clientConfig.TransportParser = configregistry.NewComposerTransportParser(tcp, udp)
+		clientComposer, err := outline.NewClientComposer(tcp, udp)
+		if err != nil {
+			printErrorAndExit(err, exitCodeFailure)
+		}
+		clientConfig.Composer = clientComposer
 	}
 	result := clientConfig.New(*args.keyID, *args.clientConfig)
 	if result.Error != nil {

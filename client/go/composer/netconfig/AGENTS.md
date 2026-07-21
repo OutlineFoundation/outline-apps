@@ -1,15 +1,16 @@
 # The `netconfig` Package
 
-The transport layer of Outline Composer: config interfaces
+The transport contract layer of Outline Composer: config interfaces
 (`StreamDialerConfig`, `PacketDialerConfig`, `StreamEndpointConfig`,
 `PacketEndpointConfig`, `PacketListenerConfig`, all in interfaces.go),
-their concrete config types, and the parsers that build them — one file
-per protocol (direct.go, block.go, dialendpoint.go, websocket.go,
+their shared typed `registry.Kind[T]` extension points, concrete config
+types, parser constructors, and optional registration helpers — one
+file per protocol (direct.go, block.go, dialendpoint.go, websocket.go,
 shadowsocks.go). Built on `client/go/composer`; read its SPEC.md (wire
 format) and AGENTS.md (parser mechanics) first. Consumed by the Outline
 app layer at `client/go/outline/configregistry` — read that package's
-README.md for how these pieces get registered, wrapped with metadata,
-and assembled into a client.
+README.md for how these pieces are named, analyzed, and assembled into
+a client.
 
 ## Two-phase: parse, then `New`
 
@@ -22,11 +23,24 @@ address via `net.ResolveTCPAddr` when `ResolveAddressFirst` is set).
 Keeping parse pure lets a caller inspect a parsed tree — e.g. read the
 first-hop endpoint address — without building anything.
 
-`New*` methods take pointer receivers, so only `*T` satisfies the
-config interfaces. This is required, not stylistic: the app layer's
-`composer/meta` side table (see the configregistry README) keys metadata off
-a config's pointer identity, which only holds if parsing always
-produces the same `*T`.
+Many `New*` methods take pointer receivers because their config values
+or builders are naturally pointer-backed. Analysis does not depend on
+pointer identity or a metadata side table.
+
+## Registration helpers
+
+`RegisterBlock`, `RegisterDialEndpoint`, `RegisterDirect`,
+`RegisterShadowsocks`, and `RegisterWebsocket` are optional sugar over
+the exported parser constructors and `registry.Register`. Each helper:
+
+- takes every `$type` name from its caller;
+- installs named entries only, never a fallback;
+- may be called again with a different name or configuration; and
+- contains no connection analysis or Outline policy.
+
+Advanced consumers remain free to register any exported parser
+directly. Multi-Kind registration is non-transactional, matching the
+underlying registry.
 
 ## The no-app-imports rule
 
@@ -36,10 +50,9 @@ D12). It must never import an Outline application package
 application policy:
 
 - No `ConnectionProviderInfo` or other connection metadata — the app
-  layer computes that in wrappers around these parsers, not the parsers
-  themselves.
+  layer computes that by analyzing the completed typed config graph.
 - No hardcoded User-Agent. `NewWebsocketEndpointParser` takes generic
-  `WithWebsocketHeaders(...)` options; the caller (configregistry)
+  `WithWebsocketHeaders(...)` options; the caller (`outline/configregistry`)
   supplies the actual Outline User-Agent string.
 - No DNS interception, cookie-jar paths, or other Outline-specific
   behavior — a `TransportPairConfig`-style aggregate type and any DNS
@@ -49,8 +62,7 @@ application policy:
   the address itself before dialing — with no wire field. It is set by
   the app on the already-parsed config, e.g. because a platform's
   protected-socket routing can't tolerate unprotected system DNS
-  resolution at dial time (see `resolveFirstOnThisPlatform` in
-  configregistry).
+  resolution at dial time (see `ConnectionAnalyzer` in the app layer).
 
 ## Adding a new config type
 
@@ -66,18 +78,19 @@ application policy:
    `NewShadowsocksStreamDialerParser`). Delegated dependencies are
    explicit `composer.ParseFunc` constructor arguments, per
    composer/AGENTS.md.
-3. Stop there. Do not register a `$type` name or construct a
-   `composer.TypeParser` in this package — netconfig exports parser
-   constructors only. Registration (`RegisterSubParser`), metadata
-   wrapping, and composing strategies into a client all happen in
-   `client/go/outline/configregistry`.
+3. Optionally add a `RegisterMyConfig(r, name, ...)` helper when the type
+   implements multiple Kinds or otherwise has repeated mechanical
+   registration. The caller supplies every wire name and policy option;
+   the helper registers named entries only and does not install a
+   fallback. Direct `registry.Register` with the exported parser remains
+   the fundamental API.
 
 ## Where new code belongs: here vs. the app layer
 
 Add it here if it's generic transport behavior any Outline Composer
 consumer could use: a new protocol, a new dial/endpoint shape, a new
-wrapping transport. Add it in `configregistry` instead if it needs
-Outline application state or policy — `ConnectionProviderInfo`, a
+wrapping transport. Add it in `outline/configregistry` instead if it
+needs Outline application state or policy — `ConnectionProviderInfo`, a
 User-Agent value, DNS interception, data-directory paths, or anything
 that reads from an app-only package like `iptable` or `reporting`.
 

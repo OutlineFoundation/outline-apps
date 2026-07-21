@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/composer/meta"
+	"localhost/client/go/composer/registry"
 )
 
 // TestCorpus_DocumentedConfigs parses every config example documented at
@@ -287,8 +287,8 @@ tcp:
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg, table := parseTransport(t, tc.yaml)
-			info := requirePairInfo(t, table, cfg)
+			cfg := parseTransport(t, tc.yaml)
+			info := requirePairInfo(t, cfg)
 			require.Equal(t, tc.wantStream, info.Stream.ConnType)
 			require.Equal(t, tc.wantPacket, info.Packet.ConnType)
 			require.Equal(t, tc.wantStreamHop, info.Stream.FirstHop)
@@ -363,7 +363,7 @@ udp:
 		// registered as a StreamDialerConfig/PacketDialerConfig/
 		// PacketListenerConfig sub-parser (for use inside a tcpudp's tcp/
 		// udp fields, or as a nested dialer), not as a top-level
-		// TransportPairConfig: NewComposerTransportParser only registers
+		// TransportPairConfig: the app registry only registers
 		// "tcpudp" and "basic-access" at that level, plus the legacy
 		// (no-$type) fallback.
 		{
@@ -379,11 +379,12 @@ secret: SECRET
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			parser := NewComposerTransportParser(&transport.TCPDialer{}, &transport.UDPDialer{})
+			r := registry.New()
+			require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
+			parse := registry.Parser(r, TransportPairKind)
 			node, err := composer.ParseYAML([]byte(tc.yaml))
 			require.NoError(t, err)
-			ctx, _ := meta.WithTable(context.Background())
-			_, err = parser.Parse(ctx, node)
+			_, err = parse(context.Background(), node)
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.wantErrContains)
 		})

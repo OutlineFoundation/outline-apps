@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer/registry"
 )
 
 // StreamDialerConfig is a parsed strategy that can build a StreamDialer.
@@ -44,3 +45,14 @@ type PacketEndpointConfig interface {
 type PacketListenerConfig interface {
 	NewPacketListener(ctx context.Context) (transport.PacketListener, error)
 }
+
+// Kinds are the typed Composer extension points owned by the networking
+// contracts. Applications register implementations under these shared
+// identities, either directly or through the optional Register helpers.
+var (
+	StreamDialerKind   = registry.NewKind[StreamDialerConfig]("stream dialer")
+	PacketDialerKind   = registry.NewKind[PacketDialerConfig]("packet dialer")
+	StreamEndpointKind = registry.NewKind[StreamEndpointConfig]("stream endpoint")
+	PacketEndpointKind = registry.NewKind[PacketEndpointConfig]("packet endpoint")
+	PacketListenerKind = registry.NewKind[PacketListenerConfig]("packet listener")
+)

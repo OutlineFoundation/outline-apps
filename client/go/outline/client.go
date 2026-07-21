@@ -17,6 +17,7 @@ package outline
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -26,7 +27,7 @@ import (
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/composer/meta"
+	"localhost/client/go/composer/registry"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
@@ -90,8 +91,8 @@ type NewClientResult struct {
 
 // ClientConfig is used to create a session Client.
 type ClientConfig struct {
-	DataDir         string
-	TransportParser *composer.TypeParser[configregistry.TransportPairConfig]
+	DataDir  string
+	Composer registry.Composer
 }
 
 // ParsedClient is the result of parsing a provider client config. It
@@ -108,12 +109,18 @@ type ParsedClient struct {
 // ParseConfig parses providerClientConfigText into a [ParsedClient],
 // without building any network resources.
 func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*ParsedClient, error) {
-	parser := c.TransportParser
-	if parser == nil {
+	clientComposer := c.Composer
+	if clientComposer == nil {
 		tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 		udpDialer := &transport.UDPDialer{}
-		parser = configregistry.NewComposerTransportParser(tcpDialer, udpDialer)
+		var err error
+		clientComposer, err = NewClientComposer(tcpDialer, udpDialer)
+		if err != nil {
+			return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
+				Message: "failed to create client composer", Cause: platerrors.ToPlatformError(err)}
+		}
 	}
+	parseTransport := registry.Parser(clientComposer, configregistry.TransportPairKind)
 	dataDir := c.DataDir
 	if dataDir == "" && runtime.GOOS != "android" && runtime.GOOS != "ios" {
 		if userDir, err := os.UserConfigDir(); err == nil {
@@ -143,8 +150,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 	transportNode := envelope["transport"]
 	reporterNode := envelope["reporter"]
 
-	ctx, table := meta.WithTable(context.Background())
-	transportCfg, err := parser.Parse(ctx, transportNode)
+	transportCfg, err := parseTransport(context.Background(), transportNode)
 	if err != nil {
 		code := platerrors.InvalidConfig
 		msg := "failed to create transport"
@@ -153,13 +159,23 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		}
 		return nil, &platerrors.PlatformError{Code: code, Message: msg, Cause: platerrors.ToPlatformError(err)}
 	}
-	info, ok := meta.Get[configregistry.TransportPairInfo](table, transportCfg)
-	if !ok {
+	info, err := configregistry.NewConnectionAnalyzer().AnalyzeTransport(transportCfg)
+	if err != nil {
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
-			Message: "missing connection info for transport config"}
+			Message: "failed to analyze transport config", Cause: platerrors.ToPlatformError(err)}
 	}
 	return &ParsedClient{Transport: transportCfg, Info: info,
 		reporterNode: reporterNode, keyID: keyID, dataDir: dataDir}, nil
+}
+
+// NewClientComposer registers Outline's config vocabulary and returns a Composer
+// ready to parse client configurations.
+func NewClientComposer(directSD transport.StreamDialer, directPD transport.PacketDialer) (registry.Composer, error) {
+	r := registry.New()
+	if err := configregistry.Register(r, directSD, directPD); err != nil {
+		return nil, fmt.Errorf("register Outline config: %w", err)
+	}
+	return r, nil
 }
 
 // NewClient builds a [Client] from a [ParsedClient], creating the
