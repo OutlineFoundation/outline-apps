@@ -34,7 +34,11 @@ type IPTableEntryConfig struct {
 
 // IPTableStreamDialerConfig routes by destination IP prefix.
 type IPTableStreamDialerConfig struct {
-	Entries  []IPTableEntryConfig
+	Entries []IPTableEntryConfig
+	// Fallback dials addresses no entry matches. nil means there is no
+	// fallback, so those addresses fail; both NewStreamDialer and
+	// ConnectionAnalyzer branch on it. Assign only an untyped nil — a typed nil
+	// pointer makes this interface non-nil and defeats those checks.
 	Fallback netconfig.StreamDialerConfig
 }
 
