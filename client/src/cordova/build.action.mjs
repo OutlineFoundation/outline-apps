@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import url from 'url';
 
@@ -224,27 +225,50 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
   await downloadHttpsFile(JAVA_BUNDLETOOL_RESOURCE_URL, bundletoolPath);
 
   const outputPath = path.resolve(androidBuildPath, 'Outline.apks');
-  await spawnStream(
-    path.resolve(javaPath, 'bin', 'java'),
-    '-jar',
-    bundletoolPath,
-    'build-apks',
-    `--bundle=${path.resolve(
-      androidBuildPath,
-      'app',
-      'build',
-      'outputs',
-      'bundle',
-      'release',
-      'app-release.aab'
-    )}`,
-    `--output=${outputPath}`,
-    '--mode=universal',
-    `--ks=${keystorePath}`,
-    `--ks-pass=pass:${ksPassword}`,
-    '--ks-key-alias=privatekey',
-    `--key-pass=pass:${ksPassword}`
+
+  // Pass the keystore password through a file rather than `pass:<password>`:
+  // spawnStream echoes the full command line, and argv is visible to other
+  // processes via `ps`. bundletool reads only the first line of the file.
+  if (/[\r\n]/.test(ksPassword)) {
+    throw new TypeError(
+      'ANDROID_KEY_STORE_PASSWORD must not contain newline characters!'
+    );
+  }
+
+  // A unique 0700 temp directory per invocation, so concurrent builds
+  // cannot overwrite or delete each other's password file.
+  const ksPasswordDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'outline-android-signing-')
   );
+  const ksPasswordPath = path.join(ksPasswordDir, 'keystore.pass');
+
+  try {
+    await fs.writeFile(ksPasswordPath, ksPassword, {mode: 0o600});
+
+    await spawnStream(
+      path.resolve(javaPath, 'bin', 'java'),
+      '-jar',
+      bundletoolPath,
+      'build-apks',
+      `--bundle=${path.resolve(
+        androidBuildPath,
+        'app',
+        'build',
+        'outputs',
+        'bundle',
+        'release',
+        'app-release.aab'
+      )}`,
+      `--output=${outputPath}`,
+      '--mode=universal',
+      `--ks=${keystorePath}`,
+      `--ks-pass=file:${ksPasswordPath}`,
+      '--ks-key-alias=privatekey',
+      `--key-pass=file:${ksPasswordPath}`
+    );
+  } finally {
+    await fs.rm(ksPasswordDir, {recursive: true, force: true});
+  }
 
   return fs.rename(outputPath, path.resolve(androidBuildPath, 'Outline.zip'));
 }
