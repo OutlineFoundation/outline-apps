@@ -29,6 +29,7 @@ import (
 	"localhost/client/go/outline/connectivity"
 )
 
+// Public DNS resolvers available to an Outline VPN session.
 var outlineDNSResolvers = []netip.AddrPort{
 	netip.MustParseAddrPort("1.1.1.1:53"),
 	netip.MustParseAddrPort("9.9.9.9:53"),
@@ -36,10 +37,15 @@ var outlineDNSResolvers = []netip.AddrPort{
 	netip.MustParseAddrPort("208.67.220.220:53"),
 }
 
+// linkLocalDNS is the synthetic resolver address configured by the platform
+// VPN implementations. Keep it in sync with those configurations.
+//
+// TODO: make this configurable via VpnConfig.
 var linkLocalDNS = netip.MustParseAddrPort("169.254.113.53:53")
 
 // NewOutlineDNSTransport applies Outline's TCP and UDP DNS interception policy
-// to a built transport.
+// to a built transport. UDP DNS starts in truncate mode, forcing the system to
+// retry over TCP until UDP connectivity has been verified.
 func NewOutlineDNSTransport(sd transport.StreamDialer, pl transport.PacketListener) (transport.StreamDialer, packetrelay.PacketRelay, func(), error) {
 	remoteDNS := outlineDNSResolvers[rand.IntN(len(outlineDNSResolvers))]
 
@@ -54,16 +60,22 @@ func NewOutlineDNSTransport(sd transport.StreamDialer, pl transport.PacketListen
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create base PacketRelay: %w", err)
 	}
+	// DNS uses a shorter timeout on an independent listener so its forwarding
+	// policy does not affect non-DNS packet relay state.
 	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl, 5*time.Second)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create DNS PacketRelay: %w", err)
 	}
 	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsListener, baseListener, linkLocalDNS, remoteDNS)
+	// Truncated responses force resolvers to retry over TCP. Non-DNS traffic
+	// continues through baseListener.
 	dnsTruncRelay, err := dnstruncate.NewPacketRelay()
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create DNS truncate relay: %w", err)
 	}
 	relayTrunc := dnsintercept.NewInterceptDNSPacketRelay(dnsTruncRelay, baseListener, linkLocalDNS, remoteDNS)
+	// UDP has not been verified yet, so start with the conservative TCP-retry
+	// behavior and switch to forwarding only after a successful health check.
 	relayMain, err := packetrelay.NewDelegatePacketRelay(relayTrunc)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create delegate PacketRelay: %w", err)

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 
 	"localhost/client/go/composer"
@@ -199,6 +200,33 @@ options:
 	require.ErrorIs(t, err, errors.ErrUnsupported)
 	require.Contains(t, err.Error(), "warp-drive")
 	require.Contains(t, err.Error(), "teleport")
+}
+
+func TestConcurrentParsingOfUnregisteredKind(t *testing.T) {
+	kind := registry.NewKind[string]("animal")
+	parse := registry.Parser(registry.New(), kind)
+	node := parseNode(t, "$type: warp-drive")
+
+	const workerCount = 32
+	start := make(chan struct{})
+	errs := make(chan error, workerCount)
+	var workers sync.WaitGroup
+	workers.Add(workerCount)
+	for range workerCount {
+		go func() {
+			defer workers.Done()
+			<-start
+			_, err := parse(context.Background(), node)
+			errs <- err
+		}()
+	}
+	close(start)
+	workers.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.ErrorIs(t, err, errors.ErrUnsupported)
+	}
 }
 
 func TestParserIsLateBound(t *testing.T) {

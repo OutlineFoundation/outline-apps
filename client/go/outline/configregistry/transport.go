@@ -130,6 +130,8 @@ func registerLegacyShadowsocks(r registry.Registrar) error {
 }
 
 const (
+	// TLS fragmentation split points are measured within the record content;
+	// the five-byte TLS record header is not included.
 	minSplit = 6
 	maxSplit = 64
 )

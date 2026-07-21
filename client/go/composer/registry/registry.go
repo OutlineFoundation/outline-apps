@@ -248,7 +248,13 @@ func (r *registry) Compose(ctx context.Context, request ParseRequest) error {
 	if request.kind == nil || request.assign == nil {
 		return errors.New("composer registry: invalid parse request")
 	}
-	value, err := r.category(request.kind).parser.Parse(ctx, request.node)
+	category := r.categories[request.kind]
+	if category == nil {
+		// Keep registry lookup read-only during parsing. An unregistered Kind
+		// gets a temporary empty category rather than mutating shared state.
+		category = newCategory()
+	}
+	value, err := category.parser.Parse(ctx, request.node)
 	if err != nil {
 		return fmt.Errorf("composer registry: kind %q: %w", request.kind.name, err)
 	}
@@ -260,7 +266,13 @@ func (r *registry) category(kind *kindIdentity) *category {
 	if entry != nil {
 		return entry
 	}
-	entry = &category{
+	entry = newCategory()
+	r.categories[kind] = entry
+	return entry
+}
+
+func newCategory() *category {
+	entry := &category{
 		typeNames: map[TypeName]struct{}{
 			"first-supported": {},
 		},
@@ -271,6 +283,5 @@ func (r *registry) category(kind *kindIdentity) *category {
 		}
 		return entry.fallback(ctx, node)
 	})
-	r.categories[kind] = entry
 	return entry
 }
