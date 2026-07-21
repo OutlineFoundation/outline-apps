@@ -29,8 +29,11 @@ func parseReporter(t *testing.T, text string) (Reporter, error) {
 	t.Helper()
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	parse := NewHTTPReporterConfigParser("", &transport.TCPDialer{})
-	return parse(context.Background(), node)
+	config, err := NewHTTPReporterConfigParser("")(context.Background(), node)
+	if err != nil {
+		return nil, err
+	}
+	return config.NewReporter(&transport.TCPDialer{})
 }
 
 func TestHTTPReporter_Parse(t *testing.T) {

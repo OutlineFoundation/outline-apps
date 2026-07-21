@@ -228,15 +228,6 @@ func (c *ClientConfig) New(keyID string, providerClientConfigText string) *NewCl
 	return &NewClientResult{Client: client}
 }
 
-func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *composer.TypeParser[reporting.Reporter] {
-	parser := composer.NewTypeParser(func(ctx context.Context, node composer.Node) (reporting.Reporter, error) {
-		return nil, errors.New("parser not specified")
-	})
-	// first-supported is built into composer.NewTypeParser.
-	parser.RegisterSubParser("http", reporting.NewHTTPReporterConfigParser(cookiesFilename, streamDialer))
-	return parser
-}
-
 // NewReporterConfigParser returns a side-effect-free parser for reporting
 // configs that can be built after the transport is available.
 func NewReporterConfigParser(cookiesFilename string) *composer.TypeParser[reporting.Config] {
@@ -244,6 +235,6 @@ func NewReporterConfigParser(cookiesFilename string) *composer.TypeParser[report
 		return nil, errors.New("parser not specified")
 	})
 	// first-supported is built into composer.NewTypeParser.
-	parser.RegisterSubParser("http", reporting.NewHTTPConfigParser(cookiesFilename))
+	parser.RegisterSubParser("http", reporting.NewHTTPReporterConfigParser(cookiesFilename))
 	return parser
 }

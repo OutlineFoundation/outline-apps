@@ -453,8 +453,21 @@ reporter:
 
 // TODO(fortuna): TEST enable_cookies
 
+// parseReporter parses a reporter config and builds its Reporter. The stream
+// dialer is only used when a report is sent, so tests pass nil.
+func parseReporter(t *testing.T, cookiesFilename, config string) (reporting.Reporter, error) {
+	t.Helper()
+	yamlNode, err := composer.ParseYAML([]byte(config))
+	require.NoError(t, err)
+	cfg, err := NewReporterConfigParser(cookiesFilename).Parse(context.Background(), yamlNode)
+	if err != nil {
+		return nil, err
+	}
+	return cfg.NewReporter(nil)
+}
+
 func Test_ParseReporter(t *testing.T) {
-	config := `
+	reporter, err := parseReporter(t, "", `
 $type: http
 request:
   url: https://your-callback-server.com/outline_callback
@@ -463,10 +476,7 @@ request:
     Content-Type: [application/json]
     Authorization: [Bearer SECRET]
   body: '{"foo": "bar"}'
-interval: 24h`
-	yamlNode, err := composer.ParseYAML([]byte(config))
-	require.NoError(t, err)
-	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
+interval: 24h`)
 	require.NoError(t, err)
 	require.NotNil(t, reporter)
 	request, err := reporter.(*reporting.HTTPReporter).NewRequest()
@@ -483,13 +493,10 @@ interval: 24h`
 }
 
 func Test_ParseReporter_NoInterval(t *testing.T) {
-	config := `
+	reporter, err := parseReporter(t, "", `
 $type: http
 request:
-  url: https://your-callback-server.com/outline_callback`
-	yamlNode, err := composer.ParseYAML([]byte(config))
-	require.NoError(t, err)
-	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
+  url: https://your-callback-server.com/outline_callback`)
 	require.NoError(t, err)
 	require.NotNil(t, reporter)
 	request, err := reporter.(*reporting.HTTPReporter).NewRequest()
@@ -500,18 +507,15 @@ request:
 }
 
 func Test_ParseReporter_CookieEnabled(t *testing.T) {
-	config := `
+	tempDir, err := os.MkdirTemp("", "")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+	reporter, err := parseReporter(t, path.Join(tempDir, "cookies.txt"), `
 $type: http
 request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
-interval: 24h`
-	yamlNode, err := composer.ParseYAML([]byte(config))
-	require.NoError(t, err)
-	tempDir, err := os.MkdirTemp("", "")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
-	reporter, err := NewReporterParser(path.Join(tempDir, "cookies.txt"), nil).Parse(context.Background(), yamlNode)
+interval: 24h`)
 	require.NoError(t, err)
 	require.NotNil(t, reporter)
 	request, err := reporter.(*reporting.HTTPReporter).NewRequest()
@@ -521,14 +525,11 @@ interval: 24h`
 }
 
 func Test_ParseReporter_CookieEnabled_FileMissing(t *testing.T) {
-	config := `
+	_, err := parseReporter(t, "", `
 $type: http
 request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
-interval: 24h`
-	yamlNode, err := composer.ParseYAML([]byte(config))
-	require.NoError(t, err)
-	_, err = NewReporterParser("", nil).Parse(context.Background(), yamlNode)
+interval: 24h`)
 	require.Error(t, err)
 }

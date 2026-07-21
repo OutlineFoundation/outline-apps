@@ -54,9 +54,9 @@ type Config interface {
 	NewReporter(streamDialer transport.StreamDialer) (Reporter, error)
 }
 
-// NewHTTPConfigParser returns a side-effect-free parser for HTTP reporter
-// configs. Runtime resources are created by Config.NewReporter.
-func NewHTTPConfigParser(cookiesFilename string) composer.ParseFunc[Config] {
+// NewHTTPReporterConfigParser returns a side-effect-free parser for
+// [HTTPReporterConfig]. Runtime resources are created by Config.NewReporter.
+func NewHTTPReporterConfigParser(cookiesFilename string) composer.ParseFunc[Config] {
 	return func(ctx context.Context, node composer.Node) (Config, error) {
 		var config HTTPReporterConfig
 		if err := node.Decode(&config); err != nil {
@@ -82,19 +82,6 @@ func NewHTTPConfigParser(cookiesFilename string) composer.ParseFunc[Config] {
 			config.interval = d
 		}
 		return &config, nil
-	}
-}
-
-// NewHTTPReporterConfigParser parses and builds an HTTP Reporter in one
-// operation. Prefer NewHTTPConfigParser when construction must be deferred.
-func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) composer.ParseFunc[Reporter] {
-	parseConfig := NewHTTPConfigParser(cookiesFilename)
-	return func(ctx context.Context, node composer.Node) (Reporter, error) {
-		config, err := parseConfig(ctx, node)
-		if err != nil {
-			return nil, err
-		}
-		return config.NewReporter(streamDialer)
 	}
 }
 
