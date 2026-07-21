@@ -21,9 +21,11 @@ YAML → typed config graph → Outline analysis/policy → runtime build
    `TransportPairConfig`. Parsing uses an ordinary `context.Context`; there is
    no metadata table or pointer-identity requirement.
 2. `ConnectionAnalyzer.AnalyzeTransport` recursively inspects the concrete
-   config graph. It returns `TransportPairInfo` and sets
-   `ResolveAddressFirst` on direct dial endpoints according to Outline's
-   platform policy. Unknown concrete configs are internal wiring errors.
+   config graph and returns `TransportPairInfo`. On platforms that need it,
+   it also resolves direct dial endpoints and rewrites their `Address` to the
+   resolved form, so `FirstHop` is the address that will actually be dialed.
+   This performs DNS and honors the context. Unknown concrete configs are
+   internal wiring errors.
 3. `ParsedClient.NewClient` recursively builds the runtime dialers and
    listeners, then applies Outline's DNS interception.
 
@@ -62,9 +64,8 @@ caller-controlled.
 Outline-only configs or compatibility behavior belong here. Register their
 parsers directly in `Register`, then add an exhaustive concrete-type case to
 the relevant `ConnectionAnalyzer` method. Analyzer cases must reject typed nil
-pointers and recursively analyze child configs. Dial endpoints must assign
-`ResolveAddressFirst` on every analysis so repeated analysis is idempotent and
-stale values are cleared.
+pointers and recursively analyze child configs. Repeated analysis must stay
+idempotent; address rewriting relies on re-resolving an IP being a no-op.
 
 ## Testing
 

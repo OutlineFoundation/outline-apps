@@ -26,14 +26,14 @@ import (
 )
 
 // StreamDialEndpointConfig connects to a fixed address via a dialer.
+//
+// Address is dialed as written. An app that needs the dialed address to be an
+// IP (e.g. so a VPN can install a bypass route for it, or to avoid a system DNS
+// lookup it cannot protect) resolves it and rewrites this field on the parsed
+// config; this package never performs DNS itself.
 type StreamDialEndpointConfig struct {
 	Address string
-	// ResolveAddressFirst makes New resolve Address before dialing.
-	// It has no wire field: apps set it on the parsed config (e.g. to
-	// avoid unprotectable system DNS resolution at dial time on
-	// platforms that route by socket mark or interface binding).
-	ResolveAddressFirst bool
-	Dialer              StreamDialerConfig
+	Dialer  StreamDialerConfig
 }
 
 func (c *StreamDialEndpointConfig) NewStreamEndpoint(ctx context.Context) (transport.StreamEndpoint, error) {
@@ -42,13 +42,6 @@ func (c *StreamDialEndpointConfig) NewStreamEndpoint(ctx context.Context) (trans
 		return nil, fmt.Errorf("failed to build dialer: %w", err)
 	}
 	addr := c.Address
-	if c.ResolveAddressFirst {
-		// Ignore resolution failures and keep the hostname, so building
-		// doesn't fail and recovery is possible when DNS comes back.
-		if ipPort, err := net.ResolveTCPAddr("tcp", addr); err == nil {
-			addr = ipPort.String()
-		}
-	}
 	return transport.FuncStreamEndpoint(func(ctx context.Context) (transport.StreamConn, error) {
 		return dialer.DialStream(ctx, addr)
 	}), nil
@@ -56,9 +49,8 @@ func (c *StreamDialEndpointConfig) NewStreamEndpoint(ctx context.Context) (trans
 
 // PacketDialEndpointConfig is the packet variant of StreamDialEndpointConfig.
 type PacketDialEndpointConfig struct {
-	Address             string
-	ResolveAddressFirst bool
-	Dialer              PacketDialerConfig
+	Address string
+	Dialer  PacketDialerConfig
 }
 
 func (c *PacketDialEndpointConfig) NewPacketEndpoint(ctx context.Context) (transport.PacketEndpoint, error) {
@@ -67,11 +59,6 @@ func (c *PacketDialEndpointConfig) NewPacketEndpoint(ctx context.Context) (trans
 		return nil, fmt.Errorf("failed to build dialer: %w", err)
 	}
 	addr := c.Address
-	if c.ResolveAddressFirst {
-		if ipPort, err := net.ResolveUDPAddr("udp", addr); err == nil {
-			addr = ipPort.String()
-		}
-	}
 	return transport.FuncPacketEndpoint(func(ctx context.Context) (net.Conn, error) {
 		return dialer.DialPacket(ctx, addr)
 	}), nil

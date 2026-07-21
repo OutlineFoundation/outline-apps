@@ -17,11 +17,11 @@ a client.
 A parser only composes a typed config object; it does no I/O and has no
 side effects. Each config type has a `New*(ctx)` method — `NewStreamDialer`,
 `NewStreamEndpoint`, etc. — that builds the runtime object. That's where
-dependencies actually get invoked and where any build-time side effect
-happens (e.g. `StreamDialEndpointConfig.NewStreamEndpoint` resolves the
-address via `net.ResolveTCPAddr` when `ResolveAddressFirst` is set).
-Keeping parse pure lets a caller inspect a parsed tree — e.g. read the
-first-hop endpoint address — without building anything.
+dependencies actually get invoked. Keeping parse pure lets a caller
+inspect a parsed tree — e.g. read the first-hop endpoint address —
+without building anything. This package performs no DNS at any stage:
+`StreamDialEndpointConfig.NewStreamEndpoint` dials `Address` exactly as
+it finds it.
 
 Many `New*` methods take pointer receivers because their config values
 or builders are naturally pointer-backed. Analysis does not depend on
@@ -57,12 +57,13 @@ application policy:
 - No DNS interception, cookie-jar paths, or other Outline-specific
   behavior — a `TransportPairConfig`-style aggregate type and any DNS
   wrapping belong in the app layer.
-- `ResolveAddressFirst` on `StreamDialEndpointConfig` /
-  `PacketDialEndpointConfig` is a generic knob — whether `New` resolves
-  the address itself before dialing — with no wire field. It is set by
-  the app on the already-parsed config, e.g. because a platform's
-  protected-socket routing can't tolerate unprotected system DNS
-  resolution at dial time (see `ConnectionAnalyzer` in the app layer).
+- No address resolution. `StreamDialEndpointConfig` /
+  `PacketDialEndpointConfig` dial `Address` verbatim. An app that needs
+  the dialed address to be an IP resolves it and rewrites `Address` on
+  the already-parsed config — e.g. because a platform installs a bypass
+  route for that address, or because its protected-socket routing can't
+  tolerate unprotected system DNS at dial time (see `ConnectionAnalyzer`
+  in the app layer).
 
 ## Adding a new config type
 

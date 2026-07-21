@@ -39,9 +39,9 @@ func parseSD(t *testing.T, text string) netconfig.StreamDialerConfig {
 
 func TestConnectionInfo_DirectFallback(t *testing.T) {
 	cfg := parseSD(t, "")
-	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
 	require.NoError(t, err)
-	require.Equal(t, ConnectionProviderInfo{ConnTypeDirect, ""}, info)
+	require.Equal(t, ConnectionProviderInfo{ConnType: ConnTypeDirect}, info)
 }
 
 func TestConnectionInfo_Shadowsocks(t *testing.T) {
@@ -51,7 +51,7 @@ endpoint: example.com:1234
 cipher: chacha20-ietf-poly1305
 secret: SECRET
 `)
-	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
 	require.NoError(t, err)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	require.Equal(t, "example.com:1234", info.FirstHop)
@@ -66,7 +66,7 @@ endpoint:
   $type: websocket
   url: wss://cdn.example.com/tcp
 `)
-	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
 	require.NoError(t, err)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	// Websocket copies its inner (direct dial) endpoint's info: the
@@ -95,14 +95,14 @@ options:
   - $type: warp-drive
   - $type: block
 `)
-	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
 	require.NoError(t, err)
 	require.Equal(t, ConnTypeBlocked, info.ConnType)
 }
 
 func TestConnectionInfo_SSURLStringFallback(t *testing.T) {
 	cfg := parseSD(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
-	info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+	info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
 	require.NoError(t, err)
 	require.Equal(t, ConnTypeTunneled, info.ConnType)
 	require.Equal(t, "example.com:1234", info.FirstHop)

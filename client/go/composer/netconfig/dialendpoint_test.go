@@ -16,7 +16,6 @@ package netconfig
 
 import (
 	"context"
-	"net"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -70,19 +69,24 @@ func TestStreamDialEndpoint_AddressValidation(t *testing.T) {
 	}
 }
 
-func TestStreamDialEndpoint_ResolveAddressFirst(t *testing.T) {
+// This package never resolves: it dials Address exactly as the app left it.
+func TestStreamDialEndpoint_DialsAddressVerbatim(t *testing.T) {
 	fake := &fakeStreamDialer{}
 	parse := NewStreamDialEndpointParser(parseSDForTest(fake))
-	cfg, err := parse(context.Background(), mustNode(t, `"localhost:443"`))
+	cfg, err := parse(context.Background(), mustNode(t, `"example.com:443"`))
 	require.NoError(t, err)
-	cfg.ResolveAddressFirst = true
 
 	ep, err := cfg.NewStreamEndpoint(context.Background())
 	require.NoError(t, err)
 	_, err = ep.ConnectStream(context.Background())
 	require.NoError(t, err)
-	// localhost resolves; the dialed address must be an IP.
-	host, _, err := net.SplitHostPort(fake.gotAddr)
+	require.Equal(t, "example.com:443", fake.gotAddr, "the hostname must not be resolved here")
+
+	// An app that rewrites Address to a resolved form gets that address dialed.
+	cfg.Address = "203.0.113.7:443"
+	ep, err = cfg.NewStreamEndpoint(context.Background())
 	require.NoError(t, err)
-	require.NotNil(t, net.ParseIP(host))
+	_, err = ep.ConnectStream(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "203.0.113.7:443", fake.gotAddr)
 }

@@ -203,7 +203,7 @@ table:
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := parseSD(t, "$type: iptable\n"+tc.configYAML)
-			info, err := (ConnectionAnalyzer{}).streamDialer(cfg)
+			info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedConnType, info.ConnType)
 			require.Empty(t, info.FirstHop)

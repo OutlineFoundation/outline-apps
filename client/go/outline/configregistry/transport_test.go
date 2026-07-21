@@ -39,7 +39,7 @@ func parseTransport(t *testing.T, text string) TransportPairConfig {
 
 func requirePairInfo(t *testing.T, cfg TransportPairConfig) TransportPairInfo {
 	t.Helper()
-	info, err := (ConnectionAnalyzer{}).AnalyzeTransport(cfg)
+	info, err := (ConnectionAnalyzer{}).AnalyzeTransport(context.Background(), cfg)
 	require.NoError(t, err)
 	return info
 }

@@ -51,6 +51,10 @@ func (c ConnType) MarshalJSON() ([]byte, error) {
 // endpoint.
 type ConnectionProviderInfo struct {
 	ConnType ConnType
+	// FirstHop is the address the first hop will be dialed at. On platforms
+	// where [ConnectionAnalyzer] resolves direct addresses it is an IP, so a VPN
+	// can install a bypass route that covers exactly the address we dial; it is
+	// the address from the config otherwise.
 	FirstHop string
 }
 

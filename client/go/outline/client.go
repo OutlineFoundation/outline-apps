@@ -157,7 +157,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		}
 		return nil, &platerrors.PlatformError{Code: code, Message: msg, Cause: platerrors.ToPlatformError(err)}
 	}
-	info, err := configregistry.NewConnectionAnalyzer().AnalyzeTransport(transportCfg)
+	info, err := configregistry.NewConnectionAnalyzer().AnalyzeTransport(context.Background(), transportCfg)
 	if err != nil {
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
 			Message: "failed to analyze transport config", Cause: platerrors.ToPlatformError(err)}

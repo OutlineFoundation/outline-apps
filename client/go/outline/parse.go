@@ -43,7 +43,11 @@ type ProviderErrorConfig struct {
 
 // firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in config.ts.
 type firstHopAndTunnelConfigJSON struct {
-	Client         string                  `json:"client"`
+	Client string `json:"client"`
+	// FirstHop is the address the client will dial. On platforms where the
+	// analyzer resolves direct addresses it is an IP, so a VPN can install a
+	// bypass route covering exactly that address. Note Client keeps the config
+	// as written, so the stored access key is unaffected.
 	FirstHop       string                  `json:"firstHop"`
 	ConnectionType configregistry.ConnType `json:"connectionType"`
 }
