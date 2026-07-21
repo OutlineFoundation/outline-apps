@@ -192,6 +192,13 @@ func TestDecode_StringMap(t *testing.T) {
 	require.Error(t, mustParse(t, "1: a").Decode(&bad), "non-string map keys unsupported")
 }
 
+func TestDecode_NamedStringMapKey(t *testing.T) {
+	type headerName string
+	var headers map[headerName]string
+	require.NoError(t, mustParse(t, "Content-Type: application/json").Decode(&headers))
+	require.Equal(t, map[headerName]string{"Content-Type": "application/json"}, headers)
+}
+
 // deepMap is a recursive map type that lets Decode follow a mapping
 // chain of arbitrary depth.
 type deepMap map[string]deepMap

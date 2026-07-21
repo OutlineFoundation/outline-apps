@@ -51,6 +51,41 @@ func TestParseConfig_UnknownAnalysisTypeIsInternalError(t *testing.T) {
 	require.Equal(t, "failed to analyze transport config", platformErr.Message)
 }
 
+func TestParseConfig_RejectsInvalidReporter(t *testing.T) {
+	config := `
+transport:
+  $type: tcpudp
+reporter:
+  $type: http
+  request:
+    url: https://collector.example.com/report
+  interval: 10m
+`
+	_, err := (&ClientConfig{}).ParseConfig("service", config)
+	var platformErr *platerrors.PlatformError
+	require.ErrorAs(t, err, &platformErr)
+	require.Equal(t, platerrors.InvalidConfig, platformErr.Code)
+	require.Equal(t, "invalid reporter config", platformErr.Message)
+}
+
+func TestParseConfig_DoesNotBuildReporterResources(t *testing.T) {
+	dataDir := t.TempDir()
+	config := `
+transport:
+  $type: tcpudp
+reporter:
+  $type: http
+  request:
+    url: https://collector.example.com/report
+  enable_cookies: true
+`
+	parsed, err := (&ClientConfig{DataDir: dataDir}).ParseConfig("service", config)
+	require.NoError(t, err)
+	require.NotNil(t, parsed.reporterConfig)
+	_, err = os.Stat(path.Join(dataDir, "services", "service"))
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
+
 func Test_NewTransport_SS_URL(t *testing.T) {
 	config := "transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/"
 	firstHop := "example.com:4321"

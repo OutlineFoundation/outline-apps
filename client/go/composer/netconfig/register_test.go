@@ -16,6 +16,7 @@ package netconfig
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -43,6 +44,32 @@ func TestRegisterDirectUsesCallerNameAndInjectedConfigs(t *testing.T) {
 	require.Same(t, stream, parseRegistered(t, r, StreamDialerKind, "$type: plain"))
 	require.Same(t, packet, parseRegistered(t, r, PacketDialerKind, "$type: plain"))
 	require.Same(t, listener, parseRegistered(t, r, PacketListenerKind, "$type: plain"))
+}
+
+func TestRegisterDirectRejectsRequiredFields(t *testing.T) {
+	r := registry.New()
+	stream := NewDirectStreamDialerConfig(nil)
+	packet := NewDirectPacketDialerConfig(nil)
+	listener := NewDirectPacketListenerConfig(nil)
+	require.NoError(t, RegisterDirect(r, "plain", stream, packet, listener))
+	require.NoError(t, RegisterBlock(r, "deny"))
+
+	node, err := composer.ParseYAML([]byte(`
+$type: first-supported
+options:
+  - $type: plain
+    required_policy: true
+  - $type: deny
+`))
+	require.NoError(t, err)
+	cfg, err := registry.Parser(r, StreamDialerKind)(context.Background(), node)
+	require.NoError(t, err)
+	require.IsType(t, &BlockConfig{}, cfg)
+
+	directNode, err := composer.ParseYAML([]byte("$type: plain\nrequired_policy: true"))
+	require.NoError(t, err)
+	_, err = registry.Parser(r, StreamDialerKind)(context.Background(), directNode)
+	require.ErrorIs(t, err, errors.ErrUnsupported)
 }
 
 func TestRegistrationHelpersCoverTheirKinds(t *testing.T) {

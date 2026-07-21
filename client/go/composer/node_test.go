@@ -16,6 +16,8 @@ package composer
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -216,6 +218,29 @@ func TestNode_MergeOfNonMapping(t *testing.T) {
 	_, err = entries[0].value.mappingEntries()
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "expected a map")
+}
+
+func TestNode_MergeAliasAmplificationBudget(t *testing.T) {
+	var text strings.Builder
+	text.WriteString("base: &base\n")
+	for i := 0; i < 400; i++ {
+		fmt.Fprintf(&text, "  key%d: %d\n", i, i)
+	}
+	text.WriteString("host:\n  <<: [")
+	for i := 0; i < 300; i++ {
+		if i > 0 {
+			text.WriteString(", ")
+		}
+		text.WriteString("*base")
+	}
+	text.WriteString("]\n")
+
+	root := mustParse(t, text.String())
+	entries, err := root.mappingEntries()
+	require.NoError(t, err)
+	_, err = entries[1].value.mappingEntries()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "merge expansion exceeds 100000")
 }
 
 func TestError_Format(t *testing.T) {

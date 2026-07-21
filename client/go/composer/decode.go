@@ -311,11 +311,13 @@ func (n Node) decodeMap(dst reflect.Value, depth int, st *decodeState) error {
 	}
 	out := reflect.MakeMapWithSize(dst.Type(), len(entries))
 	for _, entry := range entries {
+		key := reflect.New(dst.Type().Key()).Elem()
+		key.SetString(entry.key)
 		val := reflect.New(dst.Type().Elem()).Elem()
 		if err := entry.value.decodeValue(val, depth+1, st); err != nil {
 			return err
 		}
-		out.SetMapIndex(reflect.ValueOf(entry.key), val)
+		out.SetMapIndex(key, val)
 	}
 	dst.Set(out)
 	return nil

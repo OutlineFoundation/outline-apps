@@ -102,8 +102,10 @@ explicit keys in the host mapping win over merged keys, and earlier
 merge sources win over later ones. Merges are expanded when a mapping's
 entries are read, before any field matching, so they work uniformly for
 struct targets, map targets, and `$type` dispatch. Expansion is
-depth-limited (20 levels) so self-referential merges error instead of
-hanging. An earlier draft rejected merge keys, but the official
+depth-limited (20 levels) and work-limited (100,000 visited values), so
+self-referential merges error instead of hanging and repeated aliases
+cannot amplify a compact merge sequence into quadratic work. An earlier
+draft rejected merge keys, but the official
 access-key config documentation relies on them to de-duplicate config
 sections (e.g. sharing cipher/secret between the tcp and udp
 transports):

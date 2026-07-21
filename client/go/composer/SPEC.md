@@ -136,6 +136,7 @@ failed.
 To protect against adversarial configs:
 
 - Alias indirection: at most 20 levels.
+- Merge expansion work: at most 100,000 mapping and sequence values.
 - Decode depth: at most 100 nested levels.
 - Decode work: at most 100,000 values visited per Decode call
   (defeats billion-laughs style alias amplification).

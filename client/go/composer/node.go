@@ -28,6 +28,7 @@ const TypeKey = "$type"
 const (
 	maxAliasDepth = 20
 	maxMergeDepth = 20
+	maxMergeNodes = 100_000
 )
 
 // mergeKey is the standard YAML merge key, which inserts the entries of
@@ -193,13 +194,27 @@ type mapEntry struct {
 // document order, with YAML merge keys (<<) expanded: explicit keys win
 // over merged keys, and earlier merge sources win over later ones.
 func (n Node) mappingEntries() ([]mapEntry, error) {
-	return n.mappingEntriesDepth(0)
+	return n.mappingEntriesDepth(0, &mergeState{})
+}
+
+// mergeState carries the per-expansion work budget that bounds alias
+// amplification through merge sequences.
+type mergeState struct {
+	visited int
+}
+
+func (s *mergeState) visit(n Node, count int) error {
+	if count > maxMergeNodes-s.visited {
+		return n.errorf("merge expansion exceeds %d values", maxMergeNodes)
+	}
+	s.visited += count
+	return nil
 }
 
 // The MappingValueNode case is defensive: goccy v1.18 always produces
 // MappingNode (see goccy_test.go), but older versions used
 // MappingValueNode for single-pair mappings.
-func (n Node) mappingEntriesDepth(depth int) ([]mapEntry, error) {
+func (n Node) mappingEntriesDepth(depth int, st *mergeState) ([]mapEntry, error) {
 	if depth > maxMergeDepth {
 		return nil, n.errorf("merge key nesting exceeds %d levels", maxMergeDepth)
 	}
@@ -212,6 +227,9 @@ func (n Node) mappingEntriesDepth(depth int) ([]mapEntry, error) {
 	default:
 		return nil, n.errorf("expected a map, found %s", n.describe())
 	}
+	if err := st.visit(n, len(kvs)); err != nil {
+		return nil, err
+	}
 	entries := make([]mapEntry, 0, len(kvs))
 	haveKey := make(map[string]bool, len(kvs))
 	var merged []mapEntry
@@ -222,7 +240,7 @@ func (n Node) mappingEntriesDepth(depth int) ([]mapEntry, error) {
 			if err != nil {
 				return nil, err
 			}
-			sub, err := source.mergeSourceEntries(depth)
+			sub, err := source.mergeSourceEntries(depth, st)
 			if err != nil {
 				return nil, err
 			}
@@ -253,18 +271,21 @@ func (n Node) mappingEntriesDepth(depth int) ([]mapEntry, error) {
 
 // mergeSourceEntries returns the entries provided by a merge-key value:
 // a mapping, or a sequence of mappings (earlier mappings win).
-func (n Node) mergeSourceEntries(depth int) ([]mapEntry, error) {
+func (n Node) mergeSourceEntries(depth int, st *mergeState) ([]mapEntry, error) {
 	if n.Kind() != KindSequence {
-		return n.mappingEntriesDepth(depth + 1)
+		return n.mappingEntriesDepth(depth+1, st)
 	}
 	items, err := n.sequenceItems()
 	if err != nil {
 		return nil, err
 	}
+	if err := st.visit(n, len(items)); err != nil {
+		return nil, err
+	}
 	var out []mapEntry
 	haveKey := make(map[string]bool)
 	for _, item := range items {
-		sub, err := item.mappingEntriesDepth(depth + 1)
+		sub, err := item.mappingEntriesDepth(depth+1, st)
 		if err != nil {
 			return nil, err
 		}

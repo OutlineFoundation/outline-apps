@@ -99,11 +99,9 @@ type ClientConfig struct {
 // holds everything needed to build a [Client], without yet having
 // built any network resources.
 type ParsedClient struct {
-	Transport    configregistry.TransportPairConfig
-	Info         configregistry.TransportPairInfo
-	reporterNode composer.Node
-	keyID        string
-	dataDir      string
+	Transport      configregistry.TransportPairConfig
+	Info           configregistry.TransportPairInfo
+	reporterConfig reporting.Config
 }
 
 // ParseConfig parses providerClientConfigText into a [ParsedClient],
@@ -164,8 +162,20 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
 			Message: "failed to analyze transport config", Cause: platerrors.ToPlatformError(err)}
 	}
-	return &ParsedClient{Transport: transportCfg, Info: info,
-		reporterNode: reporterNode, keyID: keyID, dataDir: dataDir}, nil
+
+	var reporterConfig reporting.Config
+	if !reporterNode.IsAbsent() {
+		cookieFilename := ""
+		if dataDir != "" {
+			cookieFilename = path.Join(dataDir, "services", keyID, "cookies.json")
+		}
+		reporterConfig, err = NewReporterConfigParser(cookieFilename).Parse(context.Background(), reporterNode)
+		if err != nil {
+			return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
+				Message: "invalid reporter config", Cause: platerrors.ToPlatformError(err)}
+		}
+	}
+	return &ParsedClient{Transport: transportCfg, Info: info, reporterConfig: reporterConfig}, nil
 }
 
 // NewClientComposer registers Outline's config vocabulary and returns a Composer
@@ -194,12 +204,8 @@ func (p *ParsedClient) NewClient() (*Client, error) {
 	client := &Client{sd: sd, sdInfo: p.Info.Stream, pr: relay, prInfo: p.Info.Packet,
 		notifyNetworkChanged: onNetworkChanged}
 
-	if !p.reporterNode.IsAbsent() {
-		cookieFilename := ""
-		if p.dataDir != "" {
-			cookieFilename = path.Join(p.dataDir, "services", p.keyID, "cookies.json")
-		}
-		reporter, err := NewReporterParser(cookieFilename, client).Parse(context.Background(), p.reporterNode)
+	if p.reporterConfig != nil {
+		reporter, err := p.reporterConfig.NewReporter(client)
 		if err != nil {
 			return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
 				Message: "invalid reporter config", Cause: platerrors.ToPlatformError(err)}
@@ -228,5 +234,16 @@ func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDial
 	})
 	// first-supported is built into composer.NewTypeParser.
 	parser.RegisterSubParser("http", reporting.NewHTTPReporterConfigParser(cookiesFilename, streamDialer))
+	return parser
+}
+
+// NewReporterConfigParser returns a side-effect-free parser for reporting
+// configs that can be built after the transport is available.
+func NewReporterConfigParser(cookiesFilename string) *composer.TypeParser[reporting.Config] {
+	parser := composer.NewTypeParser(func(ctx context.Context, node composer.Node) (reporting.Config, error) {
+		return nil, errors.New("parser not specified")
+	})
+	// first-supported is built into composer.NewTypeParser.
+	parser.RegisterSubParser("http", reporting.NewHTTPConfigParser(cookiesFilename))
 	return parser
 }

@@ -16,6 +16,7 @@ package reporting
 
 import (
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -57,6 +58,16 @@ func TestHTTPReporter_Defaults(t *testing.T) {
 	req, err := r.(*HTTPReporter).NewRequest()
 	require.NoError(t, err)
 	require.Equal(t, "POST", req.Method)
+}
+
+func TestHTTPReporter_EmptyValuesUseDefaults(t *testing.T) {
+	r, err := parseReporter(t, "request:\n  url: https://collector.example.com/report\n  method: \"\"\ninterval: \"\"")
+	require.NoError(t, err)
+	hr := r.(*HTTPReporter)
+	require.Zero(t, hr.Interval)
+	req, err := hr.NewRequest()
+	require.NoError(t, err)
+	require.Equal(t, http.MethodPost, req.Method)
 }
 
 func TestHTTPReporter_Validation(t *testing.T) {

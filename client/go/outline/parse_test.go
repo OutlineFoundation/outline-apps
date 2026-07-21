@@ -514,6 +514,21 @@ func TestParseConfig_Transport_Unsupported(t *testing.T) {
 	require.Contains(t, result.Error.Message, "unsupported config")
 }
 
+func TestParseConfig_InvalidReporter(t *testing.T) {
+	result := doParseTunnelConfig(`
+transport:
+  $type: tcpudp
+reporter:
+  $type: http
+  request:
+    url: https://collector.example.com/report
+  interval: 10m
+`)
+	require.NotNil(t, result.Error)
+	require.Equal(t, platerrors.InvalidConfig, result.Error.Code)
+	require.Equal(t, "invalid reporter config", result.Error.Message)
+}
+
 func TestParseConfig_Transport_AllowProxylessTCP(t *testing.T) {
 	userInputConfig := `
 $type: tcpudp

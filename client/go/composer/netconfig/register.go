@@ -106,7 +106,14 @@ func RegisterDirect(
 }
 
 func constantParser[Cfg any](cfg Cfg) composer.ParseFunc[Cfg] {
-	return func(context.Context, composer.Node) (Cfg, error) { return cfg, nil }
+	return func(_ context.Context, node composer.Node) (Cfg, error) {
+		var fields struct{}
+		if err := node.Decode(&fields); err != nil {
+			var zero Cfg
+			return zero, err
+		}
+		return cfg, nil
+	}
 }
 
 func asStreamDialer[Cfg StreamDialerConfig](parse composer.ParseFunc[Cfg]) composer.ParseFunc[StreamDialerConfig] {
