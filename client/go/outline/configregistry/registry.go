@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package configregistry owns Outline's Composer registration, compatibility
-// behavior, connection analysis, and transport policy.
+// behavior, connection metadata, and transport policy.
 package configregistry
 
 import (
@@ -34,114 +34,337 @@ func Register(r registry.Registrar, directSD transport.StreamDialer, directPD tr
 	directStream := netconfig.NewDirectStreamDialerConfig(directSD)
 	directPacket := netconfig.NewDirectPacketDialerConfig(directPD)
 	directListener := netconfig.NewDirectPacketListenerConfig(&transport.UDPListener{})
+	directInfo := ConnectionProviderInfo{ConnType: ConnTypeDirect}
 
 	// Named registrations, sorted by their $type value.
-	if err := registerBasicAccess(r); err != nil {
+	if err := registry.Register(r, TransportPairKind, "basic-access",
+		transportPairParser(parseBasicAccess,
+			func(context.Context, *BasicAccessTransportConfig) (TransportPairInfo, error) {
+				return TransportPairInfo{Stream: directInfo, Packet: directInfo}, nil
+			})); err != nil {
 		return fmt.Errorf("register basic-access: %w", err)
 	}
-	if err := netconfig.RegisterBlock(r, "block"); err != nil {
-		return fmt.Errorf("register block: %w", err)
+	if err := registry.Register(r, netconfig.StreamDialerKind, "block",
+		streamDialerParser(netconfig.ParseBlock,
+			func(context.Context, *netconfig.BlockConfig) (ConnectionProviderInfo, error) {
+				return ConnectionProviderInfo{ConnType: ConnTypeBlocked}, nil
+			})); err != nil {
+		return fmt.Errorf("register block stream dialer: %w", err)
 	}
-	if err := netconfig.RegisterDialEndpoint(r, "dial"); err != nil {
-		return fmt.Errorf("register dial endpoint: %w", err)
+	if err := registry.Register(r, netconfig.PacketDialerKind, "block",
+		packetDialerParser(netconfig.ParseBlock,
+			func(context.Context, *netconfig.BlockConfig) (ConnectionProviderInfo, error) {
+				return ConnectionProviderInfo{ConnType: ConnTypeBlocked}, nil
+			})); err != nil {
+		return fmt.Errorf("register block packet dialer: %w", err)
 	}
-	if err := netconfig.RegisterDirect(r, "direct", directStream, directPacket, directListener); err != nil {
-		return fmt.Errorf("register direct: %w", err)
+	if err := registry.Register(r, netconfig.StreamEndpointKind, "dial",
+		streamEndpointParser(
+			netconfig.NewStreamDialEndpointParser(registry.Parser(r, netconfig.StreamDialerKind)),
+			streamDialEndpointInfo)); err != nil {
+		return fmt.Errorf("register dial stream endpoint: %w", err)
 	}
-	if err := registerIPTable(r); err != nil {
-		return fmt.Errorf("register iptable: %w", err)
+	if err := registry.Register(r, netconfig.PacketEndpointKind, "dial",
+		packetEndpointParser(
+			netconfig.NewPacketDialEndpointParser(registry.Parser(r, netconfig.PacketDialerKind)),
+			packetDialEndpointInfo)); err != nil {
+		return fmt.Errorf("register dial packet endpoint: %w", err)
 	}
-	if err := netconfig.RegisterShadowsocks(r, "shadowsocks"); err != nil {
-		return fmt.Errorf("register shadowsocks: %w", err)
+	if err := registry.Register(r, netconfig.StreamDialerKind, "direct",
+		streamDialerParser(netconfig.NewDirectStreamDialerParser(directSD),
+			func(context.Context, *netconfig.DirectStreamDialerConfig) (ConnectionProviderInfo, error) {
+				return directInfo, nil
+			})); err != nil {
+		return fmt.Errorf("register direct stream dialer: %w", err)
 	}
-	if err := registerTCPUDP(r); err != nil {
-		return fmt.Errorf("register tcpudp: %w", err)
+	if err := registry.Register(r, netconfig.PacketDialerKind, "direct",
+		packetDialerParser(netconfig.NewDirectPacketDialerParser(directPD),
+			func(context.Context, *netconfig.DirectPacketDialerConfig) (ConnectionProviderInfo, error) {
+				return directInfo, nil
+			})); err != nil {
+		return fmt.Errorf("register direct packet dialer: %w", err)
+	}
+	if err := registry.Register(r, netconfig.PacketListenerKind, "direct",
+		packetListenerParser(netconfig.NewDirectPacketListenerParser(&transport.UDPListener{}),
+			func(context.Context, *netconfig.DirectPacketListenerConfig) (ConnectionProviderInfo, error) {
+				return directInfo, nil
+			})); err != nil {
+		return fmt.Errorf("register direct packet listener: %w", err)
+	}
+	if err := registry.Register(r, netconfig.StreamDialerKind, "iptable",
+		streamDialerParser(newIPTableParser(registry.Parser(r, netconfig.StreamDialerKind)), ipTableInfo)); err != nil {
+		return fmt.Errorf("register iptable stream dialer: %w", err)
+	}
+	if err := registry.Register(r, netconfig.StreamDialerKind, "shadowsocks",
+		streamDialerParser(
+			netconfig.NewShadowsocksStreamDialerParser(registry.Parser(r, netconfig.StreamEndpointKind)),
+			shadowsocksStreamInfo)); err != nil {
+		return fmt.Errorf("register Shadowsocks stream dialer: %w", err)
+	}
+	if err := registry.Register(r, netconfig.PacketDialerKind, "shadowsocks",
+		packetDialerParser(
+			netconfig.NewShadowsocksPacketDialerParser(registry.Parser(r, netconfig.PacketEndpointKind)),
+			shadowsocksPacketDialerInfo)); err != nil {
+		return fmt.Errorf("register Shadowsocks packet dialer: %w", err)
+	}
+	if err := registry.Register(r, netconfig.PacketListenerKind, "shadowsocks",
+		packetListenerParser(
+			netconfig.NewShadowsocksPacketListenerParser(registry.Parser(r, netconfig.PacketEndpointKind)),
+			shadowsocksPacketListenerInfo)); err != nil {
+		return fmt.Errorf("register Shadowsocks packet listener: %w", err)
+	}
+	if err := registry.Register(r, TransportPairKind, "tcpudp",
+		transportPairParser(
+			newTCPUDPParser(
+				registry.Parser(r, netconfig.StreamDialerKind),
+				registry.Parser(r, netconfig.PacketListenerKind)),
+			tcpudpInfo)); err != nil {
+		return fmt.Errorf("register tcpudp transport: %w", err)
 	}
 	headers := http.Header{"User-Agent": []string{useragent.GetOutlineUserAgent()}}
-	if err := netconfig.RegisterWebsocket(r, "websocket", netconfig.WithWebsocketHeaders(headers)); err != nil {
-		return fmt.Errorf("register websocket: %w", err)
+	if err := registry.Register(r, netconfig.StreamEndpointKind, "websocket",
+		streamEndpointParser(
+			netconfig.NewWebsocketEndpointParser(
+				registry.Parser(r, netconfig.StreamEndpointKind),
+				netconfig.WithWebsocketHeaders(headers)),
+			websocketInfo)); err != nil {
+		return fmt.Errorf("register WebSocket stream endpoint: %w", err)
+	}
+	if err := registry.Register(r, netconfig.PacketEndpointKind, "websocket",
+		packetEndpointParser(
+			netconfig.NewWebsocketEndpointParser(
+				registry.Parser(r, netconfig.StreamEndpointKind),
+				netconfig.WithWebsocketHeaders(headers)),
+			websocketInfo)); err != nil {
+		return fmt.Errorf("register WebSocket packet endpoint: %w", err)
 	}
 
 	// Unnamed compatibility fallbacks.
-	if err := registerCompatibility(r, directStream, directPacket, directListener); err != nil {
-		return fmt.Errorf("register compatibility fallbacks: %w", err)
+	if err := registry.RegisterFallback(r, netconfig.StreamEndpointKind,
+		streamEndpointParser(
+			netconfig.NewStreamDialEndpointParser(registry.Parser(r, netconfig.StreamDialerKind)),
+			streamDialEndpointInfo)); err != nil {
+		return fmt.Errorf("register stream endpoint fallback: %w", err)
 	}
-	if err := registerLegacyShadowsocks(r); err != nil {
-		return fmt.Errorf("register legacy shadowsocks: %w", err)
+	if err := registry.RegisterFallback(r, netconfig.PacketEndpointKind,
+		packetEndpointParser(
+			netconfig.NewPacketDialEndpointParser(registry.Parser(r, netconfig.PacketDialerKind)),
+			packetDialEndpointInfo)); err != nil {
+		return fmt.Errorf("register packet endpoint fallback: %w", err)
 	}
-	return nil
-}
-
-// registerCompatibility installs Outline's $type-less compatibility forms:
-// endpoint values default to dial endpoints, absent dialers/listeners mean
-// direct access, and scalar dialers use the legacy Shadowsocks URL form. These
-// fallbacks combine application wire compatibility with app-owned defaults, so
-// they intentionally do not live in netconfig's reusable registration helpers.
-func registerCompatibility(
-	r registry.Registrar,
-	directStream *netconfig.DirectStreamDialerConfig,
-	directPacket *netconfig.DirectPacketDialerConfig,
-	directListener *netconfig.DirectPacketListenerConfig,
-) error {
-	parseStreamEndpoint := netconfig.NewStreamDialEndpointParser(registry.Parser(r, netconfig.StreamDialerKind))
-	if err := registry.RegisterFallback(r, netconfig.StreamEndpointKind, asStreamEndpoint(parseStreamEndpoint)); err != nil {
-		return fmt.Errorf("stream endpoint fallback: %w", err)
-	}
-	parsePacketEndpoint := netconfig.NewPacketDialEndpointParser(registry.Parser(r, netconfig.PacketDialerKind))
-	if err := registry.RegisterFallback(r, netconfig.PacketEndpointKind, asPacketEndpoint(parsePacketEndpoint)); err != nil {
-		return fmt.Errorf("packet endpoint fallback: %w", err)
-	}
-
-	parseShadowsocksStream := netconfig.NewShadowsocksStreamDialerParser(registry.Parser(r, netconfig.StreamEndpointKind))
+	parseDirectStream := streamDialerParser(
+		func(_ context.Context, node composer.Node) (*netconfig.DirectStreamDialerConfig, error) {
+			if !node.IsAbsent() {
+				return nil, errors.New("parser not specified")
+			}
+			return directStream, nil
+		},
+		func(context.Context, *netconfig.DirectStreamDialerConfig) (ConnectionProviderInfo, error) {
+			return directInfo, nil
+		})
+	parseShadowsocksStream := streamDialerParser(
+		netconfig.NewShadowsocksStreamDialerParser(registry.Parser(r, netconfig.StreamEndpointKind)),
+		shadowsocksStreamInfo)
 	if err := registry.RegisterFallback(r, netconfig.StreamDialerKind,
 		func(ctx context.Context, node composer.Node) (netconfig.StreamDialerConfig, error) {
 			switch node.Kind() {
 			case composer.KindAbsent:
-				return directStream, nil
+				return parseDirectStream(ctx, node)
 			case composer.KindScalar:
 				return parseShadowsocksStream(ctx, node)
 			default:
 				return nil, errors.New("parser not specified")
 			}
 		}); err != nil {
-		return fmt.Errorf("stream dialer fallback: %w", err)
+		return fmt.Errorf("register stream dialer fallback: %w", err)
 	}
-
-	parseShadowsocksPacket := netconfig.NewShadowsocksPacketDialerParser(registry.Parser(r, netconfig.PacketEndpointKind))
+	parseDirectPacket := packetDialerParser(
+		func(_ context.Context, node composer.Node) (*netconfig.DirectPacketDialerConfig, error) {
+			if !node.IsAbsent() {
+				return nil, errors.New("parser not specified")
+			}
+			return directPacket, nil
+		},
+		func(context.Context, *netconfig.DirectPacketDialerConfig) (ConnectionProviderInfo, error) {
+			return directInfo, nil
+		})
+	parseShadowsocksPacket := packetDialerParser(
+		netconfig.NewShadowsocksPacketDialerParser(registry.Parser(r, netconfig.PacketEndpointKind)),
+		shadowsocksPacketDialerInfo)
 	if err := registry.RegisterFallback(r, netconfig.PacketDialerKind,
 		func(ctx context.Context, node composer.Node) (netconfig.PacketDialerConfig, error) {
 			switch node.Kind() {
 			case composer.KindAbsent:
-				return directPacket, nil
+				return parseDirectPacket(ctx, node)
 			case composer.KindScalar:
 				return parseShadowsocksPacket(ctx, node)
 			default:
 				return nil, errors.New("parser not specified")
 			}
 		}); err != nil {
-		return fmt.Errorf("packet dialer fallback: %w", err)
+		return fmt.Errorf("register packet dialer fallback: %w", err)
 	}
-
 	if err := registry.RegisterFallback(r, netconfig.PacketListenerKind,
-		func(_ context.Context, node composer.Node) (netconfig.PacketListenerConfig, error) {
-			if !node.IsAbsent() {
-				return nil, errors.New("parser not specified")
-			}
-			return directListener, nil
-		}); err != nil {
-		return fmt.Errorf("packet listener fallback: %w", err)
+		packetListenerParser(
+			func(_ context.Context, node composer.Node) (*netconfig.DirectPacketListenerConfig, error) {
+				if !node.IsAbsent() {
+					return nil, errors.New("parser not specified")
+				}
+				return directListener, nil
+			},
+			func(context.Context, *netconfig.DirectPacketListenerConfig) (ConnectionProviderInfo, error) {
+				return directInfo, nil
+			})); err != nil {
+		return fmt.Errorf("register packet listener fallback: %w", err)
+	}
+	if err := registry.RegisterFallback(r, TransportPairKind,
+		transportPairParser(
+			newLegacyShadowsocksTransportParser(
+				netconfig.NewShadowsocksStreamDialerParser(registry.Parser(r, netconfig.StreamEndpointKind)),
+				netconfig.NewShadowsocksPacketListenerParser(registry.Parser(r, netconfig.PacketEndpointKind))),
+			legacyShadowsocksTransportInfo)); err != nil {
+		return fmt.Errorf("register legacy shadowsocks: %w", err)
 	}
 	return nil
 }
 
-func asStreamEndpoint[Cfg netconfig.StreamEndpointConfig](parse composer.ParseFunc[Cfg]) composer.ParseFunc[netconfig.StreamEndpointConfig] {
-	return func(ctx context.Context, node composer.Node) (netconfig.StreamEndpointConfig, error) {
-		return parse(ctx, node)
+func streamDialEndpointInfo(ctx context.Context, cfg *netconfig.StreamDialEndpointConfig) (ConnectionProviderInfo, error) {
+	info, err := requireConnectionInfo(ctx, cfg.Dialer)
+	if err != nil {
+		return ConnectionProviderInfo{}, err
+	}
+	cfg.ResolveAddressFirst = false
+	if info.ConnType == ConnTypeDirect {
+		collector, err := collectorFromContext(ctx)
+		if err != nil {
+			return ConnectionProviderInfo{}, err
+		}
+		cfg.ResolveAddressFirst = collector.resolveDirectAddress != nil
+		if cfg.ResolveAddressFirst {
+			cfg.Address = collector.resolveDirect(ctx, cfg.Address)
+		}
+		info.FirstHop = cfg.Address
+	}
+	return info, nil
+}
+
+func packetDialEndpointInfo(ctx context.Context, cfg *netconfig.PacketDialEndpointConfig) (ConnectionProviderInfo, error) {
+	info, err := requireConnectionInfo(ctx, cfg.Dialer)
+	if err != nil {
+		return ConnectionProviderInfo{}, err
+	}
+	cfg.ResolveAddressFirst = false
+	if info.ConnType == ConnTypeDirect {
+		collector, err := collectorFromContext(ctx)
+		if err != nil {
+			return ConnectionProviderInfo{}, err
+		}
+		cfg.ResolveAddressFirst = collector.resolveDirectAddress != nil
+		if cfg.ResolveAddressFirst {
+			cfg.Address = collector.resolveDirect(ctx, cfg.Address)
+		}
+		info.FirstHop = cfg.Address
+	}
+	return info, nil
+}
+
+func websocketInfo(ctx context.Context, cfg *netconfig.WebsocketEndpointConfig) (ConnectionProviderInfo, error) {
+	return requireConnectionInfo(ctx, cfg.Endpoint)
+}
+
+func shadowsocksStreamInfo(ctx context.Context, cfg *netconfig.ShadowsocksStreamDialerConfig) (ConnectionProviderInfo, error) {
+	info, err := requireConnectionInfo(ctx, cfg.Endpoint)
+	if err != nil {
+		return ConnectionProviderInfo{}, err
+	}
+	return ConnectionProviderInfo{ConnType: ConnTypeTunneled, FirstHop: info.FirstHop}, nil
+}
+
+func shadowsocksPacketListenerInfo(ctx context.Context, cfg *netconfig.ShadowsocksPacketListenerConfig) (ConnectionProviderInfo, error) {
+	info, err := requireConnectionInfo(ctx, cfg.Endpoint)
+	if err != nil {
+		return ConnectionProviderInfo{}, err
+	}
+	return ConnectionProviderInfo{ConnType: ConnTypeTunneled, FirstHop: info.FirstHop}, nil
+}
+
+func shadowsocksPacketDialerInfo(ctx context.Context, cfg *netconfig.ShadowsocksPacketDialerConfig) (ConnectionProviderInfo, error) {
+	info, err := shadowsocksPacketListenerInfo(ctx, cfg.Listener)
+	if err != nil {
+		return ConnectionProviderInfo{}, err
+	}
+	if err := storeConnectionInfo(ctx, cfg.Listener, info); err != nil {
+		return ConnectionProviderInfo{}, err
+	}
+	return info, nil
+}
+
+func ipTableInfo(ctx context.Context, cfg *IPTableStreamDialerConfig) (ConnectionProviderInfo, error) {
+	allTunneled, allDirect, allBlocked := true, true, true
+	consider := func(info ConnectionProviderInfo) {
+		if info.ConnType == ConnTypeBlocked {
+			return
+		}
+		allBlocked = false
+		if info.ConnType != ConnTypeTunneled {
+			allTunneled = false
+		}
+		if info.ConnType != ConnTypeDirect {
+			allDirect = false
+		}
+	}
+	for i, entry := range cfg.Entries {
+		info, err := requireConnectionInfo(ctx, entry.Dialer)
+		if err != nil {
+			return ConnectionProviderInfo{}, fmt.Errorf("iptable entry %d: %w", i, err)
+		}
+		consider(info)
+	}
+	if cfg.Fallback != nil {
+		info, err := requireConnectionInfo(ctx, cfg.Fallback)
+		if err != nil {
+			return ConnectionProviderInfo{}, fmt.Errorf("iptable fallback: %w", err)
+		}
+		consider(info)
+	}
+	switch {
+	case allBlocked:
+		return ConnectionProviderInfo{ConnType: ConnTypeBlocked}, nil
+	case allTunneled:
+		return ConnectionProviderInfo{ConnType: ConnTypeTunneled}, nil
+	case allDirect:
+		return ConnectionProviderInfo{ConnType: ConnTypeDirect}, nil
+	default:
+		return ConnectionProviderInfo{ConnType: ConnTypePartial}, nil
 	}
 }
 
-func asPacketEndpoint[Cfg netconfig.PacketEndpointConfig](parse composer.ParseFunc[Cfg]) composer.ParseFunc[netconfig.PacketEndpointConfig] {
-	return func(ctx context.Context, node composer.Node) (netconfig.PacketEndpointConfig, error) {
-		return parse(ctx, node)
+func tcpudpInfo(ctx context.Context, cfg *TCPUDPTransportConfig) (TransportPairInfo, error) {
+	stream, err := requireConnectionInfo(ctx, cfg.TCP)
+	if err != nil {
+		return TransportPairInfo{}, fmt.Errorf("TCP transport: %w", err)
 	}
+	packet, err := requireConnectionInfo(ctx, cfg.UDP)
+	if err != nil {
+		return TransportPairInfo{}, fmt.Errorf("UDP transport: %w", err)
+	}
+	return TransportPairInfo{Stream: stream, Packet: packet}, nil
+}
+
+func legacyShadowsocksTransportInfo(ctx context.Context, cfg *ShadowsocksTransportConfig) (TransportPairInfo, error) {
+	stream, err := shadowsocksStreamInfo(ctx, cfg.StreamDialer)
+	if err != nil {
+		return TransportPairInfo{}, fmt.Errorf("legacy Shadowsocks stream transport: %w", err)
+	}
+	if err := storeConnectionInfo(ctx, cfg.StreamDialer, stream); err != nil {
+		return TransportPairInfo{}, err
+	}
+	packet, err := shadowsocksPacketListenerInfo(ctx, cfg.PacketListener)
+	if err != nil {
+		return TransportPairInfo{}, fmt.Errorf("legacy Shadowsocks packet transport: %w", err)
+	}
+	if err := storeConnectionInfo(ctx, cfg.PacketListener, packet); err != nil {
+		return TransportPairInfo{}, err
+	}
+	return TransportPairInfo{Stream: stream, Packet: packet}, nil
 }

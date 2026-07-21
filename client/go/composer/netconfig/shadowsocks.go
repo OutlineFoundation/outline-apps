@@ -248,9 +248,8 @@ func parseShadowsocksNode(node composer.Node) (*ssParams, error) {
 }
 
 // ShadowsocksStreamDialerConfig is a parsed Shadowsocks stream dialer
-// config. It's built from a composer config node, but is plain data:
-// callers (e.g. an application analyzer) may inspect and mutate its exported
-// fields before calling NewStreamDialer.
+// config. It's built from a composer config node, but is plain data: callers
+// may inspect and mutate its exported fields before calling NewStreamDialer.
 type ShadowsocksStreamDialerConfig struct {
 	Endpoint StreamEndpointConfig
 	key      *shadowsocks.EncryptionKey
@@ -276,9 +275,9 @@ func (c *ShadowsocksStreamDialerConfig) NewStreamDialer(ctx context.Context) (tr
 }
 
 // ShadowsocksPacketListenerConfig is a parsed Shadowsocks packet
-// listener config. It's built from a composer config node, but is
-// plain data: callers (e.g. an application analyzer) may inspect and mutate
-// its exported fields before calling NewPacketListener.
+// listener config. It's built from a composer config node, but is plain data:
+// callers may inspect and mutate its exported fields before calling
+// NewPacketListener.
 type ShadowsocksPacketListenerConfig struct {
 	Endpoint PacketEndpointConfig
 	key      *shadowsocks.EncryptionKey

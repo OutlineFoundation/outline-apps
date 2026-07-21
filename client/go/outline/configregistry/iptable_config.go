@@ -23,7 +23,6 @@ import (
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
 	"localhost/client/go/composer/netconfig"
-	"localhost/client/go/composer/registry"
 	"localhost/client/go/outline/iptable"
 )
 
@@ -36,9 +35,9 @@ type IPTableEntryConfig struct {
 type IPTableStreamDialerConfig struct {
 	Entries []IPTableEntryConfig
 	// Fallback dials addresses no entry matches. nil means there is no
-	// fallback, so those addresses fail; both NewStreamDialer and
-	// ConnectionAnalyzer branch on it. Assign only an untyped nil — a typed nil
-	// pointer makes this interface non-nil and defeats those checks.
+	// fallback, so those addresses fail; both NewStreamDialer and the metadata
+	// callback branch on it. Assign only an untyped nil — a typed nil pointer
+	// makes this interface non-nil and defeats those checks.
 	Fallback netconfig.StreamDialerConfig
 }
 
@@ -115,9 +114,4 @@ func newIPTableParser(parseSD composer.ParseFunc[netconfig.StreamDialerConfig]) 
 		}
 		return cfg, nil
 	}
-}
-
-func registerIPTable(r registry.Registrar) error {
-	parse := newIPTableParser(registry.Parser(r, netconfig.StreamDialerKind))
-	return registry.Register(r, netconfig.StreamDialerKind, "iptable", asStreamDialer(parse))
 }

@@ -67,6 +67,16 @@ the same name need not be valid for a whole transport. The parser that
 delegates a field determines its expected category. A `$type` registered
 for another category is unsupported at that location.
 
+### Application metadata
+
+Metadata such as connection type and first-hop address is not part of the wire
+format and is not a responsibility of reusable strategy parsers. An
+application may wrap a concrete parser at registration time to record metadata
+for the Config object it returns. Delegating parsers build children first, so a
+parent wrapper can read already-recorded child metadata. The built-in
+`first-supported` combinator returns the selected Config object unchanged; it
+does not create a wrapper Config or require separate metadata behavior.
+
 ## Field naming
 
 Field names are lowercase `snake_case` (e.g. `server_port`). Matching is

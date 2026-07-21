@@ -12,11 +12,11 @@ they are.
 2. Write a build function `func(ctx context.Context, cfg MyConfig) (T, error)`.
    If it delegates, take the needed `composer.ParseFunc` as a constructor
    argument so the dependency is explicit and compile-checked.
-3. Register the resulting parser under its contract owner's typed Kind
-   with `registry.Register`. A reusable package may offer an optional
-   `Register…` helper that takes a caller-chosen name. For a
-   standalone legacy `TypeParser[T]`, `composer.RegisterParser` remains
-   available.
+3. Export the concrete Config type and parser constructor. The consuming
+   application registers that parser under its contract owner's typed Kind
+   with `registry.Register`, choosing the `$type` name and attaching any
+   application metadata or policy there. For a standalone legacy
+   `TypeParser[T]`, `composer.RegisterParser` remains available.
 
 Keep application policy (metadata, DNS behavior, User-Agent) out of this
 package; it is destined for the Outline SDK and must stay app-agnostic.
@@ -29,7 +29,8 @@ the transport layer built on this package — config interfaces
 (`StreamDialerConfig` etc.), concrete config types, and their parsers,
 kept free of Outline application policy so it can move to the Outline
 SDK. `client/go/outline/configregistry` is the app layer: it chooses
-netconfig `$type` names and fallbacks, analyzes typed config graphs for
-connection metadata, and applies Outline-specific policy (User-Agent,
-DNS interception) that must not live in this package or in netconfig.
+netconfig `$type` names and fallbacks, wraps registered parsers to collect
+connection metadata while the typed graph is built, and applies
+Outline-specific policy (User-Agent, address resolution, DNS interception)
+that must not live in this package or in netconfig.
 See netconfig/AGENTS.md and configregistry/README.md.

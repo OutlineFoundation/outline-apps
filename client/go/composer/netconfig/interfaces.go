@@ -47,8 +47,8 @@ type PacketListenerConfig interface {
 }
 
 // Kinds are the typed Composer extension points owned by the networking
-// contracts. Applications register implementations under these shared
-// identities, either directly or through the optional Register helpers.
+// contracts. Applications register concrete parsers directly under these
+// shared identities.
 var (
 	StreamDialerKind   = registry.NewKind[StreamDialerConfig]("stream dialer")
 	PacketDialerKind   = registry.NewKind[PacketDialerConfig]("packet dialer")

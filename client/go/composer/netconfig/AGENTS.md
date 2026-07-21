@@ -4,12 +4,12 @@ The transport contract layer of Outline Composer: config interfaces
 (`StreamDialerConfig`, `PacketDialerConfig`, `StreamEndpointConfig`,
 `PacketEndpointConfig`, `PacketListenerConfig`, all in interfaces.go),
 their shared typed `registry.Kind[T]` extension points, concrete config
-types, parser constructors, and optional registration helpers — one
+types, and parser constructors — one
 file per protocol (direct.go, block.go, dialendpoint.go, websocket.go,
 shadowsocks.go). Built on `client/go/composer`; read its SPEC.md (wire
 format) and AGENTS.md (parser mechanics) first. Consumed by the Outline
 app layer at `client/go/outline/configregistry` — read that package's
-README.md for how these pieces are named, analyzed, and assembled into
+README.md for how these pieces are named, annotated, and assembled into
 a client.
 
 ## Two-phase: parse, then `New`
@@ -19,28 +19,21 @@ side effects. Each config type has a `New*(ctx)` method — `NewStreamDialer`,
 `NewStreamEndpoint`, etc. — that builds the runtime object. That's where
 dependencies actually get invoked. Keeping parse pure lets a caller
 inspect a parsed tree — e.g. read the first-hop endpoint address —
-without building anything. This package performs no DNS at any stage:
-`StreamDialEndpointConfig.NewStreamEndpoint` dials `Address` exactly as
-it finds it.
+without building anything. Dial endpoints resolve only when the consuming
+application sets their non-wire `ResolveAddressFirst` policy field.
 
-Many `New*` methods take pointer receivers because their config values
-or builders are naturally pointer-backed. Analysis does not depend on
-pointer identity or a metadata side table.
+Many `New*` methods take pointer receivers because their config values or
+builders are naturally pointer-backed. Outline's per-parse metadata side table
+is entirely app-owned; this package neither creates nor reads it.
 
-## Registration helpers
+## Registration API
 
-`RegisterBlock`, `RegisterDialEndpoint`, `RegisterDirect`,
-`RegisterShadowsocks`, and `RegisterWebsocket` are optional sugar over
-the exported parser constructors and `registry.Register`. Each helper:
-
-- takes every `$type` name from its caller;
-- installs named entries only, never a fallback;
-- may be called again with a different name or configuration; and
-- contains no connection analysis or Outline policy.
-
-Advanced consumers remain free to register any exported parser
-directly. Multi-Kind registration is non-transactional, matching the
-underlying registry.
+The reusable API is the Config types and concrete parser constructors.
+Applications register those parsers directly with `registry.Register`, so the
+registered name, parser options, and application metadata callback remain
+together at the application boundary. A parser constructor never knows the
+name under which its result will be registered and can be reused under
+different names or with different options.
 
 ## The no-app-imports rule
 
@@ -49,21 +42,20 @@ D12). It must never import an Outline application package
 (`localhost/client/go/outline/...`), and it must never encode Outline
 application policy:
 
-- No `ConnectionProviderInfo` or other connection metadata — the app
-  layer computes that by analyzing the completed typed config graph.
+- No `ConnectionProviderInfo` or other connection metadata — the app layer
+  wraps each registered parser and records metadata as it builds the typed
+  config graph.
 - No hardcoded User-Agent. `NewWebsocketEndpointParser` takes generic
   `WithWebsocketHeaders(...)` options; the caller (`outline/configregistry`)
   supplies the actual Outline User-Agent string.
 - No DNS interception, cookie-jar paths, or other Outline-specific
   behavior — a `TransportPairConfig`-style aggregate type and any DNS
   wrapping belong in the app layer.
-- No address resolution. `StreamDialEndpointConfig` /
-  `PacketDialEndpointConfig` dial `Address` verbatim. An app that needs
-  the dialed address to be an IP resolves it and rewrites `Address` on
-  the already-parsed config — e.g. because a platform installs a bypass
-  route for that address, or because its protected-socket routing can't
-  tolerate unprotected system DNS at dial time (see `ConnectionAnalyzer`
-  in the app layer).
+- No platform address-resolution policy. `StreamDialEndpointConfig` and
+  `PacketDialEndpointConfig` expose the generic, non-wire
+  `ResolveAddressFirst` switch; the Outline registration callback assigns it
+  for every parsed endpoint. The config resolves only when that caller-owned
+  switch is true.
 
 ## Adding a new config type
 
@@ -79,12 +71,9 @@ application policy:
    `NewShadowsocksStreamDialerParser`). Delegated dependencies are
    explicit `composer.ParseFunc` constructor arguments, per
    composer/AGENTS.md.
-3. Optionally add a `RegisterMyConfig(r, name, ...)` helper when the type
-   implements multiple Kinds or otherwise has repeated mechanical
-   registration. The caller supplies every wire name and policy option;
-   the helper registers named entries only and does not install a
-   fallback. Direct `registry.Register` with the exported parser remains
-   the fundamental API.
+3. Export the concrete Config and parser constructor. Keep `$type` names,
+   fallbacks, application options, and metadata out of this package; the
+   consuming application supplies all of them at its registration site.
 
 ## Where new code belongs: here vs. the app layer
 

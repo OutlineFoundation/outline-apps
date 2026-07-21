@@ -26,14 +26,13 @@ import (
 )
 
 // StreamDialEndpointConfig connects to a fixed address via a dialer.
-//
-// Address is dialed as written. An app that needs the dialed address to be an
-// IP (e.g. so a VPN can install a bypass route for it, or to avoid a system DNS
-// lookup it cannot protect) resolves it and rewrites this field on the parsed
-// config; this package never performs DNS itself.
 type StreamDialEndpointConfig struct {
 	Address string
-	Dialer  StreamDialerConfig
+	// ResolveAddressFirst makes NewStreamEndpoint resolve Address once before
+	// dialing. It has no wire field; applications may set it on a parsed config
+	// when their routing policy cannot tolerate DNS during DialStream.
+	ResolveAddressFirst bool
+	Dialer              StreamDialerConfig
 }
 
 func (c *StreamDialEndpointConfig) NewStreamEndpoint(ctx context.Context) (transport.StreamEndpoint, error) {
@@ -42,6 +41,9 @@ func (c *StreamDialEndpointConfig) NewStreamEndpoint(ctx context.Context) (trans
 		return nil, fmt.Errorf("failed to build dialer: %w", err)
 	}
 	addr := c.Address
+	if c.ResolveAddressFirst {
+		addr = resolveAddress(ctx, addr)
+	}
 	return transport.FuncStreamEndpoint(func(ctx context.Context) (transport.StreamConn, error) {
 		return dialer.DialStream(ctx, addr)
 	}), nil
@@ -49,8 +51,9 @@ func (c *StreamDialEndpointConfig) NewStreamEndpoint(ctx context.Context) (trans
 
 // PacketDialEndpointConfig is the packet variant of StreamDialEndpointConfig.
 type PacketDialEndpointConfig struct {
-	Address string
-	Dialer  PacketDialerConfig
+	Address             string
+	ResolveAddressFirst bool
+	Dialer              PacketDialerConfig
 }
 
 func (c *PacketDialEndpointConfig) NewPacketEndpoint(ctx context.Context) (transport.PacketEndpoint, error) {
@@ -59,9 +62,26 @@ func (c *PacketDialEndpointConfig) NewPacketEndpoint(ctx context.Context) (trans
 		return nil, fmt.Errorf("failed to build dialer: %w", err)
 	}
 	addr := c.Address
+	if c.ResolveAddressFirst {
+		addr = resolveAddress(ctx, addr)
+	}
 	return transport.FuncPacketEndpoint(func(ctx context.Context) (net.Conn, error) {
 		return dialer.DialPacket(ctx, addr)
 	}), nil
+}
+
+// resolveAddress resolves host:port once and returns address unchanged if DNS
+// is unavailable. The latter lets a later dial recover when DNS comes back.
+func resolveAddress(ctx context.Context, address string) string {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return address
+	}
+	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+	if err != nil || len(ips) == 0 {
+		return address
+	}
+	return net.JoinHostPort(ips[0].Unmap().String(), port)
 }
 
 type dialEndpointFields struct {

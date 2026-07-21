@@ -148,8 +148,13 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 	transportNode := envelope["transport"]
 	reporterNode := envelope["reporter"]
 
-	transportCfg, err := parseTransport(context.Background(), transportNode)
+	parseContext, metadata := configregistry.WithMetadataCollector(context.Background())
+	transportCfg, err := parseTransport(parseContext, transportNode)
 	if err != nil {
+		if errors.Is(err, configregistry.ErrMetadataWiring) {
+			return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
+				Message: "failed to collect transport metadata", Cause: platerrors.ToPlatformError(err)}
+		}
 		code := platerrors.InvalidConfig
 		msg := "failed to create transport"
 		if errors.Is(err, errors.ErrUnsupported) {
@@ -157,10 +162,10 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		}
 		return nil, &platerrors.PlatformError{Code: code, Message: msg, Cause: platerrors.ToPlatformError(err)}
 	}
-	info, err := configregistry.NewConnectionAnalyzer().AnalyzeTransport(context.Background(), transportCfg)
+	info, err := metadata.TransportPairInfo(transportCfg)
 	if err != nil {
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
-			Message: "failed to analyze transport config", Cause: platerrors.ToPlatformError(err)}
+			Message: "failed to collect transport metadata", Cause: platerrors.ToPlatformError(err)}
 	}
 
 	var reporterConfig reporting.Config

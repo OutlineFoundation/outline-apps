@@ -123,11 +123,11 @@ The package was built alongside `configyaml` and adopted by porting one
 parser chain at a time in a follow-up plan; `configyaml` was deleted at
 the end. Migration complete 2026-07-09: `client/go/composer/netconfig`
 is now the transport-config layer (config interfaces, concrete config
-types, protocol parsers, and optional registration helpers), and
+types, and protocol parser constructors), and
 `client/go/outline/configregistry` is the app layer that chooses wire
-names and fallbacks, analyzes parsed graphs for connection metadata,
-and applies Outline policy (DNS interception, User-Agent) at the
-boundary. Long-term destination: the Outline SDK (this package has no
+names and fallbacks, wraps those parsers to collect connection metadata,
+and applies Outline policy (address resolution, DNS interception, User-Agent)
+at the boundary. Long-term destination: the Outline SDK (this package has no
 Outline-app dependencies by design — app policy like
 `ConnectionProviderInfo`, DNS interception, and
 User-Agent stays in the app layer, never in `composer` or `netconfig`).
@@ -156,12 +156,12 @@ The rule that makes the umbrella meaningful: everything under
 `client/go/outline/`, and must never move under the umbrella.
 
 Audience map: config authors read SPEC.md, never Go; strategy
-developers work in `composer/netconfig` plus an optional registration
-helper; app developers read `composer/netconfig` with
+developers work in `composer/netconfig` and export concrete Configs and parser
+constructors; app developers read `composer/netconfig` with
 `outline/configregistry` as the worked example; tooling developers need
 only the core + SPEC.md.
 
-## D15. Multi-category registry and registration helpers
+## D15. Multi-category registry and application parser wrapping
 
 The multi-category registry lives in `composer/registry`, one layer
 above the YAML node and `TypeParser` mechanics in `composer`. Keeping
@@ -189,35 +189,40 @@ The returned parser is passed to a parser constructor and captured for
 later use. It is late-bound so registration order does not matter and
 recursive categories work.
 
-Direct registration is the fundamental API. Packages may offer small
-convenience functions that bundle the registrations needed for one
-reusable config type. Such helpers take the registrar and the caller's
-chosen name; they contain no canonical name, fallback, metadata, or app
-policy. For example:
+Direct registration is the fundamental API. Reusable strategy packages expose
+concrete Config types and parser constructors; they do not bundle
+registrations, choose names, or know application metadata. The application
+keeps the name, concrete parser constructor, parser options, metadata callback,
+and `registry.Register` call at one registration site. For example:
 
 ```go
-func RegisterMyEndpoint(r registry.Registrar, name registry.TypeName) error {
-    parseDialer := registry.Parser(r, netconfig.StreamDialerKind)
-    parse := NewMyEndpointParser(parseDialer)
-    return registry.Register(
-        r, netconfig.StreamEndpointKind, name,
-        func(ctx context.Context, node composer.Node) (
-            netconfig.StreamEndpointConfig, error,
-        ) {
-            return parse(ctx, node)
-        })
-}
+registry.Register(r, netconfig.StreamEndpointKind, "websocket",
+    streamEndpointParser(
+        netconfig.NewWebsocketEndpointParser(
+            registry.Parser(r, netconfig.StreamEndpointKind),
+            netconfig.WithWebsocketHeaders(outlineHeaders)),
+        websocketInfo))
 ```
 
-An application may use the helper more than once with different names
-or options, or bypass it and register an individual parser directly:
+The app-local `streamEndpointParser` adapter requires a metadata callback. It
+calls the concrete parser, computes and records the result's metadata in the
+per-parse Outline collector, and returns that same concrete Config widened to
+`StreamEndpointConfig`. Equivalent adapters cover the other typed Kinds and
+whole transports. They wrap parsers, not Config objects, and do not inspect
+private `registry.Registration` fields.
+
+A parser constructor may be used more than once with different application
+names or options:
 
 ```go
-r := registry.New()
-netconfig.RegisterWebsocket(r, "websocket",
-    netconfig.WithWebsocketHeaders(outlineHeaders))
-netconfig.RegisterWebsocket(r, "other-websocket",
-    netconfig.WithWebsocketHeaders(otherHeaders))
+parseA := netconfig.NewWebsocketEndpointParser(parseEndpoint,
+    netconfig.WithWebsocketHeaders(headersA))
+parseB := netconfig.NewWebsocketEndpointParser(parseEndpoint,
+    netconfig.WithWebsocketHeaders(headersB))
+registry.Register(r, netconfig.StreamEndpointKind, "websocket-a",
+    streamEndpointParser(parseA, websocketInfo))
+registry.Register(r, netconfig.StreamEndpointKind, "websocket-b",
+    streamEndpointParser(parseB, websocketInfo))
 ```
 
 Composer has no plugin object, `AddPlugin`, installation lifecycle, or
@@ -246,10 +251,9 @@ func RegisterFallback[T any](Registrar, Kind[T], composer.ParseFunc[T]) error
 `RegisterFallback` explicitly preserves each category's application-
 specific `$type`-less behavior; an empty `TypeName` is not a magic
 fallback name. Duplicate type or fallback registration returns an
-error. Registration is deliberately non-transactional: a helper that
-registers several Kinds may leave earlier registrations installed if a
-later one fails. Helpers should validate their own arguments before the
-first registration, but rollback is not part of the registry contract.
+error. Registration is deliberately non-transactional: if an application
+registers a strategy under several Kinds and a later call fails, earlier calls
+remain installed. Rollback is not part of the registry contract.
 
 Go does not support independently generic interface methods. The
 `Composer.Compose(ParseRequest)` and `Registrar.Register(Registration)`
@@ -263,29 +267,33 @@ nil interface results and the association between a `Kind[T]` and
 semantics; ordinary registration code never handles `any`.
 
 There is no `Use` middleware or separate `RegisterConfig` operation.
-Parsers can be wrapped explicitly before registration, and decode-then-
-build behavior can be a parser-construction helper if it is useful. A
-global decoration API should wait for concrete annotation and telemetry
-requirements.
+Parsers can be wrapped explicitly before registration. Composer itself has no
+metadata collector or global decoration API; Outline's collector and adapters
+live in `outline/configregistry` because their semantics are application-owned.
 
 The production Outline wiring validates this design.
 `composer/netconfig` owns the five typed networking Kinds alongside the
-config interfaces they describe, parser constructors, and optional
-`Register…` helpers. `outline/configregistry.Register` chooses Outline's
-names and options, installs compatibility fallbacks directly, and
-registers app-only IP-table and whole-transport parsers.
+config interfaces they describe, concrete Config types, and parser
+constructors. `outline/configregistry.Register` chooses Outline's names and
+options, attaches required metadata callbacks, installs compatibility
+fallbacks directly, and registers app-only IP-table and whole-transport
+parsers.
 
-The resulting lifecycle has four distinct stages:
+The resulting lifecycle is:
+
+```text
+YAML → wrapped parsers build typed graph and collect app metadata → runtime build
+```
 
 1. **Strategy definition:** registration installs long-lived
-   parser functions. A parser may capture other typed parser functions.
-2. **Config instance:** each parse or dynamic-config refresh invokes
-   those functions to create a new typed config graph. Child parser
-   calls produce child config objects.
-3. **Application analysis:** Outline recursively inspects the completed
-   graph to derive `ConnectionProviderInfo` and apply its direct-address
-   resolution policy. Parsing itself carries no metadata context.
-4. **Runtime instance:** the config graph's `New*` methods recursively
+   wrapped parser functions. A parser may capture other typed parser functions.
+2. **Config and metadata instance:** each parse or dynamic-config refresh
+   creates a per-parse Outline collector and invokes those functions. Children
+   are parsed and recorded before parent metadata callbacks read them.
+   `first-supported` returns the selected Config unchanged, so its existing
+   metadata entry remains valid. Missing child or root metadata is an internal
+   wiring error.
+3. **Runtime instance:** the config graph's `New*` methods recursively
    build the actual dialers, endpoints, and listeners for a client or
    session.
 

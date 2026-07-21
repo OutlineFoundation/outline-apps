@@ -13,10 +13,10 @@
 // limitations under the License.
 
 // Package netconfig provides Outline Composer config contracts, typed registry
-// Kinds, config types, parser constructors, and optional registration helpers
-// for network strategies (dialers, endpoints, listeners). Registration helpers
-// take caller-chosen names and install no fallback. Parsing composes typed
-// Config objects; calling a Config's New method builds the runtime object. This
-// package is destined for the Outline SDK and must not import Outline
-// application packages.
+// Kinds, concrete config types, and parser constructors for network strategies
+// (dialers, endpoints, listeners). Applications choose names, fallbacks,
+// options, and metadata behavior when registering those parsers. Parsing
+// composes typed Config objects; calling a Config's New method builds the
+// runtime object. This package is destined for the Outline SDK and must not
+// import Outline application packages.
 package netconfig

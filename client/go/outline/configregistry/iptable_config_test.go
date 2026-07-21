@@ -38,8 +38,8 @@ func (d *errorStreamDialer) DialStream(ctx context.Context, addr string) (transp
 	return nil, fmt.Errorf("dialer '%s' called for address '%s'", d.name, addr)
 }
 
-// parseSDErr is like the parseSD helper in analysis_integration_test.go, but
-// returns the parse error instead of requiring success. Needed here
+// parseSDErr is like the parseSD helper in metadata_test.go, but returns the
+// parse error instead of requiring success. Needed here
 // because iptable has several config-time error cases.
 func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, error) {
 	t.Helper()
@@ -48,7 +48,8 @@ func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, error)
 	require.NoError(t, err)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	cfg, err := registry.Parser(r, netconfig.StreamDialerKind)(context.Background(), node)
+	ctx, _ := withMetadataCollector(context.Background(), nil)
+	cfg, err := registry.Parser(r, netconfig.StreamDialerKind)(ctx, node)
 	return cfg, err
 }
 
@@ -202,9 +203,7 @@ table:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := parseSD(t, "$type: iptable\n"+tc.configYAML)
-			info, err := (ConnectionAnalyzer{}).streamDialer(context.Background(), cfg)
-			require.NoError(t, err)
+			_, info := parseSDWithInfo(t, "$type: iptable\n"+tc.configYAML)
 			require.Equal(t, tc.expectedConnType, info.ConnType)
 			require.Empty(t, info.FirstHop)
 		})

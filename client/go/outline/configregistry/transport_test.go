@@ -27,26 +27,27 @@ import (
 
 func parseTransport(t *testing.T, text string) TransportPairConfig {
 	t.Helper()
+	cfg, _ := parseTransportWithInfo(t, text)
+	return cfg
+}
+
+func parseTransportWithInfo(t *testing.T, text string) (TransportPairConfig, TransportPairInfo) {
+	t.Helper()
 	r := registry.New()
 	require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
 	parse := registry.Parser(r, TransportPairKind)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	cfg, err := parse(context.Background(), node)
+	ctx, collector := withMetadataCollector(context.Background(), nil)
+	cfg, err := parse(ctx, node)
 	require.NoError(t, err)
-	return cfg
-}
-
-func requirePairInfo(t *testing.T, cfg TransportPairConfig) TransportPairInfo {
-	t.Helper()
-	info, err := (ConnectionAnalyzer{}).AnalyzeTransport(context.Background(), cfg)
+	info, err := collector.TransportPairInfo(cfg)
 	require.NoError(t, err)
-	return info
+	return cfg, info
 }
 
 func TestTransport_LegacySSURL(t *testing.T) {
-	cfg := parseTransport(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
-	info := requirePairInfo(t, cfg)
+	cfg, info := parseTransportWithInfo(t, `"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:1234"`)
 	require.Equal(t, ConnTypeTunneled, info.Stream.ConnType)
 	require.Equal(t, "example.com:1234", info.Stream.FirstHop)
 	require.Equal(t, ConnTypeTunneled, info.Packet.ConnType)
@@ -58,19 +59,17 @@ func TestTransport_LegacySSURL(t *testing.T) {
 }
 
 func TestTransport_LegacyMappingNoType(t *testing.T) {
-	cfg := parseTransport(t, `
+	_, info := parseTransportWithInfo(t, `
 server: example.com
 server_port: 1234
 method: chacha20-ietf-poly1305
 password: SECRET
 `)
-	info := requirePairInfo(t, cfg)
 	require.Equal(t, "example.com:1234", info.Stream.FirstHop)
-	_ = cfg
 }
 
 func TestTransport_TCPUDP(t *testing.T) {
-	cfg := parseTransport(t, `
+	_, info := parseTransportWithInfo(t, `
 $type: tcpudp
 tcp:
   $type: shadowsocks
@@ -83,22 +82,18 @@ udp:
   cipher: chacha20-ietf-poly1305
   secret: SECRET
 `)
-	info := requirePairInfo(t, cfg)
 	require.Equal(t, "example.com:1234", info.Stream.FirstHop)
 	require.Equal(t, "example.com:5678", info.Packet.FirstHop)
 }
 
 func TestTransport_TCPUDP_DefaultsToDirect(t *testing.T) {
-	cfg := parseTransport(t, "$type: tcpudp")
-	info := requirePairInfo(t, cfg)
+	_, info := parseTransportWithInfo(t, "$type: tcpudp")
 	require.Equal(t, ConnTypeDirect, info.Stream.ConnType)
 	require.Equal(t, ConnTypeDirect, info.Packet.ConnType)
-	_ = cfg
 }
 
 func TestTransport_BasicAccess(t *testing.T) {
-	cfg := parseTransport(t, "$type: basic-access")
-	info := requirePairInfo(t, cfg)
+	cfg, info := parseTransportWithInfo(t, "$type: basic-access")
 	require.Equal(t, ConnTypeDirect, info.Stream.ConnType)
 	parts, err := cfg.NewTransportPair(context.Background())
 	require.NoError(t, err)
@@ -158,13 +153,11 @@ udp:
 }
 
 func TestTransport_FirstSupported(t *testing.T) {
-	cfg := parseTransport(t, `
+	_, info := parseTransportWithInfo(t, `
 $type: first-supported
 options:
   - $type: warp-drive
   - $type: tcpudp
 `)
-	info := requirePairInfo(t, cfg)
 	require.Equal(t, ConnTypeDirect, info.Stream.ConnType)
-	_ = cfg
 }

@@ -287,8 +287,7 @@ tcp:
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := parseTransport(t, tc.yaml)
-			info := requirePairInfo(t, cfg)
+			_, info := parseTransportWithInfo(t, tc.yaml)
 			require.Equal(t, tc.wantStream, info.Stream.ConnType)
 			require.Equal(t, tc.wantPacket, info.Packet.ConnType)
 			require.Equal(t, tc.wantStreamHop, info.Stream.FirstHop)
@@ -384,7 +383,8 @@ secret: SECRET
 			parse := registry.Parser(r, TransportPairKind)
 			node, err := composer.ParseYAML([]byte(tc.yaml))
 			require.NoError(t, err)
-			_, err = parse(context.Background(), node)
+			ctx, _ := withMetadataCollector(context.Background(), nil)
+			_, err = parse(ctx, node)
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.wantErrContains)
 		})

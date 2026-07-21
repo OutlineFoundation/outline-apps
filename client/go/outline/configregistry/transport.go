@@ -65,10 +65,11 @@ type tcpudpFields struct {
 	UDP composer.Optional[composer.Node]
 }
 
-func registerTCPUDP(r registry.Registrar) error {
-	parseStreamDialer := registry.Parser(r, netconfig.StreamDialerKind)
-	parsePacketListener := registry.Parser(r, netconfig.PacketListenerKind)
-	parse := func(ctx context.Context, node composer.Node) (*TCPUDPTransportConfig, error) {
+func newTCPUDPParser(
+	parseStreamDialer composer.ParseFunc[netconfig.StreamDialerConfig],
+	parsePacketListener composer.ParseFunc[netconfig.PacketListenerConfig],
+) composer.ParseFunc[*TCPUDPTransportConfig] {
+	return func(ctx context.Context, node composer.Node) (*TCPUDPTransportConfig, error) {
 		var fields tcpudpFields
 		if err := node.Decode(&fields); err != nil {
 			return nil, fmt.Errorf("invalid config format: %w", err)
@@ -85,7 +86,6 @@ func registerTCPUDP(r registry.Registrar) error {
 		}
 		return &TCPUDPTransportConfig{TCP: sd, UDP: pl}, nil
 	}
-	return registry.Register(r, TransportPairKind, "tcpudp", asTransportPair(parse))
 }
 
 // ShadowsocksTransportConfig is the legacy transport form: one Shadowsocks
@@ -107,10 +107,11 @@ func (c *ShadowsocksTransportConfig) NewTransportPair(ctx context.Context) (*Tra
 	return &TransportPairParts{StreamDialer: sd, PacketListener: pl}, nil
 }
 
-func registerLegacyShadowsocks(r registry.Registrar) error {
-	parseStream := netconfig.NewShadowsocksStreamDialerParser(registry.Parser(r, netconfig.StreamEndpointKind))
-	parsePacket := netconfig.NewShadowsocksPacketListenerParser(registry.Parser(r, netconfig.PacketEndpointKind))
-	parse := func(ctx context.Context, node composer.Node) (*ShadowsocksTransportConfig, error) {
+func newLegacyShadowsocksTransportParser(
+	parseStream composer.ParseFunc[*netconfig.ShadowsocksStreamDialerConfig],
+	parsePacket composer.ParseFunc[*netconfig.ShadowsocksPacketListenerConfig],
+) composer.ParseFunc[*ShadowsocksTransportConfig] {
+	return func(ctx context.Context, node composer.Node) (*ShadowsocksTransportConfig, error) {
 		if node.IsAbsent() {
 			return nil, errors.New("transport config missing")
 		}
@@ -126,7 +127,6 @@ func registerLegacyShadowsocks(r registry.Registrar) error {
 		packet.SaltGenerator = nil
 		return &ShadowsocksTransportConfig{StreamDialer: stream, PacketListener: packet}, nil
 	}
-	return registry.RegisterFallback(r, TransportPairKind, asTransportPair(parse))
 }
 
 const (
@@ -148,25 +148,10 @@ func (c *BasicAccessTransportConfig) NewTransportPair(context.Context) (*Transpo
 	return &TransportPairParts{StreamDialer: fragSD, PacketListener: &transport.UDPListener{}}, nil
 }
 
-func registerBasicAccess(r registry.Registrar) error {
-	parse := func(_ context.Context, node composer.Node) (*BasicAccessTransportConfig, error) {
-		var fields struct{}
-		if err := node.Decode(&fields); err != nil {
-			return nil, fmt.Errorf("invalid config format: %w", err)
-		}
-		return &BasicAccessTransportConfig{}, nil
+func parseBasicAccess(_ context.Context, node composer.Node) (*BasicAccessTransportConfig, error) {
+	var fields struct{}
+	if err := node.Decode(&fields); err != nil {
+		return nil, fmt.Errorf("invalid config format: %w", err)
 	}
-	return registry.Register(r, TransportPairKind, "basic-access", asTransportPair(parse))
-}
-
-func asTransportPair[Cfg TransportPairConfig](parse composer.ParseFunc[Cfg]) composer.ParseFunc[TransportPairConfig] {
-	return func(ctx context.Context, node composer.Node) (TransportPairConfig, error) {
-		return parse(ctx, node)
-	}
-}
-
-func asStreamDialer[Cfg netconfig.StreamDialerConfig](parse composer.ParseFunc[Cfg]) composer.ParseFunc[netconfig.StreamDialerConfig] {
-	return func(ctx context.Context, node composer.Node) (netconfig.StreamDialerConfig, error) {
-		return parse(ctx, node)
-	}
+	return &BasicAccessTransportConfig{}, nil
 }

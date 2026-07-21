@@ -36,7 +36,7 @@ func (*unknownTransportConfig) NewTransportPair(context.Context) (*configregistr
 	return nil, nil
 }
 
-func TestParseConfig_UnknownAnalysisTypeIsInternalError(t *testing.T) {
+func TestParseConfig_UnknownMetadataTypeIsInternalError(t *testing.T) {
 	r := registry.New()
 	err := registry.Register(r, configregistry.TransportPairKind, "unknown",
 		func(context.Context, composer.Node) (configregistry.TransportPairConfig, error) {
@@ -48,7 +48,7 @@ func TestParseConfig_UnknownAnalysisTypeIsInternalError(t *testing.T) {
 	var platformErr *platerrors.PlatformError
 	require.ErrorAs(t, err, &platformErr)
 	require.Equal(t, platerrors.InternalError, platformErr.Code)
-	require.Equal(t, "failed to analyze transport config", platformErr.Message)
+	require.Equal(t, "failed to collect transport metadata", platformErr.Message)
 }
 
 func TestParseConfig_RejectsInvalidReporter(t *testing.T) {
