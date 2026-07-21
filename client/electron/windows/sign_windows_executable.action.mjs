@@ -27,12 +27,8 @@ async function main() {
 //   npm run action client/electron/windows/sign_windows_executable --
 //     --target <exe-path-to-sign>
 //     --algorithm <sha1|sha256>
-//     --certtype <none|pfx|digicert-usb|gcp-hsm>
-//     --password <cert-store-password|gcp-access-token>
-// The following options are for --certtype == pfx
-//     --pfx <pfx-cert-path>
-// The following options are for --certtype == digicert-usb
-//     [--subject <cert-subject-name>]
+//     --certtype <none|gcp-hsm>
+//     --password <gcp-access-token>
 // The following options are for --certtype == gcp-hsm
 //     --gcp-keyring <full-id: https://cloud.google.com/kms/docs/resource-hierarchy#retrieve_resource_id>
 //     --gcp-private-key <name-of-the-key-in-key-ring>
@@ -41,8 +37,6 @@ async function main() {
 // You can also use environment variables to specify some arguments:
 //   WINDOWS_SIGNING_CERT_TYPE       <=> --certtype
 //   WINDOWS_SIGNING_CERT_PASSWORD   <=> --password
-//   WINDOWS_SIGNING_PFX_CERT        <=> --pfx
-//   WINDOWS_SIGNING_EV_CERT_SUBJECT <=> --subject
 //   WINDOWS_SIGNING_GCP_KEYRING     <=> --gcp-keyring
 //   WINDOWS_SIGNING_GCP_PRIVATE_KEY <=> --gcp-private-key
 //   WINDOWS_SIGNING_GCP_PUBLIC_CERT <=> --gcp-public-cert

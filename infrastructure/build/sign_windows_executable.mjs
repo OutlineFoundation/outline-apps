@@ -34,15 +34,6 @@ async function assertFileExists(file, msg) {
   }
 }
 
-async function fileExists(file) {
-  try {
-    await access(file, constants.R_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Get the required option value from either cliValue or environment variable.
  * @param {object} options the CLI options object.
@@ -58,69 +49,6 @@ function getOptionValue(options, argName, envName, required) {
     assert(!!v, `either --${argName} or ${envName} is required`);
   }
   return v;
-}
-
-function appendPfxJsignArgs(args, options) {
-  // self-signed development certificate
-  args.push('--storetype', 'PKCS12');
-
-  const pfxCert = getOptionValue(
-    options,
-    'pfx',
-    'WINDOWS_SIGNING_PFX_CERT',
-    true
-  );
-  args.push('--keystore', pfxCert);
-}
-
-// SafeNet Authentication Client PKCS#11 libraries, in probing order. The
-// macOS driver has installed either name depending on its version, and both
-// were in use across our release machines.
-const SAFENET_PKCS11_LIBRARIES = {
-  win32: ['c:\\WINDOWS\\system32\\eTPKCS11.dll'],
-  darwin: [
-    '/usr/local/lib/libeToken.dylib',
-    '/usr/local/lib/libeTPkcs11.dylib',
-  ],
-};
-
-async function appendDigicertUsbJsignArgs(args, options, tempDir) {
-  // extended validation certificate stored in USB drive
-  args.push('--storetype', 'PKCS11');
-
-  const subject = getOptionValue(
-    options,
-    'subject',
-    'WINDOWS_SIGNING_EV_CERT_SUBJECT',
-    false
-  );
-  if (subject) {
-    args.push('--alias', subject);
-  }
-
-  const libraries = SAFENET_PKCS11_LIBRARIES[process.platform];
-  assert(!!libraries, `we do not support ev signing on ${process.platform}`);
-
-  let library;
-  for (const candidate of libraries) {
-    if (await fileExists(candidate)) {
-      library = candidate;
-      break;
-    }
-  }
-  assert(
-    !!library,
-    `no SafeNet PKCS#11 library found, checked: ${libraries.join(', ')}`
-  );
-
-  const eTokenCfg = join(tempDir, 'eToken.cfg');
-  await writeFile(
-    eTokenCfg,
-    'name=eToken\n' +
-      'description=SunPKCS11 via Digicert SafeNet Authentication Client\n' +
-      `library=${library}\n`
-  );
-  args.push('--keystore', eTokenCfg);
 }
 
 function appendGcpHsmJsignArgs(args, options) {
@@ -213,12 +141,6 @@ export async function signWindowsExecutable(exeFile, algorithm, options) {
     ];
 
     switch (type) {
-      case 'pfx':
-        appendPfxJsignArgs(jsignArgs, options);
-        break;
-      case 'digicert-usb':
-        await appendDigicertUsbJsignArgs(jsignArgs, options, tempDir);
-        break;
       case 'gcp-hsm':
         appendGcpHsmJsignArgs(jsignArgs, options);
         break;
