@@ -58,8 +58,9 @@ concrete Config widened to the requested interface. They do not inspect private
 
 - Direct configs are direct with no first hop; block configs are blocked.
 - Dial endpoints inherit their child dialer's type. A direct child makes the
-  endpoint address the first hop and enables Outline's platform resolution
-  policy; a tunneled child clears that policy and preserves its first hop.
+  endpoint address the first hop and resolves it under Outline's platform
+  policy; a tunneled child leaves the address untouched and preserves its first
+  hop.
 - WebSocket inherits its inner stream endpoint metadata.
 - Shadowsocks stream, packet-dialer, and packet-listener forms are tunneled and
   preserve their endpoint's first hop.
@@ -72,9 +73,10 @@ concrete Config widened to the requested interface. They do not inspect private
 On Linux and Windows, production parsing resolves a direct endpoint once per
 parse and rewrites `Address` to that stable result. The stream and packet halves
 share the collector's resolution cache, so `FirstHop` is the address the
-runtime dials and a platform bypass route can cover it exactly. Resolution
-failure is non-fatal: the hostname remains and `ResolveAddressFirst` lets the
-runtime retry. Tests disable external DNS unless they inject a resolver.
+runtime dials and a platform bypass route can cover it exactly. netconfig itself
+never resolves; this rewrite is the only resolution. Resolution failure is
+non-fatal: the hostname remains and the runtime dialer resolves it at dial time.
+Tests disable external DNS unless they inject a resolver.
 
 ## Adding a config type
 

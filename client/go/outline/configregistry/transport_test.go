@@ -38,7 +38,7 @@ func parseTransportWithInfo(t *testing.T, text string) (TransportPairConfig, Tra
 	parse := registry.Parser(r, TransportPairKind)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, collector := withMetadataCollector(context.Background(), nil)
+	ctx, collector := WithMetadataCollector(context.Background())
 	cfg, err := parse(ctx, node)
 	require.NoError(t, err)
 	info, err := collector.TransportPairInfo(cfg)

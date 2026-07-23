@@ -20,7 +20,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
+	"runtime"
+	"testing"
 
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
@@ -233,16 +236,11 @@ func streamDialEndpointInfo(ctx context.Context, cfg *netconfig.StreamDialEndpoi
 	if err != nil {
 		return ConnectionProviderInfo{}, err
 	}
-	cfg.ResolveAddressFirst = false
 	if info.ConnType == ConnTypeDirect {
-		collector, err := collectorFromContext(ctx)
-		if err != nil {
-			return ConnectionProviderInfo{}, err
-		}
-		cfg.ResolveAddressFirst = collector.resolveDirectAddress != nil
-		if cfg.ResolveAddressFirst {
-			cfg.Address = collector.resolveDirect(ctx, cfg.Address)
-		}
+		// Rewrite to the resolved form so FirstHop is the address the runtime
+		// dials and a platform bypass route can cover it exactly. A no-op when
+		// this platform does not resolve; re-resolving an IP is a no-op too.
+		cfg.Address = resolveDirectFirstHop(ctx, cfg.Address)
 		info.FirstHop = cfg.Address
 	}
 	return info, nil
@@ -253,19 +251,105 @@ func packetDialEndpointInfo(ctx context.Context, cfg *netconfig.PacketDialEndpoi
 	if err != nil {
 		return ConnectionProviderInfo{}, err
 	}
-	cfg.ResolveAddressFirst = false
 	if info.ConnType == ConnTypeDirect {
-		collector, err := collectorFromContext(ctx)
-		if err != nil {
-			return ConnectionProviderInfo{}, err
-		}
-		cfg.ResolveAddressFirst = collector.resolveDirectAddress != nil
-		if cfg.ResolveAddressFirst {
-			cfg.Address = collector.resolveDirect(ctx, cfg.Address)
-		}
+		cfg.Address = resolveDirectFirstHop(ctx, cfg.Address)
 		info.FirstHop = cfg.Address
 	}
 	return info, nil
+}
+
+type directResolutionKey struct{}
+
+// directResolution memoizes direct-endpoint resolution for one parse, so a
+// transport's stream and packet halves resolve a shared host to the same
+// address. Without it their first hops could differ and be dropped. It is
+// specific to the direct-dialing logic and deliberately separate from the
+// metadata collector.
+type directResolution struct {
+	resolved map[string]string
+}
+
+// WithDirectDialResolution seeds the per-parse direct-resolution cache into ctx.
+// ParseConfig adds it to the parse context alongside the metadata collector.
+func WithDirectDialResolution(ctx context.Context) context.Context {
+	return context.WithValue(ctx, directResolutionKey{}, &directResolution{resolved: map[string]string{}})
+}
+
+// resolveDirectFirstHop resolves a direct endpoint's address to the form the
+// runtime will dial, memoized per parse via the cache in ctx. A missing cache
+// (a parse context set up without WithDirectDialResolution) just skips
+// memoization.
+func resolveDirectFirstHop(ctx context.Context, address string) string {
+	cache, _ := ctx.Value(directResolutionKey{}).(*directResolution)
+	if cache != nil {
+		if resolved, ok := cache.resolved[address]; ok {
+			return resolved
+		}
+	}
+	resolved := directAddressResolver(ctx, address)
+	if cache != nil {
+		cache.resolved[address] = resolved
+	}
+	return resolved
+}
+
+// directAddressResolver rewrites a direct endpoint's address to the one the
+// runtime will dial. It is a package variable so tests can exercise resolution
+// deterministically; production always uses platformDirectAddressResolver.
+var directAddressResolver = platformDirectAddressResolver
+
+// platformDirectAddressResolver resolves a direct endpoint's address to an IP on
+// the platforms that require it, and returns it unchanged elsewhere.
+//
+// Direct first hops are resolved up front on Linux and Windows, for two
+// different platform reasons:
+//
+//   - Windows: the routing daemon installs a bypass route for the first hop
+//     (client/electron/index.ts passes it to RoutingDaemon as proxyIp, which
+//     becomes a "<host>/32" routing table entry) so proxy traffic skips the
+//     tunnel. The address we dial therefore has to be the one that route
+//     covers.
+//   - Linux: the VPN protects sockets with a FW_MARK, but the system
+//     resolver's socket is not marked. Resolving at dial time would send the
+//     DNS query into the tunnel, so we resolve while normal routing still
+//     applies.
+//
+// Parsing runs before the tunnel routes are installed (ParseConfig precedes
+// vpn.EstablishVPN), so this resolution happens while normal routing applies.
+// The resolved address is written back to Address and reported as FirstHop, so
+// the platform installs its bypass route for the very address we dial instead
+// of resolving the hostname a second time and possibly getting a different one.
+//
+// A no-op under test so the suite does not depend on DNS, and on platforms that
+// dial hostnames directly. Resolution failure is non-fatal: the hostname
+// remains and the runtime dialer resolves it at dial time.
+func platformDirectAddressResolver(ctx context.Context, address string) string {
+	if (runtime.GOOS != "linux" && runtime.GOOS != "windows") || testing.Testing() {
+		return address
+	}
+	resolved, err := resolveAddress(ctx, address)
+	if err != nil {
+		return address
+	}
+	return resolved
+}
+
+// resolveAddress resolves host:port to its ip:port form. It resolves the host
+// without regard to transport, so a config's stream and packet halves cannot
+// disagree about the server's address.
+func resolveAddress(ctx context.Context, address string) (string, error) {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return "", err
+	}
+	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+	if err != nil {
+		return "", err
+	}
+	if len(ips) == 0 {
+		return "", fmt.Errorf("no addresses for %q", host)
+	}
+	return net.JoinHostPort(ips[0].Unmap().String(), port), nil
 }
 
 func websocketInfo(ctx context.Context, cfg *netconfig.WebsocketEndpointConfig) (ConnectionProviderInfo, error) {

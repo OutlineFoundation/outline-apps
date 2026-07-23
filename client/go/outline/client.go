@@ -149,6 +149,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 	reporterNode := envelope["reporter"]
 
 	parseContext, metadata := configregistry.WithMetadataCollector(context.Background())
+	parseContext = configregistry.WithDirectDialResolution(parseContext)
 	transportCfg, err := parseTransport(parseContext, transportNode)
 	if err != nil {
 		if errors.Is(err, configregistry.ErrMetadataWiring) {

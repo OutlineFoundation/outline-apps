@@ -44,7 +44,7 @@ func parseSDWithInfo(t *testing.T, text string) (netconfig.StreamDialerConfig, C
 	t.Helper()
 	r := registry.New()
 	require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
-	ctx, _ := withMetadataCollector(context.Background(), nil)
+	ctx, _ := WithMetadataCollector(context.Background())
 	cfg, err := registry.Parser(r, netconfig.StreamDialerKind)(ctx, parseNode(t, text))
 	require.NoError(t, err)
 	info, err := requireConnectionInfo(ctx, cfg)
@@ -82,7 +82,7 @@ func TestMetadata_StreamDialerForms(t *testing.T) {
 func TestMetadata_PacketConfigForms(t *testing.T) {
 	r := registry.New()
 	require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
-	ctx, _ := withMetadataCollector(context.Background(), nil)
+	ctx, _ := WithMetadataCollector(context.Background())
 	shadowsocks := `
 $type: shadowsocks
 endpoint: example.com:1234
@@ -137,15 +137,23 @@ secret: SECRET
 	}
 }
 
+// swapDirectResolver installs a test resolver and returns a restore func. Tests
+// run sequentially within the package, so the package variable is safe to swap.
+func swapDirectResolver(resolve func(context.Context, string) string) func() {
+	prev := directAddressResolver
+	directAddressResolver = resolve
+	return func() { directAddressResolver = prev }
+}
+
 func TestMetadata_DialEndpointResolutionPolicy(t *testing.T) {
 	r := registry.New()
 	require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
 	resolveCalls := 0
-	ctx, _ := withMetadataCollector(context.Background(),
-		func(context.Context, string) (string, error) {
-			resolveCalls++
-			return "203.0.113.7:443", nil
-		})
+	defer swapDirectResolver(func(context.Context, string) string {
+		resolveCalls++
+		return "203.0.113.7:443"
+	})()
+	ctx, _ := WithMetadataCollector(context.Background())
 	cfg, err := registry.Parser(r, netconfig.StreamEndpointKind)(ctx, parseNode(t, `
 $type: dial
 address: origin.example:443
@@ -154,8 +162,7 @@ dialer:
 `))
 	require.NoError(t, err)
 	dial := cfg.(*netconfig.StreamDialEndpointConfig)
-	require.True(t, dial.ResolveAddressFirst)
-	require.Equal(t, "203.0.113.7:443", dial.Address)
+	require.Equal(t, "203.0.113.7:443", dial.Address, "a direct endpoint's address is rewritten to the resolved form")
 	info, err := requireConnectionInfo(ctx, cfg)
 	require.NoError(t, err)
 	require.Equal(t, ConnectionProviderInfo{ConnType: ConnTypeDirect, FirstHop: "203.0.113.7:443"}, info)
@@ -164,26 +171,22 @@ dialer:
 	child := &netconfig.ShadowsocksStreamDialerConfig{}
 	require.NoError(t, storeConnectionInfo(ctx, child,
 		ConnectionProviderInfo{ConnType: ConnTypeTunneled, FirstHop: "proxy.example:1234"}))
-	stale := &netconfig.StreamDialEndpointConfig{
-		Address: "ignored.example:443", ResolveAddressFirst: true, Dialer: child,
-	}
-	info, err = streamDialEndpointInfo(ctx, stale)
+	tunneled := &netconfig.StreamDialEndpointConfig{Address: "ignored.example:443", Dialer: child}
+	info, err = streamDialEndpointInfo(ctx, tunneled)
 	require.NoError(t, err)
-	require.False(t, stale.ResolveAddressFirst, "tunneled children must clear stale resolution policy")
+	require.Equal(t, "ignored.example:443", tunneled.Address, "a tunneled endpoint's address is not resolved")
 	require.Equal(t, ConnectionProviderInfo{ConnType: ConnTypeTunneled, FirstHop: "proxy.example:1234"}, info)
 
-	failureContext, _ := withMetadataCollector(context.Background(),
-		func(context.Context, string) (string, error) {
-			return "", errors.New("DNS unavailable")
-		})
+	// A resolver that cannot resolve returns the address unchanged.
+	defer swapDirectResolver(func(_ context.Context, address string) string { return address })()
+	failureContext, _ := WithMetadataCollector(context.Background())
 	directPacket := netconfig.NewDirectPacketDialerConfig(&transport.UDPDialer{})
 	require.NoError(t, storeConnectionInfo(failureContext, directPacket,
 		ConnectionProviderInfo{ConnType: ConnTypeDirect}))
 	packet := &netconfig.PacketDialEndpointConfig{Address: "origin.example:53", Dialer: directPacket}
 	info, err = packetDialEndpointInfo(failureContext, packet)
 	require.NoError(t, err)
-	require.True(t, packet.ResolveAddressFirst)
-	require.Equal(t, "origin.example:53", packet.Address)
+	require.Equal(t, "origin.example:53", packet.Address, "resolution failure leaves the hostname in place")
 	require.Equal(t, ConnectionProviderInfo{ConnType: ConnTypeDirect, FirstHop: "origin.example:53"}, info)
 }
 
@@ -191,11 +194,12 @@ func TestMetadata_ResolutionIsSharedAcrossTransportHalves(t *testing.T) {
 	r := registry.New()
 	require.NoError(t, Register(r, &transport.TCPDialer{}, &transport.UDPDialer{}))
 	resolveCalls := 0
-	ctx, collector := withMetadataCollector(context.Background(),
-		func(context.Context, string) (string, error) {
-			resolveCalls++
-			return "203.0.113.9:1234", nil
-		})
+	defer swapDirectResolver(func(context.Context, string) string {
+		resolveCalls++
+		return "203.0.113.9:1234"
+	})()
+	ctx, collector := WithMetadataCollector(context.Background())
+	ctx = WithDirectDialResolution(ctx)
 	cfg, err := registry.Parser(r, TransportPairKind)(ctx, parseNode(t, `
 $type: tcpudp
 tcp:
@@ -233,7 +237,7 @@ func TestMetadata_MissingChildIsInternalWiringError(t *testing.T) {
 		streamEndpointParser(
 			netconfig.NewStreamDialEndpointParser(registry.Parser(r, netconfig.StreamDialerKind)),
 			streamDialEndpointInfo)))
-	ctx, _ := withMetadataCollector(context.Background(), nil)
+	ctx, _ := WithMetadataCollector(context.Background())
 	_, err := registry.Parser(r, netconfig.StreamEndpointKind)(ctx, parseNode(t, `
 $type: dial
 address: example.com:443
@@ -313,7 +317,7 @@ func TestMetadata_RepeatedParserOptionsStayIsolated(t *testing.T) {
 					netconfig.WithWebsocketHeaders(http.Header{"X-App": []string{header}})),
 				websocketInfo)))
 	}
-	ctx, _ := withMetadataCollector(context.Background(), nil)
+	ctx, _ := WithMetadataCollector(context.Background())
 	parse := registry.Parser(r, netconfig.StreamEndpointKind)
 	a, err := parse(ctx, parseNode(t, "$type: socket-a\nurl: wss://example.com/a"))
 	require.NoError(t, err)

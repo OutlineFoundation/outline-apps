@@ -48,7 +48,7 @@ func parseSDErr(t *testing.T, text string) (netconfig.StreamDialerConfig, error)
 	require.NoError(t, err)
 	node, err := composer.ParseYAML([]byte(text))
 	require.NoError(t, err)
-	ctx, _ := withMetadataCollector(context.Background(), nil)
+	ctx, _ := WithMetadataCollector(context.Background())
 	cfg, err := registry.Parser(r, netconfig.StreamDialerKind)(ctx, node)
 	return cfg, err
 }

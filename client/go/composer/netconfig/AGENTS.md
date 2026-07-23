@@ -19,8 +19,9 @@ side effects. Each config type has a `New*(ctx)` method — `NewStreamDialer`,
 `NewStreamEndpoint`, etc. — that builds the runtime object. That's where
 dependencies actually get invoked. Keeping parse pure lets a caller
 inspect a parsed tree — e.g. read the first-hop endpoint address —
-without building anything. Dial endpoints resolve only when the consuming
-application sets their non-wire `ResolveAddressFirst` policy field.
+without building anything. This package performs no DNS at any stage: a dial
+endpoint dials its `Address` exactly as it finds it. An application that needs
+the dialed address resolved rewrites `Address` on the parsed config first.
 
 Many `New*` methods take pointer receivers because their config values or
 builders are naturally pointer-backed. Outline's per-parse metadata side table
@@ -51,11 +52,13 @@ application policy:
 - No DNS interception, cookie-jar paths, or other Outline-specific
   behavior — a `TransportPairConfig`-style aggregate type and any DNS
   wrapping belong in the app layer.
-- No platform address-resolution policy. `StreamDialEndpointConfig` and
-  `PacketDialEndpointConfig` expose the generic, non-wire
-  `ResolveAddressFirst` switch; the Outline registration callback assigns it
-  for every parsed endpoint. The config resolves only when that caller-owned
-  switch is true.
+- No address resolution. `StreamDialEndpointConfig` and
+  `PacketDialEndpointConfig` dial `Address` verbatim and never do DNS. An
+  application that needs the dialed address to be an IP resolves it and
+  rewrites `Address` on the parsed config — e.g. because a platform installs a
+  bypass route for that address, or because its protected-socket routing can't
+  tolerate unprotected system DNS at dial time (see the Outline registration
+  callback in `outline/configregistry`).
 
 ## Adding a new config type
 

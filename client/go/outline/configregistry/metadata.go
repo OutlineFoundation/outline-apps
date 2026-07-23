@@ -18,10 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"reflect"
-	"runtime"
-	"testing"
 
 	"localhost/client/go/composer"
 	"localhost/client/go/composer/netconfig"
@@ -39,35 +36,16 @@ var ErrMetadataWiring = errors.New("internal Outline metadata wiring error")
 type MetadataCollector struct {
 	connectionInfo map[any]ConnectionProviderInfo
 	transportInfo  map[any]TransportPairInfo
-
-	resolveDirectAddress func(context.Context, string) (string, error)
-	resolved             map[string]string
 }
 
 // WithMetadataCollector creates a per-parse collector and carries it in the
 // returned context. Outline parser registrations require such a context.
 func WithMetadataCollector(parent context.Context) (context.Context, *MetadataCollector) {
-	return withMetadataCollector(parent, platformDirectAddressResolver())
-}
-
-func withMetadataCollector(
-	parent context.Context,
-	resolveDirectAddress func(context.Context, string) (string, error),
-) (context.Context, *MetadataCollector) {
 	collector := &MetadataCollector{
-		connectionInfo:       make(map[any]ConnectionProviderInfo),
-		transportInfo:        make(map[any]TransportPairInfo),
-		resolveDirectAddress: resolveDirectAddress,
-		resolved:             make(map[string]string),
+		connectionInfo: make(map[any]ConnectionProviderInfo),
+		transportInfo:  make(map[any]TransportPairInfo),
 	}
 	return context.WithValue(parent, metadataCollectorContextKey{}, collector), collector
-}
-
-func platformDirectAddressResolver() func(context.Context, string) (string, error) {
-	if (runtime.GOOS != "linux" && runtime.GOOS != "windows") || testing.Testing() {
-		return nil
-	}
-	return resolveAddress
 }
 
 func collectorFromContext(ctx context.Context) (*MetadataCollector, error) {
@@ -141,38 +119,6 @@ func (c *MetadataCollector) TransportPairInfo(cfg TransportPairConfig) (Transpor
 		return TransportPairInfo{}, fmt.Errorf("%w: no transport metadata for %T", ErrMetadataWiring, cfg)
 	}
 	return info, nil
-}
-
-// resolveDirect resolves address once per parse. Resolution failures are not
-// fatal: the config keeps its hostname and may retry when it is built.
-func (c *MetadataCollector) resolveDirect(ctx context.Context, address string) string {
-	if c.resolveDirectAddress == nil {
-		return address
-	}
-	if resolved, ok := c.resolved[address]; ok {
-		return resolved
-	}
-	resolved, err := c.resolveDirectAddress(ctx, address)
-	if err != nil {
-		return address
-	}
-	c.resolved[address] = resolved
-	return resolved
-}
-
-func resolveAddress(ctx context.Context, address string) (string, error) {
-	host, port, err := net.SplitHostPort(address)
-	if err != nil {
-		return "", err
-	}
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
-	if err != nil {
-		return "", err
-	}
-	if len(ips) == 0 {
-		return "", fmt.Errorf("no addresses for %q", host)
-	}
-	return net.JoinHostPort(ips[0].Unmap().String(), port), nil
 }
 
 type connectionInfoFunc[Cfg any] func(context.Context, Cfg) (ConnectionProviderInfo, error)
