@@ -8,7 +8,8 @@
       "./client/tsconfig.json",
       "./client/capacitor/tsconfig.json",
       "./infrastructure/tsconfig.json",
-      "./server_manager/tsconfig.json"
+      "./server_manager/tsconfig.json",
+      "./server_manager/e2e/tsconfig.json"
     ]
   },
   "plugins": [
@@ -153,6 +154,7 @@
         "server_manager/www/karma.conf.js",
         "server_manager/electron_main.webpack.mjs",
         "server_manager/electron_preload.webpack.mjs",
+        "server_manager/e2e/test.action.mjs",
         ".prettierrc.js",
         "client/web/karma.conf.js"
       ],

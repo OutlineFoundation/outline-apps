@@ -50,6 +50,38 @@ jobs:
       - name: Manager Web Test
         run: npm run action server_manager/test
 
+  manager_ui_e2e_test:
+    name: Manager UI E2E Test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./server_manager/package.json
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Manager UI E2E Suite
+        run: npm run action server_manager/e2e/test
+
+      - name: Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: server_manager/e2e/playwright-report
+          retention-days: 14
+
   linux_debug_build:
     name: Linux Debug Build
     runs-on: ubuntu-latest
