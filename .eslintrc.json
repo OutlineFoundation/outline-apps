@@ -29,7 +29,8 @@
             "from": ".",
             "except": [
               "./infrastructure",
-              "./node_modules"
+              "./node_modules",
+              "./third_party"
             ]
           },
           // Similar to above but for web/model, but you can use files from both the
@@ -146,6 +147,7 @@
         "server_manager/css-in-js-rtl-loader.js",
         "server_manager/electron_renderer.webpack.js",
         "server_manager/electron/release/notarize.js",
+        "server_manager/electron/windows/electron_builder_signing_plugin.cjs",
         "server_manager/install_scripts/build_do_install_script_ts.node.js",
         "server_manager/install_scripts/build_gcp_install_script_ts.node.js",
         "server_manager/www/karma.conf.js",
