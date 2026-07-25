@@ -30,26 +30,29 @@ type metadataCollectorContextKey struct{}
 // not produce or propagate the metadata required by its parent.
 var ErrMetadataWiring = errors.New("internal Outline metadata wiring error")
 
-// MetadataCollector owns the connection metadata produced by one Outline
+// metadataCollector owns the connection metadata produced by one Outline
 // config parse. Config values remain their canonical concrete types; the
-// collector is a side table keyed by those values.
-type MetadataCollector struct {
+// collector is a side table keyed by those values. It is accessed only through
+// the context, like the direct-resolution cache; TransportMetadata reads the
+// root result.
+type metadataCollector struct {
 	connectionInfo map[any]ConnectionProviderInfo
 	transportInfo  map[any]TransportPairInfo
 }
 
-// WithMetadataCollector creates a per-parse collector and carries it in the
-// returned context. Outline parser registrations require such a context.
-func WithMetadataCollector(parent context.Context) (context.Context, *MetadataCollector) {
-	collector := &MetadataCollector{
+// WithMetadataCollection seeds the per-parse metadata side table into ctx.
+// Outline parser registrations require such a context; read the root result
+// with TransportMetadata.
+func WithMetadataCollection(parent context.Context) context.Context {
+	collector := &metadataCollector{
 		connectionInfo: make(map[any]ConnectionProviderInfo),
 		transportInfo:  make(map[any]TransportPairInfo),
 	}
-	return context.WithValue(parent, metadataCollectorContextKey{}, collector), collector
+	return context.WithValue(parent, metadataCollectorContextKey{}, collector)
 }
 
-func collectorFromContext(ctx context.Context) (*MetadataCollector, error) {
-	collector, _ := ctx.Value(metadataCollectorContextKey{}).(*MetadataCollector)
+func collectorFromContext(ctx context.Context) (*metadataCollector, error) {
+	collector, _ := ctx.Value(metadataCollectorContextKey{}).(*metadataCollector)
 	if collector == nil {
 		return nil, fmt.Errorf("%w: no collector in context", ErrMetadataWiring)
 	}
@@ -105,16 +108,18 @@ func storeTransportPairInfo(ctx context.Context, cfg any, info TransportPairInfo
 	return nil
 }
 
-// TransportPairInfo returns the metadata collected for cfg. A missing entry is
-// an internal registration/wrapping error, never an implicit direct transport.
-func (c *MetadataCollector) TransportPairInfo(cfg TransportPairConfig) (TransportPairInfo, error) {
-	if c == nil {
-		return TransportPairInfo{}, fmt.Errorf("%w: nil collector", ErrMetadataWiring)
+// TransportMetadata returns the metadata collected for cfg during parsing. A
+// missing entry is an internal registration/wrapping error, never an implicit
+// direct transport.
+func TransportMetadata(ctx context.Context, cfg TransportPairConfig) (TransportPairInfo, error) {
+	collector, err := collectorFromContext(ctx)
+	if err != nil {
+		return TransportPairInfo{}, err
 	}
 	if err := comparableMetadataKey(cfg); err != nil {
 		return TransportPairInfo{}, err
 	}
-	info, ok := c.transportInfo[cfg]
+	info, ok := collector.transportInfo[cfg]
 	if !ok {
 		return TransportPairInfo{}, fmt.Errorf("%w: no transport metadata for %T", ErrMetadataWiring, cfg)
 	}

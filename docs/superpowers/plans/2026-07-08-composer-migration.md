@@ -1,12 +1,15 @@
 # Composer Migration Implementation Plan
 
-> Historical plan: completed and subsequently superseded in part. The
-> current architecture uses `composer/registry`, optional caller-named
-> `netconfig.Register…` helpers, and post-parse
-> `configregistry.ConnectionAnalyzer`; it does not use the metadata
-> side table or registration wrappers described below. See
+> Historical plan: completed and subsequently reworked in part. The current
+> architecture uses `composer/registry` and collects connection metadata in a
+> per-parse side table populated by Outline registration wrappers — close in
+> spirit to what this plan describes below, though the details differ (the
+> collector is context-only, direct-address resolution is a separate concern,
+> and `netconfig` exposes parser constructors directly with no `Register…`
+> helpers). An interim revision replaced the side table with a post-parse
+> `configregistry.ConnectionAnalyzer`; that was removed. See
 > `client/go/composer/DESIGN.md` and
-> `client/go/outline/configregistry/README.md`.
+> `client/go/outline/configregistry/README.md` for the current design.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

@@ -383,7 +383,7 @@ secret: SECRET
 			parse := registry.Parser(r, TransportPairKind)
 			node, err := composer.ParseYAML([]byte(tc.yaml))
 			require.NoError(t, err)
-			ctx, _ := WithMetadataCollector(context.Background())
+			ctx := WithMetadataCollection(context.Background())
 			_, err = parse(ctx, node)
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.wantErrContains)

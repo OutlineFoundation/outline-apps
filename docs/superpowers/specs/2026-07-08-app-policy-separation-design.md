@@ -4,10 +4,15 @@ Status: Historical design, superseded 2026-07-20.
 Depends on: the `composer` core (`client/go/composer`, PR #2801).
 
 > This document records the initial side-table design. The implemented
-> architecture instead performs Outline-owned post-parse analysis with
-> `configregistry.ConnectionAnalyzer`; it has no metadata table or
-> parser decoration. See `client/go/composer/DESIGN.md` and
-> `client/go/outline/configregistry/README.md` for the current design.
+> architecture also collects connection metadata in a per-parse side table,
+> populated by Outline registration wrappers as configs are parsed. (An interim
+> revision replaced this with a post-parse `configregistry.ConnectionAnalyzer`
+> and no table; that was removed, so an earlier version of this note describing
+> it is itself superseded.) Specifics differ from this document — e.g. the
+> collector is context-only and direct-address resolution is a separate
+> concern. See `client/go/composer/DESIGN.md` and
+> `client/go/outline/configregistry/README.md` for the authoritative current
+> design.
 
 ## Problem
 

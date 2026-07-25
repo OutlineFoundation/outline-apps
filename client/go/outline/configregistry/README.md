@@ -18,16 +18,17 @@ The client config lifecycle is:
 YAML → wrapped parsers build typed graph and collect app metadata → runtime build
 ```
 
-1. `ClientConfig.ParseConfig` creates a per-parse `MetadataCollector`, carries
-   it in the parse context, and invokes the registry's whole-transport parser.
+1. `ClientConfig.ParseConfig` seeds the parse context with `WithMetadataCollection`
+   (and `WithDirectDialResolution`), then invokes the registry's whole-transport
+   parser. The per-parse metadata side table is reached only through the context.
 2. Each Outline registration wraps one concrete parser. After that parser has
    successfully produced its canonical netconfig Config, the wrapper computes
    metadata from the Config and already-recorded child metadata, stores the
    result, and widens the original Config to its typed Kind interface. No
    decorator Configs are returned.
-3. `ClientConfig.ParseConfig` retrieves the root `TransportPairInfo`. Missing
-   root or child metadata is an internal registration-wiring error, never an
-   implicit direct connection.
+3. `ClientConfig.ParseConfig` retrieves the root metadata with
+   `TransportMetadata(ctx, cfg)`. Missing root or child metadata is an internal
+   registration-wiring error, never an implicit direct connection.
 4. `ParsedClient.NewClient` recursively builds runtime dialers and listeners,
    then applies Outline's DNS interception.
 

@@ -148,7 +148,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 	transportNode := envelope["transport"]
 	reporterNode := envelope["reporter"]
 
-	parseContext, metadata := configregistry.WithMetadataCollector(context.Background())
+	parseContext := configregistry.WithMetadataCollection(context.Background())
 	parseContext = configregistry.WithDirectDialResolution(parseContext)
 	transportCfg, err := parseTransport(parseContext, transportNode)
 	if err != nil {
@@ -163,7 +163,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 		}
 		return nil, &platerrors.PlatformError{Code: code, Message: msg, Cause: platerrors.ToPlatformError(err)}
 	}
-	info, err := metadata.TransportPairInfo(transportCfg)
+	info, err := configregistry.TransportMetadata(parseContext, transportCfg)
 	if err != nil {
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
 			Message: "failed to collect transport metadata", Cause: platerrors.ToPlatformError(err)}
