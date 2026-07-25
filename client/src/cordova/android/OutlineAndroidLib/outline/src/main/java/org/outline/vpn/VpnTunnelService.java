@@ -49,7 +49,7 @@ import org.outline.TunnelConfig;
 import org.outline.DetailedJsonError;
 import org.outline.log.SentryErrorReporter;
 
-import outline.ClientConfig;
+import outline.ClientParser;
 import outline.NewClientResult;
 import platerrors.Platerrors;
 import platerrors.PlatformError;
@@ -233,9 +233,9 @@ public class VpnTunnelService extends VpnService {
       this.tunFd = null;
     }
 
-    final ClientConfig clientConfig = new ClientConfig();
+    final ClientParser clientConfig = new ClientParser();
     clientConfig.setDataDir(this.getFilesDir().getAbsolutePath());
-    final NewClientResult clientResult = clientConfig.new_(config.id, config.transportConfig);
+    final NewClientResult clientResult = clientConfig.newClient(config.id, config.transportConfig);
     if (clientResult.getError() != null) {
       LOG.log(Level.WARNING, "Failed to create Outline Client", clientResult.getError());
       tearDownActiveTunnel();

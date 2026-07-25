@@ -43,7 +43,7 @@ public class SwiftBridge: NSObject {
 
   /** Creates a new Outline Client based on the given transportConfig. */
   public static func newClient(id: String, transportConfig: String) -> OutlineNewClientResult {
-    let clientConfig = OutlineClientConfig()
+    let clientConfig = OutlineClientParser()
     do {
       clientConfig.dataDir = try FileManager.default.url(
         for: .applicationSupportDirectory,
@@ -54,7 +54,7 @@ public class SwiftBridge: NSObject {
     } catch {
       DDLogWarn("Error finding Application Support directory: \(error)")
     }
-    let result = clientConfig.new(id, providerClientConfigText: transportConfig)
+    let result = clientConfig.newClient(id, providerClientConfigText: transportConfig)
     if result?.error != nil {
       DDLogInfo(
         "Failed to construct client: \(String(describing: result?.error))."
