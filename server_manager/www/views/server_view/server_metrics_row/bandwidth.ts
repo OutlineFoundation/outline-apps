@@ -21,7 +21,11 @@ import {ifDefined} from 'lit/directives/if-defined.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
 
 import type {ServerMetricsData} from './index';
-import {formatBytes, getDataFormattingParams} from '../../../data_formatting';
+import {
+  formatBinaryBytes,
+  formatBytes,
+  getDataFormattingParams,
+} from '../../../data_formatting';
 
 import '../icon_tooltip';
 import './index';
@@ -293,6 +297,7 @@ export class ServerMetricsBandwidthRow extends LitElement {
             return {
               title: 'Unknown',
               highlight: formatBytes(asn.bytes, this.language),
+              highlightTooltip: formatBinaryBytes(asn.bytes, this.language),
             };
           }
 
@@ -300,6 +305,7 @@ export class ServerMetricsBandwidthRow extends LitElement {
             title: asn.asOrg,
             subtitle: asn.asn,
             highlight: formatBytes(asn.bytes, this.language),
+            highlightTooltip: formatBinaryBytes(asn.bytes, this.language),
             icon: asn.countryFlag,
           };
         })}
@@ -347,20 +353,27 @@ export class ServerMetricsBandwidthRow extends LitElement {
             .dir=${document.documentElement.dir}
           >
             <div class="current-container">
-              ${this.metrics.bandwidth
-                ? html`<span class="current-value-and-unit">
-                    <span class="current-value"
-                      >${this.formatBandwidthValue(
+              <span class="current-value-and-unit">
+                ${this.metrics.bandwidth
+                  ? html`<icon-tooltip
+                      text="${this.formatBandwidthBinaryTooltip(
                         this.metrics.bandwidth.current.data.bytes
-                      )}</span
+                      )}"
+                      position="right"
                     >
-                    <span class="current-unit"
-                      >${this.formatBandwidthUnit(
-                        this.metrics.bandwidth.current.data.bytes
-                      )}</span
-                    >
-                  </span>`
-                : html`<span class="current-value">-</span>`}
+                      <span class="current-value">
+                        ${this.formatBandwidthValue(
+                          this.metrics.bandwidth.current.data.bytes
+                        )}
+                      </span>
+                      <span class="current-unit">
+                        ${this.formatBandwidthUnit(
+                          this.metrics.bandwidth.current.data.bytes
+                        )}
+                      </span>
+                    </icon-tooltip>`
+                  : html`<span class="current-value">-</span>`}
+              </span>
               <span class="current-title"
                 >${this.localize(
                   'server-view-server-metrics-bandwidth-usage'
@@ -370,16 +383,22 @@ export class ServerMetricsBandwidthRow extends LitElement {
             <div class="peak-container">
               <span class="peak-value-and-unit">
                 ${this.metrics.bandwidth
-                  ? html`<span class="peak-value"
-                        >${this.formatBandwidthValue(
+                  ? html`<icon-tooltip
+                      text="${this.formatBandwidthBinaryTooltip(
+                        this.metrics.bandwidth.peak.data.bytes
+                      )}"
+                    >
+                      <span class="peak-value">
+                        ${this.formatBandwidthValue(
                           this.metrics.bandwidth.peak.data.bytes
-                        )}</span
-                      >
-                      <span class="peak-unit"
-                        >${this.formatBandwidthUnit(
+                        )}
+                      </span>
+                      <span class="peak-unit">
+                        ${this.formatBandwidthUnit(
                           this.metrics.bandwidth.peak.data.bytes
-                        )}</span
-                      >`
+                        )}
+                      </span>
+                    </icon-tooltip>`
                   : html`<span class="peak-value">-</span>`}
                 ${this.metrics.bandwidth?.peak.timestamp
                   ? html`<span class="peak-timestamp"
@@ -413,18 +432,33 @@ export class ServerMetricsBandwidthRow extends LitElement {
     }
 
     if (this.dataLimitBytes === 0) {
-      return html`<span class="bandwidth-percentage">
-        ${formatBytes(this.metrics.dataTransferred.bytes, this.language)}
-      </span>`;
+      return html`<icon-tooltip
+        text="${this.formatDataAmountBinaryTooltip(
+          this.metrics.dataTransferred.bytes
+        )}"
+        position="right"
+      >
+        <span class="bandwidth-percentage">
+          ${formatBytes(this.metrics.dataTransferred.bytes, this.language)}
+        </span>
+      </icon-tooltip>`;
     }
 
     return html`<span class="bandwidth-percentage">
         ${this.formatPercentage(this.bandwidthPercentage)}
       </span>
-      <span class="bandwidth-fraction"
-        >${formatBytes(this.metrics.dataTransferred.bytes, this.language)}
-        /${formatBytes(this.dataLimitBytes, this.language)}</span
+      <icon-tooltip
+        text="${this.formatDataAmountBinaryTooltip(
+          this.metrics.dataTransferred.bytes
+        )}
+        / ${this.formatDataAmountBinaryTooltip(this.dataLimitBytes)}"
+        position="right"
       >
+        <span class="bandwidth-fraction">
+          ${formatBytes(this.metrics.dataTransferred.bytes, this.language)} /
+          ${formatBytes(this.dataLimitBytes, this.language)}
+        </span>
+      </icon-tooltip>
       <span class="bandwidth-progress-container">
         <progress
           max=${this.dataLimitBytes}
@@ -471,6 +505,29 @@ export class ServerMetricsBandwidthRow extends LitElement {
         // http://unicode.org/reports/tr35/tr35-general.html#Example_Units
         .replace(/bytes?/, ' B')
     );
+  }
+
+  /**
+   * Formats bandwidth value with binary units for tooltip display.
+   * Converts bytes per second to human-readable binary format (KiB/s, MiB/s, etc.)
+   *
+   * @param bytesPerSecond The bandwidth in bytes per second
+   * @returns Formatted string with binary units
+   */
+  private formatBandwidthBinaryTooltip(bytesPerSecond: number): string {
+    // Format the numeric value with binary units, then append "/s" for rate
+    return `${formatBinaryBytes(bytesPerSecond, this.language)}/s`;
+  }
+
+  /**
+   * Formats a data amount with binary units for tooltip display.
+   * Used for total data transferred (not a rate).
+   *
+   * @param bytes The amount of data in bytes
+   * @returns Formatted string with binary units
+   */
+  private formatDataAmountBinaryTooltip(bytes: number): string {
+    return formatBinaryBytes(bytes, this.language);
   }
 
   private formatBandwidthValue(bytesPerSecond: number) {
