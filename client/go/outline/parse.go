@@ -144,9 +144,9 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 	}
 
-	parsed, err := (&ClientConfig{
+	parsed, err := (&ClientParser{
 		DataDir: GetBackendConfig().DataDir,
-	}).ParseConfig("", string(clientConfigBytes))
+	}).Parse("", string(clientConfigBytes))
 	if err != nil {
 		return &InvokeMethodResult{Error: platerrors.ToPlatformError(err)}
 	}

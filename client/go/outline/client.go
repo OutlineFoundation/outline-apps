@@ -89,24 +89,24 @@ type NewClientResult struct {
 	Error  *platerrors.PlatformError
 }
 
-// ClientConfig is used to create a session Client.
-type ClientConfig struct {
+// ClientParser parses a provider client config into a [ClientConfig].
+type ClientParser struct {
 	DataDir  string
 	Composer registry.Composer
 }
 
-// ParsedClient is the result of parsing a provider client config. It
+// ClientConfig is the result of parsing a provider client config. It
 // holds everything needed to build a [Client], without yet having
 // built any network resources.
-type ParsedClient struct {
+type ClientConfig struct {
 	Transport      configregistry.TransportPairConfig
 	Info           configregistry.TransportPairInfo
 	reporterConfig reporting.Config
 }
 
-// ParseConfig parses providerClientConfigText into a [ParsedClient],
+// Parse parses providerClientConfigText into a [ClientConfig],
 // without building any network resources.
-func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*ParsedClient, error) {
+func (c *ClientParser) Parse(keyID, providerClientConfigText string) (*ClientConfig, error) {
 	clientComposer := c.Composer
 	if clientComposer == nil {
 		tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
@@ -181,7 +181,7 @@ func (c *ClientConfig) ParseConfig(keyID, providerClientConfigText string) (*Par
 				Message: "invalid reporter config", Cause: platerrors.ToPlatformError(err)}
 		}
 	}
-	return &ParsedClient{Transport: transportCfg, Info: info, reporterConfig: reporterConfig}, nil
+	return &ClientConfig{Transport: transportCfg, Info: info, reporterConfig: reporterConfig}, nil
 }
 
 // NewClientComposer registers Outline's config vocabulary and returns a Composer
@@ -194,10 +194,10 @@ func NewClientComposer(directSD transport.StreamDialer, directPD transport.Packe
 	return r, nil
 }
 
-// NewClient builds a [Client] from a [ParsedClient], creating the
+// New builds a [Client] from a [ClientConfig], creating the
 // network resources (dialers, listeners, reporters).
-func (p *ParsedClient) NewClient() (*Client, error) {
-	parts, err := p.Transport.NewTransportPair(context.Background())
+func (c *ClientConfig) New() (*Client, error) {
+	parts, err := c.Transport.NewTransportPair(context.Background())
 	if err != nil {
 		return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
 			Message: "failed to create transport", Cause: platerrors.ToPlatformError(err)}
@@ -207,11 +207,11 @@ func (p *ParsedClient) NewClient() (*Client, error) {
 		return nil, &platerrors.PlatformError{Code: platerrors.InternalError,
 			Message: "failed to set up DNS handling", Cause: platerrors.ToPlatformError(err)}
 	}
-	client := &Client{sd: sd, sdInfo: p.Info.Stream, pr: relay, prInfo: p.Info.Packet,
+	client := &Client{sd: sd, sdInfo: c.Info.Stream, pr: relay, prInfo: c.Info.Packet,
 		notifyNetworkChanged: onNetworkChanged}
 
-	if p.reporterConfig != nil {
-		reporter, err := p.reporterConfig.NewReporter(client)
+	if c.reporterConfig != nil {
+		reporter, err := c.reporterConfig.NewReporter(client)
 		if err != nil {
 			return nil, &platerrors.PlatformError{Code: platerrors.InvalidConfig,
 				Message: "invalid reporter config", Cause: platerrors.ToPlatformError(err)}
@@ -221,13 +221,13 @@ func (p *ParsedClient) NewClient() (*Client, error) {
 	return client, nil
 }
 
-// New creates a new session client. It's used by the native code, so it returns a NewClientResult.
-func (c *ClientConfig) New(keyID string, providerClientConfigText string) *NewClientResult {
-	parsed, err := c.ParseConfig(keyID, providerClientConfigText)
+// NewClient creates a new session client. It's used by the native code, so it returns a NewClientResult.
+func (c *ClientParser) NewClient(keyID string, providerClientConfigText string) *NewClientResult {
+	parsed, err := c.Parse(keyID, providerClientConfigText)
 	if err != nil {
 		return &NewClientResult{Error: platerrors.ToPlatformError(err)}
 	}
-	client, err := parsed.NewClient()
+	client, err := parsed.New()
 	if err != nil {
 		return &NewClientResult{Error: platerrors.ToPlatformError(err)}
 	}

@@ -123,7 +123,7 @@ func main() {
 		printErrorAndExit(platerrors.PlatformError{Code: platerrors.InvalidConfig, Message: "client config missing"}, exitCodeFailure)
 	}
 
-	clientConfig := outline.ClientConfig{}
+	clientConfig := outline.ClientParser{}
 	if *args.adapterIndex >= 0 {
 		tcp, udp, err := newBaseDialersWithAdapter(*args.adapterIndex)
 		if err != nil {
@@ -135,7 +135,7 @@ func main() {
 		}
 		clientConfig.Composer = clientComposer
 	}
-	result := clientConfig.New(*args.keyID, *args.clientConfig)
+	result := clientConfig.NewClient(*args.keyID, *args.clientConfig)
 	if result.Error != nil {
 		printErrorAndExit(result.Error, exitCodeFailure)
 	}

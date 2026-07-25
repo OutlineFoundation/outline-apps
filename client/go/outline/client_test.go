@@ -44,7 +44,7 @@ func TestParseConfig_UnknownMetadataTypeIsInternalError(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	_, err = (&ClientConfig{Composer: r}).ParseConfig("", "transport:\n  $type: unknown")
+	_, err = (&ClientParser{Composer: r}).Parse("", "transport:\n  $type: unknown")
 	var platformErr *platerrors.PlatformError
 	require.ErrorAs(t, err, &platformErr)
 	require.Equal(t, platerrors.InternalError, platformErr.Code)
@@ -61,7 +61,7 @@ reporter:
     url: https://collector.example.com/report
   interval: 10m
 `
-	_, err := (&ClientConfig{}).ParseConfig("service", config)
+	_, err := (&ClientParser{}).Parse("service", config)
 	var platformErr *platerrors.PlatformError
 	require.ErrorAs(t, err, &platformErr)
 	require.Equal(t, platerrors.InvalidConfig, platformErr.Code)
@@ -79,7 +79,7 @@ reporter:
     url: https://collector.example.com/report
   enable_cookies: true
 `
-	parsed, err := (&ClientConfig{DataDir: dataDir}).ParseConfig("service", config)
+	parsed, err := (&ClientParser{DataDir: dataDir}).Parse("service", config)
 	require.NoError(t, err)
 	require.NotNil(t, parsed.reporterConfig)
 	_, err = os.Stat(path.Join(dataDir, "services", "service"))
@@ -90,7 +90,7 @@ func Test_NewTransport_SS_URL(t *testing.T) {
 	config := "transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/"
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -106,7 +106,7 @@ transport: {
 }`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -123,7 +123,7 @@ transport: {
 }`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -139,7 +139,7 @@ transport:
   password: SECRET`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -155,7 +155,7 @@ transport:
   secret: SECRET`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -172,7 +172,7 @@ transport:
   secret: SECRET`
 	firstHop := "entry.example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -193,7 +193,7 @@ transport:
   secret: EXIT_SECRET`
 	firstHop := "entry.example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -215,7 +215,7 @@ transport:
       cipher: chacha20-ietf-poly1305
       secret: SECRET`
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, "example.com:80", result.Client.sdInfo.FirstHop)
 	require.Equal(t, "example.com:53", result.Client.prInfo.FirstHop)
@@ -235,7 +235,7 @@ transport:
       prefix: "POST "`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -257,7 +257,7 @@ transport:
       endpoint: example.com:53
       <<: *cipher`
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, "example.com:80", result.Client.sdInfo.FirstHop)
 	require.Equal(t, "example.com:53", result.Client.prInfo.FirstHop)
@@ -265,7 +265,7 @@ transport:
 
 func Test_NewTransport_Unsupported(t *testing.T) {
 	config := `transport: {$type: unsupported}`
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Error(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, "unsupported config", result.Error.Message)
 }
@@ -288,7 +288,7 @@ transport:
           url: https://entrypoint.cdn.example.com/udp`
 	firstHop := "entrypoint.cdn.example.com:443"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -300,7 +300,7 @@ transport:
   $type: tcpudp
   tcp:
   udp:`
-	result := (&ClientConfig{}).New("", configText)
+	result := (&ClientParser{}).NewClient("", configText)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.NotNil(t, result.Client)
 	require.Equal(t, configregistry.ConnTypeDirect, result.Client.sdInfo.ConnType)
@@ -317,7 +317,7 @@ metadata:
 transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -332,7 +332,7 @@ error: null
 transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/`
 	firstHop := "example.com:4321"
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, firstHop, result.Client.sdInfo.FirstHop)
 	require.Equal(t, firstHop, result.Client.prInfo.FirstHop)
@@ -350,7 +350,7 @@ func Test_NewTransport_MissingTransport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := (&ClientConfig{}).New("", tt.config)
+			result := (&ClientParser{}).NewClient("", tt.config)
 			require.NotNil(t, result.Error)
 			require.Nil(t, result.Client)
 			require.Contains(t, result.Error.Error(), "transport config missing")
@@ -410,7 +410,7 @@ func Test_NewClientFromJSON_Errors(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := (&ClientConfig{}).New("", tt.input)
+			got := (&ClientParser{}).NewClient("", tt.input)
 			if got.Error == nil || got.Client != nil {
 				t.Errorf("NewClientFromJSON() expects an error, got = %v", got.Client)
 				return
@@ -440,7 +440,7 @@ reporter:
     url: https://your-callback-server.com/outline_callback
   interval: 24h`
 
-	result := (&ClientConfig{}).New("", config)
+	result := (&ClientParser{}).NewClient("", config)
 	require.Nil(t, result.Error, "Got %v", result.Error)
 	require.Equal(t, "example.com:80", result.Client.sdInfo.FirstHop)
 	require.Equal(t, "example.com:53", result.Client.prInfo.FirstHop)

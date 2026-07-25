@@ -59,7 +59,7 @@ func (api *vpnAPI) Establish(configStr string) (err error) {
 		}
 	}
 
-	clientConfig := ClientConfig{}
+	clientConfig := ClientParser{}
 	tcp := newFWMarkProtectedTCPDialer(conf.VPN.ProtectionMark)
 	udp := newFWMarkProtectedUDPDialer(conf.VPN.ProtectionMark)
 	clientComposer, err := NewClientComposer(tcp, udp)
@@ -71,7 +71,7 @@ func (api *vpnAPI) Establish(configStr string) (err error) {
 		}
 	}
 	clientConfig.Composer = clientComposer
-	result := clientConfig.New(conf.VPN.ID, conf.Client)
+	result := clientConfig.NewClient(conf.VPN.ID, conf.Client)
 	if result.Error != nil {
 		return result.Error
 	}
