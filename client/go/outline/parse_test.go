@@ -365,7 +365,7 @@ func TestParseConfig_Flexible_JSON(t *testing.T) {
 }
 
 func TestParseConfig_Transport_YAML(t *testing.T) {
-	// This input is the transport part of a ClientParser.
+	// This input is the transport part of a ClientConfig.
 	// doParseTunnelConfig will treat it as a "legacy" format and wrap it.
 	userInputConfig := `# Comment
 server: example.com
