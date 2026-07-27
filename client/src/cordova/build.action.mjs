@@ -187,8 +187,52 @@ async function androidDebug(verbose) {
   });
 }
 
-const JAVA_BUNDLETOOL_VERSION = '1.8.2';
-const JAVA_BUNDLETOOL_RESOURCE_URL = `https://github.com/google/bundletool/releases/download/1.8.2/bundletool-all-${JAVA_BUNDLETOOL_VERSION}.jar`;
+// bundletool turns the release AAB into the installable universal APK we ship
+// to S3 (an AAB itself cannot be installed). We need a modern version: since
+// bundletool 1.17.0 it 16 KB-page-aligns the uncompressed native libraries in
+// the generated APK ("Default page size is now set to 16 KB"), which Android
+// 15+ and the Play Store require; the previously pinned 1.8.2 aligned them to
+// 4 KB. https://github.com/google/bundletool/releases/tag/1.17.0
+const JAVA_BUNDLETOOL_VERSION = '1.18.3';
+const JAVA_BUNDLETOOL_RESOURCE_URL = `https://github.com/google/bundletool/releases/download/${JAVA_BUNDLETOOL_VERSION}/bundletool-all-${JAVA_BUNDLETOOL_VERSION}.jar`;
+
+/**
+ * Verifies that the native libraries in an APK are aligned for 16 KB memory
+ * pages, as required by Android 15+ and the Play Store. Throws (failing the
+ * build) if any `.so` is misaligned, so a bundletool/packaging regression can
+ * never ship silently again.
+ *
+ * @param {string} apkPath path to the APK to check.
+ */
+async function verify16kAlignment(apkPath) {
+  const androidHome = process.env.ANDROID_HOME;
+  if (!androidHome) {
+    throw new ReferenceError(
+      'ANDROID_HOME must be defined in the environment to verify APK alignment!'
+    );
+  }
+
+  // zipalign lives in the build-tools; pick the newest installed version.
+  const buildToolsDir = path.resolve(androidHome, 'build-tools');
+  const buildToolsVersions = (await fs.readdir(buildToolsDir))
+    .filter(name => /^\d+\./.test(name))
+    .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+  if (buildToolsVersions.length === 0) {
+    throw new ReferenceError(
+      `No Android build-tools found under ${buildToolsDir} to run zipalign!`
+    );
+  }
+  const zipalignPath = path.resolve(
+    buildToolsDir,
+    buildToolsVersions.at(-1),
+    'zipalign'
+  );
+
+  // `-c` checks (does not modify), `-P 16` requires 16 KB page alignment for
+  // shared libraries, `4` is the alignment for all other entries, `-v` is
+  // verbose. zipalign exits non-zero (making spawnStream throw) if misaligned.
+  await spawnStream(zipalignPath, '-c', '-P', '16', '-v', '4', apkPath);
+}
 
 async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
   const androidBuildPath = path.resolve(
@@ -268,6 +312,18 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
     );
   } finally {
     await fs.rm(ksPasswordDir, {recursive: true, force: true});
+  }
+
+  // The universal `.apks` archive is a zip holding `universal.apk`. Extract it
+  // and assert its native libraries are 16 KB aligned before we ship it.
+  const extractDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'outline-android-align-')
+  );
+  try {
+    await spawnStream('unzip', '-o', outputPath, 'universal.apk', '-d', extractDir);
+    await verify16kAlignment(path.resolve(extractDir, 'universal.apk'));
+  } finally {
+    await fs.rm(extractDir, {recursive: true, force: true});
   }
 
   return fs.rename(outputPath, path.resolve(androidBuildPath, 'Outline.zip'));
