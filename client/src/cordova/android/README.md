@@ -19,9 +19,9 @@ Install these pre-requisites:
   export JAVA_HOME=$(/usr/libexec/java_home -v 17.0)
   ```
 
-- [Gradle 8.7+](https://gradle.org/install/). On macOS: `brew install gradle`.
+- [Gradle 8.14.2+](https://gradle.org/install/). On macOS: `brew install gradle`.
 
-Then we need to install and configure the Android components. You can follow the [Cordova Android Platform Guide](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html), which uses Android Studio to configure the environment. You need an Android Studio compatible with the Android Gradle Plugin 8.3.0 (see [build.gradle](client/src/cordova/android/OutlineAndroidLib/build.gradle)) we use ([compatibility table](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility)).
+Then we need to install and configure the Android components. You can follow the [Cordova Android Platform Guide](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html), which uses Android Studio to configure the environment. You need an Android Studio compatible with the Android Gradle Plugin 8.10.1 (see [build.gradle](client/src/cordova/android/OutlineAndroidLib/build.gradle)) we use ([compatibility table](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility)).
 
 Alternatively, you can do it on the command-line:
 
@@ -45,16 +45,16 @@ Alternatively, you can do it on the command-line:
 1. Install platform and build tools:
 
     ```shell
-    sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;28.2.13676358" 
+    sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358" 
     ```
 
 1. Install optional components that help development (source code, emulator and image):
 
     ```shell
-    sdkmanager "sources;android-35" "system-images;android-35;default;arm64-v8a"
+    sdkmanager "sources;android-36" "system-images;android-36;default;arm64-v8a"
     ```
 
-  Note: you will need the `system-images;android-35;default;x86_64` image on an Intel computer.
+  Note: you will need the `system-images;android-36;default;x86_64` image on an Intel computer.
 
 For development of the OutlineAndroidLib, we recommend installing Android Studio. That also make it easier to create virtual devices and run the emulator.
 
@@ -70,13 +70,13 @@ npx cordova requirements android
 
 | Component  | version  | constrained by | set in  |
 |---|---|---|---|
-| Android API Level | 35+ | [Play Store](https://developer.android.com/google/play/requirements/target-sdk) | [config.xml](../../../config.xml), [build.gradle](./OutlineAndroidLib/outline/build.gradle) |
-| cordova-android | 14 | Android API Level | [package.json](../../../package.json) |
+| Android API Level | 36+ | [Play Store](https://developer.android.com/google/play/requirements/target-sdk) | [config.xml](../../../config.xml), [build.gradle](./OutlineAndroidLib/outline/build.gradle) |
+| cordova-android | 15 | Android API Level | [package.json](../../../package.json) |
 | JDK | 17 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instruction |
-| Gradle | 8.13+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [gradle-wrapper.properties](./OutlineAndroidLib/gradle/wrapper/gradle-wrapper.properties) |
-| Android Gradle Plugin (AGP) | 8.7.3 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [build.gradle](../android/OutlineAndroidLib/build.gradle) |
-| Android Build Tools | 35.0.0+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instructions |
-| Android Studio | 2024.2.2 (Ladybug Feature Drop) | [AGP](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility) | |
+| Gradle | 8.14.2+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [gradle-wrapper.properties](./OutlineAndroidLib/gradle/wrapper/gradle-wrapper.properties) |
+| Android Gradle Plugin (AGP) | 8.10.1 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [build.gradle](../android/OutlineAndroidLib/build.gradle) |
+| Android Build Tools | 36.0.0+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instructions |
+| Android Studio | 2025.1.1 (Narwhal) | [AGP](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility) | |
 
 ## Build the app
 

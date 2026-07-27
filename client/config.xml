@@ -24,7 +24,7 @@
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <preference name="android-minSdkVersion" value="29" />
-    <preference name="android-targetSdkVersion" value="35" />
+    <preference name="android-targetSdkVersion" value="36" />
     <preference name="AndroidLaunchMode" value="singleInstance" />
     <preference name="ShowSplashScreenSpinner" value="false" />
     <preference name="Orientation" value="portrait" />
