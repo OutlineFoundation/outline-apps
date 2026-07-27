@@ -21,15 +21,15 @@ group = 'org.outline'
 
 android {
     namespace 'org.outline'
-    compileSdk 35
+    compileSdk 36
 
     buildFeatures {
         aidl true
     }
 
     defaultConfig {
-        minSdk 24
-        targetSdk 35
+        minSdk 29
+        targetSdk 36
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
