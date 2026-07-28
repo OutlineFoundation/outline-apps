@@ -36,10 +36,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -65,7 +65,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v4
@@ -75,57 +75,65 @@ jobs:
       - name: Test Go Backend
         run: go test -race -bench=. -benchtime=100ms ./client/...
 
-  linux_debug_build:
-    name: Linux Debug Build
-    runs-on: ubuntu-22.04
-    timeout-minutes: 20
+  electron_debug_build:
+    name: ${{ matrix.name }} Debug Build
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: ${{ matrix.timeout }}
     needs: [web_test, backend_test]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
-
-      - name: Install Node
-        uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: ./package-lock.json
-
-      - name: Install NPM Dependencies
-        run: npm ci
-
-      - name: Install Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: '${{ github.workspace }}/go.mod'
-
-      - name: Install zig
-        uses: mlugg/setup-zig@v1
-        with:
-          version: 0.13.0
-          use-cache: false
-
-      - name: Build Linux Client
-        run: npm run action client/electron/build linux
-
-  windows_debug_build:
-    name: Windows Debug Build
-    runs-on: windows-2025
-    timeout-minutes: 40
-    needs: [web_test, backend_test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            platform: linux
+            arch: x64
+            runner: ubuntu-22.04
+            timeout: 20
+          - name: Linux arm64
+            platform: linux
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            timeout: 20
+            # puppeteer 13 has no arm64 chromium; install system chromium so
+            # its postinstall finds one.
+            installChromium: true
+            # fpm ("Effing Package Manager") is what electron-builder
+            # invokes to produce the Linux .deb. It bundles an x86 fpm
+            # binary only, so the arm64 runner has to install a native fpm
+            # via gem and tell electron-builder to use it. Workaround from:
+            # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
+            useSystemFpm: true
+            # We use windows-2022 instead of windows-2025 because windows-2025
+            # includes Visual Studio 2026, which causes a buffer overflow crash
+            # in the node-gyp version (v10.1.0) bundled with Node 22.
+          - name: Windows ia32
+            platform: windows
+            arch: ia32
+            runner: windows-2022
+            timeout: 40
+          - name: Windows arm64
+            platform: windows
+            arch: arm64
+            runner: windows-2022
+            timeout: 40
     steps:
       - name: Support longpaths
+        if: runner.os == 'Windows'
         run: git config --system core.longpaths true
 
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: ./package-lock.json
+
+      - name: Install Chromium
+        if: matrix.installChromium
+        run: sudo apt update && sudo apt install chromium-browser
 
       - name: Install NPM Dependencies
         run: npm ci
@@ -136,13 +144,23 @@ jobs:
           go-version-file: '${{ github.workspace }}/go.mod'
 
       - name: Install zig
-        uses: mlugg/setup-zig@153c8d5202cbb8c7e10831110a3afd27593eb960
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
           version: 0.13.0
           use-cache: false
 
-      - name: Build Windows Client
-        run: npm run action client/electron/build windows
+      - name: Install system fpm
+        # Export USE_SYSTEM_FPM from this conditional step rather than via the
+        # build step's `env:` block. `env:` would always *define* the variable
+        # (with an empty value for non-fpm matrices), and app-builder treats
+        # any defined USE_SYSTEM_FPM as a request to use system fpm.
+        if: matrix.useSystemFpm
+        run: |
+          sudo gem install fpm
+          echo "USE_SYSTEM_FPM=true" >> $GITHUB_ENV
+
+      - name: Build Client
+        run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
 
   macos_debug_build:
     name: MacOS Debug Build
@@ -154,10 +172,10 @@ jobs:
         run: xcode-select --print-path
 
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -187,7 +205,7 @@ jobs:
 
   ios_debug_build:
     name: iOS Debug Build
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 20
     needs: [web_test, backend_test]
     steps:
@@ -195,10 +213,10 @@ jobs:
         run: xcode-select --print-path
 
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -233,10 +251,10 @@ jobs:
     needs: [web_test, backend_test]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4
 
       - name: Install Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm

@@ -15,14 +15,18 @@
 package configregistry
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
 	"net/netip"
+	"time"
 
 	"localhost/client/go/outline/connectivity"
-	"localhost/client/go/outline/dnsintercept"
-	"golang.getoutline.org/sdk/network"
+
+	"golang.getoutline.org/sdk/network/dnsintercept"
+	"golang.getoutline.org/sdk/network/dnstruncate"
+	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 )
 
@@ -49,44 +53,52 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	// Randomly selects a DNS resolver for the VPN session
 	remoteDNS := outlineDNSResolvers[rand.IntN(len(outlineDNSResolvers))]
 
-	// Intercept DNS for StreamDialer
-	sdForward, err := dnsintercept.WrapForwardStreamDialer(transport.FuncStreamDialer(sd.Dial), linkLocalDNS, remoteDNS)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DNS redirect StreamDialer: %w", err)
+	// Intercept DNS for StreamDialer: remap TCP connections to linkLocalDNS → remoteDNS.
+	sdForward := func(ctx context.Context, addr string) (transport.StreamConn, error) {
+		if dst, err := netip.ParseAddrPort(addr); err == nil && dst.Addr().Unmap() == linkLocalDNS.Addr() && dst.Port() == linkLocalDNS.Port() {
+			addr = remoteDNS.String()
+		}
+		return sd.Dial(ctx, addr)
 	}
 
-	// Intercept DNS for PacketProxy
-	ppBase, err := network.NewPacketProxyFromPacketListener(pl)
+	baseListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener, 30*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create base PacketRelay: %w", err)
 	}
-	ppForward, err := dnsintercept.WrapForwardPacketProxy(ppBase, linkLocalDNS, remoteDNS)
+	// Forward relay: intercept DNS at link-local address, forward to remote resolver.
+	// DNS gets a shorter 5s timeout on its own independent listener.
+	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener, 5*time.Second)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create DNS redirect PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create DNS PacketRelay: %w", err)
 	}
-	ppTrunc, err := dnsintercept.WrapTruncatePacketProxy(ppBase, linkLocalDNS)
+	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsListener, baseListener, linkLocalDNS, remoteDNS)
+	// Truncate relay: intercept DNS at link-local address, return truncated response (forces TCP retry).
+	// Non-DNS traffic passes through to baseListener.
+	dnsTruncRelay, err := dnstruncate.NewPacketRelay()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create always-truncate DNS PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create DNS truncate relay: %w", err)
 	}
-	ppMain, err := network.NewDelegatePacketProxy(ppTrunc)
+	relayTrunc := dnsintercept.NewInterceptDNSPacketRelay(dnsTruncRelay, baseListener, linkLocalDNS, remoteDNS)
+	// Delegate relay starts with truncate (UDP unverified), switches to forward when UDP is healthy.
+	relayMain, err := packetrelay.NewDelegatePacketRelay(relayTrunc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create indirect PacketProxy: %w", err)
+		return nil, fmt.Errorf("failed to create delegate PacketRelay: %w", err)
 	}
 
 	onNetworkChanged := func() {
 		go func() {
 			if err := connectivity.CheckUDPConnectivity(pl); err == nil {
 				slog.Info("remote device UDP is healthy")
-				ppMain.SetProxy(ppForward)
+				relayMain.SetRelay(relayForward)
 			} else {
 				slog.Warn("remote device UDP is not healthy", "err", err)
-				ppMain.SetProxy(ppTrunc)
+				relayMain.SetRelay(relayTrunc)
 			}
 		}()
 	}
 
 	return &TransportPair{
-		&Dialer[transport.StreamConn]{sd.ConnectionProviderInfo, sdForward.DialStream},
-		&PacketProxy{pl.ConnectionProviderInfo, ppMain, onNetworkChanged},
+		&Dialer[transport.StreamConn]{sd.ConnectionProviderInfo, sdForward},
+		&PacketRelay{pl.ConnectionProviderInfo, relayMain, onNetworkChanged},
 	}, nil
 }

@@ -33,6 +33,8 @@ class AppKitController: NSObject {
         if let observer = windowCloseObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        NotificationCenter.default.removeObserver(
+            self, name: NSApplication.didBecomeActiveNotification, object: nil)
     }
     
     private func setupWindowCloseObserver() {
@@ -49,40 +51,29 @@ class AppKitController: NSObject {
             }
         }
         
-        // Also observe when the app becomes active/inactive to manage Dock icon
+        // Restore the Dock icon when the app becomes active again (e.g. the main
+        // window is reopened after being closed).
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
             name: NSApplication.didBecomeActiveNotification,
             object: nil
         )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appDidResignActive),
-            name: NSApplication.didResignActiveNotification,
-            object: nil
-        )
     }
-    
+
     @objc private func appDidBecomeActive() {
         // Show Dock icon when app becomes active
         showDockIcon()
     }
-    
-    @objc private func appDidResignActive() {
-        // Only hide Dock icon if no windows are visible
-        let hasVisibleWindows = NSApp.windows.contains { window in
-            window.isVisible && isMainUiWindow(window)
-        }
-        
-        if !hasVisibleWindows {
-            hideDockIcon()
-        }
-    }
-    
+
     private func hideDockIcon() {
-        // Hide the Dock icon when the main window is closed
+        // Hide the Dock icon when the main window is closed.
+        //
+        // This is only triggered by NSWindow.willCloseNotification, never by
+        // didResignActive: switching to .accessory deactivates the app and sends
+        // its window behind other apps. During launch the main UINSWindow isn't
+        // reliably visible yet, so hiding on an early resign-active made the
+        // window "disappear" behind other windows.
         NSApp.setActivationPolicy(.accessory)
     }
     
@@ -91,10 +82,17 @@ class AppKitController: NSObject {
         NSApp.setActivationPolicy(.regular)
     }
     
-    /// Determines if the given window is the main UI window
+    /// Determines if the given window is the main UI window.
+    ///
+    /// Match the Catalyst content window class exactly ("UINSWindow"). A substring
+    /// match is wrong here: during launch Catalyst also creates and destroys a
+    /// transient, non-visible "TUINSWindow", whose name *contains* "UINSWindow".
+    /// Treating that transient window's close as the main window closing flipped
+    /// the app to .accessory and sent the real (still-visible) window behind other
+    /// apps on launch.
     /// TODO: Decouple from the internal class name "UINSWindow" in the future
     private func isMainUiWindow(_ window: NSWindow) -> Bool {
-        return String(describing: window).contains("UINSWindow")
+        return window.className == "UINSWindow"
     }
 
     /// Set the connection status in the app's menu in the system-wide menu bar.

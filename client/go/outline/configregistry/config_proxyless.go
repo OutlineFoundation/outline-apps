@@ -19,10 +19,9 @@ import (
 	"fmt"
 	"math/rand"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/tlsfrag"
+	"localhost/client/go/configyaml"
 )
 
 const (
@@ -57,22 +56,16 @@ func parseProxylessTransportPair(ctx context.Context, configMap map[string]any, 
 
 	splitLength := randomSplitLength()
 
-	sd, err := tlsfrag.NewFixedLenStreamDialer(&transport.TCPDialer{}, splitLength)
+	fragSD, err := tlsfrag.NewFixedLenStreamDialer(&transport.TCPDialer{}, splitLength)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create StreamDialer: %w", err)
 	}
 
 	pl := &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, &transport.UDPListener{}}
-	pp, err := network.NewPacketProxyFromPacketListener(pl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create PacketProxy: %w", err)
+	sd := &Dialer[transport.StreamConn]{
+		ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeDirect},
+		Dial:                   fragSD.DialStream,
 	}
 
-	return &TransportPair{
-		StreamDialer: &Dialer[transport.StreamConn]{
-			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeDirect},
-			Dial:                   sd.DialStream,
-		},
-		PacketProxy: &PacketProxy{ConnectionProviderInfo{ConnTypeDirect, ""}, pp, nil},
-	}, nil
+	return wrapTransportPairWithOutlineDNS(sd, pl)
 }

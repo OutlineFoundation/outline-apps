@@ -423,6 +423,11 @@ ${FIREWALL_STATUS}
 Make sure to open the following ports on your firewall, router or cloud provider:
 - Management port ${API_PORT}, for TCP
 - Access key port ${ACCESS_KEY_PORT}, for TCP and UDP
+
+If you use UFW, you can allow these ports with:
+  sudo ufw allow ${API_PORT}/tcp
+  sudo ufw allow ${ACCESS_KEY_PORT}/tcp
+  sudo ufw allow ${ACCESS_KEY_PORT}/udp
 "
 }
 

@@ -91,12 +91,11 @@ export const browserConfig = {
     ],
   },
   plugins: [
-    new CopyPlugin(
-      [
-        {from: 'assets', to: 'assets'},
-        {from: 'messages', to: 'messages'},
+    new CopyPlugin({
+      patterns: [
+        {from: 'assets', to: 'assets', context: __dirname},
+        {from: 'messages', to: 'messages', context: __dirname},
       ],
-      {context: __dirname}
-    ),
+    }),
   ],
 };

@@ -13,3 +13,8 @@ node_modules
 /build
 
 *storybook.log
+
+
+
+# Capacitor web build output
+client/capacitor/www/

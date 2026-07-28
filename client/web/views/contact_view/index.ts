@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// TODO: Remove this entire contact-us view once
+// https://github.com/OutlineFoundation/outline-apps/pull/2739 is merged.
+
 import {SingleSelectedEvent} from '@material/mwc-list/mwc-list';
 import {Radio} from '@material/mwc-radio';
 import '@material/mwc-circular-progress';

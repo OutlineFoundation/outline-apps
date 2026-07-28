@@ -13,6 +13,10 @@ third_party {
     type: GIT
     value: "https://github.com/OpenVPN/tap-windows6"
   }
-  version: "9.21.2"
-  last_upgrade_date { year: 2018 month: 5 day: 7 }
+  url {
+    type: ARCHIVE
+    value: "https://github.com/OpenVPN/tap-windows6/releases/download/9.27.0/dist.win10.zip"
+  }
+  version: "9.27.0"
+  last_upgrade_date { year: 2026 month: 6 day: 4 }
 }

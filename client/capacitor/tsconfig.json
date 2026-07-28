@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "paths": {
+      "@web/*": ["web/*"],
+      "@capacitor-plugin-outline": ["capacitor/plugins/capacitor-plugin-outline/src"]
+    }
+  },
+  "include": [
+    "src",
+    "plugins/capacitor-plugin-outline/src",
+    "webpack.config.js",
+    "build.action.mjs",
+    "start.action.mjs"
+  ],
+  "exclude": ["node_modules", "www", "*.cjs"]
+}

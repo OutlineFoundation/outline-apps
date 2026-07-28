@@ -24,13 +24,13 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  const {platform: targetPlatform} = getBuildParameters(parameters);
+  const {goTaskTarget} = getBuildParameters(parameters);
   await spawnStream(
     'go',
     'tool',
     'task',
     '-v',
-    `client:tun2socks:${targetPlatform}`
+    `client:tun2socks:${goTaskTarget}`
   );
 }
 

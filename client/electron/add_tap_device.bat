@@ -42,7 +42,7 @@ if %errorlevel% equ 0 (
 )
 
 echo Creating TAP network device...
-tap-windows6\tapinstall install tap-windows6\OemVista.inf %DEVICE_HWID%
+tap-windows6\devcon install tap-windows6\OemVista.inf %DEVICE_HWID%
 if %errorlevel% neq 0 (
   echo Could not create TAP network device. >&2
   exit /b %ERROR_TAP_INSTALL%

@@ -24,7 +24,51 @@ const VALID_PLATFORMS = [
 ];
 const VALID_BUILD_MODES = ['debug', 'release'];
 
+// Every (platform, arch) combination we support building. Acts as the single
+// source of truth for arch validation and for the goArch translation we need
+// downstream (Taskfile and `output/client/<platform>-<goArch>` directories use
+// Go arch names; --arch and electron-builder use electron-builder names).
+export const SUPPORTED_BUILDS = [
+  {platform: 'linux', arch: 'x64', goArch: 'amd64'},
+  {platform: 'linux', arch: 'arm64', goArch: 'arm64'},
+  {platform: 'windows', arch: 'ia32', goArch: '386'},
+  {platform: 'windows', arch: 'arm64', goArch: 'arm64'},
+];
+
+const BUILDS_BY_PLATFORM = Map.groupBy(SUPPORTED_BUILDS, b => b.platform);
+
 const MS_PER_HOUR = 1000 * 60 * 60;
+
+function assertOneOf(value, allowed, label) {
+  if (!allowed.includes(value)) {
+    throw new TypeError(
+      `${label} "${value}" is not valid. Must be one of ${allowed.join(', ')}.`
+    );
+  }
+}
+
+// Returns the matching SUPPORTED_BUILDS row, or null when the platform doesn't
+// take --arch. Throws if --arch is required and missing/invalid, or if --arch
+// is given for a platform that doesn't take it.
+function resolveBuild(platform, arch) {
+  const builds = BUILDS_BY_PLATFORM.get(platform);
+  if (!builds) {
+    if (arch) {
+      throw new TypeError(
+        `--arch cannot be specified for platform "${platform}".`
+      );
+    }
+    return null;
+  }
+  const match = arch ? builds.find(b => b.arch === arch) : null;
+  if (match) return match;
+  const validArchs = builds.map(b => b.arch).join(', ');
+  throw new TypeError(
+    arch
+      ? `Architecture "${arch}" is not a valid target for ${platform}. Must be one of ${validArchs}.`
+      : `--arch is required for platform "${platform}". Must be one of ${validArchs}.`
+  );
+}
 
 /*
   Inputs:
@@ -40,21 +84,12 @@ export function getBuildParameters(cliArguments) {
     verbose = false,
     versionName = '0.0.0',
     sentryDsn = process.env.SENTRY_DSN,
+    arch = '',
   } = minimist(cliArguments);
 
-  if (platform && !VALID_PLATFORMS.includes(platform)) {
-    throw new TypeError(
-      `Platform "${platform}" is not a valid target for Outline Client. Must be one of ${VALID_PLATFORMS.join(', ')}`
-    );
-  }
-
-  if (buildMode && !VALID_BUILD_MODES.includes(buildMode)) {
-    throw new TypeError(
-      `Build mode "${buildMode}" is not a valid build mode for Outline Client. Must be one of ${VALID_BUILD_MODES.join(
-        ', '
-      )}`
-    );
-  }
+  assertOneOf(platform, VALID_PLATFORMS, 'Platform');
+  assertOneOf(buildMode, VALID_BUILD_MODES, 'Build mode');
+  const build = resolveBuild(platform, arch);
 
   return {
     platform,
@@ -64,5 +99,11 @@ export function getBuildParameters(cliArguments) {
       buildMode === 'release' ? versionName : `${versionName}-${buildMode}`,
     sentryDsn,
     buildNumber: Math.floor(Date.now() / MS_PER_HOUR),
+    arch,
+    goArch: build?.goArch,
+    // The Taskfile parameterizes linux/windows tasks by arch
+    // (`linux:amd64`, `windows:386`, ...); android/apple/browser are single
+    // tasks. Resolve the shape here so callers don't conditional on it.
+    goTaskTarget: build ? `${platform}:${build.goArch}` : platform,
   };
 }

@@ -23,8 +23,8 @@ import (
 
 	"localhost/client/go/outline/connectivity"
 	perrs "localhost/client/go/outline/platerrors"
-	"golang.getoutline.org/sdk/network"
 	"golang.getoutline.org/sdk/network/lwip2transport"
+	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 )
 
@@ -33,7 +33,7 @@ type RemoteDevice struct {
 	io.ReadWriteCloser
 
 	sd transport.StreamDialer
-	pp network.PacketProxy
+	pr packetrelay.PacketRelay
 
 	// health check fields
 	tcpMu        sync.Mutex
@@ -41,20 +41,20 @@ type RemoteDevice struct {
 	tcpErr       error
 }
 
-func ConnectRemoteDevice(ctx context.Context, sd transport.StreamDialer, pp network.PacketProxy) (_ *RemoteDevice, err error) {
+func ConnectRemoteDevice(ctx context.Context, sd transport.StreamDialer, pr packetrelay.PacketRelay) (_ *RemoteDevice, err error) {
 	if sd == nil {
 		return nil, errors.New("StreamDialer must be provided")
 	}
-	if pp == nil {
-		return nil, errors.New("PacketProxy must be provided")
+	if pr == nil {
+		return nil, errors.New("PacketRelay must be provided")
 	}
 	if ctx.Err() != nil {
 		return nil, errCancelled(ctx.Err())
 	}
 
-	dev := &RemoteDevice{sd: sd, pp: pp}
+	dev := &RemoteDevice{sd: sd, pr: pr}
 	dev.tcpCheckDone.Go(dev.checkTCPHealthAndUpdate)
-	dev.ReadWriteCloser, err = lwip2transport.ConfigureDevice(dev.sd, dev.pp)
+	dev.ReadWriteCloser, err = lwip2transport.ConfigureDeviceWithRelay(dev.sd, dev.pr)
 	if err != nil {
 		return nil, errSetupHandler("remote device failed to configure network stack", err)
 	}

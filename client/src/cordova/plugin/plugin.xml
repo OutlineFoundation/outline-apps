@@ -64,6 +64,22 @@
           </intent-filter>
       </receiver>
 
+      <!-- Allows Android SystemUI to bind and show Outline as a Quick Settings tile. -->
+      <service
+        android:name="org.outline.vpn.QuickSettingsTileService"
+        android:exported="true"
+        android:icon="@drawable/small_icon"
+        android:label="@string/app_name"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+        android:process=":vpn">
+        <intent-filter>
+          <action android:name="android.service.quicksettings.action.QS_TILE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+          android:value="true" />
+      </service>
+
       <meta-data android:name="io.sentry.auto-init" android:value="false" />
     </config-file>
 

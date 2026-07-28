@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "ES2017",
+        "moduleResolution": "node",
+        "lib": [
+            "ES2017"
+        ],
+        "declaration": true,
+        "declarationMap": true,
+        "outDir": "./dist/esm",
+        "esModuleInterop": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

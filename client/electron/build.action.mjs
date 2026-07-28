@@ -24,17 +24,41 @@ import minimist from 'minimist';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
 const ELECTRON_BUILD_DIR = 'output';
-const ELECTRON_PLATFORMS = ['linux', 'windows'];
+
+// Per-platform packaging config keyed by `platform`. Arch validation /
+// translation lives upstream in getBuildParameters (SUPPORTED_BUILDS).
+// electron-builder.json holds only the arch-independent config; everything
+// that depends on the requested architecture is filled in from this table
+// at build time.
+const ELECTRON_PLATFORM_PACKAGING = {
+  linux: {
+    builderKey: 'linux',
+    targetFormat: 'deb',
+    // Binary files to keep outside the asar archive so they can be loaded at runtime.
+    binaryFiles: ['libbackend.so', 'tun2socks'],
+    // Non-binary files to include in the package alongside the Go output.
+    extraPackageFiles: ['client/electron/icons/png'],
+  },
+  windows: {
+    builderKey: 'win',
+    targetFormat: 'nsis',
+    // Binary files to keep outside the asar archive so they can be loaded at runtime.
+    binaryFiles: ['backend.dll', 'tun2socks.exe'],
+    extraPackageFiles: [],
+  },
+};
 
 export async function main(...parameters) {
-  const {platform, buildMode, versionName} = getBuildParameters(parameters);
+  const {platform, buildMode, versionName, arch, goArch} =
+    getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
-  if (!ELECTRON_PLATFORMS.includes(platform)) {
+  const packaging = ELECTRON_PLATFORM_PACKAGING[platform];
+  if (!packaging) {
     throw new TypeError(
-      `The platform "${platform}" is not a valid Electron platform. It must be one of: ${ELECTRON_PLATFORMS.join(
-        ', '
-      )}.`
+      `The platform "${platform}" is not a valid Electron platform. It must be one of: ${Object.keys(
+        ELECTRON_PLATFORM_PACKAGING
+      ).join(', ')}.`
     );
   }
 
@@ -65,6 +89,22 @@ export async function main(...parameters) {
       path.resolve(getRootDir(), 'client', 'electron', 'electron-builder.json')
     )
   );
+
+  const binaryDir = `output/client/${platform}-${goArch}`;
+
+  // Keep the Go-built binaries outside the asar archive so they're loadable
+  // at runtime (CGo .so / .dll can't be loaded from inside asar).
+  electronConfig.asarUnpack = packaging.binaryFiles.map(
+    f => `${binaryDir}/${f}`
+  );
+  electronConfig[packaging.builderKey].files = [
+    ...packaging.extraPackageFiles,
+    binaryDir,
+    `!${binaryDir}/*.h`,
+  ];
+  electronConfig[packaging.builderKey].target = [
+    {arch, target: packaging.targetFormat},
+  ];
 
   // build electron binary
   await electron.build({

@@ -27,8 +27,9 @@ export class RootHeader extends LitElement {
       justify-content: space-between;
       background-color: var(--outline-dark-primary);
       display: flex;
-      height: 64px;
-      padding: 0 16px;
+      box-sizing: border-box;
+      min-height: calc(64px + var(--outline-safe-area-top));
+      padding: var(--outline-safe-area-top) 16px 0 16px;
     }
 
     h1 {
