@@ -22,6 +22,19 @@ android {
       useLegacyPackaging false
     }
   }
+
+  // Enable R8 code shrinking/obfuscation and resource shrinking on the app
+  // module. Cordova generates this module without any minification, so this is
+  // the only project-controlled hook to shrink the shipped APK/AAB. The keep
+  // rules that protect our reflectively-instantiated / JNI / AIDL classes live
+  // in OutlineAndroidLib's consumer-rules.pro, which propagates to this R8 run.
+  buildTypes {
+    release {
+      minifyEnabled true
+      shrinkResources true
+      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+    }
+  }
 }
 
 repositories {
@@ -36,8 +49,4 @@ dependencies {
   implementation 'org.outline:outline:0.0'
   // From local Maven directory.
   implementation 'org.getoutline.client:tun2socks:0.0.1'
-
-  // From public Maven.
-  implementation 'com.android.support:appcompat-v7:23.4.0'
-  implementation 'io.sentry:sentry-android:2.0.2'
 }
