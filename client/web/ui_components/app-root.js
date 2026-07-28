@@ -330,7 +330,6 @@ export class AppRoot extends mixinBehaviors(
             name="contact"
             id="contactView"
             localize="[[localize]]"
-            language-code="[[_computeSupportSiteLanguageCode(LANGUAGES_AVAILABLE, language)]]"
             error-reporter="[[errorReporter]]"
             on-success="showContactSuccessToast"
             on-error="showContactErrorToast"
