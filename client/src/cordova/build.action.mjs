@@ -348,7 +348,14 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
     path.join(os.tmpdir(), 'outline-android-align-')
   );
   try {
-    await spawnStream('unzip', '-o', outputPath, 'universal.apk', '-d', extractDir);
+    await spawnStream(
+      'unzip',
+      '-o',
+      outputPath,
+      'universal.apk',
+      '-d',
+      extractDir
+    );
     await verify16kAlignment(path.resolve(extractDir, 'universal.apk'));
   } finally {
     await fs.rm(extractDir, {recursive: true, force: true});
