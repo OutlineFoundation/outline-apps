@@ -62,6 +62,7 @@ export async function main(...parameters) {
     dotenv.config({
       path: path.resolve(getRootDir(), 'output', 'client', 'android', '.env'),
     });
+    await disableJetifier();
   }
 
   switch (platform + buildMode) {
@@ -98,6 +99,35 @@ export async function main(...parameters) {
     case 'macos' + 'release':
       return appleRelease(platform);
   }
+}
+
+/**
+ * Disables AndroidX Jetifier in the generated Android platform.
+ *
+ * cordova-android hard-defaults `android.enableJetifier=true` into
+ * gradle.properties on every `prepare`, and offers no config.xml preference to
+ * override it. Jetifier only rewrites legacy `android.support.*` artifacts to
+ * AndroidX; we ship none (the last Support Library dependency was removed from
+ * build-extras.gradle), so it is a pure build-time no-op. Turn it off to save
+ * build time and get ahead of its removal in AGP 9. Runs after `prepare` (which
+ * writes the file) and before the Gradle build in `compile`.
+ */
+async function disableJetifier() {
+  const gradlePropertiesPath = path.resolve(
+    getRootDir(),
+    'client',
+    'platforms',
+    'android',
+    'gradle.properties'
+  );
+  const contents = await fs.readFile(gradlePropertiesPath, 'utf8');
+  const patched = /^android\.enableJetifier=.*$/m.test(contents)
+    ? contents.replace(
+        /^android\.enableJetifier=.*$/m,
+        'android.enableJetifier=false'
+      )
+    : `${contents.replace(/\n?$/, '\n')}android.enableJetifier=false\n`;
+  await fs.writeFile(gradlePropertiesPath, patched);
 }
 
 function getXcodeBuildArgs(platform) {
