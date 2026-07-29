@@ -62,6 +62,7 @@ export async function main(...parameters) {
     dotenv.config({
       path: path.resolve(getRootDir(), 'output', 'client', 'android', '.env'),
     });
+    await disableJetifier();
   }
 
   switch (platform + buildMode) {
@@ -98,6 +99,35 @@ export async function main(...parameters) {
     case 'macos' + 'release':
       return appleRelease(platform);
   }
+}
+
+/**
+ * Disables AndroidX Jetifier in the generated Android platform.
+ *
+ * cordova-android hard-defaults `android.enableJetifier=true` into
+ * gradle.properties on every `prepare`, and offers no config.xml preference to
+ * override it. Jetifier only rewrites legacy `android.support.*` artifacts to
+ * AndroidX; we ship none (the last Support Library dependency was removed from
+ * build-extras.gradle), so it is a pure build-time no-op. Turn it off to save
+ * build time and get ahead of its removal in AGP 9. Runs after `prepare` (which
+ * writes the file) and before the Gradle build in `compile`.
+ */
+async function disableJetifier() {
+  const gradlePropertiesPath = path.resolve(
+    getRootDir(),
+    'client',
+    'platforms',
+    'android',
+    'gradle.properties'
+  );
+  const contents = await fs.readFile(gradlePropertiesPath, 'utf8');
+  const patched = /^android\.enableJetifier=.*$/m.test(contents)
+    ? contents.replace(
+        /^android\.enableJetifier=.*$/m,
+        'android.enableJetifier=false'
+      )
+    : `${contents.replace(/\n?$/, '\n')}android.enableJetifier=false\n`;
+  await fs.writeFile(gradlePropertiesPath, patched);
 }
 
 function getXcodeBuildArgs(platform) {
@@ -187,8 +217,50 @@ async function androidDebug(verbose) {
   });
 }
 
-const JAVA_BUNDLETOOL_VERSION = '1.8.2';
-const JAVA_BUNDLETOOL_RESOURCE_URL = `https://github.com/google/bundletool/releases/download/1.8.2/bundletool-all-${JAVA_BUNDLETOOL_VERSION}.jar`;
+// bundletool 1.18+ aligns uncompressed native libraries to 16 KB in the
+// universal APK it generates. The legacy 1.8.2 did not, which is what forced
+// the zipalign+re-sign workaround in the release scripts (outline-release
+// scripts/client/android.sh::_rebuild_universal_apk_16k).
+const JAVA_BUNDLETOOL_VERSION = '1.18.3';
+const JAVA_BUNDLETOOL_RESOURCE_URL = `https://github.com/google/bundletool/releases/download/${JAVA_BUNDLETOOL_VERSION}/bundletool-all-${JAVA_BUNDLETOOL_VERSION}.jar`;
+
+/**
+ * Verifies that the native libraries in an APK are aligned for 16 KB memory
+ * pages, as required by Android 15+ and the Play Store. Throws (failing the
+ * build) if any `.so` is misaligned, so a bundletool/packaging regression can
+ * never ship silently again.
+ *
+ * @param {string} apkPath path to the APK to check.
+ */
+async function verify16kAlignment(apkPath) {
+  const androidHome = process.env.ANDROID_HOME;
+  if (!androidHome) {
+    throw new ReferenceError(
+      'ANDROID_HOME must be defined in the environment to verify APK alignment!'
+    );
+  }
+
+  // zipalign lives in the build-tools; pick the newest installed version.
+  const buildToolsDir = path.resolve(androidHome, 'build-tools');
+  const buildToolsVersions = (await fs.readdir(buildToolsDir))
+    .filter(name => /^\d+\./.test(name))
+    .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+  if (buildToolsVersions.length === 0) {
+    throw new ReferenceError(
+      `No Android build-tools found under ${buildToolsDir} to run zipalign!`
+    );
+  }
+  const zipalignPath = path.resolve(
+    buildToolsDir,
+    buildToolsVersions.at(-1),
+    'zipalign'
+  );
+
+  // `-c` checks (does not modify), `-P 16` requires 16 KB page alignment for
+  // shared libraries, `4` is the alignment for all other entries, `-v` is
+  // verbose. zipalign exits non-zero (making spawnStream throw) if misaligned.
+  await spawnStream(zipalignPath, '-c', '-P', '16', '-v', '4', apkPath);
+}
 
 async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
   const androidBuildPath = path.resolve(
@@ -268,6 +340,25 @@ async function androidRelease(ksPassword, ksContents, javaPath, verbose) {
     );
   } finally {
     await fs.rm(ksPasswordDir, {recursive: true, force: true});
+  }
+
+  // The universal `.apks` archive is a zip holding `universal.apk`. Extract it
+  // and assert its native libraries are 16 KB aligned before we ship it.
+  const extractDir = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'outline-android-align-')
+  );
+  try {
+    await spawnStream(
+      'unzip',
+      '-o',
+      outputPath,
+      'universal.apk',
+      '-d',
+      extractDir
+    );
+    await verify16kAlignment(path.resolve(extractDir, 'universal.apk'));
+  } finally {
+    await fs.rm(extractDir, {recursive: true, force: true});
   }
 
   return fs.rename(outputPath, path.resolve(androidBuildPath, 'Outline.zip'));
