@@ -16,6 +16,15 @@
 # third-party Cordova plugins we bundle.
 -keep public class * extends org.apache.cordova.CordovaPlugin { public <init>(); }
 
+# The Cordova framework itself is pervasively reflective: MainActivity.onCreate
+# instantiates the WebView engine via
+# SystemWebViewEngine(Context, CordovaPreferences) looked up with
+# getConstructor(), config values are resolved by class name, etc. Without this
+# R8 renames/removes those members and the app crashes on launch with
+# "Failed to create webview" (NoSuchMethodException on the constructor). Keep
+# the whole framework -- narrower rules just turn into launch-time whack-a-mole.
+-keep class org.apache.cordova.** { *; }
+
 # --- gomobile / tun2socks (JNI) --------------------------------------------
 # The gomobile-generated bindings and the Go runtime call back into these
 # classes by name over JNI; obfuscating or removing them breaks the tunnel.
