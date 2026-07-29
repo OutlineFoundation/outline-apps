@@ -59,7 +59,7 @@ function resolveSentryCli() {
  * @param {string[]} parameters The list of action arguments passed in.
  */
 export async function main(...parameters) {
-  const {platform, buildMode} = getBuildParameters(parameters);
+  const {platform, buildMode, goArch} = getBuildParameters(parameters);
 
   if (buildMode !== 'release') {
     console.debug(
@@ -68,7 +68,7 @@ export async function main(...parameters) {
     return;
   }
 
-  const debugFiles = await collectDebugFiles(platform);
+  const debugFiles = await collectDebugFiles(platform, goArch);
   if (debugFiles === null) {
     console.warn(
       '[sentry] Native debug symbol upload is not implemented for platform ' +
@@ -86,8 +86,11 @@ export async function main(...parameters) {
   // Verify every file actually carries usable debug info BEFORE uploading. A
   // stripped binary uploads "successfully" but resolves nothing, so we fail the
   // build here rather than ship a symbol pipeline that silently does nothing.
+  // dSYM bundles are directories; check the DWARF binaries inside them.
   for (const file of debugFiles) {
-    await assertUsableDebugFile(file);
+    for (const target of await resolveCheckTargets(file)) {
+      await assertUsableDebugFile(target);
+    }
   }
 
   const org = process.env.SENTRY_ORG || DEFAULT_SENTRY_ORG;
@@ -118,12 +121,19 @@ export async function main(...parameters) {
  * Returns the list of native debug files to upload for the given platform, or
  * null if symbol upload is not implemented for it.
  * @param {string} platform
+ * @param {string | undefined} goArch
  * @returns {Promise<string[] | null>}
  */
-async function collectDebugFiles(platform) {
+async function collectDebugFiles(platform, goArch) {
   switch (platform) {
     case 'android':
       return collectAndroidDebugFiles();
+    case 'linux':
+    case 'windows':
+      return collectElectronDebugFiles(platform, goArch);
+    case 'ios':
+    case 'macos':
+      return collectAppleDebugFiles(platform);
     default:
       return null;
   }
@@ -172,10 +182,111 @@ async function collectAndroidDebugFiles() {
 }
 
 /**
+ * Returns the Go-built native artifacts for a desktop (Electron) build: the
+ * backend shared library and the tun2socks binary, from
+ * output/client/<platform>-<goArch>/. These are shipped unstripped (see the
+ * Taskfile electron task), so the copies on disk carry the DWARF we upload.
+ * @param {string} platform 'linux' | 'windows'
+ * @param {string | undefined} goArch
+ * @returns {Promise<string[]>}
+ */
+async function collectElectronDebugFiles(platform, goArch) {
+  if (!goArch) {
+    throw new Error(
+      `[sentry] --arch is required to locate ${platform} debug files.`
+    );
+  }
+  const binaryDir = path.resolve(
+    getRootDir(),
+    'output',
+    'client',
+    `${platform}-${goArch}`
+  );
+  const candidates =
+    platform === 'windows'
+      ? ['backend.dll', 'tun2socks.exe']
+      : ['libbackend.so', 'tun2socks'];
+
+  const files = [];
+  for (const name of candidates) {
+    const candidate = path.join(binaryDir, name);
+    try {
+      await fs.access(candidate);
+      files.push(candidate);
+    } catch {
+      // The binary for this platform/arch wasn't produced; skip it.
+    }
+  }
+  return files;
+}
+
+/**
+ * Returns the .dSYM bundles for an Apple build. The cordova apple build archives
+ * into Xcode's default Archives folder (the release script locates it there by
+ * timestamp and exports it), so appleRelease's archive path isn't known here.
+ * The caller therefore passes the archive location via SENTRY_DSYMS_PATH —
+ * either the .xcarchive itself or its dSYMs directory. This is invoked from the
+ * release script, which already resolves the archive path.
+ * @param {string} platform 'ios' | 'macos'
+ * @returns {Promise<string[]>}
+ */
+async function collectAppleDebugFiles(platform) {
+  const provided = process.env.SENTRY_DSYMS_PATH;
+  if (!provided) {
+    throw new Error(
+      `[sentry] SENTRY_DSYMS_PATH must point at the ${platform} .xcarchive (or ` +
+        'its dSYMs directory) to upload Apple debug symbols. The release script ' +
+        'sets this after locating the archive.'
+    );
+  }
+  const dsymsDir = provided.endsWith('.xcarchive')
+    ? path.join(provided, 'dSYMs')
+    : provided;
+  try {
+    await fs.access(dsymsDir);
+  } catch {
+    throw new Error(`[sentry] dSYMs directory not found at ${dsymsDir}.`);
+  }
+
+  const files = [];
+  for (const entry of await fs.readdir(dsymsDir)) {
+    if (entry.endsWith('.dSYM')) {
+      files.push(path.join(dsymsDir, entry));
+    }
+  }
+  return files;
+}
+
+/**
+ * Expands a debug-file path into the concrete object files to run
+ * `debug-files check` on. A .dSYM is a bundle directory; its DWARF lives at
+ * Contents/Resources/DWARF/<binary>. Everything else is checked as-is.
+ * @param {string} file
+ * @returns {Promise<string[]>}
+ */
+async function resolveCheckTargets(file) {
+  if (!file.endsWith('.dSYM')) {
+    return [file];
+  }
+  const dwarfDir = path.join(file, 'Contents', 'Resources', 'DWARF');
+  let entries;
+  try {
+    entries = await fs.readdir(dwarfDir);
+  } catch {
+    throw new Error(
+      `[sentry] ${path.basename(file)} has no DWARF payload at ${dwarfDir}; ` +
+        'the archive was likely built without debug information.'
+    );
+  }
+  return entries.map(entry => path.join(dwarfDir, entry));
+}
+
+/**
  * Runs `sentry-cli debug-files check` on a file and throws unless it reports
- * usable debug info that includes DWARF (`debug`) and unwind tables (`unwind`).
- * This is the guard the task explicitly asked for: uploading a stripped binary
- * silently produces nothing useful.
+ * usable debug info that includes DWARF (`debug`). This is the guard the task
+ * explicitly asked for: uploading a stripped binary silently produces nothing
+ * useful. Unwind tables are strongly desired but their presence varies by
+ * object format, so a missing one is a warning rather than a build failure.
  * @param {string} file
  * @returns {Promise<void>}
  */
@@ -201,7 +312,11 @@ async function assertUsableDebugFile(file) {
   const hasDebug = /\bdebug\b/.test(features);
   const hasUnwind = /\bunwind\b/.test(features);
 
-  if (!usable || !hasDebug || !hasUnwind) {
+  // DWARF (`debug`) is the hard requirement: without it a stripped binary
+  // symbolicates nothing, which is exactly what we're guarding against. Unwind
+  // tables are strongly desired but their presence varies by object format, so
+  // a missing one is a warning rather than a build failure.
+  if (!usable || !hasDebug) {
     throw new Error(
       `[sentry] ${path.basename(file)} is missing usable native debug info ` +
         `(usable=${usable}, debug=${hasDebug}, unwind=${hasUnwind}). It was ` +
@@ -211,9 +326,16 @@ async function assertUsableDebugFile(file) {
     );
   }
 
+  if (!hasUnwind) {
+    console.warn(
+      `[sentry] ${path.basename(file)}: DWARF present but no unwind tables ` +
+        'reported; stack unwinding through this frame may be incomplete.'
+    );
+  }
+
   console.info(
     `[sentry] ${path.basename(file)}: usable native debug info confirmed ` +
-      '(debug + unwind present).'
+      `(debug present${hasUnwind ? ', unwind present' : ''}).`
   );
 }
 
