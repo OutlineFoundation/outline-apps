@@ -144,12 +144,7 @@ function setupWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      // Before Electron 20, renderers that specified a preload script defaulted to being unsandboxed.
-      // This meant that by default, preload scripts had access to Node.js.
-      // Beginning in Electron 20, renderers are sandboxed by default.
-      // https://www.electronjs.org/docs/latest/breaking-changes#default-changed-renderers-without-nodeintegration-true-are-sandboxed-by-default
-      // TODO: Move all Node.js-dependent logic to the main process and enable sandboxing.
-      sandbox: false,
+      sandbox: true,
       preload: path.join(__dirname, 'preload.js'),
     },
   });
