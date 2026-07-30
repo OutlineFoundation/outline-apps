@@ -1,0 +1,37 @@
+# Copyright 2026 The Outline Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Vpn.AutoReconnect scenario, step 2/3: the runner has just enabled airplane
+# mode. The client must notice the outage and surface the reconnecting state,
+# which persists for as long as the network is down.
+#
+# Two sharp edges (both validated on the emulator):
+#  - Maestro's `text:` is a FULL-STRING regex, and the label is literally
+#    "Reconnecting..." — so the selector must match the ellipsis, not just the
+#    word.
+#  - Toggling airplane mode while the tunnel is up can make the app briefly
+#    unresponsive, raising Android's "Outline isn't responding" ANR dialog.
+#    It's a transient emulator artifact (main-thread jank during the network
+#    transition), so dismiss it with "Wait" and let reconnect continue.
+appId: org.outline.android.client
+name: android-network-change-02-outage
+---
+- tapOn:
+    text: "Wait"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      text: "(?i)reconnecting.*"
+    timeout: 30000
+- takeScreenshot: reconnecting
