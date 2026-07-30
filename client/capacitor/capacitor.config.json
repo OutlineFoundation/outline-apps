@@ -1,8 +1,36 @@
 {
-  "appId": "org.outline.client",
-  "appName": "Outline",
-  "webDir": "www",
-  "plugins": {
-    "CapacitorPluginOutline": {}
-  }
+    "appId": "org.outline.ios.client",
+    "appName": "Outline",
+    "webDir": "www",
+    "bundledWebRuntime": false,
+    "server": {
+      "allowNavigation": [
+          "*"
+      ]
+    },
+    "ios": {
+        "contentInset": "never",
+        "limitsNavigationsToAppBoundDomains": false,
+        "scrollEnabled": true
+    },
+    "plugins": {
+        "SplashScreen": {
+            "launchAutoHide": true,
+            "launchShowDuration": 1000,
+            "backgroundColor": "#0F1621",
+            "androidSplashResourceName": "splash",
+            "androidScaleType": "CENTER_CROP",
+            "iosSplashResourceName": "Splash",
+            "showSpinner": false,
+            "androidSpinnerStyle": "large",
+            "iosSpinnerStyle": "small",
+            "spinnerColor": "#999999",
+            "splashFullScreen": true,
+            "splashImmersive": true,
+            "autoHide": false,
+            "fadeInDuration": 0,
+            "fadeOutDuration": 300
+        },
+        "CapacitorPluginOutline": {}
+    }
 }

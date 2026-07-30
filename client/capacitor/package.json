@@ -31,7 +31,8 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
-    "@capacitor/app": "^8.1.0",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/ios": "^8.3.1",
     "@capacitor/browser": "^8.0.3",
     "@capacitor/core": "^8.3.1",
     "@capacitor/android": "^8.3.1",
