@@ -119,18 +119,17 @@ class ElectronErrorReporter implements OutlineErrorReporter {
     });
   }
 
-  sendFeedback(
+  async sendFeedback(
     message: string,
     feedbackCategory: string,
     userEmail?: string,
     tags?: Tags
-  ): Promise<void> {
-    Sentry.captureFeedback({
+  ): Promise<string> {
+    return Sentry.captureFeedback({
       message: message,
       email: userEmail,
       tags: {...tags, category: feedbackCategory},
     });
-    return Promise.resolve();
   }
 }
 

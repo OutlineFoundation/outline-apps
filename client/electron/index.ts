@@ -234,7 +234,7 @@ function setupWindow(): void {
     (event: Electron.Event, url: string) => {
       try {
         const parsed: URL = new URL(url);
-        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        if (parsed.protocol === 'https:') {
           shell.openExternal(url);
         } else {
           console.warn(

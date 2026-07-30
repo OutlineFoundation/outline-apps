@@ -34,20 +34,20 @@ export const Example = ({
   onSuccess,
   onError,
 }: {
-  onSuccess: Function;
-  onError: Function;
+  onSuccess: () => void;
+  onError: () => void;
 }) => html`
   <contact-view
     .localize=${localize}
     .errorReporter=${{
-      report: (
+      sendFeedback: (
         userFeedback: string,
         feedbackCategory: string,
         userEmail?: string,
         tags?: {[id: string]: string | boolean | number}
       ) => {
         console.log(userFeedback, feedbackCategory, userEmail, tags);
-        return Promise.resolve();
+        return Promise.resolve('test-id');
       },
     }}
     @success=${onSuccess}

@@ -23,7 +23,7 @@ export interface OutlineErrorReporter {
     feedbackCategory: string,
     userEmail?: string,
     tags?: Tags
-  ): Promise<void>;
+  ): Promise<string>;
 }
 
 export class SentryErrorReporter implements OutlineErrorReporter {
@@ -47,9 +47,9 @@ export class SentryErrorReporter implements OutlineErrorReporter {
     feedbackCategory: string,
     userEmail?: string,
     tags?: Tags
-  ): Promise<void> {
+  ): Promise<string> {
     const combinedTags = {...this.tags, ...tags};
-    Sentry.captureFeedback({
+    return Sentry.captureFeedback({
       message: message,
       email: userEmail,
       tags: {
