@@ -15,7 +15,6 @@ import {Browser} from '@capacitor/browser';
 import {Capacitor} from '@capacitor/core';
 import type {PluginListenerHandle} from '@capacitor/core';
 import {CapacitorPluginOutline} from '@capacitor-plugin-outline';
-import * as Sentry from '@sentry/browser';
 import {AbstractClipboard} from '@web/app/clipboard';
 import type {EnvironmentVariables} from '@web/app/environment';
 import {main} from '@web/app/main';
@@ -30,11 +29,12 @@ import type {
 } from '@web/app/outline_server_repository/vpn';
 import type {OutlinePlatform} from '@web/app/platform';
 import {AbstractUpdater} from '@web/app/updater';
-import * as interceptors from '@web/app/url_interceptor';
+import {UrlInterceptor} from '@web/app/url_interceptor';
 import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
 import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
 
 import {CapacitorBrowserMethodChannel} from './browser_method_channel';
+import {CapacitorAndroidUrlInterceptor} from './capacitor_android_url_interceptor';
 
 interface AsyncVpnApi extends VpnApi {
   onStatusChange(
@@ -67,15 +67,20 @@ class CapacitorErrorReporter extends SentryErrorReporter {
     }
   }
 
-  async report(
-    userFeedback: string,
+  async sendFeedback(
+    message: string,
     feedbackCategory: string,
     userEmail?: string
-  ): Promise<void> {
-    await super.report(userFeedback, feedbackCategory, userEmail);
+  ): Promise<string> {
+    const eventId = await super.sendFeedback(
+      message,
+      feedbackCategory,
+      userEmail
+    );
     await CapacitorPluginOutline.reportEvents({
-      uuid: Sentry.lastEventId() || '',
+      uuid: eventId,
     });
+    return eventId;
   }
 }
 
@@ -135,9 +140,9 @@ class CapacitorPlatform implements OutlinePlatform {
 
   getUrlInterceptor() {
     if (Capacitor.getPlatform() === 'android') {
-      return new interceptors.AndroidUrlInterceptor();
+      return new CapacitorAndroidUrlInterceptor();
     }
-    return new interceptors.UrlInterceptor();
+    return new UrlInterceptor();
   }
 
   getClipboard() {

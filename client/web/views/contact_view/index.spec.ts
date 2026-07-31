@@ -190,7 +190,7 @@ describe('ContactView', () => {
         supportForm.dispatchEvent(new CustomEvent('submit'));
         await nextFrame();
 
-        expect(mockErrorReporter.report).toHaveBeenCalledWith(
+        expect(mockErrorReporter.sendFeedback).toHaveBeenCalledWith(
           'Test Description',
           'general',
           'foo@bar.com',
@@ -217,7 +217,7 @@ describe('ContactView', () => {
 
       it('emits failure event when feedback reporting fails', async () => {
         const listener = oneEvent(el, 'error');
-        mockErrorReporter.report.and.throwError('fail');
+        mockErrorReporter.sendFeedback.and.throwError('fail');
 
         const supportForm: SupportForm =
           el.shadowRoot!.querySelector('support-form')!;

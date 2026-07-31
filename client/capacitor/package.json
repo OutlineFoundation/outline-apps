@@ -10,12 +10,15 @@
     "mobile"
   ],
   "scripts": {
+    "assets:generate": "capacitor-assets generate --android && capacitor-assets generate --ios",
     "clean": "rm -rf node_modules www",
     "start": "node ./start.action.mjs",
-    "build": "node ./build.action.mjs"
+    "build:web": "node ./web_build.action.mjs",
+    "capacitor:sync:before": "cd ../.. && go tool task -v client:tun2socks:$CAPACITOR_PLATFORM_NAME && ([ \"$CAPACITOR_PLATFORM_NAME\" != \"android\" ] || go tool task -v client:android:configure)"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.0.0",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/assets": "^3.0.5",
     "@outline/infrastructure": "file:../../infrastructure",
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.4",
@@ -23,15 +26,19 @@
     "style-loader": "^4.0.0",
     "ts-loader": "^9.5.7",
     "webpack": "^5.16.0",
-    "webpack-merge": "^5.8.0",
     "webpack-cli": "^4.4.0",
-    "webpack-dev-server": "^4.5.0"
+    "webpack-dev-server": "^4.5.0",
+    "webpack-merge": "^5.8.0"
   },
   "dependencies": {
-    "@capacitor/browser": "^6.0.6",
-    "@capacitor/core": "^6.2.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/splash-screen": "8.0.1",
     "@polymer/polymer": "^3.5.1",
-    "@sentry/browser": "^7.31.1",
+    "@sentry/browser": "^10.47.0",
+    "@sentry/core": "^10.47.0",
     "@webcomponents/webcomponentsjs": "^2.4.4",
     "capacitor-plugin-outline": "file:./plugins/capacitor-plugin-outline",
     "core-js": "^3.49.0",

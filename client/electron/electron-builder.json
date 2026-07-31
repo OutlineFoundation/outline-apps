@@ -37,9 +37,11 @@
   },
   "win": {
     "icon": "client/electron/icons/win/icon.ico",
-    "sign": "client/electron/windows/electron_builder_signing_plugin.cjs",
-    "signingHashAlgorithms": [
-      "sha256"
-    ]
+    "signtoolOptions": {
+      "sign": "client/electron/windows/electron_builder_signing_plugin.cjs",
+      "signingHashAlgorithms": [
+        "sha256"
+      ]
+    }
   }
 }
