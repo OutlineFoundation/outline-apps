@@ -85,7 +85,7 @@ Use this flow when you need the real Outline Android plugin (VPN, native method 
 ### Requirements (Android)
 
 - [Android Studio](https://developer.android.com/studio) with a recent Android SDK (match the versions in `client/capacitor/android/variables.gradle` and root Gradle files).
-- **JDK 21** — the Android Gradle build compiles against Java 21 (see `client/capacitor/android/app/build.gradle`).
+- **JDK 21** — the Android Gradle build compiles against Java 21 (see `client/capacitor/android/app/build.gradle`). This differs from the Cordova Android client, which builds with JDK 17.
 - A **physical device** with USB debugging or an **AVD** emulator.
 - **Go** on your `PATH` (`npm run capacitor:sync:before` runs `go tool task` for tun2socks and Android configure; see `package.json` in this directory).
 
