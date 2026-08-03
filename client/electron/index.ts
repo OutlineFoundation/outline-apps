@@ -59,6 +59,13 @@ const debugMode = process.env.OUTLINE_DEBUG === 'true';
 const IS_LINUX = os.platform() === 'linux';
 const IS_WINDOWS = os.platform() === 'win32';
 
+if (IS_LINUX) {
+  // GPU rendering freezes the UI on some Linux systems (buttons never paint on
+  // the first-run screen): https://github.com/OutlineFoundation/outline-apps/issues/2794
+  // Must be set before the app's "ready" event.
+  app.commandLine.appendSwitch('disable-gpu');
+}
+
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
 const tunnelStore = new TunnelStore(app.getPath('userData'));
