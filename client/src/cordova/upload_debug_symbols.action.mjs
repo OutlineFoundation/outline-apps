@@ -29,6 +29,10 @@ import {getBuildParameters} from '../../build/get_build_parameters.mjs';
 const DEFAULT_SENTRY_ORG = 'outlinevpn';
 const DEFAULT_SENTRY_PROJECT = 'outline-clients';
 
+// Temp directories created while collecting debug files (e.g. the Android .aar
+// extraction). They must outlive the upload, so main() removes them on exit.
+const tempDirs = [];
+
 /**
  * Resolve the sentry-cli binary. Prefer the path exported by the @sentry/cli
  * package so this works whether or not node_modules/.bin is on PATH; fall back
@@ -68,53 +72,61 @@ export async function main(...parameters) {
     return;
   }
 
-  const debugFiles = await collectDebugFiles(platform, goArch);
-  if (debugFiles === null) {
-    console.warn(
-      '[sentry] Native debug symbol upload is not implemented for platform ' +
-        `"${platform}"; skipping.`
-    );
-    return;
-  }
-  if (debugFiles.length === 0) {
-    throw new Error(
-      `[sentry] No native debug files were found for ${platform}. Expected at ` +
-        'least one binary with DWARF. Was the release build run first?'
-    );
-  }
-
-  // Verify every file actually carries usable debug info BEFORE uploading. A
-  // stripped binary uploads "successfully" but resolves nothing, so we fail the
-  // build here rather than ship a symbol pipeline that silently does nothing.
-  // dSYM bundles are directories; check the DWARF binaries inside them.
-  for (const file of debugFiles) {
-    for (const target of await resolveCheckTargets(file)) {
-      await assertUsableDebugFile(target);
+  try {
+    const debugFiles = await collectDebugFiles(platform, goArch);
+    if (debugFiles === null) {
+      console.warn(
+        '[sentry] Native debug symbol upload is not implemented for platform ' +
+          `"${platform}"; skipping.`
+      );
+      return;
     }
+    if (debugFiles.length === 0) {
+      throw new Error(
+        `[sentry] No native debug files were found for ${platform}. Expected at ` +
+          'least one binary with DWARF. Was the release build run first?'
+      );
+    }
+
+    // Verify every file actually carries usable debug info BEFORE uploading. A
+    // stripped binary uploads "successfully" but resolves nothing, so we fail the
+    // build here rather than ship a symbol pipeline that silently does nothing.
+    // dSYM bundles are directories; check the DWARF binaries inside them.
+    for (const file of debugFiles) {
+      for (const target of await resolveCheckTargets(file)) {
+        await assertUsableDebugFile(target);
+      }
+    }
+
+    const org = process.env.SENTRY_ORG || DEFAULT_SENTRY_ORG;
+    const project = process.env.SENTRY_PROJECT || DEFAULT_SENTRY_PROJECT;
+
+    await spawnStream(
+      resolveSentryCli(),
+      'debug-files',
+      'upload',
+      '--org',
+      org,
+      '--project',
+      project,
+      // Bundle the referenced native sources so Sentry can show source context in
+      // native stack frames (the analog of the Gradle plugin's
+      // includeNativeSources = true).
+      '--include-sources',
+      ...debugFiles
+    );
+
+    console.info(
+      `[sentry] Uploaded ${debugFiles.length} native debug file(s) for ` +
+        `${platform} to ${org}/${project}.`
+    );
+  } finally {
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map(dir => fs.rm(dir, {recursive: true, force: true}))
+    );
   }
-
-  const org = process.env.SENTRY_ORG || DEFAULT_SENTRY_ORG;
-  const project = process.env.SENTRY_PROJECT || DEFAULT_SENTRY_PROJECT;
-
-  await spawnStream(
-    resolveSentryCli(),
-    'debug-files',
-    'upload',
-    '--org',
-    org,
-    '--project',
-    project,
-    // Bundle the referenced native sources so Sentry can show source context in
-    // native stack frames (the analog of the Gradle plugin's
-    // includeNativeSources = true).
-    '--include-sources',
-    ...debugFiles
-  );
-
-  console.info(
-    `[sentry] Uploaded ${debugFiles.length} native debug file(s) for ` +
-      `${platform} to ${org}/${project}.`
-  );
 }
 
 /**
@@ -164,6 +176,7 @@ async function collectAndroidDebugFiles() {
   const outDir = await fs.mkdtemp(
     path.join(os.tmpdir(), 'outline-android-syms-')
   );
+  tempDirs.push(outDir);
   // The .aar is a zip; jni/<abi>/libgojni.so holds the native code. Preserve the
   // jni/<abi>/ layout so same-named .so files across ABIs don't collide.
   await spawnStream('unzip', '-o', '-q', aar, 'jni/*', '-d', outDir);
