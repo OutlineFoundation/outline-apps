@@ -1,8 +1,6 @@
-# Capacitor client (browser)
+# Capacitor client
 
-This directory is the Capacitor-based client shell. **This README documents the browser workflow only** (webpack bundle under `client/capacitor/www/`).
-
-Run all commands from the **repository root** using `npm run action`.
+This directory is the Capacitor-based client shell. These instructions cover both the **browser** dev workflow (webpack bundle under `client/capacitor/www/`) and the native **Android** build.
 
 ## Requirements (browser)
 
@@ -87,24 +85,31 @@ Use this flow when you need the real Outline Android plugin (VPN, native method 
 ### Requirements (Android)
 
 - [Android Studio](https://developer.android.com/studio) with a recent Android SDK (match the versions in `client/capacitor/android/variables.gradle` and root Gradle files).
+- **JDK 21** — the Android Gradle build compiles against Java 21 (see `client/capacitor/android/app/build.gradle`). This differs from the Cordova Android client, which builds with JDK 17.
 - A **physical device** with USB debugging or an **AVD** emulator.
 - **Go** on your `PATH` (`npm run capacitor:sync:before` runs `go tool task` for tun2socks and Android configure; see `package.json` in this directory).
 
 ### Steps to build and start the app
 
-1. **Go to the Capacitor project directory:**
+1. **Build the web bundle** (`www/`), from the **repository root**:
+
+   ```sh
+   npm run action client/capacitor/web_build android
+   ```
+
+2. **Go to the Capacitor project directory:**
 
    ```sh
    cd client/capacitor
    ```
 
-2. **Sync the Android project** (runs `capacitor:sync:before`: Go tun2socks, Android configure; then copies web assets into the native app and refreshes plugins):
+3. **Sync the Android project** (runs `capacitor:sync:before`: Go tun2socks, Android configure; then copies the web assets built in step 1 into the native app and refreshes plugins):
 
    ```sh
    npx cap sync android
    ```
 
-3. **Install and launch** on the default device or running emulator:
+4. **Install and launch** on the default device or running emulator:
 
    ```sh
    npx cap run android
