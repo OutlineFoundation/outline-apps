@@ -125,8 +125,8 @@
     "message": "Allow Outline to connect me to the internet with limited protection"
   },
   "contact_page_title": {
-    "description": "The menu item text and title of a page for a user to contact the support team.",
-    "message": "Contact us"
+    "description": "The menu item text and title of a page for a user to send feedback to the team.",
+    "message": "Feedback"
   },
   "contact_view_exit_billing": {
     "description": "Message shown to users who are trying to contact support about an unsupported issue.",
@@ -182,10 +182,6 @@
     "description": "Label of a Contact Support form input field.",
     "message": "Outline issue"
   },
-  "contact_view_issue_billing": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I need assistance with a billing or subscription issue"
-  },
   "contact_view_issue_cannot_add_server": {
     "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
     "message": "I am having trouble adding a server using my access key"
@@ -201,10 +197,6 @@
   "contact_view_issue_managing": {
     "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
     "message": "I need assistance managing my Outline VPN server or helping others connect to it"
-  },
-  "contact_view_issue_no_server": {
-    "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
-    "message": "I need an access key"
   },
   "contact_view_issue_performance": {
     "description": "Item in a dropdown menu on our contact page to select the issue the user is trying to contact support about.",
@@ -712,8 +704,8 @@
     "message": "Description of the issue"
   },
   "support_form_email": {
-    "description": "Label of a Contact Support form input field.",
-    "message": "Email"
+    "description": "Label of an optional email address field in the feedback form.",
+    "message": "Email address (optional)"
   },
   "support_form_email_invalid": {
     "description": "Error message shown to a user supplying an invalid email address on the Contact Support form.",

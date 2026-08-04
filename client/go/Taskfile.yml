@@ -21,7 +21,20 @@ vars:
   OUT_DIR: '{{joinPath .REPO_ROOT "output/client"}}'
   BIN_DIR: '{{joinPath .OUT_DIR "/bin"}}'
   MOBILE_PKG: "{{.TASKFILE_DIR}}/outline/tun2socks"
-  GOMOBILE_BIND_CMD: "env PATH=\"{{.BIN_DIR}}:${PATH}\" CGO_CFLAGS='-fstack-protector-strong' '{{.BIN_DIR}}/gomobile' bind -ldflags='-s -w'"
+  # gomobile bind that keeps native debug info so crashes in the bound library
+  # (Android libgojni.so, Apple Tun2socks.xcframework) can be symbolicated in
+  # Sentry. Unlike a stripped build:
+  #   - No `-ldflags='-s -w'`: `-s` strips the symbol table, `-w` strips DWARF.
+  #     Omitting both leaves symtab + DWARF in the output, which sentry-cli
+  #     needs (a stripped binary uploads but resolves nothing).
+  #   - `-g` in CGO_CFLAGS: emits DWARF for the cgo/C frames too (e.g. lwIP's
+  #     udp_input), not just the Go frames.
+  # The debug files are uploaded to Sentry by the
+  # client/src/cordova/upload_debug_symbols action (Android: the unstripped .so
+  # from the .aar; Apple: the archive's dSYMs). Shipped app size is unaffected:
+  # the Android Gradle Plugin strips the copy packaged into the APK, and Apple
+  # dSYMs live outside the app bundle.
+  GOMOBILE_BIND_CMD: "env PATH=\"{{.BIN_DIR}}:${PATH}\" CGO_CFLAGS='-fstack-protector-strong -g' '{{.BIN_DIR}}/gomobile' bind"
 
 tasks:
   electron:
@@ -43,17 +56,21 @@ tasks:
       #   Windows: requires 32-bit
       #   Linux: requires older glibc for wider compatibility
       # Linker flags: https://pkg.go.dev/cmd/link
-      #   -s Omit the symbol table and debug information.
-      #   -w Omit the DWARF symbol table.
       #   -X Set the value of the string variable.
+      # We intentionally do NOT pass `-s -w`: `-s` strips the symbol table and
+      # `-w` strips DWARF. Keeping both leaves the debug info that sentry-cli
+      # needs to symbolicate native crashes in the desktop tun2socks binary and
+      # backend library; these files are uploaded to Sentry by the
+      # client/src/cordova/upload_debug_symbols action. The desktop package ships
+      # the unstripped binaries (the size delta is negligible next to Electron).
       - |
         GOOS={{.TARGET_OS}} GOARCH={{.TARGET_ARCH}} CGO_ENABLED=1 \
         CC='zig cc -target {{.ZIG_TARGET}}' \
-        go build -trimpath -ldflags="-s -w -X=main.version={{.TUN2SOCKS_VERSION}}" -o '{{.OUTPUT}}' '{{.TASKFILE_DIR}}/outline/electron'
+        go build -trimpath -ldflags="-X=main.version={{.TUN2SOCKS_VERSION}}" -o '{{.OUTPUT}}' '{{.TASKFILE_DIR}}/outline/electron'
       - |
         GOOS={{.TARGET_OS}} GOARCH={{.TARGET_ARCH}} CGO_ENABLED=1 \
         CC='zig cc -target {{.ZIG_TARGET}}' \
-        go build -trimpath -buildmode=c-shared -ldflags="-s -w -X=main.version={{.TUN2SOCKS_VERSION}}" -o '{{.OUTPUT_LIB}}' '{{.TASKFILE_DIR}}/outline/electron'
+        go build -trimpath -buildmode=c-shared -ldflags="-X=main.version={{.TUN2SOCKS_VERSION}}" -o '{{.OUTPUT_LIB}}' '{{.TASKFILE_DIR}}/outline/electron'
 
   windows:
     deps: [windows:386]

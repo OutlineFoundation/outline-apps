@@ -64,10 +64,7 @@ export const CompleteForm = ({
 }) => {
   const values: FormValues = {
     email: 'foo@bar.com',
-    subject: 'My Test Subject',
     description: 'My Test Description',
-    accessKeySource: 'a friend',
-    outreachConsent: true,
   };
   return html`
     <support-form

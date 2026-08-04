@@ -59,6 +59,13 @@ const debugMode = process.env.OUTLINE_DEBUG === 'true';
 const IS_LINUX = os.platform() === 'linux';
 const IS_WINDOWS = os.platform() === 'win32';
 
+if (IS_LINUX) {
+  // GPU rendering freezes the UI on some Linux systems (buttons never paint on
+  // the first-run screen): https://github.com/OutlineFoundation/outline-apps/issues/2794
+  // Must be set before the app's "ready" event.
+  app.commandLine.appendSwitch('disable-gpu');
+}
+
 // Used for the auto-connect feature. There will be a tunnel in store
 // if the user was connected at shutdown.
 const tunnelStore = new TunnelStore(app.getPath('userData'));
@@ -144,12 +151,7 @@ function setupWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      // Before Electron 20, renderers that specified a preload script defaulted to being unsandboxed.
-      // This meant that by default, preload scripts had access to Node.js.
-      // Beginning in Electron 20, renderers are sandboxed by default.
-      // https://www.electronjs.org/docs/latest/breaking-changes#default-changed-renderers-without-nodeintegration-true-are-sandboxed-by-default
-      // TODO: Move all Node.js-dependent logic to the main process and enable sandboxing.
-      sandbox: false,
+      sandbox: true,
       preload: path.join(__dirname, 'preload.js'),
     },
   });

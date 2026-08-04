@@ -26,9 +26,7 @@ import {localize} from '../../testing/localize';
 
 describe('ContactView', () => {
   const ISSUE_TYPES = [
-    'no-server',
     'cannot-add-server',
-    'billing',
     'connection',
     'performance',
     'general',
@@ -55,191 +53,88 @@ describe('ContactView', () => {
     expect(el).toBeInstanceOf(ContactView);
   });
 
-  it('hides issue selector by default', async () => {
+  it('shows the issue selector', () => {
     const issueSelector = el.shadowRoot?.querySelector('mwc-select');
     expect(issueSelector).not.toBeNull();
-    expect(issueSelector!.hasAttribute('hidden')).toBeTrue();
   });
 
-  it('hides support form by default', async () => {
-    const supportForm = el.shadowRoot?.querySelector('support-form');
-    expect(supportForm).toBeNull();
+  it('shows the correct items in the selector', () => {
+    const issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
+    const issueItemEls = issueSelector.querySelectorAll('mwc-list-item');
+    const issueTypes = Array.from(issueItemEls).map(
+      el => (el as {value: string}).value
+    );
+    expect(issueTypes).toEqual(ISSUE_TYPES);
   });
 
-  it('shows exit message if the user selects that they have an open ticket', async () => {
-    const radioButton = el.shadowRoot!.querySelectorAll(
-      'mwc-formfield mwc-radio'
-    )[0] as HTMLElement;
-    radioButton.click();
-    await nextFrame();
-
-    const exitCard = el.shadowRoot!.querySelector('.exit')!;
-    expect(exitCard.textContent).toContain('experiencing high support volume');
+  it('shows the support form', () => {
+    const supportForm = el.shadowRoot!.querySelector('support-form');
+    expect(supportForm).not.toBeNull();
   });
 
-  it('resets the view on `reset()`', async () => {
-    const radioButton = el.shadowRoot!.querySelectorAll(
-      'mwc-formfield mwc-radio'
-    )[0] as HTMLElement;
-    radioButton.click();
-    await nextFrame();
-
-    el.reset();
-    await nextFrame();
-
-    const exitCard = el.shadowRoot!.querySelector('.exit')!;
-    expect(exitCard).toBeNull();
-  });
-
-  describe('when the user selects that they have no open tickets', () => {
-    let issueSelector: Element;
+  describe('when the support form is submitted', () => {
+    let supportForm: SupportForm;
 
     beforeEach(async () => {
-      const radioButton = el.shadowRoot!.querySelectorAll(
-        'mwc-formfield mwc-radio'
-      )[1] as HTMLElement;
-      radioButton.click();
+      supportForm = el.shadowRoot!.querySelector('support-form')!;
+      supportForm.values.email = 'foo@bar.com';
+      supportForm.values.description = 'Test Description';
+      supportForm.valid = true;
+    });
+
+    it('reports the default "general" category when no issue is selected', async () => {
+      supportForm.dispatchEvent(new CustomEvent('submit'));
       await nextFrame();
 
-      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
-    });
-
-    it('shows the issue selector', () => {
-      expect(issueSelector.hasAttribute('hidden')).toBeFalse();
-    });
-
-    it('shows the correct items in the selector', () => {
-      const issueItemEls = issueSelector.querySelectorAll('mwc-list-item');
-      const issueTypes = Array.from(issueItemEls).map(
-        el => (el as {value: string}).value
+      expect(mockErrorReporter.sendFeedback).toHaveBeenCalledWith(
+        'Test Description',
+        'general',
+        'foo@bar.com',
+        {
+          formVersion: 2,
+        }
       );
-      expect(issueTypes).toEqual(ISSUE_TYPES);
     });
-  });
 
-  describe('when the user selects issue', () => {
-    let issueSelector: Element;
-
-    beforeEach(async () => {
-      issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
-      const radioButton = el.shadowRoot!.querySelectorAll(
-        'mwc-formfield mwc-radio'
-      )[1] as HTMLElement;
-      radioButton.click();
+    it('reports the selected category', async () => {
+      const issueSelector = el.shadowRoot!.querySelector('mwc-select')!;
+      issueSelector.dispatchEvent(
+        new CustomEvent('selected', {
+          detail: {index: ISSUE_TYPES.indexOf('connection')},
+        })
+      );
       await nextFrame();
+
+      supportForm.dispatchEvent(new CustomEvent('submit'));
+      await nextFrame();
+
+      expect(mockErrorReporter.sendFeedback).toHaveBeenCalledWith(
+        'Test Description',
+        'connection',
+        'foo@bar.com',
+        {
+          formVersion: 2,
+        }
+      );
     });
 
-    const conditions = [
-      {
-        testcaseName: 'I need an access key',
-        value: 'no-server',
-        expectedMsg: 'does not distribute free or paid access keys',
-      },
-      {
-        testcaseName: 'I am having trouble adding a server using my access key',
-        value: 'cannot-add-server',
-        expectedMsg: 'assist with adding a server',
-      },
-      {
-        testcaseName: 'I need assistance with a billing or subscription issue',
-        value: 'billing',
-        expectedMsg: 'does not collect payment',
-      },
-      {
-        testcaseName: 'I am having trouble connecting to my Outline VPN server',
-        value: 'connection',
-        expectedMsg: 'assist with connecting to a server',
-      },
-    ];
+    it('emits success event on completion of support form', async () => {
+      const listener = oneEvent(el, 'success');
 
-    for (const {testcaseName, value, expectedMsg} of conditions) {
-      it(`'${testcaseName}' shows exit message`, async () => {
-        const selectedIndex = ISSUE_TYPES.indexOf(value);
-        issueSelector.dispatchEvent(
-          new CustomEvent('selected', {detail: {index: selectedIndex}})
-        );
-        await nextFrame();
+      supportForm.dispatchEvent(new CustomEvent('submit'));
 
-        const exitCard = el.shadowRoot!.querySelector('.exit')!;
-        expect(exitCard.textContent).toContain(expectedMsg);
-      });
-    }
+      const {detail} = await listener;
+      expect(detail).toBeNull();
+    });
 
-    describe('"General feedback & suggestions"', () => {
-      beforeEach(async () => {
-        issueSelector.dispatchEvent(
-          new CustomEvent('selected', {detail: {index: ISSUE_TYPES.length - 1}})
-        );
-        await nextFrame();
-      });
+    it('emits failure event when feedback reporting fails', async () => {
+      const listener = oneEvent(el, 'error');
+      mockErrorReporter.sendFeedback.and.throwError('fail');
 
-      it('shows support form', async () => {
-        const supportForm = el.shadowRoot!.querySelector('support-form')!;
-        expect(supportForm).not.toBeNull();
-      });
+      supportForm.dispatchEvent(new CustomEvent('submit'));
 
-      it('reports correct values to error reporter on completion of support form', async () => {
-        const supportForm: SupportForm =
-          el.shadowRoot!.querySelector('support-form')!;
-        supportForm.values.email = 'foo@bar.com';
-        supportForm.values.subject = 'Test Subject';
-        supportForm.values.accessKeySource = 'a friend';
-        supportForm.values.description = 'Test Description';
-        supportForm.values.outreachConsent = true;
-        supportForm.valid = true;
-        supportForm.dispatchEvent(new CustomEvent('submit'));
-        await nextFrame();
-
-        expect(mockErrorReporter.sendFeedback).toHaveBeenCalledWith(
-          'Test Description',
-          'general',
-          'foo@bar.com',
-          {
-            subject: 'Test Subject',
-            accessKeySource: 'a friend',
-            outreachConsent: true,
-            formVersion: 2,
-          }
-        );
-      });
-
-      it('emits success event on completion of support form', async () => {
-        const listener = oneEvent(el, 'success');
-
-        const supportForm: SupportForm =
-          el.shadowRoot!.querySelector('support-form')!;
-        supportForm.valid = true;
-        supportForm.dispatchEvent(new CustomEvent('submit'));
-
-        const {detail} = await listener;
-        expect(detail).toBeNull();
-      });
-
-      it('emits failure event when feedback reporting fails', async () => {
-        const listener = oneEvent(el, 'error');
-        mockErrorReporter.sendFeedback.and.throwError('fail');
-
-        const supportForm: SupportForm =
-          el.shadowRoot!.querySelector('support-form')!;
-        supportForm.valid = true;
-        supportForm.dispatchEvent(new CustomEvent('submit'));
-
-        const {detail} = await listener;
-        expect(detail).toBeNull();
-      });
-
-      it('shows default contact view on cancellation of support form', async () => {
-        el.shadowRoot!.querySelector('support-form')!.dispatchEvent(
-          new CustomEvent('cancel')
-        );
-
-        await nextFrame();
-
-        expect(el.shadowRoot?.querySelector('p.intro')?.textContent).toContain(
-          'Tell us how we can help.'
-        );
-        expect(el.shadowRoot?.querySelector('support-form')).toBeNull();
-      });
+      const {detail} = await listener;
+      expect(detail).toBeNull();
     });
   });
 });

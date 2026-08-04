@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {TextArea} from '@material/mwc-textarea';
 import {TextField} from '@material/mwc-textfield';
 
 import {
@@ -27,7 +28,7 @@ import {
 
 import {FormValues, SupportForm} from './index';
 
-async function setValue(el: TextField, value: string) {
+async function setValue(el: TextField | TextArea, value: string) {
   await triggerFocusFor(el);
   el.value = value;
   await triggerBlurFor(el);
@@ -43,10 +44,7 @@ describe('SupportForm', () => {
   it('sets fields with provided form values', async () => {
     const values: FormValues = {
       email: 'foo@bar.com',
-      accessKeySource: 'a friend',
-      subject: 'Test Subject',
       description: 'Test Description',
-      outreachConsent: false,
     };
     const el = await fixture(html`
       <support-form .values=${values}></support-form>
@@ -56,15 +54,7 @@ describe('SupportForm', () => {
       'mwc-textfield[name="email"'
     )!;
     expect(emailInput.value).toBe('foo@bar.com');
-    const accessKeySourceInput: TextField = el.shadowRoot!.querySelector(
-      'mwc-textfield[name="accessKeySource"'
-    )!;
-    expect(accessKeySourceInput.value).toBe('a friend');
-    const subjectInput: TextField = el.shadowRoot!.querySelector(
-      'mwc-textfield[name="subject"'
-    )!;
-    expect(subjectInput.value).toBe('Test Subject');
-    const descriptionInput: TextField = el.shadowRoot!.querySelector(
+    const descriptionInput: TextArea = el.shadowRoot!.querySelector(
       'mwc-textarea[name="description"'
     )!;
     expect(descriptionInput.value).toBe('Test Description');
@@ -93,6 +83,19 @@ describe('SupportForm', () => {
     expect(submitButton.hasAttribute('disabled')).toBeTrue();
   });
 
+  it('is valid without an email, since it is optional', async () => {
+    const el: SupportForm = await fixture(html`
+      <support-form></support-form>
+    `);
+    const descriptionInput: TextArea = el.shadowRoot!.querySelector(
+      'mwc-textarea[name="description"'
+    )!;
+    await setValue(descriptionInput, 'Test Description');
+    await nextFrame();
+
+    expect(el.valid).toBeTrue();
+  });
+
   describe('when form is valid', () => {
     let el: SupportForm;
     let submitButton: HTMLElement;
@@ -104,15 +107,7 @@ describe('SupportForm', () => {
         'mwc-textfield[name="email"'
       )!;
       await setValue(emailInput, 'foo@bar.com');
-      const accessKeySourceInput: TextField = el.shadowRoot!.querySelector(
-        'mwc-textfield[name="accessKeySource"'
-      )!;
-      await setValue(accessKeySourceInput, 'From a friend');
-      const subjectInput: TextField = el.shadowRoot!.querySelector(
-        'mwc-textfield[name="subject"'
-      )!;
-      await setValue(subjectInput, 'Test Subject');
-      const descriptionInput: TextField = el.shadowRoot!.querySelector(
+      const descriptionInput: TextArea = el.shadowRoot!.querySelector(
         'mwc-textarea[name="description"'
       )!;
       await setValue(descriptionInput, 'Test Description');

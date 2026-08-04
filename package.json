@@ -26,6 +26,7 @@
     "client/capacitor"
   ],
   "devDependencies": {
+    "@sentry/cli": "^3.6.2",
     "@storybook/addon-essentials": "^8.2.6",
     "@storybook/addon-links": "^8.2.6",
     "@storybook/blocks": "^8.2.6",

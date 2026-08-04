@@ -19,8 +19,6 @@
 
 // Please also update preload.d.ts whenever you changed this file.
 
-import * as os from 'node:os';
-
 import {
   clipboard,
   contextBridge,
@@ -97,7 +95,7 @@ export class ElectronRendererMethodChannel {
 contextBridge.exposeInMainWorld('electron', {
   // TODO: move this os definition to a platform api call in the future
   os: {
-    platform: os.platform(),
+    platform: process.platform,
   },
   // TODO: move this clipboard definition to a platform api call as well
   clipboard: clipboard,
