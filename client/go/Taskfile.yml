@@ -21,23 +21,20 @@ vars:
   OUT_DIR: '{{joinPath .REPO_ROOT "output/client"}}'
   BIN_DIR: '{{joinPath .OUT_DIR "/bin"}}'
   MOBILE_PKG: "{{.TASKFILE_DIR}}/outline/tun2socks"
-  # Android gomobile bind that keeps native debug info so crashes inside
-  # libgojni.so can be symbolicated in Sentry. Unlike a stripped build:
+  # gomobile bind that keeps native debug info so crashes in the bound library
+  # (Android libgojni.so, Apple Tun2socks.xcframework) can be symbolicated in
+  # Sentry. Unlike a stripped build:
   #   - No `-ldflags='-s -w'`: `-s` strips the symbol table, `-w` strips DWARF.
-  #     Omitting both leaves symtab + DWARF in the .so, which sentry-cli needs
-  #     (a stripped .so uploads but resolves nothing).
+  #     Omitting both leaves symtab + DWARF in the output, which sentry-cli
+  #     needs (a stripped binary uploads but resolves nothing).
   #   - `-g` in CGO_CFLAGS: emits DWARF for the cgo/C frames too (e.g. lwIP's
   #     udp_input), not just the Go frames.
-  # The unstripped .so is uploaded to Sentry as a debug file by the
-  # client/src/cordova/upload_debug_symbols action; the Android Gradle Plugin
-  # still strips the copy packaged into the shipped APK, so app size is
-  # unaffected.
-  GOMOBILE_BIND_CMD_ANDROID: "env PATH=\"{{.BIN_DIR}}:${PATH}\" CGO_CFLAGS='-fstack-protector-strong -g' '{{.BIN_DIR}}/gomobile' bind"
-  # Apple build variant, same rationale as GOMOBILE_BIND_CMD_ANDROID: keep the
-  # symbol table + DWARF (no `-s -w`) and add `-g` for the cgo/C frames, so
-  # Xcode's archive step produces dSYMs that resolve native (Go) frames. The
-  # dSYMs are uploaded to Sentry by the upload_debug_symbols action.
-  GOMOBILE_BIND_CMD_APPLE: "env PATH=\"{{.BIN_DIR}}:${PATH}\" CGO_CFLAGS='-fstack-protector-strong -g' '{{.BIN_DIR}}/gomobile' bind"
+  # The debug files are uploaded to Sentry by the
+  # client/src/cordova/upload_debug_symbols action (Android: the unstripped .so
+  # from the .aar; Apple: the archive's dSYMs). Shipped app size is unaffected:
+  # the Android Gradle Plugin strips the copy packaged into the APK, and Apple
+  # dSYMs live outside the app bundle.
+  GOMOBILE_BIND_CMD: "env PATH=\"{{.BIN_DIR}}:${PATH}\" CGO_CFLAGS='-fstack-protector-strong -g' '{{.BIN_DIR}}/gomobile' bind"
 
 tasks:
   electron:
@@ -111,7 +108,7 @@ tasks:
       - '{{.OUT_DIR}}/android/.env'
     cmds:
       - rm -rf "{{.TARGET_DIR}}" && mkdir -p "{{.TARGET_DIR}}"
-      - "{{.GOMOBILE_BIND_CMD_ANDROID}} -target=android -androidapi '{{.ANDROID_API}}' -o '{{.TARGET_DIR}}/tun2socks-0.0.1.aar' '{{.TASKFILE_DIR}}/outline/platerrors' '{{.TASKFILE_DIR}}/outline/tun2socks' '{{.TASKFILE_DIR}}/outline'"
+      - "{{.GOMOBILE_BIND_CMD}} -target=android -androidapi '{{.ANDROID_API}}' -o '{{.TARGET_DIR}}/tun2socks-0.0.1.aar' '{{.TASKFILE_DIR}}/outline/platerrors' '{{.TASKFILE_DIR}}/outline/tun2socks' '{{.TASKFILE_DIR}}/outline'"
       - echo $'<?xml version="1.0" encoding="UTF-8"?>\n<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n  <modelVersion>4.0.0</modelVersion>\n  <groupId>org.getoutline.client</groupId>\n  <artifactId>tun2socks</artifactId>\n  <version>0.0.1</version>\n  <packaging>aar</packaging>\n</project>' > "{{.TARGET_DIR}}/tun2socks-0.0.1.pom"
     deps: ["gomobile", ":client:android:configure"]
 
@@ -129,7 +126,7 @@ tasks:
       GODEBUG: gotypesalias=0
     cmds:
       - rm -rf "{{.TARGET_DIR}}" && mkdir -p "{{.TARGET_DIR}}"
-      - export MACOSX_DEPLOYMENT_TARGET={{.MACOSX_DEPLOYMENT_TARGET}}; {{.GOMOBILE_BIND_CMD_APPLE}} -target=ios,iossimulator,maccatalyst -iosversion={{.TARGET_IOS_VERSION}} -bundleid org.outline.tun2socks -o '{{.TARGET_DIR}}/Tun2socks.xcframework' '{{.TASKFILE_DIR}}/outline/platerrors' '{{.TASKFILE_DIR}}/outline/tun2socks' '{{.TASKFILE_DIR}}/outline'
+      - export MACOSX_DEPLOYMENT_TARGET={{.MACOSX_DEPLOYMENT_TARGET}}; {{.GOMOBILE_BIND_CMD}} -target=ios,iossimulator,maccatalyst -iosversion={{.TARGET_IOS_VERSION}} -bundleid org.outline.tun2socks -o '{{.TARGET_DIR}}/Tun2socks.xcframework' '{{.TASKFILE_DIR}}/outline/platerrors' '{{.TASKFILE_DIR}}/outline/tun2socks' '{{.TASKFILE_DIR}}/outline'
     deps: ["gomobile"]
 
   browser:
