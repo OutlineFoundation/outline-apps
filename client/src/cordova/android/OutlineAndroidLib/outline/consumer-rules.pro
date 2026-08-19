@@ -57,3 +57,12 @@
 -keep class org.outline.vpn.VpnTunnelService { *; }
 -keep class org.outline.vpn.VpnServiceStarter { *; }
 -keep class org.outline.vpn.QuickSettingsTileService { *; }
+
+# --- Runtime-derived names -------------------------------------------------
+# VpnTunnelStore derives its SharedPreferences filename from its own class name
+# (VpnTunnelStore.class.getName()). This must hold in the *app* R8 pass too
+# (now that the app module minifies): obfuscating the name would point the app,
+# boot receiver, and Quick Settings tile at a different store and lose the
+# user's persisted tunnel state across an update. (The library's own R8 pass is
+# covered by proguard-rules.pro; this consumer rule covers the app's pass.)
+-keepnames class org.outline.vpn.VpnTunnelStore
