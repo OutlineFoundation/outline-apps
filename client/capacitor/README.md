@@ -89,6 +89,16 @@ Use this flow when you need the real Outline Android plugin (VPN, native method 
 - A **physical device** with USB debugging or an **AVD** emulator.
 - **Go** on your `PATH` (`npm run capacitor:sync:before` runs `go tool task` for tun2socks and Android configure; see `package.json` in this directory).
 
+### Build the debug APK (one command)
+
+From the **repository root**:
+
+```sh
+npm run action client/capacitor/build android
+```
+
+This runs the full build: the web bundle, `cap sync android` (tun2socks + native sync), and `gradlew assembleDebug`. It is what CI runs. To also install and launch the app on a device, use the steps below instead.
+
 ### Steps to build and start the app
 
 1. **Build the web bundle** (`www/`), from the **repository root**:

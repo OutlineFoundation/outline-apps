@@ -299,9 +299,4 @@ jobs:
           go-version-file: '${{ github.workspace }}/go.mod'
 
       - name: Build Android Capacitor Client
-        run: |
-          npm run action client/capacitor/web_build android
-          cd client/capacitor
-          npx cap sync android
-          cd android
-          ./gradlew assembleDebug
+        run: npm run action client/capacitor/build android
