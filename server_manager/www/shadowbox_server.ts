@@ -111,8 +111,7 @@ function makeAccessKeyModel(apiAccessKey: AccessKeyJson): server.AccessKey {
 export class ShadowboxServer implements server.Server {
   private api: PathApiClient;
   private serverConfig: ServerConfigJson;
-  private _supportedExperimentalUniversalMetricsEndpointCache: boolean | null =
-    null;
+  private supportedExperimentalMetrics?: Promise<boolean>;
 
   constructor(private readonly id: string) {}
 
@@ -266,8 +265,9 @@ export class ShadowboxServer implements server.Server {
       accessKeys: [],
     };
 
-    const jsonResponse =
-      await this.api.request<DataUsageByAccessKeyJson>('metrics/transfer');
+    const jsonResponse = await this.api.request<DataUsageByAccessKeyJson>(
+      'metrics/transfer'
+    );
 
     for (const [accessKeyId, bytes] of Object.entries(
       jsonResponse.bytesTransferredByUserId
@@ -312,24 +312,23 @@ export class ShadowboxServer implements server.Server {
     return this.serverConfig.serverId;
   }
 
-  isHealthy(timeoutMs = 30000): Promise<boolean> {
-    return new Promise<boolean>((fulfill, _reject) => {
-      // Return not healthy if API doesn't complete within timeoutMs.
-      const timeout = setTimeout(() => fulfill(false), timeoutMs);
-      // Query the API and expect a successful response to validate that the
-      // service is up and running.
-      this.getServerConfig().then(
-        serverConfig => {
-          clearTimeout(timeout);
-          this.serverConfig = serverConfig;
-          fulfill(true);
-        },
-        _e => {
-          clearTimeout(timeout);
-          fulfill(false);
-        }
-      );
-    });
+  async isHealthy(timeoutMs = 30000): Promise<boolean> {
+    let timeout: ReturnType<typeof setTimeout>;
+    try {
+      const config = await Promise.race([
+        this.getServerConfig(),
+        new Promise<undefined>(resolve => {
+          timeout = setTimeout(() => resolve(undefined), timeoutMs);
+        }),
+      ]);
+      if (!config) return false;
+      this.serverConfig = config;
+      return true;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   getCreatedDate(): Date {
@@ -338,7 +337,6 @@ export class ShadowboxServer implements server.Server {
 
   async setHostnameForAccessKeys(hostname: string): Promise<void> {
     console.info(`setHostname ${hostname}`);
-    this.serverConfig.hostnameForAccessKeys = hostname;
     await this.api.requestJson<void>('server/hostname-for-access-keys', 'PUT', {
       hostname,
     });
@@ -380,35 +378,38 @@ export class ShadowboxServer implements server.Server {
     return await this.api.request<ServerConfigJson>('server');
   }
 
-  private async getSupportedExperimentalUniversalMetricsEndpoint(): Promise<boolean> {
-    if (this._supportedExperimentalUniversalMetricsEndpointCache !== null) {
-      return this._supportedExperimentalUniversalMetricsEndpointCache;
-    }
-
+  private getSupportedExperimentalUniversalMetricsEndpoint(): Promise<boolean> {
     if (!this.api) {
-      return false;
+      return Promise.resolve(false);
     }
-
-    try {
-      await this.api.request<MetricsJson>(
-        'experimental/server/metrics?since=30d'
-      );
-      return (this._supportedExperimentalUniversalMetricsEndpointCache = true);
-    } catch (error) {
-      // endpoint is not defined, keep set to false
-      if (error.response?.status !== 404) {
-        return false;
-      }
-      return (this._supportedExperimentalUniversalMetricsEndpointCache = false);
+    if (!this.supportedExperimentalMetrics) {
+      const pending = this.api
+        .request<MetricsJson>('experimental/server/metrics?since=30d')
+        .then(
+          () => true,
+          error => {
+            // Cache definite absence, but retry transient failures. An older
+            // API's response must not clear a newer capability request.
+            if (
+              error?.response?.status !== 404 &&
+              this.supportedExperimentalMetrics === pending
+            ) {
+              this.supportedExperimentalMetrics = undefined;
+            }
+            return false;
+          }
+        );
+      this.supportedExperimentalMetrics = pending;
     }
+    return this.supportedExperimentalMetrics;
   }
 
   protected setManagementApi(api: PathApiClient): void {
     this.api = api;
 
     // re-populate the supported endpoint cache
-    this._supportedExperimentalUniversalMetricsEndpointCache = null;
-    this.getSupportedExperimentalUniversalMetricsEndpoint();
+    this.supportedExperimentalMetrics = undefined;
+    void this.getSupportedExperimentalUniversalMetricsEndpoint();
   }
 
   getManagementApiUrl(): string {
