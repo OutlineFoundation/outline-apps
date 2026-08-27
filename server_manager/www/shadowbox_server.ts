@@ -314,21 +314,21 @@ export class ShadowboxServer implements server.Server {
 
   isHealthy(timeoutMs = 30000): Promise<boolean> {
     return new Promise<boolean>((fulfill, _reject) => {
+      // Return not healthy if API doesn't complete within timeoutMs.
+      const timeout = setTimeout(() => fulfill(false), timeoutMs);
       // Query the API and expect a successful response to validate that the
       // service is up and running.
       this.getServerConfig().then(
         serverConfig => {
+          clearTimeout(timeout);
           this.serverConfig = serverConfig;
           fulfill(true);
         },
         _e => {
+          clearTimeout(timeout);
           fulfill(false);
         }
       );
-      // Return not healthy if API doesn't complete within timeoutMs.
-      setTimeout(() => {
-        fulfill(false);
-      }, timeoutMs);
     });
   }
 
@@ -399,6 +399,7 @@ export class ShadowboxServer implements server.Server {
       if (error.response?.status !== 404) {
         return false;
       }
+      return (this._supportedExperimentalUniversalMetricsEndpointCache = false);
     }
   }
 
