@@ -37,6 +37,7 @@ export async function main(...parameters) {
     );
   }
 
+  // TODO: Support a release build once we're ready to migrate to Capacitor.
   if (buildMode !== 'debug') {
     throw new TypeError(
       `Capacitor ${platform} build supports only debug mode, got "${buildMode}".`
