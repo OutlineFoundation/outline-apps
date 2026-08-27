@@ -20,10 +20,7 @@ import process from 'node:process';
  * A child process is terminated abnormally, caused by a non-zero exit code.
  */
 export class ProcessTerminatedExitCodeError extends Error {
-  constructor(
-    readonly exitCode: number,
-    errJSON: string
-  ) {
+  constructor(readonly exitCode: number, errJSON: string) {
     super(errJSON);
   }
 }
@@ -111,7 +108,8 @@ export class ChildProcessHelper {
           // This will be captured by Sentry
           console.error(`[${this.processName} - STDERR]: ${data}`);
         }
-        stdErrJSON += data?.toString() ?? '';
+        // Keep recent diagnostics without retaining a session's entire log.
+        stdErrJSON = (stdErrJSON + (data?.toString() ?? '')).slice(-65536);
       });
 
       if (this.isDebugModeEnabled) {
@@ -139,8 +137,17 @@ export class ChildProcessHelper {
       // Never started.
       return '';
     }
-    this.childProcess.kill();
-    return (await this.waitProcessToExit) ?? '';
+    const childProcess = this.childProcess;
+    const waitProcessToExit = this.waitProcessToExit;
+    childProcess.kill();
+    // A helper stuck during graceful shutdown must not block server switching
+    // forever. Target this process only, even if another one starts meanwhile.
+    const killTimeout = setTimeout(() => childProcess.kill('SIGKILL'), 5000);
+    try {
+      return (await waitProcessToExit) ?? '';
+    } finally {
+      clearTimeout(killTimeout);
+    }
   }
 
   set onStdOut(listener: ((data?: string | Buffer) => void) | null) {
