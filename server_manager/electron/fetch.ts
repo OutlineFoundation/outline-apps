@@ -34,10 +34,15 @@ export const fetchWithPin = async (
       agent: false,
     };
     const request = https.request(options, resolve).on('error', reject);
+    // Bound the whole exchange, including a response body that never finishes.
+    const timeout = setTimeout(() => {
+      request.destroy(new Error('Management API request timed out'));
+    }, 30000);
+    request.once('close', () => clearTimeout(timeout));
 
     // Enforce certificate fingerprint match.
     request.on('socket', (socket: TLSSocket) =>
-      socket.on('secureConnect', () => {
+      socket.once('secureConnect', () => {
         const certificate = socket.getPeerCertificate();
         // Parse fingerprint in "AB:CD:EF" form.
         const sha2hex = certificate.fingerprint256?.replace(/:/g, '') ?? '';
@@ -46,14 +51,10 @@ export const fetchWithPin = async (
           request.destroy(new Error('Fingerprint mismatch'));
           return;
         }
+        // Do not send the management path, headers or body before the pin passes.
+        request.end(req.body);
       })
     );
-
-    if (req.body) {
-      request.write(req.body);
-    }
-
-    request.end();
   });
 
   const chunks: Buffer[] = [];
