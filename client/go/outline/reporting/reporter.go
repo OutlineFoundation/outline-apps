@@ -37,7 +37,7 @@ type HTTPReporter struct {
 }
 
 func (r *HTTPReporter) Run(sessionCtx context.Context) {
-	r.reportAndLogError()
+	r.reportAndLogError(sessionCtx)
 	if r.Interval == 0 {
 		return
 	}
@@ -52,23 +52,36 @@ func (r *HTTPReporter) Run(sessionCtx context.Context) {
 			if !ok {
 				return
 			}
-			r.reportAndLogError()
+			r.reportAndLogError(sessionCtx)
 		}
 	}
 }
 
-func (r *HTTPReporter) reportAndLogError() {
-	err := r.Report()
-	if err != nil {
+func (r *HTTPReporter) reportAndLogError(ctx context.Context) {
+	err := r.report(ctx)
+	if err != nil && ctx.Err() == nil {
 		slog.Warn("Failed to report", "err", err)
 	}
 }
 
 func (r *HTTPReporter) Report() error {
+	return r.report(context.Background())
+}
+
+func (r *HTTPReporter) report(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	req, err := r.NewRequest()
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
+	// Preserve any request-specific deadline while also honoring session shutdown.
+	requestCtx, cancel := context.WithCancel(req.Context())
+	defer cancel()
+	stopCancel := context.AfterFunc(ctx, cancel)
+	defer stopCancel()
+	req = req.WithContext(requestCtx)
 	req.Close = true
 	req.Header.Add("User-Agent", useragent.GetOutlineUserAgent())
 
