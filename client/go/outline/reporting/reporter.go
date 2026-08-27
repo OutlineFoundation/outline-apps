@@ -16,6 +16,7 @@ package reporting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -48,10 +49,7 @@ func (r *HTTPReporter) Run(sessionCtx context.Context) {
 		select {
 		case <-sessionCtx.Done():
 			return
-		case _, ok := <-ticker.C:
-			if !ok {
-				return
-			}
+		case <-ticker.C:
 			r.reportAndLogError(sessionCtx)
 		}
 	}
@@ -59,7 +57,7 @@ func (r *HTTPReporter) Run(sessionCtx context.Context) {
 
 func (r *HTTPReporter) reportAndLogError(ctx context.Context) {
 	err := r.report(ctx)
-	if err != nil && ctx.Err() == nil {
+	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, ctx.Err()) {
 		slog.Warn("Failed to report", "err", err)
 	}
 }
@@ -81,6 +79,11 @@ func (r *HTTPReporter) report(ctx context.Context) error {
 	defer cancel()
 	stopCancel := context.AfterFunc(ctx, cancel)
 	defer stopCancel()
+	// AfterFunc runs asynchronously, even when cancellation happened while the
+	// request factory was running. Cancel synchronously before handing it to HTTP.
+	if ctx.Err() != nil {
+		cancel()
+	}
 	req = req.WithContext(requestCtx)
 	req.Close = true
 	req.Header.Add("User-Agent", useragent.GetOutlineUserAgent())
