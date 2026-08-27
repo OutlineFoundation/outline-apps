@@ -223,19 +223,23 @@ export class GoVpnTunnel implements VpnTunnel {
   private updateUdpAndRestartTun2socks(): Promise<void> {
     this.restartRequested = true;
     if (!this.restarting) {
-      this.restarting = this.restartTun2socks().finally(() => {
-        this.restarting = undefined;
-      });
+      this.restarting = this.restartTun2socks();
     }
     return this.restarting;
   }
 
   private async restartTun2socks() {
-    // A network notification can arrive while the initial connection is starting.
-    await this.connecting;
-    while (this.restartRequested && !this.disconnected && !this.suspended) {
-      this.restartRequested = false;
-      await this.checkUdpAndRestartTun2socks();
+    try {
+      // A network notification can arrive while the initial connection is starting.
+      await this.connecting;
+      while (this.restartRequested && !this.disconnected && !this.suspended) {
+        this.restartRequested = false;
+        await this.checkUdpAndRestartTun2socks();
+      }
+    } finally {
+      // Clear ownership before settling the worker promise. A request arriving
+      // in a later microtask must not join a worker that has already finished.
+      this.restarting = undefined;
     }
   }
 
