@@ -22,7 +22,11 @@ android {
   // (client/src/cordova/android/README.md) so the strip runs: the AAB/APK gets
   // the small stripped .so, while the unstripped copy survives only in the
   // .aar, which is where upload_debug_symbols reads it for Sentry
-  // symbolication.
+  // symbolication. The strip is best-effort (AGP only warns "Unable to strip"
+  // when the NDK is missing and ships the libs unstripped), so the release
+  // precheck's check_android_sdk asserts this exact NDK version is installed
+  // before every release build:
+  // https://github.com/OutlineFoundation/outline-release/blob/master/scripts/lib/checks.sh
   ndkVersion "28.2.13676358"
 
   // 16KB page-size support: package native libraries uncompressed and

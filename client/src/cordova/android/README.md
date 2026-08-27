@@ -48,6 +48,8 @@ Alternatively, you can do it on the command-line:
     sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358" 
     ```
 
+    The NDK version must match the `ndkVersion` pin in [build-extras.gradle](../plugin/android/build-extras.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
+
 1. Install optional components that help development (source code, emulator and image):
 
     ```shell
@@ -76,6 +78,7 @@ npx cordova requirements android
 | Gradle | 8.14.2+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [gradle-wrapper.properties](./OutlineAndroidLib/gradle/wrapper/gradle-wrapper.properties) |
 | Android Gradle Plugin (AGP) | 8.10.1 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [build.gradle](../android/OutlineAndroidLib/build.gradle) |
 | Android Build Tools | 36.0.0+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instructions |
+| Android NDK | 28.2.13676358 | [native-lib stripping](../plugin/android/build-extras.gradle) | [build-extras.gradle](../plugin/android/build-extras.gradle), install instructions |
 | Android Studio | 2025.1.1 (Narwhal) | [AGP](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility) | |
 
 ## Build the app
