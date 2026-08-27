@@ -58,6 +58,7 @@ export async function main(...parameters) {
 
   // `cap build` only produces signed release builds, so invoke Gradle
   // directly for the debug APK — the same target `cap run` uses.
+  // TODO: Migrate to a release Gradle target once we have a production build.
   const androidDir = path.resolve(capacitorDir, 'android');
   await spawnStream(
     path.join(androidDir, 'gradlew'),
