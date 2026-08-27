@@ -20,6 +20,7 @@ import (
 	"io"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.getoutline.org/sdk/network/packetrelay"
@@ -81,7 +82,7 @@ type VPNConnection struct {
 // This package allows at most one active VPN connection at the same time.
 var mu sync.Mutex
 var conn *VPNConnection
-var stateChangeCb callback.Token
+var stateChangeCb atomic.Int64
 
 // setStatus sets the [VPNConnection] Status and calls the stateChangeCb callback.
 func (c *VPNConnection) setStatus(status ConnectionStatus) {
@@ -90,7 +91,7 @@ func (c *VPNConnection) setStatus(status ConnectionStatus) {
 	connJson, err := json.Marshal(c)
 	c.statusMu.Unlock()
 	if err == nil {
-		callback.DefaultManager().Call(stateChangeCb, string(connJson))
+		callback.DefaultManager().Call(callback.Token(stateChangeCb.Load()), string(connJson))
 	} else {
 		slog.Warn("failed to marshal VPN connection", "err", err)
 	}
@@ -100,7 +101,7 @@ func (c *VPNConnection) setStatus(status ConnectionStatus) {
 // state change listener.
 // The token should have already been registered with the [callback.DefaultManager].
 func SetStateChangeListener(token callback.Token) {
-	stateChangeCb = token
+	stateChangeCb.Store(int64(token))
 }
 
 // EstablishVPN establishes a new active [VPNConnection] connecting to a [ProxyDevice]
