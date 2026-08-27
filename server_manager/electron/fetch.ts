@@ -29,6 +29,9 @@ export const fetchWithPin = async (
       method: req.method,
       headers: req.headers,
       rejectUnauthorized: false, // Disable certificate chain validation.
+      // A pooled socket does not emit secureConnect again. Use a fresh TLS
+      // connection so every request validates its own expected fingerprint.
+      agent: false,
     };
     const request = https.request(options, resolve).on('error', reject);
 
@@ -37,16 +40,10 @@ export const fetchWithPin = async (
       socket.on('secureConnect', () => {
         const certificate = socket.getPeerCertificate();
         // Parse fingerprint in "AB:CD:EF" form.
-        const sha2hex = certificate.fingerprint256.replace(/:/g, '');
+        const sha2hex = certificate.fingerprint256?.replace(/:/g, '') ?? '';
         const sha2binary = Buffer.from(sha2hex, 'hex').toString('binary');
-        if (sha2binary !== fingerprint) {
-          request.emit(
-            'error',
-            new Error(
-              `Fingerprint mismatch: expected ${fingerprint}, not ${sha2binary}`
-            )
-          );
-          request.destroy();
+        if (!certificate.fingerprint256 || sha2binary !== fingerprint) {
+          request.destroy(new Error('Fingerprint mismatch'));
           return;
         }
       })
