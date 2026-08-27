@@ -27,13 +27,6 @@ public class OutlineVpn: NSObject {
   private var vpnStatusObserver: VpnStatusObserver?
   private let operations = VPNOperationQueue()
 
-  private enum Action {
-    static let start = "start"
-    static let restart = "restart"
-    static let stop = "stop"
-    static let getTunnelId = "getTunnelId"
-  }
-
   private enum ConfigKey {
     static let tunnelId = "id"
     static let transport = "transport"
@@ -452,12 +445,13 @@ private func setConnectVpnOnDemand(_ manager: NETunnelProviderManager?, _ enable
 // Returns nil if the tunnel disconnected cleanly, or an Error describing the failure.
 private func fetchExtensionLastDisconnectError(_ session: NETunnelProviderSession) async -> Error? {
   if #available(macOS 13.0, iOS 16.0, *) {
-    return await withCheckedContinuation { continuation in
-      DDLogDebug("Calling fetchLastDisconnectError")
-      session.fetchLastDisconnectError { error in
-        DDLogDebug("fetchLastDisconnectError returned: \(String(describing: error))")
-        continuation.resume(returning: error)
+    do {
+      let error: Error? = try await withVPNDeadline {
+        finish in session.fetchLastDisconnectError { finish(.success($0)) }
       }
+      return error
+    } catch {
+      return error
     }
   }
   // Fallback for macOS 12 / iOS 15: use IPC to read the error the extension saved to disk.
@@ -479,35 +473,17 @@ private struct LastErrorIPCData: Decodable {
 // TODO: Remove once we only support macOS 13.0+, iOS 16.0+
 private func fetchExtensionLastDisconnectErrorViaIPC(_ session: NETunnelProviderSession) async -> Error? {
   do {
-    guard let rpcNameData = ExtensionIPC.fetchLastDetailedJsonError.data(using: .utf8) else {
-      return OutlineError.internalError(message: "IPC fetchLastDisconnectError failed")
-    }
-    return try await withCheckedThrowingContinuation { continuation in
-      do {
-        DDLogDebug("Calling Extension IPC: \(ExtensionIPC.fetchLastDetailedJsonError)")
-        try session.sendProviderMessage(rpcNameData) { data in
-          guard let response = data else {
-            DDLogDebug("Extension IPC returned with nil error")
-            return continuation.resume(returning: nil)
-          }
-          do {
-            let lastError = try PropertyListDecoder().decode(LastErrorIPCData.self, from: response)
-            DDLogDebug("Extension IPC returned with \(lastError)")
-            continuation.resume(returning: OutlineError.detailedJsonError(code: lastError.errorCode,
-                                                                          json: lastError.errorJson))
-          } catch {
-            continuation.resume(throwing: error)
-          }
-        }
-      } catch {
-        continuation.resume(throwing: error)
+    let response: Data? = try await withVPNDeadline { finish in
+      try session.sendProviderMessage(Data(ExtensionIPC.fetchLastDetailedJsonError.utf8)) {
+        finish(.success($0))
       }
     }
+    guard let response = response else { return nil }
+    let lastError = try PropertyListDecoder().decode(LastErrorIPCData.self, from: response)
+    return OutlineError.detailedJsonError(code: lastError.errorCode, json: lastError.errorJson)
   } catch {
     DDLogError("Failed to invoke VPN Extension IPC: \(error)")
-    return OutlineError.internalError(
-      message: "IPC fetchLastDisconnectError failed: \(error.localizedDescription)"
-    )
+    return OutlineError.internalError(message: "IPC fetchLastDisconnectError failed: \(error.localizedDescription)")
   }
 }
 
@@ -570,15 +546,15 @@ private struct SwitchResponse: Decodable {
   let errorJson: String?
 }
 
-private final class ProviderMessageWaiter: @unchecked Sendable {
+private final class VPNValueWaiter<Value>: @unchecked Sendable {
   private let lock = NSLock()
-  private var continuation: CheckedContinuation<Data, Error>?
+  private var continuation: CheckedContinuation<Value, Error>?
 
-  init(_ continuation: CheckedContinuation<Data, Error>) {
+  init(_ continuation: CheckedContinuation<Value, Error>) {
     self.continuation = continuation
   }
 
-  func finish(_ result: Result<Data, Error>) {
+  func finish(_ result: Result<Value, Error>) {
     lock.lock()
     let continuation = self.continuation
     self.continuation = nil
@@ -587,27 +563,36 @@ private final class ProviderMessageWaiter: @unchecked Sendable {
   }
 }
 
-private func sendSwitchMessage(_ session: NETunnelProviderSession, _ request: [String: String],
-                                timeout: TimeInterval = 5) async throws -> SwitchResponse {
-  let message = try JSONSerialization.data(withJSONObject: request)
-  let data: Data = try await withCheckedThrowingContinuation { continuation in
-    let waiter = ProviderMessageWaiter(continuation)
+private func withVPNDeadline<Value>(timeout: TimeInterval = 5,
+                                     operation: (@escaping (Result<Value, Error>) -> Void) throws -> Void) async throws -> Value {
+  try await withCheckedThrowingContinuation { continuation in
+    let waiter = VPNValueWaiter(continuation)
     let deadline = DispatchWorkItem {
       waiter.finish(.failure(OutlineError.internalError(message: "VPN extension message timed out")))
     }
     DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: deadline)
     do {
-      try session.sendProviderMessage(message) { data in
+      try operation { result in
         deadline.cancel()
-        if let data = data {
-          waiter.finish(.success(data))
-        } else {
-          waiter.finish(.failure(OutlineError.internalError(message: "VPN extension does not support protected switching")))
-        }
+        waiter.finish(result)
       }
     } catch {
       deadline.cancel()
       waiter.finish(.failure(error))
+    }
+  }
+}
+
+private func sendSwitchMessage(_ session: NETunnelProviderSession, _ request: [String: String],
+                                timeout: TimeInterval = 5) async throws -> SwitchResponse {
+  let message = try JSONSerialization.data(withJSONObject: request)
+  let data: Data = try await withVPNDeadline(timeout: timeout) { finish in
+    try session.sendProviderMessage(message) { data in
+      if let data = data {
+        finish(.success(data))
+      } else {
+        finish(.failure(OutlineError.internalError(message: "VPN extension does not support protected switching")))
+      }
     }
   }
   let response = try JSONDecoder().decode(SwitchResponse.self, from: data)

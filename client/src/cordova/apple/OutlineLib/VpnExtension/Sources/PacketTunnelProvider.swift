@@ -155,7 +155,7 @@ class Subnet: NSObject {
       NSLog("Malformed CIDR subnet")
       return nil
     }
-    guard let prefix = UInt16(components[1]) else {
+    guard let prefix = UInt16(components[1]), prefix <= 32 else {
       NSLog("Invalid subnet prefix")
       return nil
     }
@@ -199,8 +199,8 @@ func getNetworkInterfaceAddresses() -> [String] {
   var interface = interfaces
   while interface != nil {
     // Only consider IPv4 interfaces.
-    if interface!.pointee.ifa_addr.pointee.sa_family == UInt8(AF_INET) {
-      let addr = interface!.pointee.ifa_addr!.withMemoryRebound(to: sockaddr_in.self, capacity: 1) {
+    if let address = interface!.pointee.ifa_addr, address.pointee.sa_family == UInt8(AF_INET) {
+      let addr = address.withMemoryRebound(to: sockaddr_in.self, capacity: 1) {
         $0.pointee.sin_addr
       }
       if let ip = String(cString: inet_ntoa(addr), encoding: .utf8) {

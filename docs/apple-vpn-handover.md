@@ -37,6 +37,12 @@ Network loss now marks the provider as reasserting without clearing its routes
 or DNS. A failed routing refresh does not deliberately cancel the VPN. Private
 network exclusions, including the Tailscale address range, are unchanged.
 
+Packet readers and routing completions belong to a session generation. A fresh
+start replaces its reader; callbacks from a stopped or replaced session cannot
+write packets, re-arm reading, or update the new session's connection status.
+Disconnect-error lookups, including legacy IPC, use the same bounded,
+exactly-once completion helper as handover messages.
+
 ## Scope and limitations
 
 - This is an Apple client implementation, not a Windows/Linux/Android change.
@@ -59,6 +65,9 @@ the repository; no test/spec files were added or modified.
   IPC, missing replies, same-ID refresh, expired/replayed tokens, delayed
   preparation after stop, network loss, commit-marker failure, and restart
   selection before and after commit.
+- Follow-up probes passed for stale/stopped packet readers, delayed routing
+  completion during network loss, native/legacy disconnect-error timeouts,
+  duplicate callbacks, and invalid IPv4 subnet prefixes.
 - A real Go/lwIP probe reproduced destruction of the active singleton when a
   second device is created before its health is known. Ten failed/successful
   client-only preflight cycles kept the existing device usable under `-race`,

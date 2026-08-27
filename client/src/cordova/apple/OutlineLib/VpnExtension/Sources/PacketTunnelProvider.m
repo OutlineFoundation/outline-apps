@@ -123,11 +123,8 @@ NSString *const kDefaultPathKey = @"defaultPath";
   bool isOnDemand = isOnDemandNumber != nil && [isOnDemandNumber intValue] == 1;
   DDLogDebug(@"isOnDemand is %d", isOnDemand);
 
-  BOOL isRestart = self.remoteDevice != nil;
-  if (isRestart) {
-    [self.remoteDevice close];
-  }
-  DDLogDebug(@"isRestart is %d", isRestart);
+  [self.remoteDevice close];
+  self.remoteDevice = nil;
 
   PlaterrorsPlatformError *deviceErr = [self connectRemoteDevice:isOnDemand];
   if (deviceErr != nil) {
@@ -141,9 +138,11 @@ NSString *const kDefaultPathKey = @"defaultPath";
               return startDone([SwiftBridge newInternalOutlineErrorWithMessage:@"VPN start cancelled"]);
             }
             if (error != nil) {
+              [self.remoteDevice close];
+              self.remoteDevice = nil;
               return startDone([SwiftBridge newOutlineErrorFromNsError:error]);
             }
-            PlaterrorsPlatformError *relayErr = [self relayTraffic:isRestart];
+            PlaterrorsPlatformError *relayErr = [self relayTraffic:NO];
             if (relayErr != nil) {
               return startDone([SwiftBridge newOutlineErrorFromPlatformError:relayErr]);
             }
@@ -183,7 +182,8 @@ NSString *const kDefaultPathKey = @"defaultPath";
     dispatch_async(strongSelf.packetQueue, ^{
       if (!strongSelf.stopping && strongSelf.sessionGeneration == generation && error == nil) {
         DDLogInfo(@"Routing started");
-        strongSelf.reasserting = strongSelf.remoteDevice == nil;
+        strongSelf.reasserting = strongSelf.remoteDevice == nil ||
+            (strongSelf.defaultPath != nil && strongSelf.defaultPath.status != NWPathStatusSatisfied);
       }
       completionHandler(error);
     });
@@ -277,8 +277,12 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
     return;
   }
   // Nothing changed. Connect the tunnel with the current settings.
+  NSUInteger generation = self.sessionGeneration;
   [self startRouting:[SwiftBridge getTunnelNetworkSettings]
          completion:^(NSError *_Nullable error) {
+           if (self.stopping || self.sessionGeneration != generation) {
+             return;
+           }
            if (error != nil) {
              // A routing refresh failure must not tear down the protected session.
              self.reasserting = YES;
@@ -302,6 +306,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
   if (self.stopping) {
     return;
   }
+  NSUInteger generation = self.sessionGeneration;
   __weak typeof(self) weakSelf = self;
   [self.packetFlow readPacketsWithCompletionHandler:^(NSArray<NSData *> *packets,
                                                       NSArray<NSNumber *> *protocols) {
@@ -310,7 +315,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
       return;
     }
     dispatch_async(strongSelf.packetQueue, ^{
-      if (strongSelf.stopping) {
+      if (strongSelf.stopping || strongSelf.sessionGeneration != generation) {
         return;
       }
       long bytesWritten = 0;
@@ -340,6 +345,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
     if (healthErr != nil) {
       DDLogError(@"Remote device is not healthy: %@", healthErr.error);
       [self.remoteDevice close];
+      self.remoteDevice = nil;
       return healthErr;
     }
     DDLogInfo(@"Remote device is healthy.");
