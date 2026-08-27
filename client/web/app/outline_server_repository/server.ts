@@ -172,7 +172,7 @@ async function fetchTunnelConfig(
     );
   }
   try {
-    return parseTunnelConfig(responseBody);
+    return await parseTunnelConfig(responseBody);
   } catch (cause) {
     if (cause instanceof errors.SessionProviderError) {
       throw cause;
