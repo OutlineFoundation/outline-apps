@@ -73,7 +73,7 @@ interface MetricsJson {
     }[];
   };
   accessKeys: {
-    accessKeyId: number | string;
+    accessKeyId: string;
     tunnelTime: {
       seconds: number;
     };
