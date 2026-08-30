@@ -79,7 +79,10 @@ export class RoutingDaemon {
     gatewayIndex?: string
   ) => void;
 
-  constructor(private proxyAddress: string, private isAutoConnect: boolean) {}
+  constructor(
+    private proxyAddress: string,
+    private isAutoConnect: boolean
+  ) {}
 
   // Fulfills once a connection is established with the routing daemon *and* it has successfully
   // configured the system's routing table.

@@ -20,7 +20,10 @@ import process from 'node:process';
  * A child process is terminated abnormally, caused by a non-zero exit code.
  */
 export class ProcessTerminatedExitCodeError extends Error {
-  constructor(readonly exitCode: number, errJSON: string) {
+  constructor(
+    readonly exitCode: number,
+    errJSON: string
+  ) {
     super(errJSON);
   }
 }
