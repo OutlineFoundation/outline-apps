@@ -100,7 +100,7 @@ tasks:
     vars:
       TARGET_DIR: "{{.OUT_DIR}}/android/org/getoutline/client/tun2socks/0.0.1"
       # ANDROID_API must match the minSdkVersion that the Android client supports.
-      ANDROID_API: 26
+      ANDROID_API: 29
     env:
       # Bug workaround as per https://github.com/golang/go/issues/71827#issuecomment-2669425491
       GODEBUG: gotypesalias=0

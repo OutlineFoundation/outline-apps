@@ -15,5 +15,5 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     // This version number must be kept in sync with AGP_VERSION in cordova-android.
-    id 'com.android.library' version '8.7.3' apply false
+    id 'com.android.library' version '8.10.1' apply false
 }

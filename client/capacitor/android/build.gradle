@@ -29,9 +29,9 @@ plugins {
 }
 
 ext {
-    compileSdkVersion = 36 
-    minSdkVersion = 26
-    targetSdkVersion = 36 
+    compileSdkVersion = 36
+    minSdkVersion = 29
+    targetSdkVersion = 36
     androidxAppCompatVersion = '1.7.1'
 }
 
