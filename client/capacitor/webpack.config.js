@@ -97,6 +97,13 @@ export default merge(baseConfig, {
           from: path.resolve(__dirname, 'www/environment.json'),
           to: 'environment.json',
         },
+        {
+          // Off-screen page used to read the Cordova build's file:// localStorage
+          // on Android. It must ship as a real asset so it is reachable at
+          // file:///android_asset/public/migrate.html after `cap sync`.
+          from: path.resolve(__dirname, 'src/migrate.html'),
+          to: 'migrate.html',
+        },
       ],
     }),
     new HtmlWebpackPlugin({
