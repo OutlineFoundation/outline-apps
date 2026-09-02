@@ -106,6 +106,42 @@ public class SwiftBridge: NSObject {
   public static func loadLastErrorToIPCResponse() -> NSData? {
     return loadLastDisconnectErrorDetailsToIPCResponse() as? NSData
   }
+
+  // Keep the response keys aligned with SwitchResponse in OutlineVpn.swift.
+  public static func switchResponse(id: String?, token: String?, error: NSError?) -> Data {
+    var response = [String: String]()
+    response["id"] = id
+    response["token"] = token
+    if let error = error {
+      response["errorCode"] = toOutlineError(error: error).code
+      response["errorJson"] = marshalErrorJson(error: error)
+    }
+    // All values are strings, so the dictionary is always JSON-serializable.
+    return try! JSONSerialization.data(withJSONObject: response)
+  }
+
+  // Persist only the transaction UUID, never access credentials. The pending
+  // configuration remains in the system VPN preferences. A restart uses it only
+  // if this marker was written after a successful device replacement.
+  private static func switchMarkerURL() throws -> URL {
+    let directory = try FileManager.default.url(for: .applicationSupportDirectory,
+                                                in: .userDomainMask, appropriateFor: nil, create: true)
+    return directory.appendingPathComponent("committed-vpn-switch")
+  }
+
+  public static func lastCommittedSwitchToken() -> String? {
+    guard let url = try? switchMarkerURL() else { return nil }
+    return try? String(contentsOf: url, encoding: .utf8)
+  }
+
+  public static func recordCommittedSwitch(token: String) -> NSError? {
+    do {
+      try Data(token.utf8).write(to: switchMarkerURL(), options: .atomic)
+      return nil
+    } catch {
+      return newInternalOutlineError(message: "failed to persist VPN switch commit")
+    }
+  }
 }
 
 // Represents an IP subnetwork.
@@ -119,7 +155,7 @@ class Subnet: NSObject {
       NSLog("Malformed CIDR subnet")
       return nil
     }
-    guard let prefix = UInt16(components[1]) else {
+    guard let prefix = UInt16(components[1]), prefix <= 32 else {
       NSLog("Invalid subnet prefix")
       return nil
     }
@@ -163,8 +199,8 @@ func getNetworkInterfaceAddresses() -> [String] {
   var interface = interfaces
   while interface != nil {
     // Only consider IPv4 interfaces.
-    if interface!.pointee.ifa_addr.pointee.sa_family == UInt8(AF_INET) {
-      let addr = interface!.pointee.ifa_addr!.withMemoryRebound(to: sockaddr_in.self, capacity: 1) {
+    if let address = interface!.pointee.ifa_addr, address.pointee.sa_family == UInt8(AF_INET) {
+      let addr = address.withMemoryRebound(to: sockaddr_in.self, capacity: 1) {
         $0.pointee.sin_addr
       }
       if let ip = String(cString: inet_ntoa(addr), encoding: .utf8) {
