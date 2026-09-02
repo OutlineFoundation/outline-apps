@@ -147,10 +147,9 @@ export async function parseAccessKey(
 function serviceNameFromAccessKey(accessKey: URL): string | undefined {
   if (!accessKey.hash) return;
 
-  return decodeURIComponent(
-    accessKey.hash
-      .slice(1)
-      .split('&')
-      .find(keyValuePair => !keyValuePair.includes('='))
-  );
+  const name = accessKey.hash
+    .slice(1)
+    .split('&')
+    .find(keyValuePair => !keyValuePair.includes('='));
+  return name === undefined ? undefined : decodeURIComponent(name);
 }
