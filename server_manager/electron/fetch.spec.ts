@@ -78,6 +78,33 @@ describe('fetchWithPin', () => {
     await clientClosed;
   });
 
+  it('validates the pin again for a second same-origin request', async () => {
+    const server = https.createServer({key: keyPem, cert: certPem});
+    server.on('request', (_incoming, response) => {
+      response.writeHead(200);
+      response.end('ok');
+    });
+    await new Promise<void>(fulfill => server.listen(0, fulfill));
+
+    const address = server.address() as AddressInfo;
+    const req = {
+      url: `https://localhost:${address.port}/`,
+      method: 'GET',
+    };
+
+    await expectAsync(fetchWithPin(req, certSha256)).toBeResolvedTo({
+      status: 200,
+      body: 'ok',
+    });
+    await expectAsync(
+      fetchWithPin(req, 'incorrect fingerprint')
+    ).toBeRejectedWithError(Error, /Fingerprint mismatch/);
+
+    await new Promise<void>((resolve, reject) =>
+      server.close(error => (error ? reject(error) : resolve()))
+    );
+  });
+
   it('succeeds on pin match', async () => {
     const server = https.createServer({key: keyPem, cert: certPem});
     await new Promise<void>(fulfill => server.listen(0, fulfill));

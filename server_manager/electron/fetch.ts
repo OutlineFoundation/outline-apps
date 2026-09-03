@@ -19,6 +19,8 @@ import {urlToHttpOptions} from 'url';
 
 import type {HttpRequest, HttpResponse} from '@outline/infrastructure/path_api';
 
+const MAX_RESPONSE_BYTES = 32 * 1024 * 1024;
+
 export const fetchWithPin = async (
   req: HttpRequest,
   fingerprint: string
@@ -29,39 +31,45 @@ export const fetchWithPin = async (
       method: req.method,
       headers: req.headers,
       rejectUnauthorized: false, // Disable certificate chain validation.
+      // A pooled socket does not emit secureConnect again. Use a fresh TLS
+      // connection so every request validates its own expected fingerprint.
+      agent: false,
     };
     const request = https.request(options, resolve).on('error', reject);
+    // Bound the whole exchange, including a response body that never finishes.
+    const timeout = setTimeout(() => {
+      request.destroy(new Error('Management API request timed out'));
+    }, 30000);
+    request.once('close', () => clearTimeout(timeout));
 
     // Enforce certificate fingerprint match.
     request.on('socket', (socket: TLSSocket) =>
-      socket.on('secureConnect', () => {
+      socket.once('secureConnect', () => {
         const certificate = socket.getPeerCertificate();
         // Parse fingerprint in "AB:CD:EF" form.
-        const sha2hex = certificate.fingerprint256.replace(/:/g, '');
+        const sha2hex = certificate.fingerprint256?.replace(/:/g, '') ?? '';
         const sha2binary = Buffer.from(sha2hex, 'hex').toString('binary');
-        if (sha2binary !== fingerprint) {
-          request.emit(
-            'error',
-            new Error(
-              `Fingerprint mismatch: expected ${fingerprint}, not ${sha2binary}`
-            )
-          );
-          request.destroy();
+        if (!certificate.fingerprint256 || sha2binary !== fingerprint) {
+          request.destroy(new Error('Fingerprint mismatch'));
           return;
         }
+        // Do not send the management path, headers or body before the pin passes.
+        request.end(req.body);
       })
     );
-
-    if (req.body) {
-      request.write(req.body);
-    }
-
-    request.end();
   });
 
   const chunks: Buffer[] = [];
+  let responseBytes = 0;
   for await (const chunk of response) {
-    chunks.push(chunk);
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    responseBytes += bytes.length;
+    if (responseBytes > MAX_RESPONSE_BYTES) {
+      const error = new Error('Management API response is too large');
+      response.destroy(error);
+      throw error;
+    }
+    chunks.push(bytes);
   }
 
   return {
