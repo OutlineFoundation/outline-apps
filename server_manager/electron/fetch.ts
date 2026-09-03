@@ -19,6 +19,8 @@ import {urlToHttpOptions} from 'url';
 
 import type {HttpRequest, HttpResponse} from '@outline/infrastructure/path_api';
 
+const MAX_RESPONSE_BYTES = 32 * 1024 * 1024;
+
 export const fetchWithPin = async (
   req: HttpRequest,
   fingerprint: string
@@ -58,8 +60,16 @@ export const fetchWithPin = async (
   });
 
   const chunks: Buffer[] = [];
+  let responseBytes = 0;
   for await (const chunk of response) {
-    chunks.push(chunk);
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    responseBytes += bytes.length;
+    if (responseBytes > MAX_RESPONSE_BYTES) {
+      const error = new Error('Management API response is too large');
+      response.destroy(error);
+      throw error;
+    }
+    chunks.push(bytes);
   }
 
   return {
