@@ -34,7 +34,7 @@ import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
 import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
 
 import {CapacitorBrowserMethodChannel} from './browser_method_channel';
-import {CapacitorAndroidUrlInterceptor} from './capacitor_android_url_interceptor';
+import {CapacitorUrlInterceptor} from './capacitor_url_interceptor';
 
 interface AsyncVpnApi extends VpnApi {
   onStatusChange(
@@ -139,8 +139,9 @@ class CapacitorPlatform implements OutlinePlatform {
   }
 
   getUrlInterceptor() {
-    if (Capacitor.getPlatform() === 'android') {
-      return new CapacitorAndroidUrlInterceptor();
+    const platform = Capacitor.getPlatform();
+    if (platform === 'android' || platform === 'ios') {
+      return new CapacitorUrlInterceptor();
     }
     return new UrlInterceptor();
   }

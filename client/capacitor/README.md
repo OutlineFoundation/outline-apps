@@ -80,6 +80,16 @@ go tool task addlicense
 
 The web/browser build does not use this directory — its favicon and images come from `client/web/` (see `webpack.config.js`). If a PWA target is ever added, `@capacitor/assets` can generate its icons too (`--pwa`).
 
+## iOS (device or simulator)
+
+Use this flow when you need the real Outline iOS plugin (VPN, native method channel, and so on). All **`npx cap`** commands below are run from **`client/capacitor`** (the directory that contains `capacitor.config.json` and `ios/`).
+
+### Requirements (iOS)
+
+- A Mac with [Xcode](https://developer.apple.com/xcode/) installed, including the Xcode command-line tools, and a recent iOS SDK.
+- [CocoaPods](https://cocoapods.org/) installed (`sudo gem install cocoapods`), used to manage native iOS dependencies.
+- A **physical device** with a valid provisioning profile/signing setup, or an **iOS Simulator** runtime installed via Xcode.
+- **Go** on your `PATH` (`npm run capacitor:sync:before` runs `go tool task` for tun2socks and iOS configure; see `package.json` in this directory).
 ## Android (device or emulator)
 
 Use this flow when you need the real Outline Android plugin (VPN, native method channel, and so on). All **`npx cap`** commands below are run from **`client/capacitor`** (the directory that contains `capacitor.config.json` and `android/`).
@@ -97,6 +107,13 @@ Use this flow when you need the real Outline Android plugin (VPN, native method 
    ```sh
    cd client/capacitor
    ```
+2. **Sync the iOS project** (runs `capacitor:sync:before`: Go tun2socks, iOS configure; then copies web assets into the native app, installs CocoaPods dependencies, and refreshes plugins):
+   ```sh
+   npx cap sync ios
+   ```
+3. **Install and launch** on the default device or running simulator:
+   ```sh
+   npx cap run ios
 
 2. **Sync the Android project** (runs `capacitor:sync:before`: Go tun2socks, Android configure; then copies web assets into the native app and refreshes plugins):
 
@@ -112,6 +129,22 @@ Use this flow when you need the real Outline Android plugin (VPN, native method 
 
 ### Optional Capacitor CLI commands
 
+- **Open in Xcode** (inspect build settings, run/debug from the IDE):
+  ```sh
+  cd client/capacitor
+  npx cap open ios
+  ```
+- **Web-only iteration** (faster when you did not change native code or `Info.plist`): copy assets without refreshing native CocoaPods dependencies. Build `www/` first, then copy (sync is heavier but already runs `npm run build` in `capacitor:sync:before`):
+  ```sh
+  cd client/capacitor
+  npm run build:web
+  npx cap copy ios
+  ```
+  Use **`npx cap sync ios`** again whenever you change native plugins, CocoaPods dependencies, or `Info.plist` entries.
+- **Sanity check** the iOS toolchain from Capacitor's point of view:
+  ```sh
+  cd client/capacitor
+  npx cap doctor ios
 - **Open in Android Studio** (inspect Gradle, run/debug from the IDE):
 
   ```sh
