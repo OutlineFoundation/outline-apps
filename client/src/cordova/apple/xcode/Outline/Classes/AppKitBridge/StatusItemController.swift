@@ -138,10 +138,20 @@ class StatusItemController: NSObject {
     }
 
     private func disconnect(_ manager: NETunnelProviderManager) async throws {
-        try await manager.loadFromPreferences()
-        manager.isOnDemandEnabled = false
-        try await manager.saveToPreferences()
+        var preferenceError: Error?
+        do {
+            try await manager.loadFromPreferences()
+            manager.isOnDemandEnabled = false
+            try await manager.saveToPreferences()
+        } catch {
+            preferenceError = error
+        }
+        // Honor Disconnect even if disabling automatic reconnect failed.
         manager.connection.stopVPNTunnel()
+        if let preferenceError {
+            // Report the failure and keep Quit from exiting with on-demand still enabled.
+            throw preferenceError
+        }
         // Wait for the system extension, but keep the app available on failure.
         for _ in 0..<100 {
             if manager.connection.status == .disconnected || manager.connection.status == .invalid {
@@ -196,6 +206,8 @@ class StatusItemController: NSObject {
                     try await disconnect(manager)
                 } catch {
                     NSLog("[StatusItemController] Failed to disconnect VPN: \(error.localizedDescription)")
+                    let alert = NSAlert(error: error)
+                    alert.runModal()
                 }
             }
         }
