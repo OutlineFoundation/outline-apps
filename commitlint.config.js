@@ -23,6 +23,7 @@ module.exports = {
       [
         'client',
         'client/android',
+        'client/electron',
         'client/ios',
         'client/linux',
         'client/macos',
