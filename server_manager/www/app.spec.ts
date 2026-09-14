@@ -68,6 +68,23 @@ describe('App', () => {
     expect(appRoot.currentPage).toEqual('serverView');
   });
 
+  it('adds and shows a manual server without waiting for its health check', async () => {
+    const appRoot = document.getElementById('appRoot') as AppRoot;
+    const manualServerRepo = new PendingHealthManualServerRepository();
+    const app = createTestApp(appRoot, undefined, manualServerRepo);
+    await app.start();
+    const config = {certSha256: 'cert', apiUrl: 'url'};
+
+    // Resolves even though the server's health check never completes.
+    await app.createManualServer(JSON.stringify(config));
+
+    expect(manualServerRepo.findServer(config)).toBeDefined();
+    expect(appRoot.selectedServerId).toEqual(
+      manualServerRepo.findServer(config).getId()
+    );
+    expect(appRoot.currentPage).toEqual('serverView');
+  });
+
   it('initially shows servers', async () => {
     // Create fake servers and simulate their metadata being cached before creating the app.
     const fakeAccount = new FakeDigitalOceanAccount();
@@ -237,6 +254,34 @@ describe('App', () => {
     expect(view.selectedPage).toEqual('progressView');
   });
 });
+
+// A manual server whose health check never completes, to verify that adding a
+// server doesn't block on (or depend on) reaching it.
+class PendingHealthManualServer extends FakeManualServer {
+  isHealthy() {
+    return new Promise<boolean>(() => {});
+  }
+}
+
+class PendingHealthManualServerRepository extends FakeManualServerRepository {
+  private pendingServers: server.ManualServer[] = [];
+
+  addServer(config: server.ManualServerConfig) {
+    const newServer = new PendingHealthManualServer(config);
+    this.pendingServers.push(newServer);
+    return Promise.resolve(newServer);
+  }
+
+  findServer(config: server.ManualServerConfig) {
+    return this.pendingServers.find(
+      server => server.getManagementApiUrl() === config.apiUrl
+    );
+  }
+
+  listServers() {
+    return Promise.resolve(this.pendingServers);
+  }
+}
 
 function createTestApp(
   appRoot: AppRoot,

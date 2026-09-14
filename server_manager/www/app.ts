@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {CustomError} from '@outline/infrastructure/custom_error';
 import * as path_api from '@outline/infrastructure/path_api';
 import {sleep} from '@outline/infrastructure/sleep';
 import * as Sentry from '@sentry/electron/renderer';
@@ -148,13 +147,6 @@ function isManualServer(
   testServer: server_model.Server
 ): testServer is server_model.ManualServer {
   return !!(testServer as server_model.ManualServer).forget;
-}
-
-// Error thrown when a shadowbox server cannot be reached (e.g. due to Firewall)
-class UnreachableServerError extends CustomError {
-  constructor(message?: string) {
-    super(message);
-  }
 }
 
 export class App {
@@ -317,24 +309,15 @@ export class App {
         .catch((e: Error) => {
           // Remove the progress indicator.
           manualServerEntryEl.showConnection = false;
-          // Display either error dialog or feedback depending on error type.
-          if (e instanceof UnreachableServerError) {
-            const errorTitle = appRoot.localize(
-              'error-server-unreachable-title'
-            );
-            const errorMessage = appRoot.localize('error-server-unreachable');
-            this.appRoot.showManualServerError(errorTitle, errorMessage);
-          } else {
-            // TODO(alalama): with UI validation, this code path never gets executed. Remove?
-            let errorMessage = '';
-            if (e.message) {
-              errorMessage += `${e.message}\n`;
-            }
-            if (userInput) {
-              errorMessage += userInput;
-            }
-            appRoot.openManualInstallFeedback(errorMessage);
+          // TODO(alalama): with UI validation, this code path never gets executed. Remove?
+          let errorMessage = '';
+          if (e.message) {
+            errorMessage += `${e.message}\n`;
           }
+          if (userInput) {
+            errorMessage += userInput;
+          }
+          appRoot.openManualInstallFeedback(errorMessage);
         });
     });
 
@@ -1430,8 +1413,11 @@ export class App {
     }
   }
 
-  // Returns promise which fulfills when the server is created successfully,
+  // Returns promise which fulfills when the server is added successfully,
   // or rejects with an error message that can be displayed to the user.
+  // The server is added and displayed without waiting for a health check:
+  // the server view performs its own check and shows the unreachable state
+  // (with retry and remove options) if the server can't be reached.
   public async createManualServer(userInput: string): Promise<void> {
     let serverConfig: server_model.ManualServerConfig;
     try {
@@ -1456,15 +1442,8 @@ export class App {
     }
     const manualServer =
       await this.manualServerRepository.addServer(serverConfig);
-    if (await manualServer.isHealthy()) {
-      this.addServer(null, manualServer);
-      this.showServer(manualServer);
-    } else {
-      // Remove inaccessible manual server from local storage if it was just created.
-      manualServer.forget();
-      console.error('Manual server installed but unreachable.');
-      throw new UnreachableServerError();
-    }
+    this.addServer(null, manualServer);
+    this.showServer(manualServer);
   }
 
   private async removeAccessKey(accessKeyId: string) {
