@@ -563,6 +563,10 @@ export class App {
             this.appRoot.localize('error-server-creation')
           );
         }
+      } else {
+        // Show a connecting state while the (possibly slow) health check
+        // below runs, instead of an empty management view.
+        await this.setServerConnectingView(server);
       }
       await this.updateServerView(server);
       // This has to run after updateServerView because it depends on the isHealthy() call.
@@ -976,8 +980,17 @@ export class App {
     const serverView = await this.appRoot.getServerView(serverId);
     serverView.selectedPage = 'unreachableView';
     serverView.retryDisplayingServer = async () => {
+      // Show the connecting state again while the check runs.
+      await this.setServerConnectingView(server);
       await this.updateServerView(server);
     };
+  }
+
+  private async setServerConnectingView(
+    server: server_model.Server
+  ): Promise<void> {
+    const serverView = await this.appRoot.getServerView(server.getId());
+    serverView.selectedPage = 'connectingView';
   }
 
   private async setServerProgressView(

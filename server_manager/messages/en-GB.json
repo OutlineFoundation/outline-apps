@@ -224,6 +224,7 @@
   "server-access-key-rename": "Rename",
   "server-access-keys": "Access keys",
   "server-access-keys-tab": "Access keys ({keyCount})",
+  "server-connecting": "Connecting to your server...",
   "server-connections": "Connections",
   "server-data-transfer": "Data transferred/last 30 days",
   "server-data-used": "Allowance used/last 30 days",

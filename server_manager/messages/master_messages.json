@@ -1070,6 +1070,10 @@
       }
     }
   },
+  "server_connecting": {
+    "message": "Connecting to your server...",
+    "description": "This string appears within a server view, next to a spinner, while the application is checking whether a newly added server can be reached."
+  },
   "server_connections": {
     "message": "Connections",
     "description": "This string appears within the server view as a header of the section that displays server information and access keys."
