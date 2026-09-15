@@ -268,3 +268,35 @@ jobs:
 
       - name: Build Android Client
         run: npm run action client/src/cordova/build android -- --verbose
+
+  capacitor_android_debug_build:
+    name: Android Capacitor Debug Build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    needs: [web_test, backend_test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Setup Java
+        # Capacitor 8's Android project targets Java 21 (see
+        # client/capacitor/android/app/build.gradle), so build with JDK 21.
+        run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      - name: Build Android Capacitor Client
+        run: npm run action client/capacitor/build android

@@ -37,7 +37,7 @@ export async function main(...parameters) {
 
   if (!SUPPORTED_PLATFORMS.has(platform)) {
     throw new TypeError(
-      `Capacitor build.action.mjs supports platforms ${[...SUPPORTED_PLATFORMS].join(', ')}, got "${platform}".`
+      `Capacitor web_build.action.mjs supports platforms ${[...SUPPORTED_PLATFORMS].join(', ')}, got "${platform}".`
     );
   }
 
