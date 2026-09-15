@@ -307,17 +307,10 @@ export class App {
           manualServerEntryEl.clear();
         })
         .catch((e: Error) => {
-          // Remove the progress indicator.
+          // Should not happen: the UI validates the config before enabling DONE.
+          // Just ensure the progress indicator is removed.
           manualServerEntryEl.showConnection = false;
-          // TODO(alalama): with UI validation, this code path never gets executed. Remove?
-          let errorMessage = '';
-          if (e.message) {
-            errorMessage += `${e.message}\n`;
-          }
-          if (userInput) {
-            errorMessage += userInput;
-          }
-          appRoot.openManualInstallFeedback(errorMessage);
+          console.error('Failed to add manual server:', e);
         });
     });
 
