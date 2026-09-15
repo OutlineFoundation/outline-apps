@@ -56,8 +56,6 @@
   "error-server-destroy": "No s'ha pogut suprimir el servidor",
   "error-server-removed": "Els servidors {serverName} ja no estan presents al teu compte de DigitalOcean.",
   "error-server-rename": "No s'ha pogut canviar el nom del servidor",
-  "error-server-unreachable": "El servidor d'Outline s'ha instal·lat correctament, però no ens hi podem connectar. El més probable és que això passi perquè les regles del tallafoc del servidor bloquegen les connexions entrants. Revisa-les i assegura't de permetre les connexions de TCP entrants als ports que van del 1024 al 65535.",
-  "error-server-unreachable-title": "No es pot connectar amb el servidor d'Outline",
   "error-servers-removed": "Els servidors {serverNames} ja no estan presents al teu compte de DigitalOcean.",
   "error-set-data-limit": "No s'ha pogut establir un límit de dades predeterminat",
   "error-set-per-key-limit": "No s'ha pogut establir un límit de dades per a aquesta clau d'accés",

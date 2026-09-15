@@ -56,8 +56,6 @@
   "error-server-destroy": "Server sa nepodarilo zrušiť",
   "error-server-removed": "Servery {serverName} už nie sú vo vašom účte DigitalOcean prítomné.",
   "error-server-rename": "Premenovanie servera bolo neúspešné",
-  "error-server-unreachable": "Váš server služby Outline bol nainštalovaný správne, no nedokážeme sa k nemu pripojiť. Je to zrejme spôsobené tým, že pravidlá firewallu vášho servera blokujú prichádzajúce pripojenia. Skontrolujte ich a nezabudnite povoliť prichádzajúce pripojenia TCP na portoch v rozsahu od 1 024 do 65 535.",
-  "error-server-unreachable-title": "Nie je možné pripojiť sa na váš server služby Outline",
   "error-servers-removed": "Servery {serverNames} už nie sú vo vašom účte DigitalOcean prítomné.",
   "error-set-data-limit": "Nepodarilo sa nastaviť predvolený dátový limit",
   "error-set-per-key-limit": "Nepodarilo sa nastaviť dátový limit pre tento prístupový kľúč",

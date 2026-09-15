@@ -56,8 +56,6 @@
   "error-server-destroy": "አገልጋዩን ማጥፋት አልተቻለም።",
   "error-server-removed": "{serverName} የዲጂታልኦሽን አካውንትዎ ውስጥ የለም።",
   "error-server-rename": "አገልጋይዎን መልሶ መሠየም አልተቻለም።",
-  "error-server-unreachable": "Outline (አውትላይን) አገልጋይዎ በትክክል ተጭኗል። ግን ማገናኘት አልቻልንም። የአገልጋይዎ የፋይርዎል መመሪያዎች እያገዱብን ሊሆን ይችላል። እባክዎ ያስተካክሉትና የቲሲፒ ግንኙነቶች ከ1024 እስከ 65535 እንዲሆን ያድርጉ። ",
-  "error-server-unreachable-title": "Outline (አውትላይን) አገልጋይዎ ጋር መገናኘት አልተቻለም።",
   "error-servers-removed": "{serverNames} ዲጂታልኦሽን አካውንቶ ውስጥ የለም።",
   "error-set-data-limit": "ነባሪ የውሂብ ገደብን ማዘጋጀት አልተቻለም",
   "error-set-per-key-limit": "ለዚህ የመዳረሻ ቁልፍ የውሂብ ገደብን ማዘጋጀት አልተቻለም",

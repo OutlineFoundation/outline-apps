@@ -56,8 +56,6 @@
   "error-server-destroy": "No se ha podido eliminar el servidor",
   "error-server-removed": "{serverName} ya no está en tu cuenta de DigitalOcean.",
   "error-server-rename": "No se ha podido cambiar el nombre del servidor",
-  "error-server-unreachable": "Tu servidor de Outline se ha instalado correctamente, pero no hemos podido conectar con él. Esto se debe probablemente a que las reglas del cortafuegos de tu servidor están bloqueando las conexiones entrantes. Revísalas y asegúrate de permitir las conexiones TCP entrantes en los puertos del 1024 al 65.535.",
-  "error-server-unreachable-title": "No se puede conectar con tu servidor de Outline",
   "error-servers-removed": "{serverNames} ya no está en tu cuenta de DigitalOcean.",
   "error-set-data-limit": "No se ha podido establecer el límite de datos predeterminado",
   "error-set-per-key-limit": "No se ha podido establecer el límite de datos para esta clave de acceso",

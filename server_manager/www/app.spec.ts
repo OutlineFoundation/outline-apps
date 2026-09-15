@@ -68,6 +68,58 @@ describe('App', () => {
     expect(appRoot.currentPage).toEqual('serverView');
   });
 
+  it('adds and shows a manual server without waiting for its health check', async () => {
+    const appRoot = document.getElementById('appRoot') as AppRoot;
+    const manualServerRepo = new PendingHealthManualServerRepository();
+    const app = createTestApp(appRoot, undefined, manualServerRepo);
+    await app.start();
+    const config = {certSha256: 'cert', apiUrl: 'url'};
+
+    // Resolves even though the server's health check never completes.
+    await app.createManualServer(JSON.stringify(config));
+
+    expect(manualServerRepo.findServer(config)).toBeDefined();
+    expect(appRoot.selectedServerId).toEqual(
+      manualServerRepo.findServer(config).getId()
+    );
+    expect(appRoot.currentPage).toEqual('serverView');
+    // While the check is pending, the view shows a connecting state rather
+    // than an empty management view.
+    await flushPromises();
+    const view = await appRoot.getServerView(appRoot.selectedServerId);
+    expect(view.selectedPage).toEqual('connectingView');
+  });
+
+  it('shows the connecting view again while retrying an unreachable manual server', async () => {
+    const appRoot = document.getElementById('appRoot') as AppRoot;
+    const manualServerRepo = new DeferredHealthManualServerRepository();
+    const app = createTestApp(appRoot, undefined, manualServerRepo);
+    await app.start();
+    await app.createManualServer(
+      JSON.stringify({certSha256: 'cert', apiUrl: 'url'})
+    );
+    await flushPromises();
+    const view = await appRoot.getServerView(appRoot.selectedServerId);
+    const manualServer = manualServerRepo.deferredServers[0];
+
+    manualServer.resolveHealth(false);
+    await flushPromises();
+    expect(view.selectedPage).toEqual('unreachableView');
+
+    // Tap Retry the way the unreachable page does.
+    const retryButton = view.shadowRoot.querySelector('.try-again-btn');
+    retryButton.dispatchEvent(
+      new CustomEvent('tap', {bubbles: true, composed: true})
+    );
+    await flushPromises();
+    expect(manualServer.healthChecks).toEqual(2);
+    expect(view.selectedPage).toEqual('connectingView');
+
+    manualServer.resolveHealth(true);
+    await flushPromises();
+    expect(view.selectedPage).toEqual('managementView');
+  });
+
   it('initially shows servers', async () => {
     // Create fake servers and simulate their metadata being cached before creating the app.
     const fakeAccount = new FakeDigitalOceanAccount();
@@ -237,6 +289,79 @@ describe('App', () => {
     expect(view.selectedPage).toEqual('progressView');
   });
 });
+
+// A manual server whose health check never completes, to verify that adding a
+// server doesn't block on (or depend on) reaching it.
+class PendingHealthManualServer extends FakeManualServer {
+  isHealthy() {
+    return new Promise<boolean>(() => {});
+  }
+}
+
+class PendingHealthManualServerRepository extends FakeManualServerRepository {
+  private pendingServers: server.ManualServer[] = [];
+
+  addServer(config: server.ManualServerConfig) {
+    const newServer = new PendingHealthManualServer(config);
+    this.pendingServers.push(newServer);
+    return Promise.resolve(newServer);
+  }
+
+  findServer(config: server.ManualServerConfig) {
+    return this.pendingServers.find(
+      server => server.getManagementApiUrl() === config.apiUrl
+    );
+  }
+
+  listServers() {
+    return Promise.resolve(this.pendingServers);
+  }
+}
+
+// A manual server whose health checks stay pending until the test settles
+// them, to exercise the connecting and retry states of the server view.
+class DeferredHealthManualServer extends FakeManualServer {
+  healthChecks = 0;
+  private healthResolvers: Array<(healthy: boolean) => void> = [];
+
+  isHealthy() {
+    this.healthChecks++;
+    return new Promise<boolean>(resolve => this.healthResolvers.push(resolve));
+  }
+
+  resolveHealth(healthy: boolean) {
+    const resolvers = this.healthResolvers;
+    this.healthResolvers = [];
+    for (const resolve of resolvers) {
+      resolve(healthy);
+    }
+  }
+}
+
+class DeferredHealthManualServerRepository extends FakeManualServerRepository {
+  deferredServers: DeferredHealthManualServer[] = [];
+
+  addServer(config: server.ManualServerConfig) {
+    const newServer = new DeferredHealthManualServer(config);
+    this.deferredServers.push(newServer);
+    return Promise.resolve(newServer);
+  }
+
+  findServer(config: server.ManualServerConfig) {
+    return this.deferredServers.find(
+      server => server.getManagementApiUrl() === config.apiUrl
+    );
+  }
+
+  listServers() {
+    return Promise.resolve(this.deferredServers as server.ManualServer[]);
+  }
+}
+
+// Lets pending promise callbacks and zero-delay timers run.
+function flushPromises() {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
 
 function createTestApp(
   appRoot: AppRoot,

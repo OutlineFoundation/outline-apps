@@ -56,8 +56,6 @@
   "error-server-destroy": "Kon nie bediener uitwis nie",
   "error-server-removed": "{serverName} is nie meer in jou DigitalOcean-rekening teenwoordig nie.",
   "error-server-rename": "Kon nie bediener hernoem nie",
-  "error-server-unreachable": "Jou Outline-bediener is reg geïnstalleer, maar ons kan nie daaraan koppel nie. Dis waarskynlik omdat jou bediener se brandmuurreëls inkomende verbindings blokkeer. Gaan hulle asseblief na en maak seker dat jy TCP-verbindings toelaat op poorte wat strek van 1024 tot 65535.",
-  "error-server-unreachable-title": "Kan nie aan jou Outline-bediener koppel nie",
   "error-servers-removed": "{serverNames} is nie meer in jou DigitalOcean-rekening teenwoordig nie.",
   "error-set-data-limit": "Kon nie verstekdatalimiet stel nie",
   "error-set-per-key-limit": "Kon nie datalimiet vir hierdie toegangsleutel stel nie",

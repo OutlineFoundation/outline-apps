@@ -33,7 +33,6 @@ import {html} from '@polymer/polymer/lib/utils/html-tag';
 
 export interface OutlineManualServerEntry extends Element {
   clear(): void;
-  retryTapped(): void;
   cancelTapped(): void;
   cloudProvider: 'generic' | 'aws' | 'gcp';
   enableDoneButton: boolean;
@@ -450,11 +449,6 @@ Polymer({
 
   cancelTapped() {
     this.fire('ManualServerEntryCancelled');
-  },
-
-  retryTapped() {
-    this.showConnection = false;
-    this.doneTapped();
   },
 
   gcpNewFlowTapped() {

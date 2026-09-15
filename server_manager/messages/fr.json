@@ -56,8 +56,6 @@
   "error-server-destroy": "Impossible de supprimer le serveur",
   "error-server-removed": "Le serveur {serverName} n'existe plus dans votre compte DigitalOcean.",
   "error-server-rename": "Impossible de renommer le serveur",
-  "error-server-unreachable": "Votre serveur Outline a bien été installé, mais nous ne parvenons pas à nous y connecter. Il est probable que les règles de son pare-feu bloquent les connexions entrantes. Veuillez les vérifier et vous assurer d'autoriser les connexions TCP entrantes sur les ports compris entre 1024 et 65535.",
-  "error-server-unreachable-title": "Impossible d'établir la connexion avec votre serveur Outline",
   "error-servers-removed": "Les serveurs {serverNames} n'existent plus dans votre compte DigitalOcean.",
   "error-set-data-limit": "Impossible de définir la limite de données par défaut",
   "error-set-per-key-limit": "Impossible de définir la limite de données pour cette clé d'accès",
