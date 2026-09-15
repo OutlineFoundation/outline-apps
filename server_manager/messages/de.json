@@ -56,8 +56,6 @@
   "error-server-destroy": "Server konnte nicht gelöscht werden",
   "error-server-removed": "{serverName} befindet sich nicht mehr in Ihrem DigitalOcean-Konto.",
   "error-server-rename": "Server konnte nicht umbenannt werden",
-  "error-server-unreachable": "Ihr Outline-Server wurde erfolgreich installiert, es kann jedoch keine Verbindung hergestellt werden. Wahrscheinlich werden eingehende Verbindungen von den Firewallregeln Ihres Servers blockiert. Überprüfen Sie die Regeln und achten Sie darauf, dass eingehende TCP-Verbindungen für die Ports 1024 bis 65535 zugelassen werden.",
-  "error-server-unreachable-title": "Es kann keine Verbindung zu Ihrem Outline-Server hergestellt werden",
   "error-servers-removed": "{serverNames} befinden sich nicht mehr in Ihrem DigitalOcean-Konto.",
   "error-set-data-limit": "Standard-Datenlimit konnte nicht festgelegt werden",
   "error-set-per-key-limit": "Für diesen Zugriffsschlüssel konnte kein Datenlimit festgelegt werden",

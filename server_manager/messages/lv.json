@@ -56,8 +56,6 @@
   "error-server-destroy": "Neizdevās iznīcināt serveri.",
   "error-server-removed": "Serveri {serverName} vairs nav pieejami jūsu DigitalOcean kontā.",
   "error-server-rename": "Neizdevās pārdēvēt serveri.",
-  "error-server-unreachable": "Outline serveris tika pareizi instalēts, taču neizdodas ar to izveidot savienojumu. Visticamāk, ienākošie savienojumi tiek bloķēti jūsu servera ugunsmūra kārtulu dēļ. Lūdzu, pārskatiet šīs kārtulas. Ir jābūt atļautiem ienākošajiem TCP savienojumiem portos, kuru numuri ir no 1024 līdz 65535.",
-  "error-server-unreachable-title": "Nevar izveidot savienojumu ar jūsu Outline serveri",
   "error-servers-removed": "Serveri {serverNames} vairs nav pieejami jūsu DigitalOcean kontā.",
   "error-set-data-limit": "Nevarēja iestatīt noklusējuma datu ierobežojumu",
   "error-set-per-key-limit": "Nevarēja iestatīt datu ierobežojumu šai piekļuves atslēgai",

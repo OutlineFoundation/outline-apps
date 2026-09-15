@@ -56,8 +56,6 @@
   "error-server-destroy": "Gagal memusnahkan pelayan",
   "error-server-removed": "{serverName} tidak lagi wujud dalam akaun DigitalOcean anda.",
   "error-server-rename": "Gagal menamakan semula pelayan",
-  "error-server-unreachable": "Pelayan Outline anda telah dipasang dengan betul, tetapi kami tidak dapat bersambung ke pelayan ini. Perkara ini kemungkinan besar disebabkan peraturan tembok api pelayan anda menyekat sambungan masuk. Sila semak peraturan tembok api ini dan pastikan sambungan TCP masuk dibenarkan pada port dari 1024 hingga 65535.",
-  "error-server-unreachable-title": "Tidak dapat bersambung ke Pelayan Outline anda",
   "error-servers-removed": "{serverNames} tidak lagi wujud dalam akaun DigitalOcean anda.",
   "error-set-data-limit": "Tidak dapat menetapkan had data lalai",
   "error-set-per-key-limit": "Tidak dapat menetapkan had data untuk kunci akses ini",

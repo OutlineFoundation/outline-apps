@@ -56,8 +56,6 @@
   "error-server-destroy": "Eliminiranje servera nije uspjelo",
   "error-server-removed": "{serverName} se više ne prikazuje na vašem DigitalOcean računu.",
   "error-server-rename": "Promjena naziva servera nije uspjela",
-  "error-server-unreachable": "Vaš Outline server je ispravno instaliran, ali se nismo mogli povezati s njim. To je najvjerovatnije zato što pravila zaštitnog zida servera blokiraju dolazne veze. Pregledajte ih i obavezno dozvolite dolazne TCP veze na priključcima u rasponu od 1024 do 65535.",
-  "error-server-unreachable-title": "Nije moguće povezivanje na vaš Outline server",
   "error-servers-removed": "{serverNames} se više ne prikazuju na vašem DigitalOcean računu.",
   "error-set-data-limit": "Postavljanje zadanog ograničenja za prenos podataka nije uspjelo",
   "error-set-per-key-limit": "Postavljanje ograničenja za prenos podataka za ovaj pristupni ključ nije uspjelo",

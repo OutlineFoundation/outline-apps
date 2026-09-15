@@ -56,8 +56,6 @@
   "error-server-destroy": "Shkatërrimi i serverit dështoi",
   "error-server-removed": "{serverName} nuk është më i pranishëm në llogarinë tënde të DigitalOcean.",
   "error-server-rename": "Riemërtimi i serverit dështoi",
-  "error-server-unreachable": "Serveri yt i Outline u instalua si duhet, por nuk mund të lidhemi me të. Ka shumë mundësi që kjo të ndodhë sepse rregullat e murit mbrojtës të serverit tënd i bllokojnë lidhjet hyrëse. Rishikoji ata dhe sigurohu që të lejosh lidhjet hyrëse të protokollit TCP në portat nga 1024 deri në 65 535.",
-  "error-server-unreachable-title": "Nuk mund të lidhesh me serverin tënd të Outline",
   "error-servers-removed": "{serverNames} nuk janë më të pranishëm në llogarinë tënde të DigitalOcean.",
   "error-set-data-limit": "Kufiri i parazgjedhur i të dhënave nuk mund të caktohej",
   "error-set-per-key-limit": "Kufiri i të dhënave nuk mund të caktohej për këtë çelës qasjeje",

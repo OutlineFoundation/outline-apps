@@ -56,8 +56,6 @@
   "error-server-destroy": "تعذّرت إزالة الخادم",
   "error-server-removed": "لم يعُد {serverName} موجودًا في حسابك على DigitalOcean.",
   "error-server-rename": "تعذّرت إعادة تسمية الخادم",
-  "error-server-unreachable": "تم تثبيت خادمك على Outline بشكل صحيح ولكننا لا نستطيع الاتصال به. يعود السبب في هذه المشكلة على الأرجح إلى أن قواعد جدار الحماية لخادمك تحظر الاتصالات الواردة. يُرجى مراجعة هذه القواعد والتأكّد من السماح باتصالات TCP الواردة على منافذ تتراوح من 1024 إلى 65535.",
-  "error-server-unreachable-title": "يتعذّر الاتصال بخادمك على Outline",
   "error-servers-removed": "لم تعُد {serverNames} موجودة في حسابك على DigitalOcean.",
   "error-set-data-limit": "تعذَّر ضبط الحد الأقصى التلقائي للبيانات.",
   "error-set-per-key-limit": "تعذَّر ضبط حد أقصى للبيانات لمفتاح الوصول الحالي.",

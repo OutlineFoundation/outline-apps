@@ -56,8 +56,6 @@
   "error-server-destroy": "Kunne ikke slette tjeneren",
   "error-server-removed": "{serverName} finnes ikke lenger i DigitalOcean-kontoen din.",
   "error-server-rename": "Kunne ikke gi tjeneren nytt navn",
-  "error-server-unreachable": "Outline-tjeneren din ble installert riktig, men vi kan ikke koble til den. Dette er sannsynligvis fordi brannmurreglene for tjeneren din blokkerer innkommende tilkoblinger. Gå gjennom dem og pass på at du tillater innkommende TCP-tilkoblinger på porter fra 1024 til 65535.",
-  "error-server-unreachable-title": "Kan ikke koble til Outline-tjeneren din",
   "error-servers-removed": "{serverNames} finnes ikke lenger i DigitalOcean-kontoen din.",
   "error-set-data-limit": "Kunne ikke angi standarddatagrense",
   "error-set-per-key-limit": "Kunne ikke angi en datagrense for denne tilgangsnøkkelen",

@@ -56,8 +56,6 @@
   "error-server-destroy": "Brisanje servera nije uspelo",
   "error-server-removed": "{serverName} više nije prisutan na DigitalOcean nalogu.",
   "error-server-rename": "Preimenovanje servera nije uspelo",
-  "error-server-unreachable": "Outline server je ispravno instaliran, ali ne možemo da se povežemo s njim. To je najverovatnije zbog toga što pravila zaštitnog zida vašeg servera blokiraju dolazne veze. Pregledajte ih i obavezno dozvolite dolazne TCP veze na portovima u opsegu od 1024 do 65535.",
-  "error-server-unreachable-title": "Ne možemo da se povežemo sa vašim Outline serverom",
   "error-servers-removed": "{serverNames} više nisu prisutni na DigitalOcean nalogu.",
   "error-set-data-limit": "Podešavanje podrazumevanog ograničenja potrošnje podataka nije uspelo",
   "error-set-per-key-limit": "Podešavanje ograničenja potrošnje podataka za ovaj pristupni ključ nije uspelo",

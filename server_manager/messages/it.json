@@ -56,8 +56,6 @@
   "error-server-destroy": "Eliminazione server non riuscita",
   "error-server-removed": "{serverName} non è più presente nel tuo account DigitalOcean.",
   "error-server-rename": "Impossibile rinominare il server",
-  "error-server-unreachable": "Il server Outline è stato installato correttamente, ma non riusciamo a collegarci. Il problema è dovuto probabilmente alle regole del firewall del server che bloccano le connessioni in arrivo. Controllale e assicurati di consentire le connessioni TCP in arrivo sulle porte da 1024 a 65535.",
-  "error-server-unreachable-title": "Impossibile collegarsi al server Outline",
   "error-servers-removed": "{serverNames} non è più presente nel tuo account DigitalOcean.",
   "error-set-data-limit": "Impossibile impostare il limite dati predefinito",
   "error-set-per-key-limit": "Impossibile impostare un limite dati per questa chiave di accesso",

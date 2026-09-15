@@ -56,8 +56,6 @@
   "error-server-destroy": "Imeshindwa kuharibu seva",
   "error-server-removed": "Seva ya {serverName} haipatikani tena kwenye akaunti yako ya DigitalOcean.",
   "error-server-rename": "Imeshindwa kubadilisha jina la seva",
-  "error-server-unreachable": "Seva yako ya Outline imesakinishwa ipasavyo lakini hatuwezi kuunganisha nayo. Yamkini ni kwa sababu amri za kinga mtandao ya seva yako zinazuia miunganisho inayoingia. Tafadhali zikague na uhakikishe kuwa umeruhusu miunganisho inayoingia ya TCP kwenye milango kuanzia 1024 hadi 65535.",
-  "error-server-unreachable-title": "Imeshindwa kuunganisha kwenye Seva yako ya Outline",
   "error-servers-removed": "Seva ya {serverNames} haipatikani tena kwenye akaunti yako ya DigitalOcean.",
   "error-set-data-limit": "Imeshindwa kuweka kikomo chaguomsingi cha data",
   "error-set-per-key-limit": "Imeshindwa kuweka kikomo cha data kwa ufunguo huu",

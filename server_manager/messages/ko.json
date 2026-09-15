@@ -56,8 +56,6 @@
   "error-server-destroy": "서버를 삭제할 수 없음",
   "error-server-removed": "{serverName} 서버가 더 이상 내 DigitalOcean 계정에 표시되지 않습니다.",
   "error-server-rename": "서버 이름을 변경할 수 없음",
-  "error-server-unreachable": "Outline 서버가 정상적으로 설치되었지만 서버에 연결할 수 없습니다. 서버의 방화벽 규칙이 수신 연결을 차단하는 것이 주된 원인입니다. 규칙을 검토하여 1024~65535 범위의 포트에서 수신 TCP 연결을 허용하도록 하세요.",
-  "error-server-unreachable-title": "Outline 서버에 연결할 수 없음",
   "error-servers-removed": "{serverNames} 서버가 더 이상 내 DigitalOcean 계정에 표시되지 않습니다.",
   "error-set-data-limit": "기본 데이터 한도를 설정할 수 없습니다.",
   "error-set-per-key-limit": "이 액세스 키에 데이터 한도를 설정할 수 없습니다.",

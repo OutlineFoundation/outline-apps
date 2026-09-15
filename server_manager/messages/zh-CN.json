@@ -56,8 +56,6 @@
   "error-server-destroy": "未能销毁服务器",
   "error-server-removed": "您的 DigitalOcean 账号中不会再显示“{serverName}”。",
   "error-server-rename": "未能重命名服务器",
-  "error-server-unreachable": "虽然您的 Outline 服务器已正确安装，但我们无法连接到该服务器。这很可能是因为该服务器的防火墙规则阻止接入连接。请检查防火墙规则，确保端口 1024 - 65535 均允许接入 TCP 连接。",
-  "error-server-unreachable-title": "无法连接到您的 Outline 服务器",
   "error-servers-removed": "您的 DigitalOcean 账号中不会再显示{serverNames}。",
   "error-set-data-limit": "无法设置默认流量上限",
   "error-set-per-key-limit": "无法为此访问密钥设置流量上限",

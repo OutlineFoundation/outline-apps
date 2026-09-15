@@ -56,8 +56,6 @@
   "error-server-destroy": "Failed to destroy server",
   "error-server-removed": "{serverName} no longer present in your DigitalOcean account.",
   "error-server-rename": "Failed to rename server",
-  "error-server-unreachable": "Your Outline server was installed correctly, but we are not able to connect to it. Most likely this is because your server's firewall rules are blocking incoming connections. Please review them and make sure that you allow incoming TCP connections on ports ranging from 1024 to 65535.",
-  "error-server-unreachable-title": "Unable to connect to your Outline server",
   "error-servers-removed": "{serverNames} no longer present in your DigitalOcean account.",
   "error-set-data-limit": "Could not set default data limit",
   "error-set-per-key-limit": "Could not set data limit for this access key",

@@ -56,8 +56,6 @@
   "error-server-destroy": "سرور تخریب نشد",
   "error-server-removed": "{serverName} دیگر در حساب DigitalOcean شما وجود ندارد.",
   "error-server-rename": "تغییر نام سرور ناموفق بود",
-  "error-server-unreachable": "سرور Outline شما باموفقیت نصب شد، اما نمی‌توانیم به آن متصل شویم. به‌احتمال زیاد قوانین دیوار آتش سرورتان اتصالات ورودی را مسدود می‌کند. لطفاً آن‌ها را مرور کنید و حتماً اتصالات ورودی TCP در درگاه‌های ۱۰۲۴ تا ۶۵۵۳۵ را مجاز کنید.",
-  "error-server-unreachable-title": "نمی‌توان به سرور Outline شما متصل شد",
   "error-servers-removed": "{serverNames} دیگر در حساب DigitalOcean شما وجود ندارد.",
   "error-set-data-limit": "محدودیت داده پیش‌فرض تنظیم نشد",
   "error-set-per-key-limit": "نمی‌توان برای این کلید دسترسی محدودیت داده تنظیم کرد",

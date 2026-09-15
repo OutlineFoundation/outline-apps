@@ -479,14 +479,6 @@
     "message": "Failed to rename server",
     "description": "This string appears in an error notification toast. It is shown when there is an error renaming a server."
   },
-  "error_server_unreachable": {
-    "message": "Your Outline Server was installed correctly, but we are not able to connect to it. Most likely this is because your server's firewall rules are blocking incoming connections. Please review them and make sure to allow incoming TCP connections on ports ranging from 1024 to 65535.",
-    "description": "This string appears in dialog as a paragraph. The dialog is shown when a server is installed successfully but cannot be reached. The dialog provides possible solutions and displays buttons that allow the user to retry reaching the server."
-  },
-  "error_server_unreachable_title": {
-    "message": "Unable to connect to your Outline Server",
-    "description": "This string appears in dialog as a header. The dialog is shown when a server is installed successfully but cannot be reached."
-  },
   "error_servers_removed": {
     "message": "$SERVER_NAMES$ no longer present in your DigitalOcean account.",
     "description": "This string appears in an error notification toast. It is shown when multiple DigitalOcean servers were destroyed outside the application to let the user know that they will not be displayed in the UI. DigitalOcean is a cloud server provider name and should not be translated.",

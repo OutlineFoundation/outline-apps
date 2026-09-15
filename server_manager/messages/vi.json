@@ -56,8 +56,6 @@
   "error-server-destroy": "Không hủy được máy chủ",
   "error-server-removed": "{serverName} không còn xuất hiện trong tài khoản DigitalOcean của bạn nữa.",
   "error-server-rename": "Không đổi được tên máy chủ",
-  "error-server-unreachable": "Máy chủ Outline của bạn đã được cài đặt chính xác, nhưng không thể kết nối. Nhiều khả năng lỗi này là do quy tắc tường lửa trên máy chủ của bạn đang chặn kết nối đến. Vui lòng xem lại các quy tắc và đảm bảo cho phép kết nối TCP đến ở các cổng từ 1024 đến 65535.",
-  "error-server-unreachable-title": "Không thể kết nối với Máy chủ Outline của bạn",
   "error-servers-removed": "{serverNames} không còn xuất hiện trong tài khoản DigitalOcean của bạn nữa.",
   "error-set-data-limit": "Không thể đặt hạn mức dữ liệu mặc định",
   "error-set-per-key-limit": "Không thể đặt hạn mức dữ liệu cho khóa truy cập này",

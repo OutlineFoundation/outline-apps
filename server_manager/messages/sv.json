@@ -56,8 +56,6 @@
   "error-server-destroy": "Det gick inte att förstöra servern",
   "error-server-removed": "{serverName} finns inte längre i DigitalOcean-kontot.",
   "error-server-rename": "Det gick inte att byta namn på servern",
-  "error-server-unreachable": "Outline-servern installerades korrekt, men vi kan inte ansluta till den. Det beror troligen på att inkommande anslutningar blockeras av serverns brandväggsregler. Granska dem och kontrollera att de tillåter inkommande TCP-anslutningar i portar mellan 1024 och 65535.",
-  "error-server-unreachable-title": "Det går inte att ansluta till din Outline-server",
   "error-servers-removed": "{serverNames} finns inte längre i DigitalOcean-kontot.",
   "error-set-data-limit": "Det gick inte att ställa in standarddatagränsen",
   "error-set-per-key-limit": "Det gick inte att ställa in datagränsen för åtkomstnyckeln",
