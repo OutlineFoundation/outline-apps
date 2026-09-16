@@ -244,6 +244,39 @@ jobs:
       #     file: ./client/src/output/coverage/apple/ios/TestResult.xcresult
       #     flags: unittests, apple, ios
 
+  capacitor_ios_debug_build:
+    name: iOS Capacitor Debug Build
+    runs-on: macos-15
+    timeout-minutes: 30
+    needs: [web_test, backend_test]
+    steps:
+      - name: Display XCode
+        run: xcode-select --print-path
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      # Builds the web bundle, runs `cap sync ios` (which builds the tun2socks
+      # xcframework via the capacitor:sync:before hook), and then runs an
+      # unsigned xcodebuild of ios/App/App.xcodeproj.
+      - name: Build iOS Capacitor Client
+        run: npm run action client/capacitor/build ios
+
   android_debug_build:
     name: Android Debug Build
     runs-on: ubuntu-22.04
