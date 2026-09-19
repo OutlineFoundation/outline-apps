@@ -160,10 +160,6 @@ public class VpnTunnelService extends VpnService {
   public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
     LOG.info(String.format(Locale.ROOT, "Starting VPN service: %s", intent));
     int superOnStartReturnValue = super.onStartCommand(intent, flags, startId);
-    // Promote to foreground immediately to satisfy Android's 5-second window requirement.
-    // startForegroundService() callers (VpnServiceStarter, QuickSettings) require that
-    // startForeground() is called before any deferred work can exceed the OS deadline.
-    startForegroundImmediately();
     if (intent != null) {
       if (intent.getBooleanExtra(STOP_ACTIVE_TUNNEL_EXTRA, false)) {
         broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
@@ -172,6 +168,9 @@ public class VpnTunnelService extends VpnService {
         return START_NOT_STICKY;
       }
       if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
+        // Promote to foreground immediately to satisfy Android's 5-second window requirement
+        // before any deferred tunnel-setup work is performed.
+        startForegroundImmediately();
         startLastSuccessfulTunnel();
         QuickSettingsTileService.requestTileUpdate(this);
         return superOnStartReturnValue;
@@ -181,6 +180,9 @@ public class VpnTunnelService extends VpnService {
           intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false);
       boolean startedByAlwaysOn = VpnService.SERVICE_INTERFACE.equals(intent.getAction());
       if (startedByVpnStarter || startedByAlwaysOn) {
+        // Promote to foreground immediately to satisfy Android's 5-second window requirement
+        // before any deferred tunnel-setup work is performed.
+        startForegroundImmediately();
         startLastSuccessfulTunnel();
       }
     }
@@ -479,6 +481,9 @@ public class VpnTunnelService extends VpnService {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Clear the foreground state we set in onStartCommand and stop the service.
+      stopForeground();
+      stopSelf();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
@@ -486,6 +491,9 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Clear the foreground state we set in onStartCommand and stop the service.
+      stopForeground();
+      stopSelf();
       return;
     }
     try {
@@ -494,14 +502,16 @@ public class VpnTunnelService extends VpnService {
       tunnelConfig.name = tunnel.getString(TUNNEL_SERVER_NAME);
       tunnelConfig.transportConfig = tunnel.getString(TUNNEL_CONFIG_KEY);
 
-      // Start the service in the foreground as per Android 8+ background service execution limits.
-      // Requires android.permission.FOREGROUND_SERVICE since Android P.
+      // Update the foreground notification with the real server name now that we have it.
       startForegroundWithNotification(tunnelConfig.name);
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Clear the foreground state we set in onStartCommand and stop the service.
+      stopForeground();
+      stopSelf();
     }
   }
 
@@ -555,11 +565,11 @@ public class VpnTunnelService extends VpnService {
     builder.setContentTitle("Outline")
            .setColor(NOTIFICATION_COLOR)
            .setVisibility(Notification.VISIBILITY_SECRET);
-    // The icon is optional; failure to load it must not prevent startForeground() from being called.
-    try {
-      builder.setSmallIcon(getResourceId("small_icon", "drawable"));
-    } catch (Exception e) {
-      LOG.warning("Failed to set notification icon in connecting notification.");
+    // The icon is optional; getResourceId() returns 0 when absent rather than throwing,
+    // so guard by checking the ID before calling setSmallIcon().
+    int iconId = getResourceId("small_icon", "drawable");
+    if (iconId != 0) {
+      builder.setSmallIcon(iconId);
     }
     // startForeground() must be called unconditionally. Do NOT move it inside a try-catch.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
