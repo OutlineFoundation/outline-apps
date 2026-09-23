@@ -128,6 +128,9 @@ export class GoVpnTunnel implements VpnTunnel {
   }
 
   networkChanged(status: TunnelStatus, gatewayIndex?: string) {
+    if (this.disconnected) {
+      return;
+    }
     if (status === TunnelStatus.CONNECTED) {
       if (gatewayIndex) {
         this.gatewayAdapterIndex = gatewayIndex;
