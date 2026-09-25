@@ -80,6 +80,11 @@ export class AppRoot extends mixinBehaviors(
   [AppLocalizeBehavior],
   PolymerElement
 ) {
+  constructor() {
+    super();
+    this.handleTvDeviceReady = this.handleTvDeviceReady.bind(this);
+  }
+
   static get template() {
     return html`
       <style>
@@ -655,6 +660,56 @@ export class AppRoot extends mixinBehaviors(
       // Don't use cordova?.platformId, ReferenceError will be thrown
       this.platform = globalThis.cordova.platformId;
     }
+
+    this.installTvNavigationIfNeeded();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    globalThis.document.addEventListener(
+      'outline-android-tv-device-ready',
+      this.handleTvDeviceReady
+    );
+    this.installTvNavigationIfNeeded();
+  }
+
+  handleTvDeviceReady() {
+    this.installTvNavigationIfNeeded();
+  }
+
+  installTvNavigationIfNeeded() {
+    if (
+      this.platform !== 'android' ||
+      !globalThis.window.outlineTvDevice ||
+      this.tvNavigationLoad ||
+      this.removeTvNavigation
+    ) {
+      return;
+    }
+
+    const navigationLoad = import('./tv-navigation.js');
+    this.tvNavigationLoad = navigationLoad;
+    navigationLoad
+      .then(({installTvNavigation}) => {
+        if (this.tvNavigationLoad !== navigationLoad || !this.isConnected) {
+          return;
+        }
+        this.removeTvNavigation = installTvNavigation(this.shadowRoot);
+      })
+      .catch(error => {
+        console.error('Failed to install Android TV navigation', error);
+      });
+  }
+
+  disconnectedCallback() {
+    globalThis.document.removeEventListener(
+      'outline-android-tv-device-ready',
+      this.handleTvDeviceReady
+    );
+    this.tvNavigationLoad = undefined;
+    this.removeTvNavigation?.();
+    this.removeTvNavigation = undefined;
+    super.disconnectedCallback();
   }
 
   setLanguage(languageCode) {

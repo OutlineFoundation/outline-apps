@@ -139,6 +139,13 @@ const sharedCSS = css`
 
     text-transform: uppercase;
   }
+
+  .card-menu-button:focus-within,
+  .card-footer-button:focus-within {
+    border-radius: var(--outline-corner);
+    outline: 4px solid var(--outline-primary);
+    outline-offset: 2px;
+  }
 `;
 
 // TODO(daniellacosse): wrap components in a closure to avoid unnecessary work
@@ -401,12 +408,10 @@ export class ServerHeroCard
       `${this.server.connectionState}-server-state`
     );
     const connectToggleKeyboardDispatcher = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       event.stopImmediatePropagation();
-
-      if (event.key === 'Enter') {
-        dispatchers.connectToggle();
-      }
+      dispatchers.connectToggle();
     };
 
     return html`

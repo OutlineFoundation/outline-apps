@@ -36,7 +36,28 @@ import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
 import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
+declare global {
+  interface Window {
+    outlineTvDevice?: boolean;
+  }
+}
+
 const hasDeviceSupport = cordova.platformId !== 'browser';
+const ANDROID_TV_DEVICE_READY_EVENT = 'outline-android-tv-device-ready';
+
+async function detectAndroidTvDevice() {
+  if (cordova.platformId !== 'android') {
+    return;
+  }
+
+  try {
+    window.outlineTvDevice = await pluginExec<boolean>('isAndroidTv');
+  } catch (error) {
+    console.error('Failed to detect Android TV device', error);
+    window.outlineTvDevice = false;
+  }
+  document.dispatchEvent(new Event(ANDROID_TV_DEVICE_READY_EVENT));
+}
 
 // Pushes a clipboard event whenever the app is brought to the foreground.
 class CordovaClipboard extends AbstractClipboard {
@@ -155,6 +176,7 @@ window.handleOpenURL = (url: string) => {
 // https://cordova.apache.org/docs/en/latest/cordova/events/events.html#deviceready
 document.addEventListener('deviceready', async () => {
   installDefaultMethodChannel(new CordovaMethodChannel());
+  await detectAndroidTvDevice();
   try {
     await main(new CordovaPlatform());
   } catch (e) {

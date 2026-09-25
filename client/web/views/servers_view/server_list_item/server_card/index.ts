@@ -502,12 +502,10 @@ export class ServerCard extends LitElement implements ServerListItemElement {
   }
 
   connectToggleKeyboardDispatcher(event: KeyboardEvent) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     event.stopImmediatePropagation();
-
-    if (event.key === 'Enter') {
-      this.connectToggle();
-    }
+    this.connectToggle();
   }
 
   forget() {
