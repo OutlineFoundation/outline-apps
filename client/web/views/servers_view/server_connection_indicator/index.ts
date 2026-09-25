@@ -75,6 +75,12 @@ export class ServerConnectionIndicator extends LitElement {
         --circle-disconnected-color: grayscale(1) brightness(0.5);
       }
 
+      :host(:focus-visible) {
+        border-radius: 50%;
+        outline: 4px solid var(--outline-primary);
+        outline-offset: 6px;
+      }
+
       /* Prevent images from being selectable on iOS, which can cause a crash when trying to save them. */
       img {
         pointer-events: none;

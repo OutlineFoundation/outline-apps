@@ -12,7 +12,7 @@
 */
 
 import {Localizer} from '@outline/infrastructure/i18n';
-import {LitElement, html, css, nothing} from 'lit';
+import {LitElement, PropertyValues, html, css, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
@@ -115,6 +115,13 @@ export class RootNavigation extends LitElement {
       cursor: pointer;
     }
 
+    md-list-item:focus-within,
+    li:focus-visible,
+    a:focus-visible {
+      outline: 4px solid var(--outline-primary);
+      outline-offset: -4px;
+    }
+
     md-list-item > a {
       color: inherit;
       display: block;
@@ -187,6 +194,16 @@ export class RootNavigation extends LitElement {
     }
   `;
 
+  override updated(changedProperties: PropertyValues<this>) {
+    if (!changedProperties.has('open') || !this.open) return;
+    requestAnimationFrame(() => {
+      if (!this.open) return;
+      this.renderRoot
+        .querySelector<HTMLElement>('md-list-item[tabindex="0"]')
+        ?.focus();
+    });
+  }
+
   render() {
     return html`<div
       class="${classMap({
@@ -211,18 +228,34 @@ export class RootNavigation extends LitElement {
           -->
           <md-list-item
             class="selected"
+            role="button"
+            tabindex="0"
             @click=${() => this.changePage('home')}
+            @keydown=${(event: KeyboardEvent) =>
+              this.activateOnKey(event, () => this.changePage('home'))}
           >
             <md-ripple></md-ripple>
             <md-icon slot="start">home</md-icon>
             ${this.localize('servers-menu-item')}
           </md-list-item>
-          <md-list-item @click=${() => this.changePage('contact')}>
+          <md-list-item
+            role="button"
+            tabindex="0"
+            @click=${() => this.changePage('contact')}
+            @keydown=${(event: KeyboardEvent) =>
+              this.activateOnKey(event, () => this.changePage('contact'))}
+          >
             <md-ripple></md-ripple>
             <md-icon slot="start">feedback</md-icon>
             ${this.localize('contact-page-title')}
           </md-list-item>
-          <md-list-item @click=${() => this.changePage('about')}>
+          <md-list-item
+            role="button"
+            tabindex="0"
+            @click=${() => this.changePage('about')}
+            @keydown=${(event: KeyboardEvent) =>
+              this.activateOnKey(event, () => this.changePage('about'))}
+          >
             <md-ripple></md-ripple>
             <md-icon slot="start">info</md-icon>
             ${this.localize('about-page-title')}
@@ -235,14 +268,28 @@ export class RootNavigation extends LitElement {
               <md-icon id="open-in-new-icon">open_in_new</md-icon>
             </a>
           </md-list-item>
-          <md-list-item @click=${() => this.changePage('language')}>
+          <md-list-item
+            role="button"
+            tabindex="0"
+            @click=${() => this.changePage('language')}
+            @keydown=${(event: KeyboardEvent) =>
+              this.activateOnKey(event, () => this.changePage('language'))}
+          >
             <md-ripple></md-ripple>
             <md-icon slot="start">language</md-icon>
             ${this.localize('change-language-page-title')}
           </md-list-item>
           ${this.showAppearanceView
             ? html`
-                <md-list-item @click=${() => this.changePage('appearance')}>
+                <md-list-item
+                  role="button"
+                  tabindex="0"
+                  @click=${() => this.changePage('appearance')}
+                  @keydown=${(event: KeyboardEvent) =>
+                    this.activateOnKey(event, () =>
+                      this.changePage('appearance')
+                    )}
+                >
                   <md-ripple></md-ripple>
                   <md-icon slot="start">brightness_medium</md-icon>
                   ${this.localize('appearance-page-title')}
@@ -250,7 +297,13 @@ export class RootNavigation extends LitElement {
               `
             : nothing}
           ${this.showQuit
-            ? html`<md-list-item @click=${this.quit}>
+            ? html`<md-list-item
+                role="button"
+                tabindex="0"
+                @click=${this.quit}
+                @keydown=${(event: KeyboardEvent) =>
+                  this.activateOnKey(event, () => this.quit())}
+              >
                 <md-ripple></md-ripple>
                 <md-icon slot="start">exit_to_app</md-icon>
                 ${this.localize('quit')}
@@ -276,7 +329,17 @@ export class RootNavigation extends LitElement {
               <md-icon id="open-in-new-icon">open_in_new</md-icon>
             </a>
           </li>
-          <li @click=${() => this.changePage('licenses')}>
+          <li
+            role="button"
+            tabindex="0"
+            @click=${() => this.changePage('licenses')}
+            @keydown=${(event: KeyboardEvent) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                this.changePage('licenses');
+              }
+            }}
+          >
             ${this.localize('licenses-page-title')}
           </li>
         </ul>
@@ -293,6 +356,12 @@ export class RootNavigation extends LitElement {
     );
   }
 
+  private activateOnKey(event: KeyboardEvent, action: () => void) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    action();
+  }
+
   private changePage(page: string) {
     this.dispatchEvent(
       new CustomEvent('ChangePage', {
@@ -301,6 +370,7 @@ export class RootNavigation extends LitElement {
         composed: true,
       })
     );
+    this.close();
   }
 
   private quit() {
