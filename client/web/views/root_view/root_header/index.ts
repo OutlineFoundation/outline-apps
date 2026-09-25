@@ -45,6 +45,12 @@ export class RootHeader extends LitElement {
       color: var(--outline-white);
     }
 
+    md-icon-button:focus-within {
+      border-radius: 50%;
+      outline: 4px solid var(--outline-primary);
+      outline-offset: 2px;
+    }
+
     .hidden {
       visibility: hidden;
     }

@@ -16,6 +16,7 @@
     "@material/mwc-textarea": "^0.27.0",
     "@material/mwc-textfield": "^0.27.0",
     "@material/web": "^2.0.0",
+    "@noriginmedia/norigin-spatial-navigation-core": "^4.1.1",
     "@outline/infrastructure": "file:../infrastructure",
     "@polymer/app-layout": "^3.1.0",
     "@polymer/app-localize-behavior": "^3.0.1",

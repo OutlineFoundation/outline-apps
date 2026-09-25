@@ -88,6 +88,13 @@ export class PrivacyAcknowledgementDialog extends LitElement {
       font-weight: bold;
     }
 
+    a:focus-visible,
+    md-filled-button:focus-within {
+      border-radius: var(--outline-corner);
+      outline: 4px solid var(--outline-primary);
+      outline-offset: 4px;
+    }
+
     fieldset {
       align-items: center;
       border: none;
