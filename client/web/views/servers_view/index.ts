@@ -119,6 +119,11 @@ export class ServerList extends LitElement {
       button:hover {
         cursor: pointer;
       }
+      button:focus-visible {
+        border-radius: var(--outline-corner);
+        outline: 4px solid var(--outline-primary);
+        outline-offset: 8px;
+      }
       server-connection-indicator {
         height: 192px;
         margin-bottom: 34px;

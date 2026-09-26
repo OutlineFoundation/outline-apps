@@ -31,6 +31,15 @@
 
     <!-- Android -->
     <platform name="android">
+        <!-- Let Android choose the natural orientation for the device. The web
+             UI enables D-pad navigation at runtime on Android TV devices. -->
+        <preference name="Orientation" value="unspecified" />
+        <!-- Keep one package compatible with phones, tablets and Android TV. -->
+        <config-file parent="/manifest" target="AndroidManifest.xml">
+            <uses-feature android:name="android.software.leanback" android:required="false" />
+            <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+        </config-file>
+
         <icon density="ldpi" src="resources/icons/android/icon_mdpi.png" />
         <icon density="mdpi" src="resources/icons/android/icon_mdpi.png" />
         <icon density="hdpi" src="resources/icons/android/icon_hdpi.png" />
@@ -38,12 +47,39 @@
         <icon density="xxhdpi" src="resources/icons/android/icon_xxhdpi.png" />
         <icon density="xxxhdpi" src="resources/icons/android/icon_xxxhdpi.png" />
 
+        <resource-file
+            src="resources/icons/android/tv_banner.png"
+            target="app/src/main/res/drawable-xhdpi/tv_banner.png"
+        />
+        <edit-config
+            file="AndroidManifest.xml"
+            mode="merge"
+            target="/manifest/application"
+        >
+            <application
+                android:banner="@drawable/tv_banner"
+            />
+        </edit-config>
+        <edit-config
+            file="AndroidManifest.xml"
+            mode="merge"
+            target="/manifest/application/activity[@android:name='MainActivity']"
+        >
+            <activity
+                android:banner="@drawable/tv_banner"
+            />
+        </edit-config>
+
         <preference name="AndroidWindowSplashScreenAnimatedIcon" value="resources/splashscreen/android/splash_screen_icon_xxxhdpi.png" />
         <preference name="AndroidWindowSplashScreenBackground" value="#263237" />
 
         <preference name="AndroidInsecureFileModeEnabled" value="true" />
 
         <config-file parent="./application/activity/[@android:name='MainActivity']" target="AndroidManifest.xml">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

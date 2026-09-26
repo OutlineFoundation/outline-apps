@@ -15,6 +15,7 @@
 package org.outline;
 
 import android.app.Activity;
+import android.app.UiModeManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -22,6 +23,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.VpnService;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -62,6 +65,7 @@ public class OutlinePlugin extends CordovaPlugin {
     STOP("stop"),
     ON_STATUS_CHANGE("onStatusChange"),
     IS_RUNNING("isRunning"),
+    IS_ANDROID_TV("isAndroidTv"),
     INIT_ERROR_REPORTING("initializeErrorReporting"),
     REPORT_EVENTS("reportEvents"),
     QUIT("quitApplication");
@@ -224,6 +228,9 @@ public class OutlinePlugin extends CordovaPlugin {
           final String tunnelId = args.getString(0);
           boolean isActive = isTunnelActive(tunnelId);
           callback.sendPluginResult(new PluginResult(PluginResult.Status.OK, isActive));
+        } else if (Action.IS_ANDROID_TV.is(action)) {
+          callback.sendPluginResult(
+              new PluginResult(PluginResult.Status.OK, isAndroidTv()));
 
           // Static actions
         } else if (Action.INIT_ERROR_REPORTING.is(action)) {
@@ -246,6 +253,18 @@ public class OutlinePlugin extends CordovaPlugin {
         sendActionResult(callback, new PlatformError(Platerrors.InternalError, e.toString()));
       }
     });
+  }
+
+  // Returns whether the app is running on an Android TV or a device that
+  // advertises the Android TV Leanback feature. This is evaluated at runtime
+  // so phones, tablets and TVs can share the same APK and application ID.
+  private boolean isAndroidTv() {
+    Context context = getBaseContext();
+    UiModeManager uiModeManager =
+        (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
+    return (uiModeManager != null
+            && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION)
+        || context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
   }
 
   // Requests user permission to connect the VPN. Returns true if permission was previously granted,
