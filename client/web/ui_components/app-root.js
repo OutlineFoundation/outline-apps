@@ -654,8 +654,9 @@ export class AppRoot extends mixinBehaviors(
     }
 
     if (typeof cordova === 'undefined') {
-      // If cordova is not defined, we're running in Electron.
-      this.platform = 'Electron';
+      // Capacitor exposes its platform on the shared global. Keep the shell
+      // host-agnostic so Android TV can enable navigation in either host.
+      this.platform = globalThis.Capacitor?.getPlatform?.() || 'Electron';
     } else {
       // Don't use cordova?.platformId, ReferenceError will be thrown
       this.platform = globalThis.cordova.platformId;
@@ -679,7 +680,6 @@ export class AppRoot extends mixinBehaviors(
 
   installTvNavigationIfNeeded() {
     if (
-      this.platform !== 'android' ||
       !globalThis.window.outlineTvDevice ||
       this.tvNavigationLoad ||
       this.removeTvNavigation

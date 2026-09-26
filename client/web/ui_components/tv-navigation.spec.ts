@@ -92,6 +92,33 @@ describe('TV navigation', () => {
     expect(document.activeElement).toBe(right);
   });
 
+  it('reaches controls outside the viewport and scrolls them into view', async () => {
+    const first = document.createElement('button');
+    const offscreen = document.createElement('button');
+    root.append(first, offscreen);
+    setRect(first, 0, 0);
+    setRect(offscreen, 0, 1000);
+    const scrollIntoView = spyOn(offscreen, 'scrollIntoView');
+    cleanup = installTvNavigation(root);
+    first.focus();
+
+    first.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        composed: true,
+        key: 'ArrowDown',
+      })
+    );
+
+    await navigationSettled();
+
+    expect(document.activeElement).toBe(offscreen);
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  });
+
   it('keeps a focusable host whose shadow control is not tabbable', () => {
     const host = document.createElement('div');
     host.tabIndex = 0;
@@ -201,16 +228,21 @@ describe('TV navigation', () => {
     expect(document.activeElement).toBe(button);
   });
 
-  it('lets Material text fields route Down to their action buttons', async () => {
-    const textField = document.createElement('md-filled-text-field');
-    const button = document.createElement('button');
-    textField.tabIndex = 0;
-    textField.addEventListener('keydown', event => {
-      if (event.key === 'ArrowDown') button.focus();
+  it('lets the access-key dialog route Down to its action button', async () => {
+    const dialog = document.createElement('div');
+    Object.defineProperty(dialog, 'localName', {
+      configurable: true,
+      value: 'add-access-key-dialog',
     });
-    root.append(textField, button);
+    const dialogShadowRoot = dialog.attachShadow({mode: 'open'});
+    const textField = document.createElement('md-filled-text-field');
+    const confirmButton = document.createElement('md-filled-button');
+    textField.tabIndex = 0;
+    confirmButton.tabIndex = 0;
+    dialogShadowRoot.append(textField, confirmButton);
+    root.append(dialog);
     setRect(textField, 0, 0);
-    setRect(button, 0, 100);
+    setRect(confirmButton, 0, 100);
     cleanup = installTvNavigation(root);
     textField.focus();
 
@@ -224,7 +256,43 @@ describe('TV navigation', () => {
 
     await navigationSettled();
 
-    expect(document.activeElement).toBe(button);
+    expect(dialogShadowRoot.activeElement).toBe(confirmButton);
+  });
+
+  it('routes Down to Cancel when the access key cannot be confirmed', async () => {
+    const dialog = document.createElement('div');
+    Object.defineProperty(dialog, 'localName', {
+      configurable: true,
+      value: 'add-access-key-dialog',
+    });
+    const dialogShadowRoot = dialog.attachShadow({mode: 'open'});
+    const textField = document.createElement('md-filled-text-field');
+    const cancelButton = document.createElement('md-text-button');
+    const confirmButton = document.createElement('md-filled-button');
+    textField.tabIndex = 0;
+    cancelButton.tabIndex = 0;
+    confirmButton.tabIndex = 0;
+    confirmButton.disabled = true;
+    dialogShadowRoot.append(textField, cancelButton, confirmButton);
+    root.append(dialog);
+    setRect(textField, 0, 0);
+    setRect(cancelButton, 0, 100);
+    setRect(confirmButton, 100, 100);
+    const focusCancel = spyOn(cancelButton, 'focus').and.callThrough();
+    cleanup = installTvNavigation(root);
+    textField.focus();
+
+    textField.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        composed: true,
+        key: 'ArrowDown',
+      })
+    );
+
+    await navigationSettled();
+
+    expect(focusCancel).toHaveBeenCalled();
   });
 
   it('routes arrow keys through an open menu', () => {
@@ -385,6 +453,21 @@ describe('TV navigation', () => {
     navigation.append(item);
     root.append(navigation);
     setRect(item, -100, 0);
+
+    expect(collectTvFocusable(root)).not.toContain(item);
+  });
+
+  it('does not collect controls from a closed overlay in the viewport', () => {
+    const navigation = document.createElement(
+      'root-navigation'
+    ) as HTMLElement & {
+      open: boolean;
+    };
+    const item = document.createElement('button');
+    navigation.open = false;
+    navigation.append(item);
+    root.append(navigation);
+    setRect(item, 0, 0);
 
     expect(collectTvFocusable(root)).not.toContain(item);
   });

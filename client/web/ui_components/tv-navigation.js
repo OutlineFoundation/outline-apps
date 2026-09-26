@@ -129,6 +129,39 @@ function isInComposedSubtree(root, target) {
   return false;
 }
 
+const OVERLAY_LOCAL_NAMES = new Set([
+  'md-dialog',
+  'md-menu',
+  'root-navigation',
+]);
+
+function isHidden(element) {
+  let current = element;
+  while (current) {
+    if (
+      current.hidden ||
+      current.getAttribute?.('aria-hidden') === 'true' ||
+      (OVERLAY_LOCAL_NAMES.has(current.localName) && !current.open)
+    ) {
+      return true;
+    }
+
+    if (current.nodeType === 1) {
+      const style = globalThis.getComputedStyle(current);
+      if (style.display === 'none' || style.visibility === 'hidden') {
+        return true;
+      }
+    }
+
+    current =
+      current.parentNode ??
+      current.host ??
+      current.getRootNode?.().host ??
+      null;
+  }
+  return false;
+}
+
 function isVisible(element) {
   const rect = element.getBoundingClientRect();
   const style = globalThis.getComputedStyle(element);
@@ -137,18 +170,27 @@ function isVisible(element) {
     rect.height > 0 &&
     style.display !== 'none' &&
     style.visibility !== 'hidden';
-  if (!geometricallyVisible) return false;
+  if (!geometricallyVisible || isHidden(element)) return false;
 
-  const x = rect.left + rect.width / 2;
-  const y = rect.top + rect.height / 2;
-  if (
-    x < 0 ||
-    y < 0 ||
-    x >= globalThis.innerWidth ||
-    y >= globalThis.innerHeight
-  ) {
-    return false;
-  }
+  // A focusable control can be outside the viewport because its scrollable
+  // ancestor has not been scrolled to it yet. Keep it in the registry so the
+  // next D-pad press can reach it. Closed overlays are filtered above, so this
+  // does not bring translated navigation drawers or dialogs back into focus.
+  const inViewport =
+    rect.right > 0 &&
+    rect.bottom > 0 &&
+    rect.left < globalThis.innerWidth &&
+    rect.top < globalThis.innerHeight;
+  if (!inViewport) return true;
+
+  const x = Math.min(
+    Math.max(rect.left + rect.width / 2, 0),
+    globalThis.innerWidth - 1
+  );
+  const y = Math.min(
+    Math.max(rect.top + rect.height / 2, 0),
+    globalThis.innerHeight - 1
+  );
 
   let topElement = element.ownerDocument.elementFromPoint(x, y);
   while (topElement?.shadowRoot) {
@@ -157,9 +199,8 @@ function isVisible(element) {
     topElement = shadowElement;
   }
 
-  // A null result means that the element is outside the viewport or that it is
-  // not rendered. Do not treat it as visible: translated navigation drawers
-  // otherwise remain in the focus registry while they are closed.
+  // A null result means that the element is not rendered at the point where it
+  // is visible. Do not treat it as visible when another element covers it.
   return Boolean(topElement && isInComposedSubtree(element, topElement));
 }
 
@@ -210,12 +251,6 @@ function getDeepActiveElement(document) {
   }
   return activeElement;
 }
-
-const OVERLAY_LOCAL_NAMES = new Set([
-  'md-dialog',
-  'md-menu',
-  'root-navigation',
-]);
 
 function collectOpenOverlays(root, result = []) {
   for (const element of root.querySelectorAll('*')) {
@@ -307,6 +342,33 @@ function handleRootNavigationKeydown(event) {
   return true;
 }
 
+function handleAccessKeyDialogKeydown(event) {
+  if (event.key !== 'ArrowDown') return false;
+
+  const path = event.composedPath();
+  if (!path.some(element => element?.localName === 'md-filled-text-field')) {
+    return false;
+  }
+
+  const dialog = path.find(
+    element => element?.localName === 'add-access-key-dialog'
+  );
+  const dialogShadowRoot = dialog?.shadowRoot;
+  if (!dialogShadowRoot) return false;
+
+  const confirmButton = dialogShadowRoot.querySelector('md-filled-button');
+  const target = confirmButton?.disabled
+    ? dialogShadowRoot.querySelector('md-text-button')
+    : confirmButton;
+  if (!target) return false;
+
+  event.preventDefault();
+  event.stopPropagation();
+  target.focus();
+  target.scrollIntoView?.({block: 'nearest', inline: 'nearest'});
+  return true;
+}
+
 function handleActivationKeydown(event, activeFocusable, activeElement) {
   if (!['Enter', ' ', 'Spacebar'].includes(event.key)) return false;
   if (
@@ -320,6 +382,11 @@ function handleActivationKeydown(event, activeFocusable, activeElement) {
   event.stopPropagation();
   activeFocusable.click();
   return true;
+}
+
+function focusElement(element) {
+  element.focus();
+  element.scrollIntoView?.({block: 'nearest', inline: 'nearest'});
 }
 
 function collectTvFocusableInternal(
@@ -503,7 +570,7 @@ export function installTvNavigation(root) {
     // not steal that focus back to the first page control while the overlay is
     // settling, even if its internal control is not yet in our focus registry.
     if (!hasActiveFocusable && !focusScope) {
-      elements[0]?.focus();
+      if (elements[0]) focusElement(elements[0]);
     }
   };
 
@@ -513,6 +580,10 @@ export function installTvNavigation(root) {
       .map(element => focusKeys.get(element))
       .find(Boolean);
     if (focusKey && SpatialNavigation.getCurrentFocusKey() !== focusKey) {
+      registered.get(focusKey)?.scrollIntoView?.({
+        block: 'nearest',
+        inline: 'nearest',
+      });
       SpatialNavigation.setCurrentFocusedKey(focusKey, {event});
     }
   };
@@ -523,6 +594,7 @@ export function installTvNavigation(root) {
     // the D-pad can move, select, and dismiss menu items reliably.
     if (handleMenuKeydown(event)) return;
     if (handleRootNavigationKeydown(event)) return;
+    if (handleAccessKeyDialogKeydown(event)) return;
 
     const activeElement = getDeepActiveElement(eventTarget);
     const activeFocusable = getActiveFocusable(
@@ -534,19 +606,6 @@ export function installTvNavigation(root) {
 
     const direction = DIRECTION_BY_KEY[event.key];
     if (!direction) return;
-
-    // The access-key dialog owns the vertical transition from its Material
-    // textarea to the action buttons. Let that component's handler run before
-    // the global spatial route (the listener below is installed in capture
-    // phase).
-    if (
-      direction === 'down' &&
-      event
-        .composedPath()
-        .some(element => element.localName === 'md-filled-text-field')
-    ) {
-      return;
-    }
 
     const textEntry = [activeElement, ...event.composedPath()].find(
       isTextEntry
@@ -563,7 +622,7 @@ export function installTvNavigation(root) {
     // not expose a usable bounding box.
     const next = findNext([...registered.values()], activeFocusable, direction);
     if (next) {
-      next.focus();
+      focusElement(next);
       return;
     }
     await SpatialNavigation.navigateByDirection(direction, {event});

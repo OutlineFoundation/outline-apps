@@ -15,12 +15,15 @@
 package org.outline
 
 import android.app.Activity
+import android.app.UiModeManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.VpnService
 import android.os.Handler
 import android.os.IBinder
@@ -150,6 +153,15 @@ class CapacitorPluginOutline : Plugin() {
     kotlin.runCatching { context.unbindService(vpnServiceConnection) }
     executor.shutdown()
     super.handleOnDestroy()
+  }
+
+  @PluginMethod
+  fun isAndroidTv(call: PluginCall) {
+    val uiModeManager = baseContext().getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+    val isAndroidTv =
+        (uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) ||
+            baseContext().packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    call.resolve(JSObject().apply { put("isAndroidTv", isAndroidTv) })
   }
 
   @PluginMethod

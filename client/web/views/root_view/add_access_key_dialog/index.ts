@@ -13,7 +13,6 @@
 
 import {LitElement, html, css} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
-import {createRef, ref} from 'lit/directives/ref.js';
 
 @customElement('add-access-key-dialog')
 export class AddAccessKeyDialog extends LitElement {
@@ -31,9 +30,6 @@ export class AddAccessKeyDialog extends LitElement {
 
   @state() hasEmptyAccessKey: boolean;
   @state() hasInvalidAccessKey: boolean;
-
-  private readonly cancelButton = createRef<HTMLElement>();
-  private readonly confirmButton = createRef<HTMLElement>();
 
   static styles = css`
     :host {
@@ -155,7 +151,6 @@ export class AddAccessKeyDialog extends LitElement {
           <md-filled-text-field
             .error=${!this.hasEmptyAccessKey && this.hasInvalidAccessKey}
             @input=${this.edit}
-            @keydown=${this.handleAccessKeyNavigation}
             .cols=${38}
             error-text="${this.localize('add-access-key-dialog-error-text')}"
             label="${this.localize('add-access-key-dialog-label')}"
@@ -166,11 +161,10 @@ export class AddAccessKeyDialog extends LitElement {
         </section>
       </article>
       <fieldset slot="actions">
-        <md-text-button ${ref(this.cancelButton)} @click=${this.cancel}>
+        <md-text-button @click=${this.cancel}>
           ${this.localize('cancel')}
         </md-text-button>
         <md-filled-button
-          ${ref(this.confirmButton)}
           @click=${this.confirm}
           ?disabled=${this.hasEmptyAccessKey || this.hasInvalidAccessKey}
           >${this.localize('confirm')}</md-filled-button
@@ -193,18 +187,6 @@ export class AddAccessKeyDialog extends LitElement {
     event.preventDefault();
 
     this.accessKey = (event.target as HTMLInputElement).value;
-  }
-
-  private handleAccessKeyNavigation(event: KeyboardEvent) {
-    if (event.key !== 'ArrowDown') return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    const target =
-      this.hasEmptyAccessKey || this.hasInvalidAccessKey
-        ? this.cancelButton.value
-        : this.confirmButton.value;
-    target?.focus();
   }
 
   private confirm(event: Event) {
