@@ -187,7 +187,9 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
           composed: true,
         })
       ),
-    connectToggle: () =>
+    connectToggle: () => {
+      if (hasErrorMessage) return;
+
       element.dispatchEvent(
         new CustomEvent(
           isConnectedState
@@ -199,7 +201,8 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
             composed: true,
           }
         )
-      ),
+      );
+    },
   };
 
   const handleMenuOpen = () => {
@@ -408,7 +411,12 @@ export class ServerHeroCard
       `${this.server.connectionState}-server-state`
     );
     const connectToggleKeyboardDispatcher = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (
+        (event.key !== 'Enter' && event.key !== ' ') ||
+        this.server.errorMessageId
+      ) {
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
       dispatchers.connectToggle();

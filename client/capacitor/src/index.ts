@@ -44,6 +44,28 @@ interface AsyncVpnApi extends VpnApi {
 }
 
 const hasDeviceSupport = Capacitor.isNativePlatform();
+const ANDROID_TV_DEVICE_READY_EVENT = 'outline-android-tv-device-ready';
+
+declare global {
+  interface Window {
+    outlineTvDevice?: boolean;
+  }
+}
+
+async function detectAndroidTvDevice() {
+  if (Capacitor.getPlatform() !== 'android') {
+    return;
+  }
+
+  try {
+    const result = await CapacitorPluginOutline.isAndroidTv();
+    window.outlineTvDevice = result.isAndroidTv;
+  } catch (error) {
+    console.error('Failed to detect Android TV device', error);
+    window.outlineTvDevice = false;
+  }
+  document.dispatchEvent(new Event(ANDROID_TV_DEVICE_READY_EVENT));
+}
 
 class CapacitorClipboard extends AbstractClipboard {
   async getContents(): Promise<string> {
@@ -248,7 +270,8 @@ wireExternalLinkHandling();
 // forms look interchangeable, but `.then(main).catch(...)` would skip main()
 // entirely on a migration failure — an app that never launches, which is far
 // worse than one that launches missing its servers.
-migrateLegacyCordovaStorageIfNeeded()
+detectAndroidTvDevice()
+  .then(() => migrateLegacyCordovaStorageIfNeeded())
   .catch(e => {
     console.error('Storage migration failed: ', e);
   })

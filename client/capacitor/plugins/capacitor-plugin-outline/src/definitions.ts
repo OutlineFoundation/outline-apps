@@ -17,6 +17,7 @@
 import type {PluginListenerHandle} from '@capacitor/core';
 
 export interface CapacitorPluginOutline {
+  isAndroidTv(): Promise<{isAndroidTv: boolean}>;
   invokeMethod(options: {
     method: string;
     input: string;
