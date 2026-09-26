@@ -487,6 +487,8 @@ export class ServerCard extends LitElement implements ServerListItemElement {
   }
 
   connectToggle() {
+    if (this.hasErrorMessage) return;
+
     this.dispatchEvent(
       new CustomEvent(
         this.isConnectedState
@@ -502,7 +504,9 @@ export class ServerCard extends LitElement implements ServerListItemElement {
   }
 
   connectToggleKeyboardDispatcher(event: KeyboardEvent) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if ((event.key !== 'Enter' && event.key !== ' ') || this.hasErrorMessage) {
+      return;
+    }
     event.preventDefault();
     event.stopImmediatePropagation();
     this.connectToggle();
