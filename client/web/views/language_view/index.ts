@@ -58,7 +58,6 @@ export class LanguageView extends LitElement {
       color: var(--outline-text-color);
     }
 
-    md-list-item:focus-visible,
     md-list-item:focus-within {
       outline: 4px solid var(--outline-primary);
       outline-offset: -4px;
@@ -109,14 +108,8 @@ export class LanguageView extends LitElement {
             <md-list-item
               class=${classMap({selected: this.selectedLanguageId === id})}
               data-value="${id}"
-              role="button"
-              tabindex="0"
+              type="button"
               @click="${this.handleLanguageSelection}"
-              @keydown=${(event: KeyboardEvent) => {
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-                event.preventDefault();
-                this.handleLanguageSelection(event);
-              }}
             >
               <md-ripple></md-ripple>
               ${name}

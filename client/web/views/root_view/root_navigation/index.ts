@@ -66,6 +66,8 @@ export class RootNavigation extends LitElement {
       will-change: transform;
       visibility: hidden;
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     md-list {
@@ -198,8 +200,12 @@ export class RootNavigation extends LitElement {
     if (!changedProperties.has('open') || !this.open) return;
     requestAnimationFrame(() => {
       if (!this.open) return;
+      // Keep the first menu item visible when the drawer is reopened after
+      // navigating to the links at the bottom of the scrollable menu.
+      const nav = this.renderRoot.querySelector<HTMLElement>('nav');
+      if (nav) nav.scrollTop = 0;
       this.renderRoot
-        .querySelector<HTMLElement>('md-list-item[tabindex="0"]')
+        .querySelector<HTMLElement>('md-list-item[type="button"]')
         ?.focus();
     });
   }
@@ -228,34 +234,22 @@ export class RootNavigation extends LitElement {
           -->
           <md-list-item
             class="selected"
-            role="button"
-            tabindex="0"
+            type="button"
             @click=${() => this.changePage('home')}
-            @keydown=${(event: KeyboardEvent) =>
-              this.activateOnKey(event, () => this.changePage('home'))}
           >
             <md-ripple></md-ripple>
             <md-icon slot="start">home</md-icon>
             ${this.localize('servers-menu-item')}
           </md-list-item>
           <md-list-item
-            role="button"
-            tabindex="0"
+            type="button"
             @click=${() => this.changePage('contact')}
-            @keydown=${(event: KeyboardEvent) =>
-              this.activateOnKey(event, () => this.changePage('contact'))}
           >
             <md-ripple></md-ripple>
             <md-icon slot="start">feedback</md-icon>
             ${this.localize('contact-page-title')}
           </md-list-item>
-          <md-list-item
-            role="button"
-            tabindex="0"
-            @click=${() => this.changePage('about')}
-            @keydown=${(event: KeyboardEvent) =>
-              this.activateOnKey(event, () => this.changePage('about'))}
-          >
+          <md-list-item type="button" @click=${() => this.changePage('about')}>
             <md-ripple></md-ripple>
             <md-icon slot="start">info</md-icon>
             ${this.localize('about-page-title')}
@@ -269,11 +263,8 @@ export class RootNavigation extends LitElement {
             </a>
           </md-list-item>
           <md-list-item
-            role="button"
-            tabindex="0"
+            type="button"
             @click=${() => this.changePage('language')}
-            @keydown=${(event: KeyboardEvent) =>
-              this.activateOnKey(event, () => this.changePage('language'))}
           >
             <md-ripple></md-ripple>
             <md-icon slot="start">language</md-icon>
@@ -282,13 +273,8 @@ export class RootNavigation extends LitElement {
           ${this.showAppearanceView
             ? html`
                 <md-list-item
-                  role="button"
-                  tabindex="0"
+                  type="button"
                   @click=${() => this.changePage('appearance')}
-                  @keydown=${(event: KeyboardEvent) =>
-                    this.activateOnKey(event, () =>
-                      this.changePage('appearance')
-                    )}
                 >
                   <md-ripple></md-ripple>
                   <md-icon slot="start">brightness_medium</md-icon>
@@ -297,13 +283,7 @@ export class RootNavigation extends LitElement {
               `
             : nothing}
           ${this.showQuit
-            ? html`<md-list-item
-                role="button"
-                tabindex="0"
-                @click=${this.quit}
-                @keydown=${(event: KeyboardEvent) =>
-                  this.activateOnKey(event, () => this.quit())}
-              >
+            ? html`<md-list-item type="button" @click=${this.quit}>
                 <md-ripple></md-ripple>
                 <md-icon slot="start">exit_to_app</md-icon>
                 ${this.localize('quit')}
@@ -354,12 +334,6 @@ export class RootNavigation extends LitElement {
         composed: true,
       })
     );
-  }
-
-  private activateOnKey(event: KeyboardEvent, action: () => void) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    action();
   }
 
   private changePage(page: string) {

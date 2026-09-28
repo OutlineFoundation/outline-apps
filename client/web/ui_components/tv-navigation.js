@@ -12,12 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  GetBoundingClientRectAdapter,
-  ROOT_FOCUS_KEY,
-  SpatialNavigation,
-} from '@noriginmedia/norigin-spatial-navigation-core';
-
 const FOCUSABLE_SELECTOR = [
   'a[href]',
   'button',
@@ -129,6 +123,25 @@ function isInComposedSubtree(root, target) {
   return false;
 }
 
+function findComposedAncestor(target, localName) {
+  let current = target;
+  while (current) {
+    if (current.localName === localName) return current;
+    current =
+      current.parentNode ??
+      current.host ??
+      current.getRootNode?.().host ??
+      null;
+  }
+  return undefined;
+}
+
+function isCoveredByNavigationHeader(element, target) {
+  const navigation = element.closest?.('nav');
+  const header = navigation?.querySelector('header');
+  return Boolean(header && isInComposedSubtree(header, target));
+}
+
 const OVERLAY_LOCAL_NAMES = new Set([
   'md-dialog',
   'md-menu',
@@ -172,6 +185,18 @@ function isVisible(element) {
     style.visibility !== 'hidden';
   if (!geometricallyVisible || isHidden(element)) return false;
 
+  // WebViews can transiently return the outer app host (or null) from
+  // elementFromPoint while focus is moving into a shadow tree. Keep the
+  // active control registered based on its actual composed focus chain.
+  const activeElement = getDeepActiveElement(element.ownerDocument);
+  if (
+    activeElement &&
+    (isInComposedSubtree(element, activeElement) ||
+      isInComposedSubtree(activeElement, element))
+  ) {
+    return true;
+  }
+
   // A focusable control can be outside the viewport because its scrollable
   // ancestor has not been scrolled to it yet. Keep it in the registry so the
   // next D-pad press can reach it. Closed overlays are filtered above, so this
@@ -201,7 +226,12 @@ function isVisible(element) {
 
   // A null result means that the element is not rendered at the point where it
   // is visible. Do not treat it as visible when another element covers it.
-  return Boolean(topElement && isInComposedSubtree(element, topElement));
+  return Boolean(
+    topElement &&
+      (isInComposedSubtree(element, topElement) ||
+        isInComposedSubtree(topElement, element) ||
+        isCoveredByNavigationHeader(element, topElement))
+  );
 }
 
 function hasFocusableShadowDescendant(element, cache) {
@@ -211,8 +241,9 @@ function hasFocusableShadowDescendant(element, cache) {
   const visit = root => {
     for (const descendant of root.querySelectorAll('*')) {
       if (
-        descendant.matches(FOCUSABLE_SELECTOR) &&
-        descendant.tabIndex >= 0 &&
+        (isButtonListItem(descendant) ||
+          descendant.matches(FOCUSABLE_SELECTOR)) &&
+        isFocusableForTv(descendant) &&
         !descendant.disabled &&
         descendant.getAttribute('aria-hidden') !== 'true'
       ) {
@@ -233,15 +264,19 @@ function hasFocusableShadowDescendant(element, cache) {
   return result;
 }
 
+function isButtonListItem(element) {
+  return (
+    element.localName === 'md-list-item' &&
+    (element.getAttribute('type') === 'button' ||
+      element.getAttribute('role') === 'button')
+  );
+}
+
 function isFocusableForTv(element) {
   // Material list items use a roving tabindex and set every non-selected
   // item to -1. They are still valid D-pad targets when marked as buttons;
   // focus() works on the host and lets the component update its own state.
-  return (
-    element.tabIndex >= 0 ||
-    (element.localName === 'md-list-item' &&
-      element.getAttribute('role') === 'button')
-  );
+  return element.tabIndex >= 0 || isButtonListItem(element);
 }
 
 function getDeepActiveElement(document) {
@@ -275,10 +310,10 @@ function getFocusScope(root) {
   );
 }
 
-function handleMenuKeydown(event) {
-  const menu = event
-    .composedPath()
-    .find(element => element?.localName === 'md-menu');
+function handleMenuKeydown(event, activeElement) {
+  const menu =
+    event.composedPath().find(element => element?.localName === 'md-menu') ??
+    findComposedAncestor(activeElement, 'md-menu');
   if (!menu?.open) return false;
 
   switch (event.key) {
@@ -320,12 +355,14 @@ function handleMenuKeydown(event) {
   }
 }
 
-function handleRootNavigationKeydown(event) {
+function handleRootNavigationKeydown(event, activeElement) {
   if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return false;
 
-  const navigation = event
-    .composedPath()
-    .find(element => element?.localName === 'root-navigation');
+  const navigation =
+    event
+      .composedPath()
+      .find(element => element?.localName === 'root-navigation') ??
+    findComposedAncestor(activeElement, 'root-navigation');
   if (!navigation?.open) return false;
 
   const exitKey = navigation.align === 'right' ? 'ArrowLeft' : 'ArrowRight';
@@ -342,17 +379,54 @@ function handleRootNavigationKeydown(event) {
   return true;
 }
 
-function handleAccessKeyDialogKeydown(event) {
+function handleBackbutton(event, root) {
+  const overlays = collectOpenOverlays(root);
+  const menu = overlays.find(element => element.localName === 'md-menu');
+  const dialog = overlays.find(element => element.localName === 'md-dialog');
+  const navigation = overlays.find(
+    element => element.localName === 'root-navigation'
+  );
+  if (!menu && !dialog && !navigation) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  if (menu) {
+    menu.close?.();
+  } else if (dialog) {
+    // Dispatch cancel on the native dialog so Material can redispatch it to
+    // the host and preserve each dialog's existing cancellation behavior.
+    const nativeDialog = dialog.shadowRoot?.querySelector('dialog');
+    if (nativeDialog) {
+      nativeDialog.dispatchEvent(
+        new globalThis.Event('cancel', {cancelable: true})
+      );
+    } else {
+      dialog.close?.();
+    }
+  } else {
+    navigation.dispatchEvent(
+      new globalThis.CustomEvent('HideNavigation', {
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+}
+
+function handleAccessKeyDialogKeydown(event, activeElement) {
   if (event.key !== 'ArrowDown') return false;
 
   const path = event.composedPath();
-  if (!path.some(element => element?.localName === 'md-filled-text-field')) {
+  const textField =
+    path.find(element => element?.localName === 'md-filled-text-field') ??
+    findComposedAncestor(activeElement, 'md-filled-text-field');
+  if (!textField) {
     return false;
   }
 
-  const dialog = path.find(
-    element => element?.localName === 'add-access-key-dialog'
-  );
+  const dialog =
+    path.find(element => element?.localName === 'add-access-key-dialog') ??
+    findComposedAncestor(activeElement, 'add-access-key-dialog');
   const dialogShadowRoot = dialog?.shadowRoot;
   if (!dialogShadowRoot) return false;
 
@@ -364,8 +438,7 @@ function handleAccessKeyDialogKeydown(event) {
 
   event.preventDefault();
   event.stopPropagation();
-  target.focus();
-  target.scrollIntoView?.({block: 'nearest', inline: 'nearest'});
+  focusElement(target, true);
   return true;
 }
 
@@ -384,9 +457,50 @@ function handleActivationKeydown(event, activeFocusable, activeElement) {
   return true;
 }
 
-function focusElement(element) {
+function focusElement(element, forceHost = false) {
   element.focus();
+  const document = element.ownerDocument;
+  if (
+    document &&
+    (forceHost || isButtonListItem(element)) &&
+    !isInComposedSubtree(element, getDeepActiveElement(document))
+  ) {
+    // Some Material hosts call focus() on a shadow control that may not have
+    // rendered yet. Focusing the host keeps the D-pad position stable until
+    // the component finishes rendering.
+    const previousTabIndex = element.getAttribute('tabindex');
+    if (element.tabIndex < 0) element.setAttribute('tabindex', '0');
+    globalThis.HTMLElement.prototype.focus.call(element);
+    if (previousTabIndex === null) {
+      element.removeAttribute('tabindex');
+    } else {
+      element.setAttribute('tabindex', previousTabIndex);
+    }
+  }
+  scrollElementIntoView(element);
+}
+
+function scrollElementIntoView(element) {
+  if (!element) return;
   element.scrollIntoView?.({block: 'nearest', inline: 'nearest'});
+
+  const navigation = element.closest?.('nav');
+  const header = navigation?.querySelector('header');
+  if (!header) return;
+
+  const headerRect = header.getBoundingClientRect();
+  let elementRect = element.getBoundingClientRect();
+  if (
+    elementRect.top < headerRect.bottom &&
+    elementRect.bottom > headerRect.top
+  ) {
+    element.scrollIntoView?.({block: 'center', inline: 'nearest'});
+    elementRect = element.getBoundingClientRect();
+    if (elementRect.top < headerRect.bottom) {
+      const overlap = headerRect.bottom - elementRect.top;
+      navigation.scrollTop = Math.max(0, navigation.scrollTop - overlap);
+    }
+  }
 }
 
 function collectTvFocusableInternal(
@@ -397,7 +511,8 @@ function collectTvFocusableInternal(
   focusScope
 ) {
   for (const element of root.querySelectorAll('*')) {
-    if (element.shadowRoot) {
+    const isButtonItem = isButtonListItem(element);
+    if (element.shadowRoot && !isButtonItem) {
       shadowRoots.push(element.shadowRoot);
       collectTvFocusableInternal(
         element.shadowRoot,
@@ -409,11 +524,12 @@ function collectTvFocusableInternal(
     }
     if (
       (!focusScope || isInComposedSubtree(focusScope, element)) &&
-      element.matches(FOCUSABLE_SELECTOR) &&
+      (isButtonItem || element.matches(FOCUSABLE_SELECTOR)) &&
       isFocusableForTv(element) &&
       !element.disabled &&
       element.getAttribute('aria-hidden') !== 'true' &&
-      !hasFocusableShadowDescendant(element, focusableShadowDescendants) &&
+      (isButtonItem ||
+        !hasFocusableShadowDescendant(element, focusableShadowDescendants)) &&
       isVisible(element)
     ) {
       result.push(element);
@@ -434,39 +550,30 @@ export function collectTvFocusable(root, result = [], shadowRoots = []) {
 }
 
 function getActiveFocusable(registered, activeElement, event) {
-  const elements = [...registered.values()];
+  const elements = [...registered];
   return (
     elements.find(element => isInComposedSubtree(element, activeElement)) ??
-    event.composedPath().find(element => elements.includes(element))
+    event?.composedPath?.().find(element => elements.includes(element))
   );
 }
 
 /**
- * Bridges Outline's nested web components to Norigin spatial navigation.
+ * Adds spatial navigation for Outline's nested web components.
  *
  * @param {Document|DocumentFragment|Element} root
  * @return {() => void} cleanup callback
  */
 export function installTvNavigation(root) {
   const eventTarget = root.ownerDocument ?? root;
-  const focusKeys = new WeakMap();
-  const registered = new Map();
+  const registered = new Set();
   const observers = new Map();
-  let nextFocusKey = 0;
+  let previousFocusScope = null;
+  let focusReturnElement;
+  let pendingFocusReturnElement;
+  let lastFocusedElement;
   let scanPending = false;
   let scanFrame = null;
   let disposed = false;
-
-  SpatialNavigation.init({
-    distanceCalculationMethod: 'edges',
-    layoutAdapter: GetBoundingClientRectAdapter,
-    shouldFocusDOMNode: true,
-    shouldUseNativeEvents: true,
-  });
-  // Android remotes can emit keydown and keyup in the same frame. The app
-  // owns the capture-phase event handler below, so keep Norigin's registry
-  // and navigation engine but disable its global DOM listeners.
-  SpatialNavigation.unbindEventHandlers();
 
   const scheduleScan = () => {
     if (scanPending || disposed) return;
@@ -506,6 +613,25 @@ export function installTvNavigation(root) {
     const shadowRoots = [];
     const elements = [];
     const focusScope = getFocusScope(root);
+    const focusScopeChanged = focusScope !== previousFocusScope;
+    const shouldRestoreFocus = focusScopeChanged && !focusScope;
+
+    if (focusScopeChanged && focusScope) {
+      // Keep the control that opened the first overlay so closing a menu or
+      // dialog does not leave focus on a hidden overlay item. A menu can close
+      // while opening a dialog; preserve the original page opener in that
+      // case. Menus opened from a dialog should instead return to the dialog
+      // control that opened them.
+      if (
+        !previousFocusScope ||
+        (focusScope.localName === 'md-menu' &&
+          previousFocusScope.localName === 'md-dialog')
+      ) {
+        focusReturnElement = pendingFocusReturnElement ?? lastFocusedElement;
+      }
+      pendingFocusReturnElement = undefined;
+    }
+
     collectTvFocusableInternal(
       root,
       elements,
@@ -513,8 +639,6 @@ export function installTvNavigation(root) {
       new WeakMap(),
       focusScope
     );
-    const visible = new Set(elements);
-
     const liveObservedRoots = new Set([root, ...shadowRoots]);
     for (const [observedRoot, observer] of observers) {
       if (liveObservedRoots.has(observedRoot)) continue;
@@ -524,84 +648,79 @@ export function installTvNavigation(root) {
     observe(root);
     for (const shadowRoot of shadowRoots) observe(shadowRoot);
 
-    for (const [focusKey, element] of registered) {
-      if (visible.has(element)) continue;
-      SpatialNavigation.removeFocusable({focusKey});
-      registered.delete(focusKey);
-    }
-
-    for (const element of elements) {
-      let focusKey = focusKeys.get(element);
-      if (focusKey && registered.has(focusKey)) continue;
-
-      focusKey ??= `outline-tv-${++nextFocusKey}`;
-      focusKeys.set(element, focusKey);
-      registered.set(focusKey, element);
-      SpatialNavigation.addFocusable({
-        focusKey,
-        node: element,
-        parentFocusKey: ROOT_FOCUS_KEY,
-        onEnterPress: () => element.click(),
-        onEnterRelease: () => {},
-        onArrowPress: direction =>
-          !isTextEntry(element) ||
-          (direction !== 'left' && direction !== 'right'),
-        onArrowRelease: () => {},
-        onFocus: () => {},
-        onBlur: () => {},
-        onUpdateFocus: () => {},
-        onUpdateHasFocusedChild: () => {},
-        saveLastFocusedChild: false,
-        trackChildren: false,
-        autoRestoreFocus: false,
-        forceFocus: true,
-        focusable: true,
-        isFocusBoundary: false,
-      });
-    }
-
-    void SpatialNavigation.updateAllLayouts();
+    registered.clear();
+    for (const element of elements) registered.add(element);
 
     const activeElement = getDeepActiveElement(eventTarget);
-    const hasActiveFocusable = elements.some(element =>
+    const activeElementIsDocument =
+      !activeElement ||
+      activeElement === eventTarget.body ||
+      activeElement === eventTarget.documentElement;
+    const activeElementOutsideScope =
+      focusScope && !isInComposedSubtree(focusScope, activeElement);
+    let activeFocusable = elements.find(element =>
       isInComposedSubtree(element, activeElement)
     );
-    // Material menus and dialogs move focus asynchronously after opening. Do
-    // not steal that focus back to the first page control while the overlay is
-    // settling, even if its internal control is not yet in our focus registry.
-    if (!hasActiveFocusable && !focusScope) {
-      if (elements[0]) focusElement(elements[0]);
+    // Material menus and dialogs move focus asynchronously after opening. If
+    // the browser has not focused an overlay control yet, focus its first
+    // registered control instead of leaving focus on a hidden page control.
+    // Otherwise, leave an unrelated active control alone during a scan.
+    if (
+      !activeFocusable &&
+      elements[0] &&
+      (focusScopeChanged ||
+        activeElementIsDocument ||
+        activeElementOutsideScope)
+    ) {
+      const returnElement =
+        shouldRestoreFocus && elements.includes(focusReturnElement)
+          ? focusReturnElement
+          : elements[0];
+      focusElement(returnElement);
+      activeFocusable = returnElement;
+    }
+
+    previousFocusScope = focusScope;
+    if (shouldRestoreFocus) focusReturnElement = undefined;
+    if (!focusScope && !focusScopeChanged) {
+      pendingFocusReturnElement = undefined;
     }
   };
 
   const handleFocus = event => {
-    const focusKey = event
-      .composedPath()
-      .map(element => focusKeys.get(element))
-      .find(Boolean);
-    if (focusKey && SpatialNavigation.getCurrentFocusKey() !== focusKey) {
-      registered.get(focusKey)?.scrollIntoView?.({
-        block: 'nearest',
-        inline: 'nearest',
-      });
-      SpatialNavigation.setCurrentFocusedKey(focusKey, {event});
-    }
+    const activeElement = getDeepActiveElement(eventTarget);
+    const element = getActiveFocusable(registered, activeElement, event);
+    if (!element) return;
+
+    lastFocusedElement = element;
+    scrollElementIntoView(element);
   };
 
-  const handleKeydown = async event => {
-    // Android WebView key events often have an empty `code`, while Material
-    // Web's menu handlers depend on it. Handle menu navigation from `key` so
-    // the D-pad can move, select, and dismiss menu items reliably.
-    if (handleMenuKeydown(event)) return;
-    if (handleRootNavigationKeydown(event)) return;
-    if (handleAccessKeyDialogKeydown(event)) return;
-
+  const handleKeydown = event => {
     const activeElement = getDeepActiveElement(eventTarget);
     const activeFocusable = getActiveFocusable(
       registered,
       activeElement,
       event
     );
+    if (
+      activeFocusable &&
+      ['Enter', ' ', 'Spacebar'].includes(event.key) &&
+      ![activeElement, ...event.composedPath()].some(isEditableTextEntry)
+    ) {
+      // Capture the opener before Material moves focus into a menu or dialog.
+      // The first scan after that move may otherwise observe the overlay item
+      // as the last focused control and lose the page opener.
+      pendingFocusReturnElement = activeFocusable;
+    }
+
+    // Android WebView key events often have an empty `code`, while Material
+    // Web's menu handlers depend on it. Handle menu navigation from `key` so
+    // the D-pad can move, select, and dismiss menu items reliably.
+    if (handleMenuKeydown(event, activeElement)) return;
+    if (handleRootNavigationKeydown(event, activeElement)) return;
+    if (handleAccessKeyDialogKeydown(event, activeElement)) return;
+
     if (handleActivationKeydown(event, activeFocusable, activeElement)) return;
 
     const direction = DIRECTION_BY_KEY[event.key];
@@ -616,34 +735,29 @@ export function installTvNavigation(root) {
 
     event.preventDefault();
     event.stopPropagation();
-
-    // Use one deterministic geometry route for DOM controls. Norigin still
-    // owns the focus registry and provides a fallback for components that do
-    // not expose a usable bounding box.
-    const next = findNext([...registered.values()], activeFocusable, direction);
-    if (next) {
-      focusElement(next);
-      return;
-    }
-    await SpatialNavigation.navigateByDirection(direction, {event});
+    const next = findNext([...registered], activeFocusable, direction);
+    if (next) focusElement(next);
   };
 
-  scan();
-  scheduleScan();
   eventTarget.addEventListener('focusin', handleFocus, true);
   eventTarget.addEventListener('keydown', handleKeydown, true);
+  const handleBackbuttonEvent = event => handleBackbutton(event, root);
+  eventTarget.addEventListener('backbutton', handleBackbuttonEvent, true);
+  scan();
+  scheduleScan();
 
   return () => {
     if (disposed) return;
     disposed = true;
     eventTarget.removeEventListener('focusin', handleFocus, true);
     eventTarget.removeEventListener('keydown', handleKeydown, true);
+    eventTarget.removeEventListener('backbutton', handleBackbuttonEvent, true);
     if (scanFrame !== null) {
       globalThis.cancelAnimationFrame(scanFrame);
       scanFrame = null;
     }
     for (const observer of observers.values()) observer.disconnect();
     observers.clear();
-    SpatialNavigation.destroy();
+    registered.clear();
   };
 }
