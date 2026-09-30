@@ -56,8 +56,6 @@
   "error-server-destroy": "Nepavyko sunaikinti serverio",
   "error-server-removed": "Šių serverių nebėra „DigitalOcean“ paskyroje: {serverName}.",
   "error-server-rename": "Nepavyko pervardyti serverio",
-  "error-server-unreachable": "„Outline“ serveris buvo įdiegtas tinkamai, tačiau mums nepavyksta prie jo prisijungti. Greičiausiai taip yra todėl, kad serverio užkardos taisyklės blokuoja gaunamus ryšius. Peržiūrėkite taisykles ir leiskite gaunamus TCP ryšius prievaduose, kurių diapazonas yra nuo 1024 iki 65535.",
-  "error-server-unreachable-title": "Nepavyko prisijungti prie „Outline“ serverio",
   "error-servers-removed": "Šių serverių nebėra „DigitalOcean“ paskyroje: {serverNames}.",
   "error-set-data-limit": "Nepavyko nustatyti numatytojo duomenų apribojimo",
   "error-set-per-key-limit": "Nepavyko nustatyti šio prieigos rakto duomenų apribojimo",

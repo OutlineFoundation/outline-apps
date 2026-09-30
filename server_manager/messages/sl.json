@@ -56,8 +56,6 @@
   "error-server-destroy": "Uničenje strežnika ni uspelo",
   "error-server-removed": "Strežnika {serverName} ni več v vašem računu DigitalOcean.",
   "error-server-rename": "Preimenovanje strežnika ni uspelo",
-  "error-server-unreachable": "Strežnik Outline Server je bil ustrezno nameščen, vendar se ne moremo povezati vanj. Najverjetnejši razlog so pravila glede požarnega zidu v vašem strežniku, ki blokirajo dohodne povezave. Preglejte jih in zagotovite, da bodo omogočene povezave TCP v vratih od 1024 do 65535.",
-  "error-server-unreachable-title": "Ni se mogoče povezati v strežnik Outline",
   "error-servers-removed": "Strežnika {serverNames} ni več v vašem računu DigitalOcean.",
   "error-set-data-limit": "Privzete omejitve podatkov ni bilo mogoče nastaviti.",
   "error-set-per-key-limit": "Omejitve podatkov za ta ključ za dostop ni bilo mogoče nastaviti.",

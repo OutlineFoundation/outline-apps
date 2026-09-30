@@ -56,8 +56,6 @@
   "error-server-destroy": "සේවාදායකය විනාශ කිරීම අසමත් විය",
   "error-server-removed": "{serverName} තවදුරටත් ඔබේ DigitalOcean ගිණුම තුළ නොතිබේ.",
   "error-server-rename": "සේවාදායකය යළි නම් කිරීම අසමත් විය",
-  "error-server-unreachable": "ඔබේ Outline සේවාදයකය නිවැරදිව ස්ථාපන කරන ලදි, නමුත් අපට එයට සම්බන්‍ධ කළ නොහැක. මෙය බොහෝ දුරට ඔබේ සේවාදායකයේ ගිනි පවුරු රීති එන සම්බන්‍ධතා අවහිර කරන බැවින් විය හැක. ඒවා සමාලෝචන කර 1024 සිට 65535 දක්වා ඇති තොටවල් මත එන TCP සම්බන්‍ධතාවලට ඉඩ දීමට තහවුරු කර ගන්න.",
-  "error-server-unreachable-title": "ඔබේ Outline සේවාදායකයට සම්බන්‍ධ කළ නොහැක",
   "error-servers-removed": "{serverNames} තවදුරටත් ඔබේ DigitalOcean ගිණුම තුළ නොතිබේ.",
   "error-set-data-limit": "පෙරනිමි දත්ත සීමාව සැකසිය නොහැකි විය",
   "error-set-per-key-limit": "මෙම ප්‍රවේශ යතුර සඳහා දත්ත සීමාව සැකසීමට නොහැකි විය",

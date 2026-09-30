@@ -56,8 +56,6 @@
   "error-server-destroy": "サーバーを削除できませんでした",
   "error-server-removed": "現在、{serverName} はお使いの DigitalOcean アカウントに存在しません。",
   "error-server-rename": "サーバーの名前を変更できませんでした",
-  "error-server-unreachable": "Outline サーバーは正常にインストールされましたが、サーバーに接続できません。この原因は多くの場合、サーバーのファイアウォール ルールで接続がブロックされていることです。ルールを確認し、ポート範囲 1024～65535 で TCP の着信接続が許可されていることを確かめてください。",
-  "error-server-unreachable-title": "Outline サーバーに接続できません",
   "error-servers-removed": "現在、{serverNames} はお使いの DigitalOcean アカウントに存在しません。",
   "error-set-data-limit": "デフォルトのデータの上限を設定できませんでした",
   "error-set-per-key-limit": "このアクセスキーにデータの上限を設定できませんでした",

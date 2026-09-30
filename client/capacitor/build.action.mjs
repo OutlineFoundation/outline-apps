@@ -22,6 +22,8 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
+const CAPACITOR_PLATFORMS = ['android', 'ios'];
+
 /**
  * @description Fully builds the Capacitor client: the web bundle, the
  * tun2socks native library, and the native app binary.
@@ -31,9 +33,9 @@ const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 export async function main(...parameters) {
   const {platform, buildMode, verbose} = getBuildParameters(parameters);
 
-  if (platform !== 'android') {
+  if (!CAPACITOR_PLATFORMS.includes(platform)) {
     throw new TypeError(
-      `Capacitor build.action.mjs only supports the android platform, got "${platform}".`
+      `Capacitor build.action.mjs supports platforms ${CAPACITOR_PLATFORMS.join(', ')}, got "${platform}".`
     );
   }
 
@@ -49,13 +51,24 @@ export async function main(...parameters) {
   await runAction('client/capacitor/web_build', ...parameters);
 
   // `cap sync` first runs the capacitor:sync:before hook (see package.json in
-  // this directory): the tun2socks gomobile AAR and client:android:configure.
-  // It then copies the web assets into the native project and refreshes the
-  // Capacitor plugins. The Capacitor CLI locates the project from the working
-  // directory.
+  // this directory), which builds the tun2socks native library for the
+  // platform: the gomobile AAR (plus client:android:configure) on Android, and
+  // the Tun2socks.xcframework that ios/App/App.xcodeproj links from
+  // output/client/apple/ on iOS. It then copies the web assets into the native
+  // project and refreshes the Capacitor plugins. The Capacitor CLI locates the
+  // project from the working directory.
   process.chdir(capacitorDir);
   await spawnStream('npx', 'cap', 'sync', platform);
 
+  switch (platform) {
+    case 'android':
+      return androidDebug(verbose);
+    case 'ios':
+      return iosDebug(verbose);
+  }
+}
+
+async function androidDebug(verbose) {
   // `cap build` only produces signed release builds, so invoke Gradle
   // directly for the debug APK — the same target `cap run` uses.
   // TODO: Migrate to a release Gradle target once we have a production build.
@@ -66,6 +79,34 @@ export async function main(...parameters) {
     androidDir,
     verbose ? '--info' : '--quiet',
     'assembleDebug'
+  );
+}
+
+async function iosDebug(verbose) {
+  // `cap build` only produces signed release builds, so invoke xcodebuild
+  // directly for an unsigned debug build, the same way the Cordova iOS build
+  // does (see client/src/cordova/build.action.mjs). Signing is disabled so the
+  // build needs no development team or provisioning profile, which CI does not
+  // have.
+  // TODO: Migrate to an archive once we have a production build.
+  console.warn(
+    'WARNING: building "ios" in [DEBUG] mode. Do not publish this build!!'
+  );
+  await spawnStream(
+    'xcodebuild',
+    'clean',
+    '-project',
+    path.resolve(capacitorDir, 'ios', 'App', 'App.xcodeproj'),
+    '-scheme',
+    'Outline',
+    '-destination',
+    'generic/platform=iOS',
+    'build',
+    '-configuration',
+    'Debug',
+    ...(verbose ? [] : ['-quiet']),
+    'CODE_SIGN_IDENTITY=',
+    'CODE_SIGNING_ALLOWED=NO'
   );
 }
 

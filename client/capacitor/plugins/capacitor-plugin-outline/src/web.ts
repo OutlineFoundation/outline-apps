@@ -54,6 +54,13 @@ export class CapacitorPluginOutlineWeb
     throw this.unimplemented('Not implemented on web.');
   }
 
+  async getLegacyCordovaLocalStorage(): Promise<Record<string, string>> {
+    // Resolves empty rather than rejecting: there is no Cordova file:// origin
+    // on web, so "read successfully, nothing there" is the accurate answer and
+    // it keeps the startup path from throwing.
+    return {};
+  }
+
   async quitApplication(): Promise<void> {
     throw this.unimplemented('Not implemented on web.');
   }

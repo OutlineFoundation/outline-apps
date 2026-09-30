@@ -56,8 +56,6 @@
   "error-server-destroy": "Nie udało się zlikwidować serwera",
   "error-server-removed": "Serwera {serverName} nie ma już na Twoim koncie DigitalOcean.",
   "error-server-rename": "Nie udało się zmienić nazwy serwera",
-  "error-server-unreachable": "Twój serwer Outline został poprawnie zainstalowany, ale nie możemy się z nim połączyć. Najprawdopodobniej reguły zapory sieciowej Twojego serwera blokują połączenia przychodzące. Sprawdź te reguły i upewnij się, że połączenia przychodzące TCP na portach 1024–65535 są dozwolone.",
-  "error-server-unreachable-title": "Nie można nawiązać połączenia z Twoim serwerem Outline",
   "error-servers-removed": "Serwerów {serverNames} nie ma już na Twoim koncie DigitalOcean.",
   "error-set-data-limit": "Nie udało się ustawić domyślnego limitu danych",
   "error-set-per-key-limit": "Nie udało się ustawić limitu danych dla tego klucza dostępu",

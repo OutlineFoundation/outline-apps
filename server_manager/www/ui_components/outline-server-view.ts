@@ -87,6 +87,7 @@ export class ServerView extends DirMixin(PolymerElement) {
           color: var(--light-gray);
         }
         #managementView,
+        #connectingView,
         #unreachableView {
           padding: 24px;
         }
@@ -149,6 +150,16 @@ export class ServerView extends DirMixin(PolymerElement) {
         }
         .unreachable-server paper-button.try-again-btn {
           color: var(--primary-green);
+        }
+        .connecting-server {
+          flex-direction: column;
+          align-items: center;
+          margin-top: 24px;
+          padding: 72px 48px;
+        }
+        .connecting-server p {
+          margin-top: 24px;
+          color: var(--medium-gray);
         }
         .server-img {
           width: 142px;
@@ -301,6 +312,7 @@ export class ServerView extends DirMixin(PolymerElement) {
             localize="[[localize]]"
             progress="[[installProgress]]"
           ></outline-server-progress-step>
+          <div id="connectingView">${this.connectingViewTemplate}</div>
           <div id="unreachableView">${this.unreachableViewTemplate}</div>
           <div id="managementView">${this.managementViewTemplate}</div>
         </iron-pages>
@@ -342,6 +354,18 @@ export class ServerView extends DirMixin(PolymerElement) {
         >
       </outline-help-bubble>
     `;
+  }
+
+  static get connectingViewTemplate() {
+    return html` <div class="server-header">
+        <div class="server-name">
+          <h3>[[serverName]]</h3>
+        </div>
+      </div>
+      <div class="card-section connecting-server">
+        <outline-progress-spinner></outline-progress-spinner>
+        <p>[[localize('server-connecting')]]</p>
+      </div>`;
   }
 
   static get unreachableViewTemplate() {
@@ -728,8 +752,11 @@ export class ServerView extends DirMixin(PolymerElement) {
   monthlyCost = 0;
   language = 'en';
   localize: (msgId: string, ...params: string[]) => string = null;
-  selectedPage: 'progressView' | 'unreachableView' | 'managementView' =
-    'managementView';
+  selectedPage:
+    | 'progressView'
+    | 'connectingView'
+    | 'unreachableView'
+    | 'managementView' = 'managementView';
   selectedTab: 'connections' | 'metrics' | 'settings' = 'connections';
   featureFlags = {serverMetricsTab: false};
 

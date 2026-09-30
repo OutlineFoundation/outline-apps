@@ -996,18 +996,6 @@ export class AppRoot extends polymerElementWithLocalize {
     });
   }
 
-  showManualServerError(errorTitle: string, errorText: string) {
-    void this.showModalDialog(errorTitle, errorText, [
-      this.localize('cancel'),
-      this.localize('retry'),
-    ]).then(clickedButtonIndex => {
-      const manualEntry = this.$.manualEntry as OutlineManualServerEntry;
-      if (clickedButtonIndex === 1) {
-        manualEntry.retryTapped();
-      }
-    });
-  }
-
   _hasManualServers(serverList: ServerListEntry[]) {
     return serverList.filter(server => !server.accountId).length > 0;
   }

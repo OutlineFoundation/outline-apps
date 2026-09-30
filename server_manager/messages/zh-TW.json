@@ -56,8 +56,6 @@
   "error-server-destroy": "無法刪除伺服器",
   "error-server-removed": "你的 DigitalOcean 帳戶中不會再顯示{serverName}。",
   "error-server-rename": "無法重新命名伺服器",
-  "error-server-unreachable": "你的 Outline 伺服器已正確安裝，但系統無法連線至該伺服器。最有可能的原因是你的伺服器防火牆規則封鎖了連入連線。請檢查防火牆規則，並確認這些規則允許 1024 到 65535 之間所有通訊埠的連入 TCP 連線。",
-  "error-server-unreachable-title": "無法連線至你的 Outline 伺服器",
   "error-servers-removed": "你的 DigitalOcean 帳戶中不會再顯示下列伺服器：{serverNames}。",
   "error-set-data-limit": "無法設定預設數據用量上限",
   "error-set-per-key-limit": "無法為此存取金鑰設定數據用量上限",

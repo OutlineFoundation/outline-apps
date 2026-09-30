@@ -34,7 +34,8 @@ import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
 import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
 
 import {CapacitorBrowserMethodChannel} from './browser_method_channel';
-import {CapacitorAndroidUrlInterceptor} from './capacitor_android_url_interceptor';
+import {CapacitorUrlInterceptor} from './capacitor_url_interceptor';
+import {migrateLegacyCordovaStorageIfNeeded} from './cordova_storage_migration';
 
 interface AsyncVpnApi extends VpnApi {
   onStatusChange(
@@ -139,8 +140,9 @@ class CapacitorPlatform implements OutlinePlatform {
   }
 
   getUrlInterceptor() {
-    if (Capacitor.getPlatform() === 'android') {
-      return new CapacitorAndroidUrlInterceptor();
+    const platform = Capacitor.getPlatform();
+    if (platform === 'android' || platform === 'ios') {
+      return new CapacitorUrlInterceptor();
     }
     return new UrlInterceptor();
   }
@@ -237,6 +239,20 @@ installDefaultMethodChannel(
 );
 wireExternalLinkHandling();
 
-main(new CapacitorPlatform()).catch(e => {
-  console.error('main() failed: ', e);
-});
+// The migration has to finish first: main() builds the server repository from
+// localStorage, so replaying the Cordova data afterwards would leave the user
+// staring at an empty server list until the next restart.
+//
+// Keep the .catch BEFORE the .then. In this order a failed migration is handled
+// here and main() still runs, so the app starts without the migrated data. The
+// forms look interchangeable, but `.then(main).catch(...)` would skip main()
+// entirely on a migration failure — an app that never launches, which is far
+// worse than one that launches missing its servers.
+migrateLegacyCordovaStorageIfNeeded()
+  .catch(e => {
+    console.error('Storage migration failed: ', e);
+  })
+  .then(() => main(new CapacitorPlatform()))
+  .catch(e => {
+    console.error('main() failed: ', e);
+  });

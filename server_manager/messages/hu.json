@@ -56,8 +56,6 @@
   "error-server-destroy": "Nem sikerült megsemmisíteni a szervert",
   "error-server-removed": "A szerverek ({serverName}) már nem találhatók meg a DigitalOcean-fiókjában.",
   "error-server-rename": "Nem sikerült átnevezni a szervert",
-  "error-server-unreachable": "Az Outline-szervere megfelelően lett telepítve, de nem tudunk hozzá csatlakozni. Valószínűleg a szerver tűzfalszabályi korlátozzák a bejövő kapcsolatokat. Ellenőrizze a szabályokat, és állítsa be úgy őket, hogy engedélyezzék a bejövő TCP-kapcoslatokat a 1024-65535-ös portokon.",
-  "error-server-unreachable-title": "Nem sikerült csatlakozni az Outline-szerveréhez",
   "error-servers-removed": "A szerverek ({serverNames}) már nem találhatók meg a DigitalOcean-fiókjában.",
   "error-set-data-limit": "Nem sikerült beállítani az alapértelmezett adatforgalmi korlátozást",
   "error-set-per-key-limit": "Nem sikerült beállítani a hozzáférési kulcs adatforgalmi korlátozását",

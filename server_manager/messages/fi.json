@@ -56,8 +56,6 @@
   "error-server-destroy": "Palvelimen tuhoaminen epäonnistui",
   "error-server-removed": "DigitalOcean-tililläsi ei ole enää seuraavaa palvelinta: {serverName}.",
   "error-server-rename": "Palvelimen nimeäminen uudelleen epäonnistui",
-  "error-server-unreachable": "Outline-palvelin on asennettu oikein, mutta siihen ei saada yhteyttä. Tämä johtuu todennäköisesti siitä, että palvelimesi palomuurisäännöt estävät saapuvat yhteydet. Tarkista säännöt ja varmista, että saapuvat TCP-yhteydet sallitaan porteissa 1024–65535.",
-  "error-server-unreachable-title": "Yhteyden muodostaminen Outline-palvelimeen ei onnistu",
   "error-servers-removed": "DigitalOcean-tililläsi ei ole enää seuraavia palvelimia: {serverNames}.",
   "error-set-data-limit": "Oletusdatarajaa ei voitu asettaa",
   "error-set-per-key-limit": "Pääsyavaimen datarajaa ei voitu asettaa",

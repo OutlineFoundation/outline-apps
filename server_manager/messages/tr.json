@@ -56,8 +56,6 @@
   "error-server-destroy": "Sunucu silinemedi",
   "error-server-removed": "{serverName} artık DigitalOcean hesabınızda mevcut değil.",
   "error-server-rename": "Sunucu yeniden adlandırılamadı",
-  "error-server-unreachable": "Outline Sunucunuz doğru şekilde yüklenmiş, ancak sunucuya bağlanılamadı. Bunun nedeni büyük olasılıkla sunucunuzun güvenlik duvarı kurallarının gelen bağlantıları engelliyor olmasıdır. Lütfen ilgili kuralları inceleyin ve 1024 - 65535 arasındaki bağlantı noktalarında gelen TCP bağlantılarına izin verildiğinden emin olun.",
-  "error-server-unreachable-title": "Outline Sunucunuza bağlanılamadı",
   "error-servers-removed": "{serverNames} artık DigitalOcean hesabınızda mevcut değil.",
   "error-set-data-limit": "Varsayılan veri limiti ayarlanamadı",
   "error-set-per-key-limit": "Bu erişim anahtarı için veri limiti ayarlanamadı",

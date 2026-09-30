@@ -56,8 +56,6 @@
   "error-server-destroy": "Serveri hävitamine nurjus",
   "error-server-removed": "{serverName} ei ole enam teie DigitalOceani kontol.",
   "error-server-rename": "Serveri ümbernimetamine nurjus",
-  "error-server-unreachable": "Teie Outline'i serveri installimine õnnestus, ent me ei saa sellega ühendust luua. Kõige tõenäolisemalt on põhjus selles, et teie serveri tulemüüri reeglid blokeerivad sissetulevaid ühendusi. Vaadake reeglid üle ja lubage sissetulevad TCP-ühendused pordivahemikus 1024 kuni 65535.",
-  "error-server-unreachable-title": "Teie Outline'i serveriga ei saa ühendust luua",
   "error-servers-removed": "{serverNames} ei ole enam teie DigitalOceani kontol.",
   "error-set-data-limit": "Andmeedastuse vaikepiirangut ei saanud määrata",
   "error-set-per-key-limit": "Selle pääsuvõtme jaoks ei saanud andmeedastuse piirangut määrata",

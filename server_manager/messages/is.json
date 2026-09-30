@@ -56,8 +56,6 @@
   "error-server-destroy": "Ekki tókst að eyðileggja þjón",
   "error-server-removed": "{serverName} er ekki lengur til staðar á DigitalOcean-reikningnum þínum.",
   "error-server-rename": "Ekki tókst að endurnefna þjón",
-  "error-server-unreachable": "Outline-þjónninn var settur rétt upp en við gátum ekki tengst honum. Það er líklegast vegna þess að eldveggsreglur þjónsins loka fyrir mótteknar tengingar. Yfirfarðu þær og vertu viss um að leyfa mótteknar TCP-tengingar í gáttum frá 1024 til 65535.",
-  "error-server-unreachable-title": "Ekki tókst að tengjast Outline-þjóni",
   "error-servers-removed": "{serverNames} er ekki lengur til staðar á DigitalOcean-reikningnum þínum.",
   "error-set-data-limit": "Ekki tókst að stilla sjálfgefin gagnamörk",
   "error-set-per-key-limit": "Ekki tókst að stilla gagnamörk fyrir þennan aðgangslykil",

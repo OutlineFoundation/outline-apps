@@ -56,8 +56,6 @@
   "error-server-destroy": "Hindi nasira ang server",
   "error-server-removed": "Wala na ang {serverName} sa iyong DigitalOcean account.",
   "error-server-rename": "Hindi na-rename ang server",
-  "error-server-unreachable": "Na-install nang tama ang iyong Outline Server, pero hindi kami makakonekta rito. Malamang na nangyayari ito dahil bina-block ng mga panuntunan sa firewall ng iyong server ang mga papasok na koneksyon. Pakisuri ang mga ito at tiyaking payagan ang mga papasok na koneksyong TCP sa mga port na mula 1024 hanggang 65535.",
-  "error-server-unreachable-title": "Hindi makakonekta sa iyong Outline Server",
   "error-servers-removed": "Wala na ang {serverNames} sa iyong DigitalOcean account.",
   "error-set-data-limit": "Hindi maitakda ang default na limitasyon sa data",
   "error-set-per-key-limit": "Hindi maitakda ang limitasyon sa data para sa access key na ito",

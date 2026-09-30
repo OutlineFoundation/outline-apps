@@ -19,7 +19,14 @@ android {
     compileSdk 36
     
     defaultConfig {
-        applicationId "org.outline.client"
+        // Ship under the same package id as the existing Cordova client so the
+        // Play Store delivers this as an in-place update. That is a hard
+        // requirement for the Cordova->Capacitor localStorage migration: the new
+        // app can only read the legacy file:// storage if it inherits the old
+        // app's data directory, which only happens on a same-id upgrade.
+        // (namespace stays org.outline.client — that is the code package, not the
+        // install identity.)
+        applicationId "org.outline.android.client"
         minSdk rootProject.ext.minSdkVersion
         targetSdk 36
         versionCode 1

@@ -56,8 +56,6 @@
   "error-server-destroy": "Унищожаването на сървъра не бе успешно",
   "error-server-removed": "{serverName} липсва в профила ви в DigitalOcean.",
   "error-server-rename": "Преименуването на сървъра не бе успешно",
-  "error-server-unreachable": "Сървърът ви на Outline е инсталиран правилно, но не можем да се свържем с него. Най-вероятната причина е, че правилата в защитната му стена блокират входящите връзки. Моля, прегледайте ги и разрешете входящи TCP връзки на портове от 1024 до 65 535.",
-  "error-server-unreachable-title": "Няма връзка със сървъра ви на Outline",
   "error-servers-removed": "{serverNames} липсват в профила ви в DigitalOcean.",
   "error-set-data-limit": "Стандартното ограничение за данните не бе зададено",
   "error-set-per-key-limit": "Не бе зададено ограничение за данните за този ключ за достъп",

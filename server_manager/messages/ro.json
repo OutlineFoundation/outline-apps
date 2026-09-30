@@ -56,8 +56,6 @@
   "error-server-destroy": "Serverul nu a putut fi distrus",
   "error-server-removed": "{serverName} nu mai este prezent în contul DigitalOcean.",
   "error-server-rename": "Nu s-a redenumit serverul.",
-  "error-server-unreachable": "Serverul dvs. Outline a fost instalat corect, dar nu se poate realiza conexiunea la acesta. Cel mai probabil, acest lucru se întâmplă deoarece regulile pentru firewallul serverului blochează conexiunile primite. Examinați regulile și asigurați-vă că sunt permise conexiunile TCP primite pe porturile de la 1024 la 65535.",
-  "error-server-unreachable-title": "Nu se poate stabili conexiunea la serverul dvs. Outline",
   "error-servers-removed": "{serverNames} nu mai sunt prezente în contul DigitalOcean.",
   "error-set-data-limit": "Nu s-a putut seta limita de date prestabilită",
   "error-set-per-key-limit": "Nu se poate seta o limită pentru datele aferente acestei chei de acces",

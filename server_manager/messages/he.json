@@ -56,8 +56,6 @@
   "error-server-destroy": "השרת לא נמחק",
   "error-server-removed": "השרת {serverName} לא קיים יותר בחשבון שלך ב-DigitalOcean.",
   "error-server-rename": "השם של השרת לא שונה",
-  "error-server-unreachable": "השרת שלך ב-Outline הותקן נכון, אבל לא הצלחנו להתחבר אליו. רוב הסיכויים שכללי חומת האש של השרת חוסמים חיבורים נכנסים. מומלץ לבדוק את הכללים ולאפשר חיבורי TCP נכנסים ביציאות 1024 עד 65535.",
-  "error-server-unreachable-title": "לא הצלחנו להתחבר לשרת שלך ב-Outline",
   "error-servers-removed": "השרתים {serverNames} לא קיימים יותר בחשבון שלך ב-DigitalOcean.",
   "error-set-data-limit": "ברירת המחדל של מגבלת הנתונים לא נוצרה",
   "error-set-per-key-limit": "מגבלת הנתונים לא נוצרה למפתח הגישה הזה",

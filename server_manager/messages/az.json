@@ -56,8 +56,6 @@
   "error-server-destroy": "Serveri silmək alınmadı",
   "error-server-removed": "{serverName} artıq DigitalOcean hesabınızda yoxdur.",
   "error-server-rename": "Serverin adını dəyişmək alınmadı",
-  "error-server-unreachable": "Outline Serveriniz düzgün quraşdırılıb, lakin ona qoşula bilmirik. Bu, serverinizin təhlükəsizlik divarı üzrə qaydalarının yeni bağlantıları bloklaması ilə əlaqədar ola bilər. Onları nəzərdən keçirin və 1024-dən 65535-ə qədər olan portlarda yeni TCP bağlantılarına icazə verin.",
-  "error-server-unreachable-title": "Outline Serverinizə qoşula bilmir",
   "error-servers-removed": "{serverNames} artıq DigitalOcean hesabınızda yoxdur.",
   "error-set-data-limit": "Defolt data limiti təyin etmək mümkün olmadı",
   "error-set-per-key-limit": "Bu giriş açarı üçün data limiti ayarlamaq mümkün olmadı",

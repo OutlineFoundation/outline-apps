@@ -56,8 +56,6 @@
   "error-server-destroy": "Gagal menghancurkan server",
   "error-server-removed": "{serverName} tidak lagi berada di akun DigitalOcean Anda.",
   "error-server-rename": "Gagal mengganti nama server",
-  "error-server-unreachable": "Server Outline Anda telah diinstal dengan benar, tetapi kami tidak dapat terhubung ke server tersebut. Kemungkinan besar masalah ini terjadi karena aturan firewall server Anda memblokir sambungan masuk. Tinjau aturan tersebut dan pastikan Anda mengizinkan sambungan TCP masuk pada port 1024 hingga 65535.",
-  "error-server-unreachable-title": "Tidak dapat terhubung ke Server Outline Anda",
   "error-servers-removed": "{serverNames} tidak lagi berada di akun DigitalOcean Anda.",
   "error-set-data-limit": "Tidak dapat menetapkan batas data default",
   "error-set-per-key-limit": "Tidak dapat menetapkan batas data untuk kunci akses ini",

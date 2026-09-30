@@ -56,8 +56,6 @@
   "error-server-destroy": "De server kan niet worden vernietigd",
   "error-server-removed": "{serverName} bevindt zich niet meer in je DigitalOcean-account.",
   "error-server-rename": "De naam van de server kan niet worden gewijzigd",
-  "error-server-unreachable": "De Outline-server is juist geïnstalleerd, maar we kunnen er geen verbinding mee maken. Dit komt waarschijnlijk doordat de firewallregels van je server binnenkomende verbindingen blokkeren. Controleer je firewallregels en zorg dat binnenkomende TCP-verbindingen op poorten 1024 t/m 65535 zijn toegestaan.",
-  "error-server-unreachable-title": "Er kan geen verbinding worden gemaakt met je Outline-server",
   "error-servers-removed": "{serverNames} bevindt zich niet meer in je DigitalOcean-account.",
   "error-set-data-limit": "De standaard gegevenslimiet kan niet worden ingesteld",
   "error-set-per-key-limit": "Er kan geen gegevenslimiet worden ingesteld voor deze toegangssleutel",

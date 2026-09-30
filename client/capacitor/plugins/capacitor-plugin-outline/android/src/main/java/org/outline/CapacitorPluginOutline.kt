@@ -22,13 +22,21 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.net.VpnService
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
+import org.json.JSONException
 import org.outline.log.OutlineLogger
 import org.outline.log.SentryErrorReporter
 import org.outline.vpn.Errors
@@ -269,6 +277,114 @@ class CapacitorPluginOutline : Plugin() {
     }
   }
 
+  /**
+   * Reads the localStorage the Cordova build wrote under the file:// origin.
+   *
+   * The Cordova app ran from file:///android_asset/www/ (config.xml sets
+   * AndroidInsecureFileModeEnabled), while Capacitor serves https://localhost.
+   * Chromium partitions storage by origin, so the servers and settings written
+   * by the Cordova build are invisible to the Capacitor WebView. Loading any
+   * file:// document off-screen gives us a context that can read them, which we
+   * then hand back to the web layer to replay into the new origin.
+   *
+   * Resolves with the legacy key/value pairs. An empty object is a perfectly good
+   * result — it means the origin was read and held nothing — so the caller should
+   * treat it as a completed migration rather than retrying.
+   *
+   * Rejects when the read could not be performed at all: no activity, the bridge
+   * page failed to load, the dump script threw, or the timeout fired. Nothing is
+   * known about the legacy origin in that case, so the caller should try again on
+   * a later launch. See the LEGACY_STORAGE_* codes for which one occurred.
+   *
+   * It always completes, one way or the other: the web layer awaits this during
+   * startup, so an outstanding call would mean an app that never launches.
+   */
+  @PluginMethod
+  fun getLegacyCordovaLocalStorage(call: PluginCall) {
+    val currentActivity = activity ?: run {
+      call.reject("No active activity to read legacy storage.", ERROR_NO_ACTIVITY)
+      return
+    }
+
+    currentActivity.runOnUiThread {
+      val handler = Handler(Looper.getMainLooper())
+      val settled = AtomicBoolean(false)
+      var webView: WebView? = null
+
+      // Completes the call exactly once, whichever of load / error / timeout wins
+      // the race, and disposes of the WebView. Only ever called on the UI thread.
+      fun settle(complete: () -> Unit) {
+        if (!settled.compareAndSet(false, true)) return
+        handler.removeCallbacksAndMessages(null)
+        val doomed = webView
+        webView = null
+        complete()
+        // Tearing a WebView down from inside its own evaluateJavascript callback
+        // crashes on some WebView builds, so destroy it on a later loop turn.
+        handler.post { doomed?.destroy() }
+      }
+
+      // Success carries the legacy pairs, which may legitimately be empty.
+      fun succeed(storage: JSObject) = settle { call.resolve(storage) }
+      // Failure means nothing is known about the legacy origin. The code lets the
+      // caller tell a cheap failure from a timeout without another native change.
+      fun fail(message: String, code: String) = settle { call.reject(message, code) }
+
+      try {
+        webView = WebView(currentActivity).apply {
+          // Only these two are load bearing: the injected script needs JavaScript,
+          // and localStorage needs DOM storage. Deliberately NOT setting
+          // allowFileAccess or allowUniversalAccessFromFileURLs, which
+          // cordova-android turns on under AndroidInsecureFileModeEnabled:
+          // the first governs file *system* access and is not required to reach
+          // file:///android_asset, and the second only permits cross-origin
+          // access from a file:// document, which this inert page never makes.
+          // Both are deprecated and widen the attack surface for no benefit here.
+          settings.javaScriptEnabled = true
+          settings.domStorageEnabled = true
+
+          webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String) {
+              // loadUrl is asynchronous: the document only has a file:// origin
+              // (and localStorage) once it has finished loading.
+              view.evaluateJavascript(DUMP_LOCAL_STORAGE_JS) { result ->
+                val storage = decodeLocalStorage(result)
+                if (storage == null) {
+                  fail("Could not read the legacy local storage.", ERROR_UNREADABLE)
+                } else {
+                  succeed(storage)
+                }
+              }
+            }
+
+            override fun onReceivedError(
+                view: WebView,
+                request: WebResourceRequest,
+                error: WebResourceError,
+            ) {
+              if (request.isForMainFrame) {
+                fail(
+                    "Could not load the legacy storage bridge page: ${error.description}",
+                    ERROR_LOAD_FAILED,
+                )
+              }
+            }
+          }
+        }
+
+        webView?.loadUrl(LEGACY_STORAGE_BRIDGE_URL)
+        // The web layer awaits this during startup, so the call must always be
+        // completed — a silent hang here would be an app that never launches.
+        handler.postDelayed(
+            { fail("Timed out reading the legacy local storage.", ERROR_TIMEOUT) },
+            LEGACY_STORAGE_TIMEOUT_MS,
+        )
+      } catch (e: Exception) {
+        fail("Could not open a WebView on the legacy origin: ${e.message}", ERROR_UNAVAILABLE)
+      }
+    }
+  }
+
   @PluginMethod
   fun quitApplication(call: PluginCall) {
     val currentActivity = activity ?: run {
@@ -398,6 +514,62 @@ class CapacitorPluginOutline : Plugin() {
   companion object {
     private const val REQUEST_CODE_PREPARE_VPN = 100
     private const val STATUS_CHANGE_EVENT = "onStatusChange"
+
+    // Any file:// document shares the single file:// storage origin, so this
+    // reads the same namespace the Cordova build wrote to under www/.
+    private const val LEGACY_STORAGE_BRIDGE_URL =
+        "file:///android_asset/public/migrate.html"
+    private const val LEGACY_STORAGE_TIMEOUT_MS = 5_000L
+
+    // Rejection codes. Every one of these means the legacy origin could not be
+    // read, so nothing is known about it and the caller should try again later.
+    // They are distinguished so the caller can treat the one slow failure
+    // (a timeout) differently from the ones that return in milliseconds.
+    private const val ERROR_NO_ACTIVITY = "LEGACY_STORAGE_NO_ACTIVITY"
+    private const val ERROR_UNAVAILABLE = "LEGACY_STORAGE_UNAVAILABLE"
+    private const val ERROR_LOAD_FAILED = "LEGACY_STORAGE_LOAD_FAILED"
+    private const val ERROR_UNREADABLE = "LEGACY_STORAGE_UNREADABLE"
+    private const val ERROR_TIMEOUT = "LEGACY_STORAGE_TIMEOUT"
+
+    // Injected rather than defined in migrate.html, so the page stays inert and
+    // the two halves of this can never drift out of sync.
+    //
+    // Returns the object itself, not a JSON string: evaluateJavascript already
+    // hands the result back as JSON text, so stringifying here would encode it
+    // twice and force the caller to unwrap two layers.
+    private const val DUMP_LOCAL_STORAGE_JS = """
+      (function () {
+        try {
+          var dump = {};
+          for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            dump[key] = localStorage.getItem(key);
+          }
+          return dump;
+        } catch (e) {
+          return null;
+        }
+      })();
+    """
+  }
+}
+
+/**
+ * Parses the JSON text [WebView.evaluateJavascript] hands back into an object.
+ *
+ * The WebView bridge is textual, so this is the one place the dump has to be
+ * deserialized. Doing it here means the plugin result carries a real key/value
+ * object and no layer above has to know it was ever serialized.
+ *
+ * Returns null when the script reported failure (`null`) or produced something
+ * that is not a JSON object.
+ */
+private fun decodeLocalStorage(result: String?): JSObject? {
+  if (result.isNullOrEmpty() || result == "null") return null
+  return try {
+    JSObject(result)
+  } catch (e: JSONException) {
+    null
   }
 }
 

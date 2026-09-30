@@ -56,8 +56,6 @@
   "error-server-destroy": "Det lykkedes ikke at slette serveren",
   "error-server-removed": "{serverName} findes ikke længere på din DigitalOcean-konto.",
   "error-server-rename": "Det lykkedes ikke at omdøbe serveren",
-  "error-server-unreachable": "Din Outline-server blev korrekt installeret, men vi kunne ikke oprette forbindelse til den. Det skyldes sikkert, at din servers firewallregler blokerer indgående forbindelser. Gennemgå reglerne, og sørg for, at du tillader indgående TCP-forbindelser på portene i intervallet 1024 til 65535.",
-  "error-server-unreachable-title": "Der kan ikke oprettes forbindelse til din Outline-server",
   "error-servers-removed": "{serverNames} findes ikke længere på din DigitalOcean-konto.",
   "error-set-data-limit": "Der kunne ikke angives en standardgrænse for dataoverførsel",
   "error-set-per-key-limit": "Der kunne ikke angives en datagrænse for denne adgangsnøgle",

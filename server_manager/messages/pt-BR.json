@@ -56,8 +56,6 @@
   "error-server-destroy": "Ocorreu uma falha ao destruir o servidor.",
   "error-server-removed": "O {serverName} não faz mais parte da sua conta da DigitalOcean.",
   "error-server-rename": "Ocorreu uma falha ao renomear o servidor.",
-  "error-server-unreachable": "Seu servidor do Outline foi instalado, mas não é possível estabelecer conexão com ele. Provavelmente isso está ocorrendo porque as regras de firewall dele estão bloqueando as conexões de entrada. Revise as regras e permita as conexões TCP de entrada nas portas 1.024 a 65.535.",
-  "error-server-unreachable-title": "Não foi possível estabelecer conexão com seu servidor do Outline.",
   "error-servers-removed": "Os {serverNames} não fazem mais parte da sua conta da DigitalOcean.",
   "error-set-data-limit": "Não foi possível definir o limite de dados padrão.",
   "error-set-per-key-limit": "Não foi possível definir um limite de dados para esta chave de acesso.",

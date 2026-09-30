@@ -210,6 +210,11 @@ function setupWindow(): void {
     event.preventDefault();
     mainWindow.hide();
   });
+
+  mainWindow.on('closed', () => {
+    // Clear the reference so callers can detect that the window is gone.
+    mainWindow = null;
+  });
   if (os.platform() === 'win32') {
     // On Windows we hide the app from the taskbar.
     mainWindow.on('minimize', (event: Event) => {
@@ -431,7 +436,7 @@ async function stopVpn() {
 function setUiTunnelStatus(status: TunnelStatus, tunnelId: string) {
   // TODO: refactor channel name and namespace to a constant
   const event = 'outline-ipc-proxy-status';
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(event, tunnelId, status);
   } else {
     console.warn(`received ${event} event but no mainWindow to notify`);

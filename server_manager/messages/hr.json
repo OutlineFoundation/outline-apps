@@ -56,8 +56,6 @@
   "error-server-destroy": "Poslužitelj nije uspješno izbrisan",
   "error-server-removed": "Poslužitelj {serverName} više nije prisutan na vašem DigitalOcean računu.",
   "error-server-rename": "Preimenovanje poslužitelja nije uspjelo",
-  "error-server-unreachable": "Vaš je Outline poslužitelj ispravno instaliran, no ne možemo se povezati s njim. Najvjerojatnije je to zato što pravila vatrozida vašeg poslužitelja blokiraju dolazne veze. Pregledajte ih i provjerite da ste dopustili dolazne TCP veze na priključcima u rasponu od 1024 do 65535.",
-  "error-server-unreachable-title": "Povezivanje s vašim Outline poslužiteljem nije moguće",
   "error-servers-removed": "Poslužitelj {serverNames} više nije prisutan na vašem DigitalOcean računu.",
   "error-set-data-limit": "Postavljanje zadanog ograničenja podatkovnog prometa nije moguće",
   "error-set-per-key-limit": "Ograničenje podatkovnog prometa ne može se postaviti za ovaj pristupni ključ",
