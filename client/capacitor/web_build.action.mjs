@@ -19,6 +19,7 @@ import url from 'url';
 import webpackConfig from './webpack.config.js';
 import {writeEnvironmentJson} from './write_environment.mjs';
 import {getBuildParameters} from '../build/get_build_parameters.mjs';
+import {getWebpackBuildMode} from '../build/get_webpack_build_mode.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
@@ -32,7 +33,7 @@ const SUPPORTED_PLATFORMS = new Set(['browser', 'android', 'ios']);
  * @param {string[]} parameters
  */
 export async function main(...parameters) {
-  const {platform, buildMode, versionName, buildNumber} =
+  const {platform, buildMode, versionName, buildNumber, sentryDsn} =
     getBuildParameters(parameters);
 
   if (!SUPPORTED_PLATFORMS.has(platform)) {
@@ -41,18 +42,32 @@ export async function main(...parameters) {
     );
   }
 
-  if (buildMode !== 'debug') {
-    throw new TypeError(
-      `Capacitor ${platform} build supports only debug mode, got "${buildMode}".`
-    );
+  if (buildMode === 'release') {
+    if (versionName === '0.0.0') {
+      throw new TypeError(
+        'Release builds require a valid versionName, but it is set to 0.0.0.'
+      );
+    }
+
+    if (!sentryDsn) {
+      throw new TypeError(
+        'Release builds require SENTRY_DSN, but it is not defined.'
+      );
+    }
+
+    try {
+      new URL(sentryDsn);
+    } catch {
+      throw new TypeError(`The sentryDsn ${sentryDsn} is not a valid URL!`);
+    }
   }
 
   const outputDir = path.resolve(capacitorDir, 'www');
   await fs.rm(outputDir, {recursive: true, force: true});
   await fs.mkdir(outputDir, {recursive: true});
 
-  await writeEnvironmentJson(capacitorDir, versionName, buildNumber);
-  await runWebpack({...webpackConfig, mode: 'development'});
+  await writeEnvironmentJson(capacitorDir, versionName, buildNumber, sentryDsn);
+  await runWebpack({...webpackConfig, mode: getWebpackBuildMode(buildMode)});
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
