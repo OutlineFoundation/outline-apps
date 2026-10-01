@@ -453,17 +453,39 @@ public class VpnTunnelService extends VpnService {
   private void broadcastVpnConnectivityChange(TunnelStatus status) {
     this.tunnelStore.setTunnelStatus(status);
     QuickSettingsTileService.requestTileUpdate(this);
-    if (tunnelConfig == null) {
+    // Capture tunnelConfig to a local variable to avoid a TOCTOU race with tearDownActiveTunnel(),
+    // which can null the field on another thread between the null check and field access.
+    final TunnelConfig config = this.tunnelConfig;
+    final Intent intent = buildStatusBroadcastIntent(config, status, getPackageName());
+    if (intent == null) {
       LOG.warning("Tunnel disconnected, not sending VPN connectivity broadcast");
       return;
     }
-    Intent statusChange = new Intent(STATUS_BROADCAST_KEY);
-    statusChange.addCategory(getPackageName());
-    // We must explicitly set the package for security reasons: https://developer.android.com/about/versions/14/behavior-changes-14#security
-    statusChange.setPackage(this.getPackageName());
-    statusChange.putExtra(MessageData.PAYLOAD.value, status.value);
-    statusChange.putExtra(MessageData.TUNNEL_ID.value, tunnelConfig.id);
-    sendBroadcast(statusChange);
+    sendBroadcast(intent);
+  }
+
+  /**
+   * Builds a status broadcast {@link Intent} for the given tunnel config snapshot and status.
+   *
+   * <p>Returns {@code null} when {@code config} is null so the caller can skip the send. Keeping
+   * the intent construction in a static method makes it testable without a running Service.
+   *
+   * <p>Package-private for testing.
+   */
+  @Nullable
+  static Intent buildStatusBroadcastIntent(
+      @Nullable TunnelConfig config, TunnelStatus status, String packageName) {
+    if (config == null) {
+      return null;
+    }
+    Intent intent = new Intent(STATUS_BROADCAST_KEY);
+    intent.addCategory(packageName);
+    // We must explicitly set the package for security reasons:
+    // https://developer.android.com/about/versions/14/behavior-changes-14#security
+    intent.setPackage(packageName);
+    intent.putExtra(MessageData.PAYLOAD.value, status.value);
+    intent.putExtra(MessageData.TUNNEL_ID.value, config.id);
+    return intent;
   }
 
   // Autostart
