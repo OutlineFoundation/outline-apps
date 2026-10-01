@@ -81,6 +81,11 @@ export class AppearanceView extends LitElement {
       margin: 4px 0;
     }
 
+    md-list-item:focus-within {
+      outline: 4px solid var(--outline-primary);
+      outline-offset: -4px;
+    }
+
     /* Direct override for appearance text - needed for dark mode */
     md-list-item span,
     md-list-item div,
@@ -145,6 +150,7 @@ export class AppearanceView extends LitElement {
             <md-list-item
               class=${classMap({selected: this.selectedAppearance === id})}
               data-value="${id}"
+              type="button"
               @click=${() => this.handleAppearanceSelection(id)}
             >
               <md-icon

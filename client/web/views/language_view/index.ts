@@ -58,6 +58,11 @@ export class LanguageView extends LitElement {
       color: var(--outline-text-color);
     }
 
+    md-list-item:focus-within {
+      outline: 4px solid var(--outline-primary);
+      outline-offset: -4px;
+    }
+
     /* Important direct override for language text - needed for dark mode */
     md-list-item span,
     md-list-item div,
@@ -103,6 +108,7 @@ export class LanguageView extends LitElement {
             <md-list-item
               class=${classMap({selected: this.selectedLanguageId === id})}
               data-value="${id}"
+              type="button"
               @click="${this.handleLanguageSelection}"
             >
               <md-ripple></md-ripple>

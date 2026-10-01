@@ -100,6 +100,14 @@ export class AddAccessKeyDialog extends LitElement {
       --md-filled-button-label-text-color: var(--outline-white);
     }
 
+    a:focus-visible,
+    md-text-button:focus-within,
+    md-filled-button:focus-within {
+      border-radius: var(--outline-corner);
+      outline: 4px solid var(--outline-primary);
+      outline-offset: 4px;
+    }
+
     /* Explicit fixing for error text */
     md-filled-text-field::part(error) {
       color: var(--outline-error);
@@ -143,6 +151,7 @@ export class AddAccessKeyDialog extends LitElement {
           <md-filled-text-field
             .error=${!this.hasEmptyAccessKey && this.hasInvalidAccessKey}
             @input=${this.edit}
+            .cols=${38}
             error-text="${this.localize('add-access-key-dialog-error-text')}"
             label="${this.localize('add-access-key-dialog-label')}"
             rows="5"
