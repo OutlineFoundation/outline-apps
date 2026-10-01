@@ -29,10 +29,12 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.result.ActivityResult
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.annotation.ActivityCallback
 import com.getcapacitor.annotation.CapacitorPlugin
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -399,11 +401,20 @@ class CapacitorPluginOutline : Plugin() {
     call.resolve()
   }
 
-  override fun handleOnActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.handleOnActivityResult(requestCode, resultCode, data)
-
-    if (requestCode != REQUEST_CODE_PREPARE_VPN) return
-
+  /**
+   * Receives the result of the system VPN permission dialog launched by
+   * [prepareVpnService]. Capacitor finds this method by name, through the
+   * launcher it registers for every [ActivityCallback] method.
+   *
+   * The start request is taken from [pendingVpnPermissionRequest] rather than
+   * from [savedCall]. The two hold the same call, except when the activity was
+   * recreated underneath the dialog: Capacitor then passes a call rebuilt from
+   * saved state (or null) to a new plugin instance, which has no pending request
+   * and no web callback left to answer, so there is nothing to resume.
+   */
+  @ActivityCallback
+  @Suppress("unused", "UNUSED_PARAMETER")
+  private fun onVpnPermissionResult(savedCall: PluginCall?, result: ActivityResult) {
     val startRequest = synchronized(stateLock) {
       val req = pendingVpnPermissionRequest
       pendingVpnPermissionRequest = null
@@ -411,7 +422,7 @@ class CapacitorPluginOutline : Plugin() {
     } ?: return
     val call = startRequest.call
 
-    if (resultCode != Activity.RESULT_OK) {
+    if (result.resultCode != Activity.RESULT_OK) {
       sendErrorResult(call, vpnPermissionDeniedError())
       bridge.releaseCall(call)
       return
@@ -443,7 +454,7 @@ class CapacitorPluginOutline : Plugin() {
       StartDecision.AlreadyPending -> {
         sendErrorResult(call, startAlreadyInProgressError())
         // Release the saved-call slot if this call was saved earlier by
-        // prepareVpnService before handleOnActivityResult re-entered here.
+        // prepareVpnService before onVpnPermissionResult re-entered here.
         // No-op for an unsaved call.
         bridge.releaseCall(call)
       }
@@ -476,7 +487,7 @@ class CapacitorPluginOutline : Plugin() {
     val prepareIntent = VpnService.prepare(baseContext())
     if (prepareIntent == null) return true
 
-    val currentActivity = activity ?: run {
+    if (activity == null) {
       call.reject("Unable to request VPN permission without an active activity.")
       return false
     }
@@ -494,9 +505,19 @@ class CapacitorPluginOutline : Plugin() {
       return false
     }
 
-    call.setKeepAlive(true)
-    saveCall(call)
-    currentActivity.startActivityForResult(prepareIntent, REQUEST_CODE_PREPARE_VPN)
+    try {
+      // Saves the call until onVpnPermissionResult runs. This has to go through
+      // Capacitor's launcher: the bridge only routes a raw
+      // Activity.startActivityForResult result to a plugin that declares the
+      // request code in the legacy `requestCodes` annotation field.
+      startActivityForResult(call, prepareIntent, VPN_PERMISSION_CALLBACK)
+    } catch (e: Exception) {
+      // For example, a device with no system VPN dialog to show. Letting this
+      // escape a plugin method would crash the app.
+      synchronized(stateLock) { pendingVpnPermissionRequest = null }
+      bridge.releaseCall(call)
+      sendErrorResult(call, platformErrorFromException(e))
+    }
     return false
   }
 
@@ -512,7 +533,8 @@ class CapacitorPluginOutline : Plugin() {
   private fun baseContext(): Context = context.applicationContext
 
   companion object {
-    private const val REQUEST_CODE_PREPARE_VPN = 100
+    // Must match the name of the @ActivityCallback method.
+    private const val VPN_PERMISSION_CALLBACK = "onVpnPermissionResult"
     private const val STATUS_CHANGE_EVENT = "onStatusChange"
 
     // Any file:// document shares the single file:// storage origin, so this
