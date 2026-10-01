@@ -24,9 +24,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
+        <!--
+          The launcher activity keeps the Cordova app's fully qualified name,
+          org.outline.android.client.MainActivity, rather than living under the
+          Gradle namespace (org.outline.client). This app ships as an in-place
+          upgrade of the Cordova app, and home-screen shortcuts and launcher
+          icon placements are bound to the full component name: changing it
+          would make users' pinned Outline icons vanish on upgrade. The class
+          is also what VpnTunnelService resolves as "<applicationId>.MainActivity"
+          for the persistent notification's tap intent.
+        -->
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
-            android:name=".MainActivity"
+            android:name="org.outline.android.client.MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"

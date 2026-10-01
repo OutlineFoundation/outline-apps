@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package org.outline.client;
+package org.outline.android.client;
 
 import com.getcapacitor.BridgeActivity;
 
+/**
+ * The launcher activity. It deliberately lives in org.outline.android.client, the package of the
+ * Cordova app's MainActivity, rather than in the Gradle namespace (org.outline.client): the
+ * Capacitor app ships as an in-place upgrade of the Cordova app, and the launcher component name
+ * must not change across that upgrade. See the comment in AndroidManifest.xml.
+ */
 public class MainActivity extends BridgeActivity {}
