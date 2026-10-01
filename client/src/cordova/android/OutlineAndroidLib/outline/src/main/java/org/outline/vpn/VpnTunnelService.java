@@ -168,6 +168,7 @@ public class VpnTunnelService extends VpnService {
         return START_NOT_STICKY;
       }
       if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
+        startForegroundConnecting();
         startLastSuccessfulTunnel();
         QuickSettingsTileService.requestTileUpdate(this);
         return superOnStartReturnValue;
@@ -177,6 +178,7 @@ public class VpnTunnelService extends VpnService {
           intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false);
       boolean startedByAlwaysOn = VpnService.SERVICE_INTERFACE.equals(intent.getAction());
       if (startedByVpnStarter || startedByAlwaysOn) {
+        startForegroundConnecting();
         startLastSuccessfulTunnel();
       }
     }
@@ -475,6 +477,8 @@ public class VpnTunnelService extends VpnService {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopForeground();
+      stopSelf();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
@@ -482,6 +486,8 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopForeground();
+      stopSelf();
       return;
     }
     try {
@@ -490,14 +496,16 @@ public class VpnTunnelService extends VpnService {
       tunnelConfig.name = tunnel.getString(TUNNEL_SERVER_NAME);
       tunnelConfig.transportConfig = tunnel.getString(TUNNEL_CONFIG_KEY);
 
-      // Start the service in the foreground as per Android 8+ background service execution limits.
-      // Requires android.permission.FOREGROUND_SERVICE since Android P.
-      startForegroundWithNotification(tunnelConfig.name);
+      // startForegroundConnecting() was already called in onStartCommand() to satisfy the Android
+      // foreground-service contract. startTunnel() will update the notification to "connected" on
+      // success, or tearDownActiveTunnel() will stop the service on failure.
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopForeground();
+      stopSelf();
     }
   }
 
@@ -525,6 +533,30 @@ public class VpnTunnelService extends VpnService {
   }
 
   // Foreground service & notifications
+
+  /**
+   * Immediately satisfies the Android foreground-service contract by posting a "Connecting..."
+   * notification. Must be called at the very start of any OS-initiated start path before any
+   * tunnel or network work. The notificationBuilder is reset so that the subsequent call to
+   * startForegroundWithNotification() rebuilds it with the real server name.
+   */
+  private void startForegroundConnecting() {
+    try {
+      Notification.Builder connectingBuilder = getNotificationBuilder(getApplicationName());
+      connectingBuilder.setContentText(getStringResource("connecting_server_state"));
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        startForeground(NOTIFICATION_SERVICE_ID, connectingBuilder.build(),
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+      } else {
+        startForeground(NOTIFICATION_SERVICE_ID, connectingBuilder.build());
+      }
+      // Reset the cached builder so startForegroundWithNotification() creates a fresh one
+      // with the real server name when the tunnel is established.
+      notificationBuilder = null;
+    } catch (Exception e) {
+      LOG.warning("Unable to display connecting notification");
+    }
+  }
 
   /** Starts the service in the foreground and displays a persistent notification. */
   private void startForegroundWithNotification(final String serverName) {
