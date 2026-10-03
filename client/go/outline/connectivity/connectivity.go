@@ -23,8 +23,8 @@ import (
 	"net/http"
 	"time"
 
-	"localhost/client/go/outline/platerrors"
 	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/outline/platerrors"
 )
 
 // TODO: make these values configurable by exposing a struct with the connectivity methods.
@@ -70,7 +70,13 @@ func CheckTCPAndUDPConnectivity(
 
 // CheckTCPConnectivity checks whether the given StreamDialer can relay traffic.
 func CheckTCPConnectivity(sd transport.StreamDialer) error {
-	return CheckTCPConnectivityWithHTTP(tcpTimeout, sd, testTCPURLs)
+	return CheckTCPConnectivityContext(context.Background(), sd)
+}
+
+// CheckTCPConnectivityContext checks TCP connectivity until the check completes,
+// its timeout expires, or ctx is canceled.
+func CheckTCPConnectivityContext(ctx context.Context, sd transport.StreamDialer) error {
+	return checkTCPConnectivityWithHTTP(ctx, tcpTimeout, sd, testTCPURLs)
 }
 
 // CheckUDPConnectivity checks whether the given PacketListener can relay traffic.
@@ -135,6 +141,10 @@ func getDNSRequest() []byte {
 // the URLs in `urlList`, which must use the 'http' scheme.
 // Returns nil on success, error on connectivity failure.
 func CheckTCPConnectivityWithHTTP(timeout time.Duration, dialer transport.StreamDialer, urlList []string) error {
+	return checkTCPConnectivityWithHTTP(context.Background(), timeout, dialer, urlList)
+}
+
+func checkTCPConnectivityWithHTTP(ctx context.Context, timeout time.Duration, dialer transport.StreamDialer, urlList []string) error {
 	if len(urlList) == 0 {
 		return errors.New("test url list is empty")
 	}
@@ -142,8 +152,7 @@ func CheckTCPConnectivityWithHTTP(timeout time.Duration, dialer transport.Stream
 		return context.DeadlineExceeded
 	}
 
-	deadline := time.Now().Add(timeout)
-	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	errCh := make(chan error, len(urlList))
@@ -159,7 +168,13 @@ func CheckTCPConnectivityWithHTTP(timeout time.Duration, dialer transport.Stream
 				endMs := max(int(timeout/time.Millisecond)-500, 0)
 				beginMs := min(endMs, 500)
 				// We use math/rand here because there's no need for strong encryption.
-				time.Sleep(time.Duration(beginMs+rand.Intn(endMs-beginMs+1)) * time.Millisecond)
+				timer := time.NewTimer(time.Duration(beginMs+rand.Intn(endMs-beginMs+1)) * time.Millisecond)
+				defer timer.Stop()
+				select {
+				case <-ctx.Done():
+					return
+				case <-timer.C:
+				}
 			}
 			errCh <- testTCPWithOneURL(ctx, dialer, targetURL)
 		}()
@@ -209,6 +224,10 @@ func testTCPWithOneURL(ctx context.Context, dialer transport.StreamDialer, targe
 		}
 	}
 	defer conn.Close()
+	// A deadline alone does not interrupt reads or writes when the caller cancels
+	// early (or a competing probe succeeds).
+	stopClose := context.AfterFunc(ctx, func() { conn.Close() })
+	defer stopClose()
 	if deadline, ok := ctx.Deadline(); ok {
 		conn.SetDeadline(deadline)
 	}

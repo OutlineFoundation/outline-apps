@@ -21,11 +21,11 @@ import (
 	"log/slog"
 	"sync"
 
-	"localhost/client/go/outline/connectivity"
-	perrs "localhost/client/go/outline/platerrors"
 	"golang.getoutline.org/sdk/network/lwip2transport"
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/outline/connectivity"
+	perrs "localhost/client/go/outline/platerrors"
 )
 
 // RemoteDevice is an IO device that connects to a remote Outline server.
@@ -36,9 +36,9 @@ type RemoteDevice struct {
 	pr packetrelay.PacketRelay
 
 	// health check fields
-	tcpMu        sync.Mutex
 	tcpCheckDone sync.WaitGroup
 	tcpErr       error
+	cancelHealth context.CancelFunc
 }
 
 func ConnectRemoteDevice(ctx context.Context, sd transport.StreamDialer, pr packetrelay.PacketRelay) (_ *RemoteDevice, err error) {
@@ -53,11 +53,12 @@ func ConnectRemoteDevice(ctx context.Context, sd transport.StreamDialer, pr pack
 	}
 
 	dev := &RemoteDevice{sd: sd, pr: pr}
-	dev.tcpCheckDone.Go(dev.checkTCPHealthAndUpdate)
 	dev.ReadWriteCloser, err = lwip2transport.ConfigureDeviceWithRelay(dev.sd, dev.pr)
 	if err != nil {
 		return nil, errSetupHandler("remote device failed to configure network stack", err)
 	}
+	ctx, dev.cancelHealth = context.WithCancel(ctx)
+	dev.tcpCheckDone.Go(func() { dev.checkTCPHealthAndUpdate(ctx) })
 	slog.Debug("remote device lwIP network stack configured")
 
 	return dev, nil
@@ -65,6 +66,9 @@ func ConnectRemoteDevice(ctx context.Context, sd transport.StreamDialer, pr pack
 
 // Close closes the connection to the Outline server.
 func (dev *RemoteDevice) Close() (err error) {
+	if dev.cancelHealth != nil {
+		dev.cancelHealth()
+	}
 	if dev.ReadWriteCloser != nil {
 		err = dev.ReadWriteCloser.Close()
 	}
@@ -73,17 +77,14 @@ func (dev *RemoteDevice) Close() (err error) {
 
 func (d *RemoteDevice) GetHealthStatus() error {
 	d.tcpCheckDone.Wait()
-	d.tcpMu.Lock()
-	defer d.tcpMu.Unlock()
+	// The completed wait group publishes the single health-check result.
 	return d.tcpErr
 }
 
-func (d *RemoteDevice) checkTCPHealthAndUpdate() {
+func (d *RemoteDevice) checkTCPHealthAndUpdate(ctx context.Context) {
 	slog.Debug("remote device is checking TCP health status...")
-	err := connectivity.CheckTCPConnectivity(d.sd)
+	err := connectivity.CheckTCPConnectivityContext(ctx, d.sd)
 
-	d.tcpMu.Lock()
-	defer d.tcpMu.Unlock()
 	if d.tcpErr = err; d.tcpErr == nil {
 		slog.Info("remote device TCP is healthy")
 	} else {
