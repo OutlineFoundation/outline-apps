@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"localhost/client/go/outline"
+	"localhost/client/go/outline/connectivity"
 	perrs "localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/vpn"
 )
@@ -43,6 +44,15 @@ type RemoteDevice struct {
 type ConnectRemoteDeviceResult struct {
 	Device *RemoteDevice
 	Error  *perrs.PlatformError
+}
+
+// CheckClientConnectivity validates a replacement client without configuring the
+// singleton lwIP device (which would close the currently connected device).
+func CheckClientConnectivity(client *outline.Client) *perrs.PlatformError {
+	if client == nil {
+		return &perrs.PlatformError{Code: perrs.InternalError, Message: "client must be provided"}
+	}
+	return perrs.ToPlatformError(connectivity.CheckTCPConnectivity(client))
 }
 
 func ConnectRemoteDevice(client *outline.Client) (res *ConnectRemoteDeviceResult) {
