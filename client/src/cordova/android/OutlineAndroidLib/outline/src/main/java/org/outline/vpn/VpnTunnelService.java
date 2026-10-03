@@ -168,6 +168,9 @@ public class VpnTunnelService extends VpnService {
         return START_NOT_STICKY;
       }
       if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
+        // Promote to foreground immediately to satisfy Android's 5-second window requirement
+        // before any deferred tunnel-setup work is performed.
+        startForegroundImmediately();
         startLastSuccessfulTunnel();
         QuickSettingsTileService.requestTileUpdate(this);
         return superOnStartReturnValue;
@@ -177,6 +180,9 @@ public class VpnTunnelService extends VpnService {
           intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false);
       boolean startedByAlwaysOn = VpnService.SERVICE_INTERFACE.equals(intent.getAction());
       if (startedByVpnStarter || startedByAlwaysOn) {
+        // Promote to foreground immediately to satisfy Android's 5-second window requirement
+        // before any deferred tunnel-setup work is performed.
+        startForegroundImmediately();
         startLastSuccessfulTunnel();
       }
     }
@@ -475,6 +481,9 @@ public class VpnTunnelService extends VpnService {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Clear the foreground state we set in onStartCommand and stop the service.
+      stopForeground();
+      stopSelf();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
@@ -482,6 +491,9 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Clear the foreground state we set in onStartCommand and stop the service.
+      stopForeground();
+      stopSelf();
       return;
     }
     try {
@@ -490,14 +502,16 @@ public class VpnTunnelService extends VpnService {
       tunnelConfig.name = tunnel.getString(TUNNEL_SERVER_NAME);
       tunnelConfig.transportConfig = tunnel.getString(TUNNEL_CONFIG_KEY);
 
-      // Start the service in the foreground as per Android 8+ background service execution limits.
-      // Requires android.permission.FOREGROUND_SERVICE since Android P.
+      // Update the foreground notification with the real server name now that we have it.
       startForegroundWithNotification(tunnelConfig.name);
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Clear the foreground state we set in onStartCommand and stop the service.
+      stopForeground();
+      stopSelf();
     }
   }
 
@@ -526,8 +540,49 @@ public class VpnTunnelService extends VpnService {
 
   // Foreground service & notifications
 
+  /**
+   * Promotes the service to the foreground immediately with a generic "connecting" notification.
+   *
+   * <p>Must be called at the very start of {@link #onStartCommand} to satisfy Android's 5-second
+   * window requirement when the service was started via {@link Context#startForegroundService}.
+   * The {@link #startForeground} call is intentionally outside any try-catch so that a failure
+   * building the rich notification cannot suppress it.
+   */
+  private void startForegroundImmediately() {
+    LOG.info("Promoting service to foreground immediately.");
+    // Build a minimal notification. The channel must exist before building on Android O+.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationChannel channel =
+          new NotificationChannel(NOTIFICATION_CHANNEL_ID, "Outline", NotificationManager.IMPORTANCE_LOW);
+      getSystemService(NotificationManager.class).createNotificationChannel(channel);
+    }
+    Notification.Builder builder;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      builder = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID);
+    } else {
+      builder = new Notification.Builder(this);
+    }
+    builder.setContentTitle("Outline")
+           .setColor(NOTIFICATION_COLOR)
+           .setVisibility(Notification.VISIBILITY_SECRET);
+    // The icon is optional; getResourceId() returns 0 when absent rather than throwing,
+    // so guard by checking the ID before calling setSmallIcon().
+    int iconId = getResourceId("small_icon", "drawable");
+    if (iconId != 0) {
+      builder.setSmallIcon(iconId);
+    }
+    // startForeground() must be called unconditionally. Do NOT move it inside a try-catch.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(NOTIFICATION_SERVICE_ID, builder.build(),
+          ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+    } else {
+      startForeground(NOTIFICATION_SERVICE_ID, builder.build());
+    }
+  }
+
   /** Starts the service in the foreground and displays a persistent notification. */
   private void startForegroundWithNotification(final String serverName) {
+    Notification notification;
     try {
       if (notificationBuilder == null) {
         // Cache the notification builder so we can update the existing notification - creating a
@@ -535,13 +590,21 @@ public class VpnTunnelService extends VpnService {
         notificationBuilder = getNotificationBuilder(serverName);
       }
       notificationBuilder.setContentText(getStringResource("connected_server_state"));
-
-      // We must specify the service type for security reasons: https://developer.android.com/about/versions/14/changes/fgs-types-required
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        startForeground(NOTIFICATION_SERVICE_ID, notificationBuilder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
-      }
+      notification = notificationBuilder.build();
     } catch (Exception e) {
-      LOG.warning("Unable to display persistent notification");
+      LOG.warning("Unable to build persistent notification, falling back to minimal notification.");
+      notification = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+          .setContentTitle(serverName)
+          .build();
+    }
+    // startForeground() must be called unconditionally. Do NOT move it inside a try-catch that
+    // would suppress it when notification building fails.
+    // We must specify the service type on Q+: https://developer.android.com/about/versions/14/changes/fgs-types-required
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(NOTIFICATION_SERVICE_ID, notification,
+          ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+    } else {
+      startForeground(NOTIFICATION_SERVICE_ID, notification);
     }
   }
 
