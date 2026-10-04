@@ -90,7 +90,7 @@ class StatusItemController: NSObject {
     }
 
     func setStatus(status: ConnectionStatus) {
-        appKitBridgeLogger.debug("[StatusItemController] Setting status: \(String(describing: status), privacy: .public)")
+        appKitBridgeLogger.info("[StatusItemController] Setting status: \(String(describing: status), privacy: .public)")
         let isConnected = status == .connected
         let appIconImage = isConnected ? AppIconImage.statusConnected : AppIconImage.statusDisconnected
         appIconImage.isTemplate = true
