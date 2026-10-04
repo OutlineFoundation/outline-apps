@@ -17,6 +17,7 @@ import ServiceManagement
 
 class AppKitController: NSObject {
     private var statusItemController: StatusItemController?
+    private var lastConnectionStatus: ConnectionStatus?
     private var windowCloseObserver: NSObjectProtocol?
 
     override public required init() {
@@ -98,9 +99,13 @@ class AppKitController: NSObject {
     /// Set the connection status in the app's menu in the system-wide menu bar.
     @objc public func _AppKitBridge_setConnectionStatus(_ status: ConnectionStatus) {
         if statusItemController == nil {
-            NSLog("[AppKitController] No status item controller found. Creating one now.")
+            appKitBridgeLogger.info("[AppKitController] No status item controller found. Creating one now.")
             statusItemController = StatusItemController()
+        } else if lastConnectionStatus == status {
+            // Skip redundant main-thread updates when the status hasn't changed.
+            return
         }
+        lastConnectionStatus = status
         statusItemController!.setStatus(status: status)
     }
 }
