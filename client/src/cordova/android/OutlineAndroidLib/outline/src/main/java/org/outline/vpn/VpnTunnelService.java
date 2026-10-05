@@ -198,7 +198,6 @@ public class VpnTunnelService extends VpnService {
     LOG.info("Destroying VPN service.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
-    backgroundExecutor.shutdown();
   }
 
   // Tunnel API
@@ -369,9 +368,26 @@ public class VpnTunnelService extends VpnService {
 
     // Stop traffic exchange with remote after closing the TUN device, so the relay unblocks
     // promptly and Android can tear down the VPN network.
-    // Run on a background thread to avoid blocking the main thread (which would cause an ANR
-    // when called from onDestroy() or onRevoke()).
-    backgroundExecutor.execute(this::stopRemoteDevice);
+    // Capture and null out remoteDevice under the lock before dispatching, so the background
+    // close targets exactly this device and cannot accidentally close a new device installed
+    // by a concurrent startTunnel() call.
+    final RemoteDevice deviceToClose;
+    synchronized (this) {
+      deviceToClose = this.remoteDevice;
+      this.remoteDevice = null;
+    }
+    if (deviceToClose != null) {
+      // Run the blocking close on a background thread to avoid ANR when called from
+      // onDestroy() or onRevoke(), which run on the main thread.
+      backgroundExecutor.execute(() -> {
+        final PlatformError err = deviceToClose.close();
+        if (err != null) {
+          LOG.log(Level.WARNING, "Failed to close remote device", err);
+        } else {
+          LOG.info("Remote device closed successfully.");
+        }
+      });
+    }
 
     // Clear VPN notification.
     stopForeground();
