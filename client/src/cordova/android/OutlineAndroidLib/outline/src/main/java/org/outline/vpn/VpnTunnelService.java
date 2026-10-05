@@ -39,6 +39,8 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -107,6 +109,7 @@ public class VpnTunnelService extends VpnService {
   private NetworkConnectivityMonitor networkConnectivityMonitor;
   private VpnTunnelStore tunnelStore;
   private Notification.Builder notificationBuilder;
+  private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
 
   private final IVpnTunnelService.Stub binder = new IVpnTunnelService.Stub() {
     @Override
@@ -195,6 +198,7 @@ public class VpnTunnelService extends VpnService {
     LOG.info("Destroying VPN service.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
     tearDownActiveTunnel();
+    backgroundExecutor.shutdown();
   }
 
   // Tunnel API
@@ -365,7 +369,9 @@ public class VpnTunnelService extends VpnService {
 
     // Stop traffic exchange with remote after closing the TUN device, so the relay unblocks
     // promptly and Android can tear down the VPN network.
-    this.stopRemoteDevice();
+    // Run on a background thread to avoid blocking the main thread (which would cause an ANR
+    // when called from onDestroy() or onRevoke()).
+    backgroundExecutor.execute(this::stopRemoteDevice);
 
     // Clear VPN notification.
     stopForeground();
