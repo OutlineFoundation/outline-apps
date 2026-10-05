@@ -590,8 +590,32 @@ public class VpnTunnelService extends VpnService {
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Unable to build persistent notification, using fallback", e);
       // We must still call startForeground() to satisfy the startForegroundService() contract.
-      notification = getFallbackNotification(serverName);
+      notificationBuilder = null;
+      try {
+        notification = getFallbackNotification(serverName);
+      } catch (Exception fallbackError) {
+        LOG.log(Level.SEVERE, "Unable to build fallback notification", fallbackError);
+        return;
+      }
     }
+    if (startForegroundCompat(notification)) {
+      return;
+    }
+    // The system rejected the notification. Retry with a minimal one so we still satisfy the
+    // startForegroundService() contract and avoid ForegroundServiceDidNotStartInTimeException.
+    notificationBuilder = null;
+    try {
+      if (startForegroundCompat(getFallbackNotification(serverName))) {
+        return;
+      }
+    } catch (Exception e) {
+      LOG.log(Level.SEVERE, "Unable to build fallback notification", e);
+    }
+    LOG.severe("Unable to start foreground service, even with fallback notification");
+  }
+
+  /** Calls startForeground() with the right service type. Returns whether it succeeded. */
+  private boolean startForegroundCompat(@NonNull final Notification notification) {
     try {
       // We must specify the service type for security reasons: https://developer.android.com/about/versions/14/changes/fgs-types-required
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -599,9 +623,32 @@ public class VpnTunnelService extends VpnService {
       } else {
         startForeground(NOTIFICATION_SERVICE_ID, notification);
       }
+      return true;
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Unable to start foreground service", e);
+      return false;
     }
+  }
+
+  /**
+   * Returns a valid small icon resource for the notification. Prefers the app's "small_icon"
+   * drawable, falling back to the application icon and finally a system icon.
+   */
+  private int getSmallIconResId() {
+    // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to OutlineAndroidLib.
+    int iconId = 0;
+    try {
+      iconId = getResourceId("small_icon", "drawable");
+    } catch (Exception e) {
+      LOG.warning("Failed to retrieve the resource ID for the notification icon.");
+    }
+    if (iconId == 0) {
+      iconId = getApplicationInfo().icon;
+    }
+    if (iconId == 0) {
+      iconId = android.R.drawable.stat_sys_warning;
+    }
+    return iconId;
   }
 
   /** Returns a minimal notification, used if the regular notification cannot be built. */
@@ -617,7 +664,7 @@ public class VpnTunnelService extends VpnService {
       builder = new Notification.Builder(this);
     }
     return builder
-        .setSmallIcon(getApplicationInfo().icon)
+        .setSmallIcon(getSmallIconResId())
         .setContentTitle(serverName != null ? serverName : "Outline")
         .setVisibility(Notification.VISIBILITY_SECRET)
         .build();
@@ -645,8 +692,10 @@ public class VpnTunnelService extends VpnService {
   @NonNull
   private Notification.Builder getNotificationBuilder(final String serverName) throws Exception {
     Intent launchIntent = new Intent(this, getPackageMainActivityClass());
-    PendingIntent mainActivityIntent =
-        PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    // FLAG_IMMUTABLE is required when targeting Android 12 (API 31) and above; without it,
+    // getActivity() throws and the foreground notification cannot be built.
+    PendingIntent mainActivityIntent = PendingIntent.getActivity(
+        this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     Notification.Builder builder;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -658,12 +707,8 @@ public class VpnTunnelService extends VpnService {
     } else {
       builder = new Notification.Builder(this);
     }
-    try {
-      // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to OutlineAndroidLib.
-      builder.setSmallIcon(getResourceId("small_icon", "drawable"));
-    } catch (Exception e) {
-      LOG.warning("Failed to retrieve the resource ID for the notification icon.");
-    }
+    // A valid small icon is required, otherwise startForeground() rejects the notification.
+    builder.setSmallIcon(getSmallIconResId());
     return builder.setContentTitle(serverName)
         .setColor(NOTIFICATION_COLOR)
         .setVisibility(Notification.VISIBILITY_SECRET) // Don't display in lock screen
