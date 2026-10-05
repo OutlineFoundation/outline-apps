@@ -168,8 +168,12 @@ public class VpnTunnelService extends VpnService {
         return START_NOT_STICKY;
       }
       if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
-        startLastSuccessfulTunnel();
+        final boolean started = startLastSuccessfulTunnel();
         QuickSettingsTileService.requestTileUpdate(this);
+        if (!started) {
+          stopSelf(startId);
+          return START_NOT_STICKY;
+        }
         return superOnStartReturnValue;
       }
       // VpnServiceStarter puts AUTOSTART_EXTRA in the intent when the service starts automatically.
@@ -177,7 +181,17 @@ public class VpnTunnelService extends VpnService {
           intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false);
       boolean startedByAlwaysOn = VpnService.SERVICE_INTERFACE.equals(intent.getAction());
       if (startedByVpnStarter || startedByAlwaysOn) {
-        startLastSuccessfulTunnel();
+        // When started via Context.startForegroundService() (e.g. by VpnServiceStarter on boot or
+        // app update), Android requires Service.startForeground() to be called promptly, even if
+        // we end up not starting a tunnel. Otherwise the app crashes with
+        // ForegroundServiceDidNotStartInTimeException.
+        startForegroundWithNotification(getAutostartNotificationTitle());
+        if (!startLastSuccessfulTunnel()) {
+          LOG.info("Auto-connect did not start a tunnel, stopping the service.");
+          stopForeground();
+          stopSelf(startId);
+          return START_NOT_STICKY;
+        }
       }
     }
     return superOnStartReturnValue;
@@ -468,21 +482,26 @@ public class VpnTunnelService extends VpnService {
 
   // Autostart
 
-  private void startLastSuccessfulTunnel() {
+  /**
+   * Starts the last successfully connected tunnel.
+   *
+   * @return true if the tunnel was started, false otherwise.
+   */
+  private boolean startLastSuccessfulTunnel() {
     LOG.info("Received an auto-connect request, loading last successful tunnel.");
     JSONObject tunnel = tunnelStore.load();
     if (tunnel == null) {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
-      return;
+      return false;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
       // We cannot prepare the VPN when running as a background service, as it requires UI.
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
-      return;
+      return false;
     }
     try {
       final TunnelConfig tunnelConfig = new TunnelConfig();
@@ -493,11 +512,40 @@ public class VpnTunnelService extends VpnService {
       // Start the service in the foreground as per Android 8+ background service execution limits.
       // Requires android.permission.FOREGROUND_SERVICE since Android P.
       startForegroundWithNotification(tunnelConfig.name);
-      startTunnel(tunnelConfig, true);
+      final PlatformError err = startTunnel(tunnelConfig, true);
+      if (err != null) {
+        LOG.log(Level.SEVERE, "Failed to auto-connect tunnel", err);
+        tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
+        QuickSettingsTileService.requestTileUpdate(this);
+        return false;
+      }
+      return true;
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      return false;
+    }
+  }
+
+  /** Returns the title for the notification shown while auto-connecting. */
+  @NonNull
+  private String getAutostartNotificationTitle() {
+    try {
+      final JSONObject tunnel = tunnelStore.load();
+      if (tunnel != null) {
+        final String serverName = tunnel.optString(TUNNEL_SERVER_NAME, null);
+        if (serverName != null && !serverName.isEmpty()) {
+          return serverName;
+        }
+      }
+    } catch (Exception e) {
+      LOG.log(Level.WARNING, "Failed to load server name for notification", e);
+    }
+    try {
+      return getApplicationName();
+    } catch (Exception e) {
+      return "Outline";
     }
   }
 
@@ -528,21 +576,98 @@ public class VpnTunnelService extends VpnService {
 
   /** Starts the service in the foreground and displays a persistent notification. */
   private void startForegroundWithNotification(final String serverName) {
+    Notification notification;
     try {
       if (notificationBuilder == null) {
         // Cache the notification builder so we can update the existing notification - creating a
         // new notification has the side effect of resetting the tunnel timer.
         notificationBuilder = getNotificationBuilder(serverName);
+      } else if (serverName != null) {
+        notificationBuilder.setContentTitle(serverName);
       }
       notificationBuilder.setContentText(getStringResource("connected_server_state"));
-
-      // We must specify the service type for security reasons: https://developer.android.com/about/versions/14/changes/fgs-types-required
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        startForeground(NOTIFICATION_SERVICE_ID, notificationBuilder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+      notification = notificationBuilder.build();
+    } catch (Exception e) {
+      LOG.log(Level.SEVERE, "Unable to build persistent notification, using fallback", e);
+      // We must still call startForeground() to satisfy the startForegroundService() contract.
+      notificationBuilder = null;
+      try {
+        notification = getFallbackNotification(serverName);
+      } catch (Exception fallbackError) {
+        LOG.log(Level.SEVERE, "Unable to build fallback notification", fallbackError);
+        return;
+      }
+    }
+    if (startForegroundCompat(notification)) {
+      return;
+    }
+    // The system rejected the notification. Retry with a minimal one so we still satisfy the
+    // startForegroundService() contract and avoid ForegroundServiceDidNotStartInTimeException.
+    notificationBuilder = null;
+    try {
+      if (startForegroundCompat(getFallbackNotification(serverName))) {
+        return;
       }
     } catch (Exception e) {
-      LOG.warning("Unable to display persistent notification");
+      LOG.log(Level.SEVERE, "Unable to build fallback notification", e);
     }
+    LOG.severe("Unable to start foreground service, even with fallback notification");
+  }
+
+  /** Calls startForeground() with the right service type. Returns whether it succeeded. */
+  private boolean startForegroundCompat(@NonNull final Notification notification) {
+    try {
+      // We must specify the service type for security reasons: https://developer.android.com/about/versions/14/changes/fgs-types-required
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        startForeground(NOTIFICATION_SERVICE_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED);
+      } else {
+        startForeground(NOTIFICATION_SERVICE_ID, notification);
+      }
+      return true;
+    } catch (Exception e) {
+      LOG.log(Level.SEVERE, "Unable to start foreground service", e);
+      return false;
+    }
+  }
+
+  /**
+   * Returns a valid small icon resource for the notification. Prefers the app's "small_icon"
+   * drawable, falling back to the application icon and finally a system icon.
+   */
+  private int getSmallIconResId() {
+    // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to OutlineAndroidLib.
+    int iconId = 0;
+    try {
+      iconId = getResourceId("small_icon", "drawable");
+    } catch (Exception e) {
+      LOG.warning("Failed to retrieve the resource ID for the notification icon.");
+    }
+    if (iconId == 0) {
+      iconId = getApplicationInfo().icon;
+    }
+    if (iconId == 0) {
+      iconId = android.R.drawable.stat_sys_warning;
+    }
+    return iconId;
+  }
+
+  /** Returns a minimal notification, used if the regular notification cannot be built. */
+  @NonNull
+  private Notification getFallbackNotification(final String serverName) {
+    Notification.Builder builder;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationChannel channel = new NotificationChannel(
+          NOTIFICATION_CHANNEL_ID, "Outline", NotificationManager.IMPORTANCE_LOW);
+      getSystemService(NotificationManager.class).createNotificationChannel(channel);
+      builder = new Notification.Builder(this, NOTIFICATION_CHANNEL_ID);
+    } else {
+      builder = new Notification.Builder(this);
+    }
+    return builder
+        .setSmallIcon(getSmallIconResId())
+        .setContentTitle(serverName != null ? serverName : "Outline")
+        .setVisibility(Notification.VISIBILITY_SECRET)
+        .build();
   }
 
   /** Updates the persistent notification to reflect the tunnel status. */
@@ -567,8 +692,10 @@ public class VpnTunnelService extends VpnService {
   @NonNull
   private Notification.Builder getNotificationBuilder(final String serverName) throws Exception {
     Intent launchIntent = new Intent(this, getPackageMainActivityClass());
-    PendingIntent mainActivityIntent =
-        PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    // FLAG_IMMUTABLE is required when targeting Android 12 (API 31) and above; without it,
+    // getActivity() throws and the foreground notification cannot be built.
+    PendingIntent mainActivityIntent = PendingIntent.getActivity(
+        this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     Notification.Builder builder;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -580,12 +707,8 @@ public class VpnTunnelService extends VpnService {
     } else {
       builder = new Notification.Builder(this);
     }
-    try {
-      // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to OutlineAndroidLib.
-      builder.setSmallIcon(getResourceId("small_icon", "drawable"));
-    } catch (Exception e) {
-      LOG.warning("Failed to retrieve the resource ID for the notification icon.");
-    }
+    // A valid small icon is required, otherwise startForeground() rejects the notification.
+    builder.setSmallIcon(getSmallIconResId());
     return builder.setContentTitle(serverName)
         .setColor(NOTIFICATION_COLOR)
         .setVisibility(Notification.VISIBILITY_SECRET) // Don't display in lock screen
