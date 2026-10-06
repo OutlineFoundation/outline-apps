@@ -39,6 +39,7 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -566,9 +567,21 @@ public class VpnTunnelService extends VpnService {
   /** Returns a notification builder with the provided server name. */
   @NonNull
   private Notification.Builder getNotificationBuilder(final String serverName) throws Exception {
-    Intent launchIntent = new Intent(this, getPackageMainActivityClass());
-    PendingIntent mainActivityIntent =
-        PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    // HACK: tapping the notification opens whatever the host app's launcher activity is, because
+    // this library has no way to know the app's activity class. The Cordova and Capacitor apps
+    // name it differently (org.outline.android.client.MainActivity vs.
+    // org.outline.client.MainActivity), and the app cannot hand it to the service either: the
+    // service also runs without the app, when started at boot, by always-on VPN, or from the
+    // Quick Settings tile. Resolving the launcher activity through the PackageManager works for
+    // both apps, but it only holds as long as the activity the notification should open is the
+    // app's launcher activity.
+    // TODO: once the Cordova app is deleted, drop this and open org.outline.client.MainActivity
+    // directly.
+    Intent launchIntent = Objects.requireNonNull(
+        getPackageManager().getLaunchIntentForPackage(getPackageName()),
+        "no launcher activity");
+    PendingIntent mainActivityIntent = PendingIntent.getActivity(
+        this, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
     Notification.Builder builder;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -598,17 +611,6 @@ public class VpnTunnelService extends VpnService {
   private void stopForeground() {
     stopForeground(true /* remove notification */);
     notificationBuilder = null;
-  }
-
-  /** Retrieves the MainActivity class from the application package. */
-  @NonNull
-  private Class<?> getPackageMainActivityClass() throws Exception {
-    try {
-      return Class.forName(getPackageName() + ".MainActivity");
-    } catch (Exception e) {
-      LOG.warning("Failed to find MainActivity class for package");
-      throw e;
-    }
   }
 
   /** Retrieves the ID for a resource. This is equivalent to using the generated R class. */
