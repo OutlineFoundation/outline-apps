@@ -29,7 +29,9 @@ describe('AddAccessKeyDialog', () => {
   let validatorSpy: jasmine.Spy;
 
   beforeEach(async () => {
-    validatorSpy = jasmine.createSpy('accessKeyValidator').and.callFake(accessKeyValidator);
+    validatorSpy = jasmine
+      .createSpy('accessKeyValidator')
+      .and.callFake(accessKeyValidator);
     el = await fixture(html`
       <add-access-key-dialog
         .localize=${localize}
@@ -46,8 +48,10 @@ describe('AddAccessKeyDialog', () => {
   });
 
   describe('attributeChangedCallback guard', () => {
-    it('calls runAccessKeyChecks when the access-key attribute changes', async () => {
-      el.setAttribute('access-key', VALID_ACCESS_KEY);
+    // Lit 3.x lowercases property names to derive observed attribute names,
+    // so `accessKey` is observed as `accesskey`.
+    it('calls the validator when the accesskey attribute changes', async () => {
+      el.setAttribute('accesskey', VALID_ACCESS_KEY);
       await nextFrame();
       expect(validatorSpy).toHaveBeenCalledWith(VALID_ACCESS_KEY);
     });
@@ -58,9 +62,9 @@ describe('AddAccessKeyDialog', () => {
       expect(validatorSpy).not.toHaveBeenCalled();
     });
 
-    it('does not throw a stack overflow when attributes change during validation', async () => {
+    it('does not throw when the accesskey attribute changes', () => {
       expect(() => {
-        el.setAttribute('access-key', VALID_ACCESS_KEY);
+        el.setAttribute('accesskey', VALID_ACCESS_KEY);
       }).not.toThrow();
     });
   });

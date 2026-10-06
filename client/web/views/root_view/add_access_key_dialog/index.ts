@@ -119,7 +119,7 @@ export class AddAccessKeyDialog extends LitElement {
   ) {
     super.attributeChangedCallback(attributeName, oldValue, newValue);
 
-    if (attributeName === 'access-key') {
+    if (attributeName === 'accesskey') {
       await this.runAccessKeyChecks(newValue);
     }
   }
