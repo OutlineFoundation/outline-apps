@@ -14,9 +14,6 @@
 
 apply plugin: 'com.android.application'
 
-def tvBannerSource = file("${rootProject.projectDir}/../../resources/icons/android/tv_banner.png")
-def tvBannerResources = file("${buildDir}/generated/res/tv")
-
 android {
     namespace "org.outline.client"
     compileSdk 36
@@ -36,10 +33,6 @@ android {
         versionName "1.0"
     }
 
-    sourceSets {
-        main.res.srcDir(tvBannerResources)
-    }
-    
     buildTypes {
         release {
             minifyEnabled false
@@ -50,17 +43,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-    }
-}
-
-def copyTvBanner = tasks.register('copyTvBanner', Sync) {
-    from(tvBannerSource)
-    into(new File(tvBannerResources, 'drawable-xhdpi'))
-}
-
-tasks.configureEach { task ->
-    if (task.name.startsWith('merge') && task.name.endsWith('Resources')) {
-        task.dependsOn(copyTvBanner)
     }
 }
 
