@@ -76,7 +76,7 @@ export async function main(...parameters) {
   // repeat the flag: minimist turns a repeated flag into an array.)
   await runAction(
     'client/capacitor/web_build',
-    ...parameters.filter(parameter => !parameter.startsWith('--buildNumber')),
+    ...withoutBuildNumber(parameters),
     `--buildNumber=${buildNumber}`
   );
 
@@ -105,6 +105,22 @@ export async function main(...parameters) {
     case 'ios' + 'debug':
       return iosDebug(verbose);
   }
+}
+
+/**
+ * Returns the parameters without any --buildNumber flag, whether given as
+ * `--buildNumber=N` or as `--buildNumber N`.
+ */
+function withoutBuildNumber(parameters) {
+  const result = [];
+  for (let i = 0; i < parameters.length; i++) {
+    if (parameters[i] === '--buildNumber') {
+      i++; // Skip its value too.
+    } else if (!parameters[i].startsWith('--buildNumber=')) {
+      result.push(parameters[i]);
+    }
+  }
+  return result;
 }
 
 const androidDir = path.resolve(capacitorDir, 'android');
