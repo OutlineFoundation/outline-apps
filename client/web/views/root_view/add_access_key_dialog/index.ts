@@ -119,6 +119,12 @@ export class AddAccessKeyDialog extends LitElement {
   ) {
     super.attributeChangedCallback(attributeName, oldValue, newValue);
 
+    // Only run access key validation when the `accessKey` property changes.
+    // Lit 3.x observes this property under the lowercased attribute name
+    // `accesskey`. Without this guard, every attribute change (including those
+    // triggered by LitElement's own reflect-to-attribute cycle) would call
+    // `runAccessKeyChecks`, which schedules a re-render, which reflects the
+    // attribute again — causing a `RangeError: Maximum call stack size exceeded`.
     if (attributeName === 'accesskey') {
       await this.runAccessKeyChecks(newValue);
     }
