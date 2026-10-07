@@ -36,27 +36,19 @@ import * as interceptors from './url_interceptor';
 import {NoOpVpnInstaller, VpnInstaller} from './vpn_installer';
 import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
-declare global {
-  interface Window {
-    outlineTvDevice?: boolean;
-  }
-}
-
 const hasDeviceSupport = cordova.platformId !== 'browser';
-const ANDROID_TV_DEVICE_READY_EVENT = 'outline-android-tv-device-ready';
 
-async function detectAndroidTvDevice() {
+async function detectAndroidTvDevice(): Promise<boolean> {
   if (cordova.platformId !== 'android') {
-    return;
+    return false;
   }
 
   try {
-    window.outlineTvDevice = await pluginExec<boolean>('isAndroidTv');
+    return await pluginExec<boolean>('isAndroidTv');
   } catch (error) {
     console.error('Failed to detect Android TV device', error);
-    window.outlineTvDevice = false;
+    return false;
   }
-  document.dispatchEvent(new Event(ANDROID_TV_DEVICE_READY_EVENT));
 }
 
 // Pushes a clipboard event whenever the app is brought to the foreground.
@@ -108,6 +100,8 @@ class CordovaMethodChannel implements MethodChannel {
 
 // This class should only be instantiated after Cordova fires the deviceready event.
 class CordovaPlatform implements OutlinePlatform {
+  constructor(readonly isAndroidTv: boolean) {}
+
   getVpnApi(): VpnApi | undefined {
     if (hasDeviceSupport) {
       return new CordovaVpnApi();
@@ -176,9 +170,9 @@ window.handleOpenURL = (url: string) => {
 // https://cordova.apache.org/docs/en/latest/cordova/events/events.html#deviceready
 document.addEventListener('deviceready', async () => {
   installDefaultMethodChannel(new CordovaMethodChannel());
-  await detectAndroidTvDevice();
+  const isAndroidTv = await detectAndroidTvDevice();
   try {
-    await main(new CordovaPlatform());
+    await main(new CordovaPlatform(isAndroidTv));
   } catch (e) {
     console.error('main() failed: ', e);
   }

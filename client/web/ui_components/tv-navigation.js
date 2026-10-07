@@ -35,6 +35,8 @@ const VECTOR_BY_DIRECTION = {
   up: {x: 0, y: -1},
 };
 
+const NAVIGATION_SCROLL_PADDING = 8;
+
 function isTextEntry(element) {
   const localName = element?.localName;
   return (
@@ -485,11 +487,30 @@ function scrollElementIntoView(element) {
   element.scrollIntoView?.({block: 'nearest', inline: 'nearest'});
 
   const navigation = element.closest?.('nav');
+  if (!navigation) return;
+
+  const navigationRect = navigation.getBoundingClientRect();
+  const hasNavigationRect = navigationRect.bottom > navigationRect.top;
+  const navigationTop = hasNavigationRect ? navigationRect.top : 0;
+  const navigationBottom = hasNavigationRect
+    ? Math.min(navigationRect.bottom, globalThis.innerHeight)
+    : globalThis.innerHeight;
+  let elementRect = element.getBoundingClientRect();
+  if (
+    elementRect.top < navigationTop + NAVIGATION_SCROLL_PADDING ||
+    elementRect.bottom > navigationBottom - NAVIGATION_SCROLL_PADDING
+  ) {
+    // `nearest` can leave a drawer item flush against the scrollport edge.
+    // Leave a small margin so focus outlines and remote focus indicators are
+    // not clipped by the WebView viewport.
+    element.scrollIntoView?.({block: 'center', inline: 'nearest'});
+    elementRect = element.getBoundingClientRect();
+  }
+
   const header = navigation?.querySelector('header');
   if (!header) return;
 
   const headerRect = header.getBoundingClientRect();
-  let elementRect = element.getBoundingClientRect();
   if (
     elementRect.top < headerRect.bottom &&
     elementRect.bottom > headerRect.top
