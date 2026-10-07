@@ -49,8 +49,10 @@ const oncePolymerIsReady = new Promise<void>(resolve => {
 // Helpers
 
 // Do not call until WebComponentsReady has fired!
+type AppRootElement = polymer.Base & {isAndroidTv: boolean};
+
 function getRootEl() {
-  return document.querySelector('app-root') as {} as polymer.Base;
+  return document.querySelector('app-root') as unknown as AppRootElement;
 }
 
 async function createServerRepo(
@@ -122,10 +124,14 @@ export function main(platform: OutlinePlatform) {
       const eventQueue = new EventQueue();
       const serverRepo = await createServerRepo(platform, eventQueue);
       const settings = new Settings();
+      const rootEl = getRootEl();
+      // Native entry points resolve this before calling main(). Pass it through
+      // the platform instead of coordinating app-root with a global event.
+      rootEl.isAndroidTv = platform.isAndroidTv;
       new App(
         eventQueue,
         serverRepo,
-        getRootEl(),
+        rootEl,
         debugMode,
         platform.getUrlInterceptor(),
         platform.getClipboard(),

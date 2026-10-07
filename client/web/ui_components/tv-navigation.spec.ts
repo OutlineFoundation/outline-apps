@@ -918,6 +918,67 @@ describe('TV navigation', () => {
     expect(scrollTop).toBe(35);
   });
 
+  it('leaves room below a focused drawer link at the viewport edge', () => {
+    const navigation = document.createElement('nav');
+    const first = document.createElement('button');
+    const link = document.createElement('a');
+    link.href = '#data-collection';
+    navigation.append(first, link);
+    root.append(navigation);
+
+    const viewportHeight = globalThis.innerHeight;
+    spyOn(navigation, 'getBoundingClientRect').and.returnValue({
+      bottom: viewportHeight,
+      height: viewportHeight,
+      left: 0,
+      right: 320,
+      top: 0,
+      width: 320,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+    spyOn(first, 'getBoundingClientRect').and.returnValue({
+      bottom: 40,
+      height: 40,
+      left: 0,
+      right: 320,
+      top: 0,
+      width: 320,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect);
+    spyOn(link, 'getBoundingClientRect').and.returnValue({
+      bottom: viewportHeight,
+      height: 40,
+      left: 0,
+      right: 320,
+      top: viewportHeight - 40,
+      width: 320,
+      x: 0,
+      y: viewportHeight - 40,
+      toJSON: () => ({}),
+    } as DOMRect);
+    const scrollIntoView = spyOn(link, 'scrollIntoView');
+
+    cleanup = installTvNavigation(root);
+    first.focus();
+    first.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        key: 'ArrowDown',
+      })
+    );
+
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      block: 'center',
+      inline: 'nearest',
+    });
+  });
+
   it('does not scan after navigation is cleaned up', async () => {
     cleanup = installTvNavigation(root);
     cleanup();

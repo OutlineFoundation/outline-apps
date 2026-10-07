@@ -44,27 +44,19 @@ interface AsyncVpnApi extends VpnApi {
 }
 
 const hasDeviceSupport = Capacitor.isNativePlatform();
-const ANDROID_TV_DEVICE_READY_EVENT = 'outline-android-tv-device-ready';
 
-declare global {
-  interface Window {
-    outlineTvDevice?: boolean;
-  }
-}
-
-async function detectAndroidTvDevice() {
+async function detectAndroidTvDevice(): Promise<boolean> {
   if (Capacitor.getPlatform() !== 'android') {
-    return;
+    return false;
   }
 
   try {
     const result = await CapacitorPluginOutline.isAndroidTv();
-    window.outlineTvDevice = result.isAndroidTv;
+    return result.isAndroidTv;
   } catch (error) {
     console.error('Failed to detect Android TV device', error);
-    window.outlineTvDevice = false;
+    return false;
   }
-  document.dispatchEvent(new Event(ANDROID_TV_DEVICE_READY_EVENT));
 }
 
 class CapacitorClipboard extends AbstractClipboard {
@@ -157,6 +149,8 @@ class CapacitorVpnApi implements AsyncVpnApi {
 }
 
 class CapacitorPlatform implements OutlinePlatform {
+  constructor(readonly isAndroidTv: boolean) {}
+
   getVpnApi(): AsyncVpnApi | undefined {
     return hasDeviceSupport ? new CapacitorVpnApi() : undefined;
   }
@@ -261,21 +255,22 @@ installDefaultMethodChannel(
 );
 wireExternalLinkHandling();
 
-// The migration has to finish first: main() builds the server repository from
-// localStorage, so replaying the Cordova data afterwards would leave the user
-// staring at an empty server list until the next restart.
-//
-// Keep the .catch BEFORE the .then. In this order a failed migration is handled
-// here and main() still runs, so the app starts without the migrated data. The
-// forms look interchangeable, but `.then(main).catch(...)` would skip main()
-// entirely on a migration failure — an app that never launches, which is far
-// worse than one that launches missing its servers.
-detectAndroidTvDevice()
-  .then(() => migrateLegacyCordovaStorageIfNeeded())
-  .catch(e => {
-    console.error('Storage migration failed: ', e);
-  })
-  .then(() => main(new CapacitorPlatform()))
-  .catch(e => {
-    console.error('main() failed: ', e);
-  });
+async function bootstrap() {
+  const isAndroidTv = await detectAndroidTvDevice();
+
+  // The migration has to finish first: main() builds the server repository from
+  // localStorage, so replaying the Cordova data afterwards would leave the user
+  // staring at an empty server list until the next restart. A failed migration
+  // must not prevent the app from launching.
+  try {
+    await migrateLegacyCordovaStorageIfNeeded();
+  } catch (error) {
+    console.error('Storage migration failed: ', error);
+  }
+
+  await main(new CapacitorPlatform(isAndroidTv));
+}
+
+bootstrap().catch(error => {
+  console.error('main() failed: ', error);
+});
