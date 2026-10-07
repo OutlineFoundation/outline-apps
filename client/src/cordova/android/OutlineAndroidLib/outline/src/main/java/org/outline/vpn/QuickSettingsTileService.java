@@ -115,7 +115,11 @@ public class QuickSettingsTileService extends TileService {
             ? VpnTunnelService.START_LAST_TUNNEL_EXTRA
             : VpnTunnelService.STOP_ACTIVE_TUNNEL_EXTRA,
         true);
-    startService(intent);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      startForegroundService(intent);
+    } else {
+      startService(intent);
+    }
   }
 
   private void registerStatusReceiver() {

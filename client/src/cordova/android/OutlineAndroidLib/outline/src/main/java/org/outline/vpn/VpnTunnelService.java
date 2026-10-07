@@ -476,6 +476,9 @@ public class VpnTunnelService extends VpnService {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Stop the service so Android's foreground-service deadline is not violated when the service
+      // was started with startForegroundService() but never enters the foreground.
+      stopSelf();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
@@ -483,6 +486,9 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Stop the service so Android's foreground-service deadline is not violated when the service
+      // was started with startForegroundService() but never enters the foreground.
+      stopSelf();
       return;
     }
     try {
@@ -499,6 +505,9 @@ public class VpnTunnelService extends VpnService {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Stop the service so Android's foreground-service deadline is not violated when the service
+      // was started with startForegroundService() but never enters the foreground.
+      stopSelf();
     }
   }
 
