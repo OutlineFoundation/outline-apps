@@ -178,6 +178,7 @@ export class OutlinePerKeyDataLimitDialog extends LitElement {
       <paper-dialog
         id="container"
         @opened-changed=${this._onDialogOpenedChanged}
+        @keydown=${this._onDialogKeydown}
       >
         <div id="headerSection">
           <iron-icon
@@ -381,6 +382,30 @@ export class OutlinePerKeyDataLimitDialog extends LitElement {
     if (dialogWasClosed) {
       delete this._onDataLimitSet;
       delete this._onDataLimitRemoved;
+    }
+  }
+
+
+  /**
+   * Enter saves (when enabled); Escape cancels — same as other Manager dialogs.
+   */
+  private _onDialogKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.close();
+      return;
+    }
+    if (event.key === 'Enter') {
+      // Avoid double-handling when focus is on a button that already activates on Enter.
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === 'PAPER-BUTTON') {
+        return;
+      }
+      if (!this._enableSave && this._showDataLimit) {
+        return;
+      }
+      event.preventDefault();
+      void this._onSaveButtonTapped();
     }
   }
 
