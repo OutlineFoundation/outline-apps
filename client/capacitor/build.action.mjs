@@ -71,8 +71,14 @@ export async function main(...parameters) {
   }
 
   // Build the web bundle (client/capacitor/www/) that `cap sync` copies into
-  // the native project.
-  await runAction('client/capacitor/web_build', ...parameters);
+  // the native project. Pass our build number down, so that environment.json
+  // carries the same number as the native app's version. (Replace rather than
+  // repeat the flag: minimist turns a repeated flag into an array.)
+  await runAction(
+    'client/capacitor/web_build',
+    ...parameters.filter(parameter => !parameter.startsWith('--buildNumber')),
+    `--buildNumber=${buildNumber}`
+  );
 
   // `cap sync` first runs the capacitor:sync:before hook (see package.json in
   // this directory), which builds the tun2socks native library for the
