@@ -16,6 +16,7 @@
 -->
 
 <resources>
+  <string name="connecting_server_state">Connecting...</string>
   <string name="connected_server_state">Connected</string>
   <string name="reconnecting_server_state">Reconnecting...</string>
 </resources>
