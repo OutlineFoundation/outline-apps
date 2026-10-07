@@ -104,6 +104,12 @@ public class VpnTunnelService extends VpnService {
   private ParcelFileDescriptor tunFd;
   /** The Go "remote device" implementation. */
   private RemoteDevice remoteDevice;
+  /**
+   * Dedicated lock for remoteDevice reads/writes. This lock is NEVER held during any blocking
+   * native (Go/JNI) call, so the main thread can always acquire it instantly to swap the
+   * reference without risking an ANR.
+   */
+  private final Object remoteDeviceLock = new Object();
 
   private TunnelConfig tunnelConfig;
   private NetworkConnectivityMonitor networkConnectivityMonitor;
@@ -295,7 +301,9 @@ public class VpnTunnelService extends VpnService {
       tearDownActiveTunnel();
       return result.getError();
     }
-    this.remoteDevice = result.getDevice();
+    synchronized (remoteDeviceLock) {
+      this.remoteDevice = result.getDevice();
+    }
     LOG.info("Remote device created successfully.");
 
     if (!isAutoStart) {
@@ -368,17 +376,15 @@ public class VpnTunnelService extends VpnService {
 
     // Stop traffic exchange with remote after closing the TUN device, so the relay unblocks
     // promptly and Android can tear down the VPN network.
-    // Capture and null out remoteDevice under the lock before dispatching, so the background
-    // close targets exactly this device and cannot accidentally close a new device installed
-    // by a concurrent startTunnel() call.
+    // Use remoteDeviceLock (never held during blocking work) to capture and null out the
+    // reference instantly. The actual close runs on a background thread so it cannot block
+    // the main thread (which would cause an ANR in onDestroy() or onRevoke()).
     final RemoteDevice deviceToClose;
-    synchronized (this) {
+    synchronized (remoteDeviceLock) {
       deviceToClose = this.remoteDevice;
       this.remoteDevice = null;
     }
     if (deviceToClose != null) {
-      // Run the blocking close on a background thread to avoid ANR when called from
-      // onDestroy() or onRevoke(), which run on the main thread.
       backgroundExecutor.execute(() -> {
         final PlatformError err = deviceToClose.close();
         if (err != null) {
@@ -401,17 +407,23 @@ public class VpnTunnelService extends VpnService {
   }
 
   /** Stops the traffic exchange with the remote device. */
-  private synchronized void stopRemoteDevice() {
-    if (this.remoteDevice == null) {
+  private void stopRemoteDevice() {
+    // Capture and null out the reference under remoteDeviceLock, then call the blocking
+    // close() outside the lock so no other thread ever waits for a native call.
+    final RemoteDevice device;
+    synchronized (remoteDeviceLock) {
+      device = this.remoteDevice;
+      this.remoteDevice = null;
+    }
+    if (device == null) {
       return;
     }
-    final PlatformError err = this.remoteDevice.close();
+    final PlatformError err = device.close();
     if (err != null) {
       LOG.log(Level.WARNING, "Failed to close remote device", err);
     } else {
       LOG.info("Remote device closed successfully.");
     }
-    this.remoteDevice = null;
   }
 
   // Connectivity
