@@ -554,13 +554,35 @@ describe('TV navigation', () => {
     root.append(opener, menu);
     setRect(opener, 0, 0);
     setRect(item, 0, 100);
+    opener.addEventListener('click', () => {
+      menu.setAttribute('open', '');
+      item.focus();
+    });
     cleanup = installTvNavigation(root);
     opener.focus();
 
-    menu.setAttribute('open', '');
-    item.focus();
-    await navigationSettled();
+    const menuOpened = new Promise<void>(resolve => {
+      const observer = new MutationObserver(() => {
+        observer.disconnect();
+        resolve();
+      });
+      observer.observe(menu, {attributes: true, attributeFilter: ['open']});
+      opener.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          key: 'Enter',
+        })
+      );
+    });
+    await menuOpened;
+    await navigationFrameSettled();
 
+    expect(document.activeElement).toBe(item);
+    const focusRestored = new Promise<void>(resolve =>
+      opener.addEventListener('focusin', () => resolve(), {once: true})
+    );
     item.dispatchEvent(
       new KeyboardEvent('keydown', {
         bubbles: true,
@@ -569,7 +591,7 @@ describe('TV navigation', () => {
         key: 'ArrowLeft',
       })
     );
-    await navigationFrameSettled();
+    await focusRestored;
 
     expect(document.activeElement).toBe(opener);
   });
