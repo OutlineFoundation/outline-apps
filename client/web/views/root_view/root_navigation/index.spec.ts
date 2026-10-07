@@ -40,4 +40,25 @@ describe('RootNavigation', () => {
 
     expect(nav.scrollTop).toBe(0);
   });
+
+  it('uses a native button for licenses navigation', async () => {
+    const navigation = await fixture<RootNavigation>(html`
+      <root-navigation .open=${true}></root-navigation>
+    `);
+    let page: string | undefined;
+    navigation.addEventListener('ChangePage', event => {
+      page = (event as CustomEvent<{page: string}>).detail.page;
+    });
+
+    const licensesButton =
+      navigation.shadowRoot!.querySelector<HTMLButtonElement>(
+        'ul li > button'
+      )!;
+    expect(licensesButton.type).toBe('button');
+    expect(licensesButton.tabIndex).toBe(0);
+
+    licensesButton.click();
+
+    expect(page).toBe('licenses');
+  });
 });

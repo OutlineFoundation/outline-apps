@@ -118,7 +118,7 @@ export class RootNavigation extends LitElement {
     }
 
     md-list-item:focus-within,
-    li:focus-visible,
+    li > button:focus-visible,
     a:focus-visible {
       outline: 4px solid var(--outline-primary);
       outline-offset: -4px;
@@ -164,6 +164,20 @@ export class RootNavigation extends LitElement {
       font-family: var(--outline-font-family);
       padding: 8px 16px;
       transition: visibility 0.3s ease;
+    }
+
+    li > button {
+      background: none;
+      border: 0;
+      box-sizing: border-box;
+      color: inherit;
+      cursor: pointer;
+      display: block;
+      font: inherit;
+      margin: -8px -16px;
+      padding: 8px 16px;
+      text-align: start;
+      width: calc(100% + 32px);
     }
 
     li > a {
@@ -309,18 +323,10 @@ export class RootNavigation extends LitElement {
               <md-icon id="open-in-new-icon">open_in_new</md-icon>
             </a>
           </li>
-          <li
-            role="button"
-            tabindex="0"
-            @click=${() => this.changePage('licenses')}
-            @keydown=${(event: KeyboardEvent) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                this.changePage('licenses');
-              }
-            }}
-          >
-            ${this.localize('licenses-page-title')}
+          <li>
+            <button type="button" @click=${() => this.changePage('licenses')}>
+              ${this.localize('licenses-page-title')}
+            </button>
           </li>
         </ul>
       </nav>
