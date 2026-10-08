@@ -475,10 +475,24 @@ public class VpnTunnelService extends VpnService {
   private void startLastSuccessfulTunnel() {
     LOG.info("Received an auto-connect request, loading last successful tunnel.");
     JSONObject tunnel = tunnelStore.load();
+
+    // Retrieve the server name early so we can pass it to startForegroundWithNotification.
+    // Fall back to an empty string when no tunnel is stored.
+    String serverName = "";
+    if (tunnel != null) {
+      serverName = tunnel.optString(TUNNEL_SERVER_NAME, "");
+    }
+
+    // Always call startForeground before any early return. Android 8+ requires that a service
+    // started via startForegroundService() calls startForeground() within 5 seconds, regardless
+    // of the code path taken. Requires android.permission.FOREGROUND_SERVICE since Android P.
+    startForegroundWithNotification(serverName);
+
     if (tunnel == null) {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopSelf();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
@@ -486,6 +500,7 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopSelf();
       return;
     }
     try {
@@ -494,9 +509,6 @@ public class VpnTunnelService extends VpnService {
       tunnelConfig.name = tunnel.getString(TUNNEL_SERVER_NAME);
       tunnelConfig.transportConfig = tunnel.getString(TUNNEL_CONFIG_KEY);
 
-      // Start the service in the foreground as per Android 8+ background service execution limits.
-      // Requires android.permission.FOREGROUND_SERVICE since Android P.
-      startForegroundWithNotification(tunnelConfig.name);
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
