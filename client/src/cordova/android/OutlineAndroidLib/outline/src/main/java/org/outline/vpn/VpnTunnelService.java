@@ -492,6 +492,9 @@ public class VpnTunnelService extends VpnService {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      // Remove the foreground notification explicitly: stopSelf() alone does not dismiss it while
+      // the service remains bound (e.g. via BIND_AUTO_CREATE from the app or crash recovery).
+      stopForeground(true);
       stopSelf();
       return;
     }
@@ -500,6 +503,7 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopForeground(true);
       stopSelf();
       return;
     }
@@ -514,6 +518,8 @@ public class VpnTunnelService extends VpnService {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopForeground(true);
+      stopSelf();
     }
   }
 
