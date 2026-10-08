@@ -478,10 +478,7 @@ public class VpnTunnelService extends VpnService {
 
     // Retrieve the server name early so we can pass it to startForegroundWithNotification.
     // Fall back to an empty string when no tunnel is stored.
-    String serverName = "";
-    if (tunnel != null) {
-      serverName = tunnel.optString(TUNNEL_SERVER_NAME, "");
-    }
+    String serverName = tunnel != null ? tunnel.optString(TUNNEL_SERVER_NAME, "") : "";
 
     // Always call startForeground before any early return. Android 8+ requires that a service
     // started via startForegroundService() calls startForeground() within 5 seconds, regardless
@@ -490,21 +487,13 @@ public class VpnTunnelService extends VpnService {
 
     if (tunnel == null) {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
-      tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
-      QuickSettingsTileService.requestTileUpdate(this);
-      // Remove the foreground notification explicitly: stopSelf() alone does not dismiss it while
-      // the service remains bound (e.g. via BIND_AUTO_CREATE from the app or crash recovery).
-      stopForeground(true);
-      stopSelf();
+      abortAutoConnect();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
       // We cannot prepare the VPN when running as a background service, as it requires UI.
       LOG.warning("VPN not prepared, aborting auto-connect.");
-      tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
-      QuickSettingsTileService.requestTileUpdate(this);
-      stopForeground(true);
-      stopSelf();
+      abortAutoConnect();
       return;
     }
     try {
@@ -516,11 +505,26 @@ public class VpnTunnelService extends VpnService {
       startTunnel(tunnelConfig, true);
     } catch (Exception e) {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
-      tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
-      QuickSettingsTileService.requestTileUpdate(this);
-      stopForeground(true);
-      stopSelf();
+      abortAutoConnect();
     }
+  }
+
+  /**
+   * Cleans up after a failed auto-connect attempt: marks the tunnel as disconnected, refreshes the
+   * Quick Settings tile, removes the foreground notification, and stops the service.
+   *
+   * <p>Centralising these steps avoids repeating the same lifecycle transition in every early-exit
+   * path of {@link #startLastSuccessfulTunnel()}.
+   *
+   * <p>Note: {@link #stopForeground(boolean)} must be called explicitly because {@link #stopSelf()}
+   * alone does not dismiss the notification while the service remains bound (e.g. via
+   * BIND_AUTO_CREATE from the app or crash-recovery rebind).
+   */
+  private void abortAutoConnect() {
+    tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
+    QuickSettingsTileService.requestTileUpdate(this);
+    stopForeground(true);
+    stopSelf();
   }
 
   private void storeActiveTunnel(@NonNull final TunnelConfig config) {
