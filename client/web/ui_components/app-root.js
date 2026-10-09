@@ -72,6 +72,12 @@ import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
 import {html} from '@polymer/polymer/lib/utils/html-tag.js';
 import {PolymerElement} from '@polymer/polymer/polymer-element.js';
 
+// Keep this a static import: the module has no platform dependencies, so
+// including it in non-TV bundles is simpler and avoiding an async loader
+// removes a race during Polymer reconnect/disconnect. Installation is still
+// guarded by the reactive isAndroidTv property.
+import {installTvNavigation as installTvNavigationModule} from './tv-navigation.js';
+
 // Workaround:
 // https://github.com/PolymerElements/paper-menu-button/issues/101#issuecomment-297856912
 PaperMenuButton.prototype.properties.restoreFocusOnClose.value = false;
@@ -80,6 +86,14 @@ export class AppRoot extends mixinBehaviors(
   [AppLocalizeBehavior],
   PolymerElement
 ) {
+  /**
+   * Cleanup returned by TV navigation while this element is connected to an
+   * Android TV host. It is cleared when the host disconnects or the native
+   * platform reports a non-TV device.
+   * @type {(() => void) | undefined}
+   */
+  removeTvNavigation;
+
   static get template() {
     return html`
       <style>
@@ -574,6 +588,11 @@ export class AppRoot extends mixinBehaviors(
         type: String,
         readonly: true,
       },
+      isAndroidTv: {
+        type: Boolean,
+        value: false,
+        observer: '_isAndroidTvChanged',
+      },
       shouldShowQuitButton: {
         type: Boolean,
         computed: '_computeShouldShowQuitButton(platform)',
@@ -649,12 +668,52 @@ export class AppRoot extends mixinBehaviors(
     }
 
     if (typeof cordova === 'undefined') {
-      // If cordova is not defined, we're running in Electron.
-      this.platform = 'Electron';
+      // Capacitor exposes its platform on the shared global. Keep the shell
+      // host-agnostic so Android TV can enable navigation in either host.
+      this.platform = globalThis.Capacitor?.getPlatform?.() || 'Electron';
     } else {
       // Don't use cordova?.platformId, ReferenceError will be thrown
       this.platform = globalThis.cordova.platformId;
     }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Native detection is passed through main() after startup; this also
+    // handles reconnects or a flag set before the element is connected.
+    this.installTvNavigation();
+  }
+
+  _isAndroidTvChanged(isAndroidTv) {
+    if (isAndroidTv) {
+      this.installTvNavigation();
+    } else {
+      this.clearTvNavigation();
+    }
+  }
+
+  // Set while TV navigation is installed; cleared when the host is detached
+  // or the native host reports that it is not an Android TV device.
+  installTvNavigation() {
+    if (
+      !this.isAndroidTv ||
+      this.removeTvNavigation ||
+      !this.isConnected ||
+      !this.shadowRoot
+    ) {
+      return;
+    }
+    this.removeTvNavigation = installTvNavigationModule(this.shadowRoot);
+  }
+
+  clearTvNavigation() {
+    this.removeTvNavigation?.();
+    this.removeTvNavigation = undefined;
+  }
+
+  disconnectedCallback() {
+    this.clearTvNavigation();
+    super.disconnectedCallback();
   }
 
   setLanguage(languageCode) {

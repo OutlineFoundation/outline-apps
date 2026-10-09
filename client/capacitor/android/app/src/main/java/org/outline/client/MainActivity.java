@@ -16,6 +16,29 @@
 
 package org.outline.client;
 
+import android.app.Activity;
+import android.app.UiModeManager;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.os.Bundle;
+
 import com.getcapacitor.BridgeActivity;
 
-public class MainActivity extends BridgeActivity {}
+public class MainActivity extends BridgeActivity {
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    if (isAndroidTv()) {
+      setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+    }
+    super.onCreate(savedInstanceState);
+  }
+
+  private boolean isAndroidTv() {
+    UiModeManager uiModeManager =
+        (UiModeManager) getSystemService(Activity.UI_MODE_SERVICE);
+    return (uiModeManager != null
+            && uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION)
+        || getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+  }
+}

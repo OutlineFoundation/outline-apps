@@ -91,6 +91,12 @@ To build the app for Android, run:
 
 The built apk will be at: `client/platforms/android/app/build/outputs/apk/debug/app-debug.apk`.
 
+The same APK is used on phones, tablets and Android TV. It keeps the
+`org.outline.android.client` application ID, advertises both the regular and
+Leanback launchers, and detects Android TV at runtime to enable D-pad
+navigation. Android chooses the device's natural orientation, so TV devices
+remain landscape without forcing phones into landscape mode.
+
 We also support passing a `--verbose` option on cordova android:
 
 ```sh
