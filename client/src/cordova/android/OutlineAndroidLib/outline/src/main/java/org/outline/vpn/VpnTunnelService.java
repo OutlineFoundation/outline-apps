@@ -479,6 +479,7 @@ public class VpnTunnelService extends VpnService {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopSelf();
       return;
     }
     if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
@@ -486,6 +487,7 @@ public class VpnTunnelService extends VpnService {
       LOG.warning("VPN not prepared, aborting auto-connect.");
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopSelf();
       return;
     }
     try {
@@ -502,6 +504,7 @@ public class VpnTunnelService extends VpnService {
       LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
       tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
       QuickSettingsTileService.requestTileUpdate(this);
+      stopSelf();
     }
   }
 
