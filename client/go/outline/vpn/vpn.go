@@ -20,11 +20,12 @@ import (
 	"io"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"localhost/client/go/outline/callback"
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/outline/callback"
 )
 
 // Config holds the configuration to establish a system-wide [VPNConnection].
@@ -69,6 +70,7 @@ type VPNConnection struct {
 	ID     string           `json:"id"`
 	Status ConnectionStatus `json:"status"`
 
+	statusMu      sync.Mutex
 	cancelEst     context.CancelFunc
 	wgEst, wgCopy sync.WaitGroup
 
@@ -80,13 +82,16 @@ type VPNConnection struct {
 // This package allows at most one active VPN connection at the same time.
 var mu sync.Mutex
 var conn *VPNConnection
-var stateChangeCb callback.Token
+var stateChangeCb atomic.Int64
 
 // setStatus sets the [VPNConnection] Status and calls the stateChangeCb callback.
 func (c *VPNConnection) setStatus(status ConnectionStatus) {
+	c.statusMu.Lock()
 	c.Status = status
-	if connJson, err := json.Marshal(c); err == nil {
-		callback.DefaultManager().Call(stateChangeCb, string(connJson))
+	connJson, err := json.Marshal(c)
+	c.statusMu.Unlock()
+	if err == nil {
+		callback.DefaultManager().Call(callback.Token(stateChangeCb.Load()), string(connJson))
 	} else {
 		slog.Warn("failed to marshal VPN connection", "err", err)
 	}
@@ -96,7 +101,7 @@ func (c *VPNConnection) setStatus(status ConnectionStatus) {
 // state change listener.
 // The token should have already been registered with the [callback.DefaultManager].
 func SetStateChangeListener(token callback.Token) {
-	stateChangeCb = token
+	stateChangeCb.Store(int64(token))
 }
 
 // EstablishVPN establishes a new active [VPNConnection] connecting to a [ProxyDevice]
@@ -121,6 +126,7 @@ func EstablishVPN(
 	ctx, c.cancelEst = context.WithCancel(ctx)
 
 	if c.platform, err = newPlatformVPNConn(conf); err != nil {
+		c.cancelEst()
 		return
 	}
 
@@ -128,6 +134,7 @@ func EstablishVPN(
 	defer c.wgEst.Done()
 
 	if err = atomicReplaceVPNConn(c); err != nil {
+		c.cancelEst()
 		c.platform.Close()
 		return
 	}
@@ -187,42 +194,43 @@ func atomicReplaceVPNConn(newConn *VPNConnection) error {
 // closeVPNNoLock closes the current VPN connection stored in conn without acquiring
 // the mutex. It is assumed that the caller holds the mutex.
 func closeVPNNoLock() (err error) {
-	if conn == nil {
+	c := conn
+	if c == nil {
 		return nil
 	}
 
-	slog.Debug("terminating the global vpn connection...", "id", conn.ID)
-	conn.setStatus(ConnectionDisconnecting)
+	slog.Debug("terminating the global vpn connection...", "id", c.ID)
+	c.setStatus(ConnectionDisconnecting)
 	defer func() {
 		if err == nil {
-			slog.Info("vpn connection terminated", "id", conn.ID)
-			conn.setStatus(ConnectionDisconnected)
+			slog.Info("vpn connection terminated", "id", c.ID)
+			c.setStatus(ConnectionDisconnected)
 			conn = nil
 		}
 	}()
 
 	// Cancel the Establish process and wait
-	conn.cancelEst()
-	conn.wgEst.Wait()
+	c.cancelEst()
+	c.wgEst.Wait()
 
 	// This is the only error that matters
-	if conn.platform != nil {
-		err = conn.platform.Close()
+	if c.platform != nil {
+		err = c.platform.Close()
 	}
 
 	// TODO: Implement more sophisticated cancellation
 	// The proxy's Close method might take a long time to return when there are
 	// still outgoing traffic to the proxy in an unreachable network environment.
-	// The conn.wgCopy will also be blocked forever because we are waiting to copy
+	// The c.wgCopy will also be blocked forever because we are waiting to copy
 	// traffic from the proxy to a local tun device.
 	// Therefore we will close the proxy in a goroutine, and wait for wgCopy to be
 	// done with a timeout value.
 
 	// We can ignore the following error
-	if conn.proxy != nil {
+	if c.proxy != nil {
 		go func() {
 			slog.Debug("disconnecting from the remote device ...")
-			if err2 := conn.proxy.Close(); err2 != nil {
+			if err2 := c.proxy.Close(); err2 != nil {
 				slog.Warn("failed to disconnect from the remote device")
 			} else {
 				slog.Info("disconnected from the remote device")
@@ -234,7 +242,7 @@ func closeVPNNoLock() (err error) {
 
 	// Wait for traffic copy go routines to finish
 	go func() {
-		conn.wgCopy.Wait()
+		c.wgCopy.Wait()
 		close(closeDone)
 	}()
 
