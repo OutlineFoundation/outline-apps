@@ -21,11 +21,22 @@ const GIGABYTE = 10 ** 9;
 const MEGABYTE = 10 ** 6;
 const KILOBYTE = 10 ** 3;
 
+const TEBIBYTE = 1024 ** 4;
+const GIBIBYTE = 1024 ** 3;
+const MEBIBYTE = 1024 ** 2;
+const KIBIBYTE = 1024;
+
 const inWebApp =
   typeof window !== 'undefined' && typeof window.document !== 'undefined';
 interface FormatParams {
   value: number;
   unit: 'terabyte' | 'gigabyte' | 'megabyte' | 'kilobyte' | 'byte';
+  decimalPlaces: number;
+}
+
+interface BinaryFormatParams {
+  value: number;
+  unit: 'TiB' | 'GiB' | 'MiB' | 'KiB' | 'B';
   decimalPlaces: number;
 }
 
@@ -46,6 +57,27 @@ export function getDataFormattingParams(numBytes: number): FormatParams {
     return {value: numBytes / KILOBYTE, unit: 'kilobyte', decimalPlaces: 0};
   }
   return {value: numBytes, unit: 'byte', decimalPlaces: 0};
+}
+
+/**
+ * Returns the binary formatting parameter based on the magnitude of bytes passed in
+ *
+ * @param numBytes the bytes to format
+ * @returns {BinaryFormatParams}
+ */
+export function getBinaryDataFormattingParams(
+  numBytes: number
+): BinaryFormatParams {
+  if (numBytes >= TEBIBYTE) {
+    return {value: numBytes / TEBIBYTE, unit: 'TiB', decimalPlaces: 2};
+  } else if (numBytes >= GIBIBYTE) {
+    return {value: numBytes / GIBIBYTE, unit: 'GiB', decimalPlaces: 2};
+  } else if (numBytes >= MEBIBYTE) {
+    return {value: numBytes / MEBIBYTE, unit: 'MiB', decimalPlaces: 1};
+  } else if (numBytes >= KIBIBYTE) {
+    return {value: numBytes / KIBIBYTE, unit: 'KiB', decimalPlaces: 0};
+  }
+  return {value: numBytes, unit: 'B', decimalPlaces: 0};
 }
 
 function makeDataAmountFormatter(language: string, params: FormatParams) {
@@ -103,6 +135,40 @@ export function formatBytesParts(
 }
 
 /**
+ * Returns a localized amount of bytes (binary units) as separate value and unit.
+ * This is useful for styling the unit and the value differently.
+ *
+ * Note: Intl.NumberFormat doesn't support binary units (KiB, MiB, etc.) in its
+ * unit style, so we format the number and append the unit manually.
+ *
+ * @param {number} numBytes An amount of data to format.
+ * @param {string} language The ISO language code for the lanugage to translate to, eg 'en'.
+ */
+export function formatBinaryBytesParts(
+  numBytes: number,
+  language: string
+): DataAmountParts {
+  if (!inWebApp) {
+    throw new Error(
+      "formatBinaryBytesParts only works in web app code. Node usage isn't supported."
+    );
+  }
+  const params = getBinaryDataFormattingParams(numBytes);
+
+  // Binary units aren't supported by Intl.NumberFormat's unit style,
+  // so we format just the number with proper locale-specific formatting
+  const numberFormatter = new Intl.NumberFormat(language, {
+    minimumFractionDigits: params.decimalPlaces,
+    maximumFractionDigits: params.decimalPlaces,
+  });
+
+  return {
+    value: numberFormatter.format(params.value),
+    unit: params.unit,
+  };
+}
+
+/**
  * Returns a string representation of a number of bytes, translated into the given language
  *
  * @param {Number} numBytes An amount of data to format.
@@ -124,6 +190,25 @@ export function formatBytes(numBytes: number, language: string): string {
       // http://unicode.org/reports/tr35/tr35-general.html#Example_Units
       .replace(/\s+bytes?/, ' B')
   );
+}
+
+/**
+ * Returns a string representation of a number of bytes using binary units (KiB, MiB, GiB, TiB),
+ * translated into the given language
+ *
+ * @param {Number} numBytes An amount of data to format.
+ * @param {string} language The ISO language code for the language to translate to, eg 'en'.
+ * @returns {string} The formatted data amount with binary units.
+ */
+export function formatBinaryBytes(numBytes: number, language: string): string {
+  if (!inWebApp) {
+    throw new Error(
+      "formatBytes only works in web app code. Node usage isn't supported."
+    );
+  }
+
+  const parts = formatBinaryBytesParts(numBytes, language);
+  return `${parts.value} ${parts.unit}`;
 }
 
 // TODO(JonathanDCohen222) Differentiate between this type, which is an input data limit, and
