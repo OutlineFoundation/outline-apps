@@ -194,6 +194,16 @@ npm run action client/capacitor/build macos -- --buildMode=release --versionName
 
 Reads `SENTRY_DSN` and `DEVELOPMENT_TEAM` like the iOS release, and leaves the signed archive at `output/client/macos/Outline.xcarchive`.
 
+### Run a signed release build locally
+
+The archive's app cannot be launched on the build machine (its profile is not tied to any Mac). To test a Release build with its VPN extension locally, build it for this Mac instead:
+
+```sh
+MACOS_LOCAL_RUN=true DEVELOPMENT_TEAM=<team id> SENTRY_DSN=<dsn> npm run action client/capacitor/build macos -- --buildMode=release --versionName=<version>
+```
+
+This signs with the team's development identity, registers this Mac with the developer account if it is not already, and leaves a runnable app at `output/client/macos/local-release/Build/Products/Release-maccatalyst/App.app`. Nothing is exported or uploaded.
+
 ### Run from Xcode
 
 Open `ios/App/App.xcodeproj` (`npx cap open ios`), pick the `Outline` scheme and the "My Mac (Mac Catalyst)" destination.
