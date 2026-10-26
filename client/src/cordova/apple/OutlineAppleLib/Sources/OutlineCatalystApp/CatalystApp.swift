@@ -27,14 +27,13 @@
 
             let appKitController = loadAppKitIntegrationFramework()
 
-            // Configure the window.
-            let scenes = UIApplication.shared.connectedScenes
-            for scene in scenes {
-                let windowScene = (scene as! UIWindowScene)
-                windowScene.titlebar?.titleVisibility = .hidden
-                windowScene.titlebar?.toolbar = nil
-                windowScene.sizeRestrictions?.minimumSize = CGSizeMake(400, 680)
-                windowScene.sizeRestrictions?.maximumSize = CGSizeMake(400, 680)
+            // Configure the windows that already exist. Scene-based apps (Capacitor)
+            // have none at this point and call configureWindowScene from their
+            // scene delegate instead.
+            for scene in UIApplication.shared.connectedScenes {
+                if let windowScene = scene as? UIWindowScene {
+                    configureWindowScene(windowScene)
+                }
             }
 
             // Initiate the connection status menu in unknown state by default.
@@ -53,6 +52,14 @@
             { _ in
                 appKitController._AppKitBridge_setConnectionStatus(.disconnected)
             }
+        }
+
+        /// Gives the Catalyst window the fixed, title-less look of the macOS client.
+        public static func configureWindowScene(_ windowScene: UIWindowScene) {
+            windowScene.titlebar?.titleVisibility = .hidden
+            windowScene.titlebar?.toolbar = nil
+            windowScene.sizeRestrictions?.minimumSize = CGSizeMake(400, 680)
+            windowScene.sizeRestrictions?.maximumSize = CGSizeMake(400, 680)
         }
     }
 

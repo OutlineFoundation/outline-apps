@@ -277,6 +277,38 @@ jobs:
       - name: Build iOS Capacitor Client
         run: npm run action client/capacitor/build ios
 
+  capacitor_macos_debug_build:
+    name: MacOS Capacitor Debug Build
+    runs-on: macos-15
+    timeout-minutes: 40
+    needs: [web_test, backend_test]
+    steps:
+      - name: Display XCode
+        run: xcode-select --print-path
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      # Builds the web bundle, runs `cap sync ios`, and then runs an unsigned
+      # Mac Catalyst xcodebuild of ios/App/App.xcodeproj.
+      - name: Build MacOS Capacitor Client
+        run: npm run action client/capacitor/build macos
+
   android_debug_build:
     name: Android Debug Build
     runs-on: ubuntu-22.04
