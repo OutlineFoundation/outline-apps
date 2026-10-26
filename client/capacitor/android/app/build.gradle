@@ -16,7 +16,7 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "org.outline.client"
-    compileSdk 36
+    compileSdk rootProject.ext.compileSdkVersion
 
     // AGP strips the debug symbols from the native libraries it packages
     // (tun2socks' libgojni.so, the Sentry native libs), but only when it can
