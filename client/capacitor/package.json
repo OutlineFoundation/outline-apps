@@ -17,8 +17,8 @@
     "capacitor:sync:before": "cd ../.. && go tool task -v client:tun2socks:$CAPACITOR_PLATFORM_NAME && ([ \"$CAPACITOR_PLATFORM_NAME\" != \"android\" ] || go tool task -v client:android:configure)"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.1",
     "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^9.0.0-alpha.8",
     "@outline/infrastructure": "file:../../infrastructure",
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.4",
@@ -32,12 +32,12 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
-    "@capacitor/app": "^8.1.1",
-    "@capacitor/ios": "^8.3.1",
-    "@capacitor/browser": "^8.0.3",
-    "@capacitor/core": "^8.3.1",
-    "@capacitor/android": "^8.3.1",
-    "@capacitor/splash-screen": "8.0.1",
+    "@capacitor/android": "^9.0.0-alpha.8",
+    "@capacitor/app": "^9.0.0-alpha.2",
+    "@capacitor/browser": "^9.0.0-alpha.2",
+    "@capacitor/core": "^9.0.0-alpha.8",
+    "@capacitor/ios": "^9.0.0-alpha.8",
+    "@capacitor/splash-screen": "^9.0.0-alpha.2",
     "@polymer/polymer": "^3.5.1",
     "@sentry/browser": "10.75.0",
     "@sentry/core": "10.75.0",
