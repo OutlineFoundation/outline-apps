@@ -70,12 +70,7 @@ export class ErrorDetailsDialog extends LitElement {
         <pre>${this.errorDetails}</pre>
       </article>
       <fieldset slot="actions">
-        <md-text-button
-          @click="${() => {
-            navigator.clipboard.writeText(this.errorDetails);
-            this.copied = true;
-          }}"
-        >
+        <md-text-button @click="${this.copyErrorDetails}">
           ${this.localize(
             this.copied
               ? 'error-details-dialog-copied'
@@ -89,8 +84,53 @@ export class ErrorDetailsDialog extends LitElement {
     </md-dialog>`;
   }
 
+  async copyErrorDetails() {
+    const text = this.errorDetails ?? '';
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copied = true;
+      return;
+    } catch (webClipboardError) {
+      // Some Android WebViews deny clipboard write permission to the Cordova
+      // page (NotAllowedError). Fall back to the native Cordova plugin.
+      const cordovaClipboard = (window as CordovaClipboardWindow).cordova
+        ?.plugins?.clipboard;
+      if (!cordovaClipboard) {
+        console.error('Failed to copy error details', webClipboardError);
+        throw webClipboardError;
+      }
+      try {
+        await new Promise<void>((resolve, reject) =>
+          cordovaClipboard.copy(text, () => resolve(), reject)
+        );
+        this.copied = true;
+      } catch (cordovaClipboardError) {
+        console.error(
+          'Failed to copy error details',
+          webClipboardError,
+          cordovaClipboardError
+        );
+        throw cordovaClipboardError;
+      }
+    }
+  }
+
   cleanup() {
     this.open = false;
     this.copied = false;
   }
 }
+
+type CordovaClipboardWindow = Window & {
+  cordova?: {
+    plugins?: {
+      clipboard?: {
+        copy(
+          text: string,
+          onSuccess: () => void,
+          onFailure: (error: unknown) => void
+        ): void;
+      };
+    };
+  };
+};
