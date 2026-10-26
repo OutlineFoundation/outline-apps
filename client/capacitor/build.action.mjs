@@ -68,10 +68,12 @@ export async function main(...parameters) {
       );
     }
 
-    if (!(
-      process.env.ANDROID_KEY_STORE_PASSWORD &&
-      process.env.ANDROID_KEY_STORE_CONTENTS
-    )) {
+    if (
+      !(
+        process.env.ANDROID_KEY_STORE_PASSWORD &&
+        process.env.ANDROID_KEY_STORE_CONTENTS
+      )
+    ) {
       throw new ReferenceError(
         "Both 'ANDROID_KEY_STORE_PASSWORD' and 'ANDROID_KEY_STORE_CONTENTS' must be defined in the environment to build an Android Release!"
       );
@@ -299,18 +301,8 @@ async function macosDebug(verbose) {
 /**
  * Archives the signed release app to output/client/macos/Outline.xcarchive,
  * replacing any previous archive there.
- *
- * With MACOS_LOCAL_RUN=true it instead builds the Release configuration for
- * this Mac, signed with the team's development identity and a profile that
- * includes this Mac (registering it with the developer account if needed), so
- * the app can be launched locally with its VPN extension. The archive's app
- * cannot run locally: its profile is not tied to any Mac. Nothing is exported
- * or uploaded either way.
  */
 async function macosRelease(teamId, versionName, buildNumber, verbose) {
-  if (process.env.MACOS_LOCAL_RUN === 'true') {
-    return macosLocalRelease(teamId, versionName, buildNumber, verbose);
-  }
   const archivePath = path.resolve(
     getRootDir(),
     'output',
@@ -334,41 +326,6 @@ async function macosRelease(teamId, versionName, buildNumber, verbose) {
     `MARKETING_VERSION=${versionName}`,
     `CURRENT_PROJECT_VERSION=${buildNumber}`,
     `DEVELOPMENT_TEAM=${teamId}`
-  );
-}
-
-async function macosLocalRelease(teamId, versionName, buildNumber, verbose) {
-  const productsDir = path.resolve(
-    getRootDir(),
-    'output',
-    'client',
-    'macos',
-    'local-release'
-  );
-  await spawnStream(
-    'xcodebuild',
-    'clean',
-    '-project',
-    path.resolve(capacitorDir, 'ios', 'App', 'App.xcodeproj'),
-    '-scheme',
-    'Outline',
-    // This Mac, so the development profile can include it.
-    '-destination',
-    'platform=macOS,variant=Mac Catalyst',
-    'build',
-    '-configuration',
-    'Release',
-    '-derivedDataPath',
-    productsDir,
-    '-allowProvisioningUpdates',
-    '-allowProvisioningDeviceRegistration',
-    ...(verbose ? [] : ['-quiet']),
-    `MARKETING_VERSION=${versionName}`,
-    `CURRENT_PROJECT_VERSION=${buildNumber}`,
-    `DEVELOPMENT_TEAM=${teamId}`
-  );
-  console.log(
-    `Signed release build for this Mac: ${path.join(productsDir, 'Build', 'Products', 'Release-maccatalyst', 'App.app')}`
   );
 }
 
