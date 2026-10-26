@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-import {LitElement, html, css} from 'lit';
+import {LitElement, PropertyValues, html, css} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 
 @customElement('error-details-dialog')
@@ -24,6 +24,20 @@ export class ErrorDetailsDialog extends LitElement {
   @property({type: Boolean}) open: boolean;
 
   @state() copied: boolean = false;
+
+  // Incremented whenever the dialog is closed or its details change, so that a
+  // copy that completes afterwards does not mark the new details as copied.
+  private copyGeneration = 0;
+
+  willUpdate(changedProperties: PropertyValues<this>) {
+    if (
+      changedProperties.has('errorDetails') ||
+      (changedProperties.has('open') && !this.open)
+    ) {
+      this.copyGeneration++;
+      this.copied = false;
+    }
+  }
 
   static styles = css`
     :host {
@@ -86,9 +100,20 @@ export class ErrorDetailsDialog extends LitElement {
 
   async copyErrorDetails() {
     const text = this.errorDetails ?? '';
+    const generation = this.copyGeneration;
+    // Only mark as copied if the dialog still shows the same details.
+    const markCopied = () => {
+      if (
+        generation === this.copyGeneration &&
+        this.open &&
+        (this.errorDetails ?? '') === text
+      ) {
+        this.copied = true;
+      }
+    };
     try {
       await navigator.clipboard.writeText(text);
-      this.copied = true;
+      markCopied();
       return;
     } catch (webClipboardError) {
       // Some Android WebViews deny clipboard write permission to the Cordova
@@ -103,7 +128,7 @@ export class ErrorDetailsDialog extends LitElement {
         await new Promise<void>((resolve, reject) =>
           cordovaClipboard.copy(text, () => resolve(), reject)
         );
-        this.copied = true;
+        markCopied();
       } catch (cordovaClipboardError) {
         console.error(
           'Failed to copy error details',
@@ -116,6 +141,7 @@ export class ErrorDetailsDialog extends LitElement {
   }
 
   cleanup() {
+    this.copyGeneration++;
     this.open = false;
     this.copied = false;
   }

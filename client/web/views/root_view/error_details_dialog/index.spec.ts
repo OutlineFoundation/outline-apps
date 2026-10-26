@@ -85,6 +85,52 @@ describe('ErrorDetailsDialog', () => {
     expect(console.error).toHaveBeenCalled();
   });
 
+  it('ignores a copy that completes after the dialog is closed', async () => {
+    let resolveWrite!: () => void;
+    writeTextSpy.and.returnValue(
+      new Promise<void>(resolve => (resolveWrite = resolve))
+    );
+
+    const pendingCopy = el.copyErrorDetails();
+    el.cleanup();
+    resolveWrite();
+    await pendingCopy;
+
+    expect(el.copied).toBeFalse();
+  });
+
+  it('does not show new details as copied after a stale copy completes', async () => {
+    let resolveWrite!: () => void;
+    writeTextSpy.and.returnValue(
+      new Promise<void>(resolve => (resolveWrite = resolve))
+    );
+
+    const pendingCopy = el.copyErrorDetails();
+    el.cleanup();
+    el.errorDetails = 'new error details';
+    el.open = true;
+    await el.updateComplete;
+    resolveWrite();
+    await pendingCopy;
+    await el.updateComplete;
+
+    expect(el.copied).toBeFalse();
+  });
+
+  it('ignores a copy whose details were replaced while open', async () => {
+    let resolveWrite!: () => void;
+    writeTextSpy.and.returnValue(
+      new Promise<void>(resolve => (resolveWrite = resolve))
+    );
+
+    const pendingCopy = el.copyErrorDetails();
+    el.errorDetails = 'replacement details';
+    resolveWrite();
+    await pendingCopy;
+
+    expect(el.copied).toBeFalse();
+  });
+
   it('does not mark as copied when the Cordova fallback also fails', async () => {
     writeTextSpy.and.returnValue(
       Promise.reject(
