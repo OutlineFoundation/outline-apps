@@ -171,10 +171,8 @@ It reads `SENTRY_DSN` and `DEVELOPMENT_TEAM` from the environment, and needs tha
 
 ## macOS (Mac Catalyst)
 
-The macOS client is the iOS app built for Mac Catalyst, so it shares the `ios/` native project, the Capacitor plugins and `cap sync ios`. What differs:
+The macOS client is the iOS app built for Mac Catalyst, so it shares the `ios/` native project, the Capacitor plugins and `cap sync ios`. Capacitor 9 ships its iOS platform as a source Swift package, so it compiles for Catalyst like every other package in the graph (Capacitor 8's binary package had no Catalyst slice). What differs from iOS:
 
-- **`ios/App/OutlineMacOS.xcworkspace`** wraps `App.xcodeproj` together with the local Swift package in **`ios/capacitor-swift-pm/`**. Capacitor's own SPM package ([ionic-team/capacitor-swift-pm](https://github.com/ionic-team/capacitor-swift-pm)) only ships iOS and iOS Simulator slices of `Capacitor.xcframework`/`Cordova.xcframework`, which cannot link a Catalyst app. The local package has the same name and products, so Xcode uses it in place of the remote one for every package in the graph, but only when building through this workspace; building `App.xcodeproj` directly (iOS) keeps using the remote package.
-- **`ios/capacitor-swift-pm/build_xcframeworks.sh`** produces those xcframeworks (iOS, iOS Simulator and Mac Catalyst slices) from the Capacitor sources at the installed `@capacitor/ios` version, the same way upstream's `build-cap` script does. The outputs are gitignored; the build action runs the script when they are missing or stale.
 - **`ios/App/AppKitIntegration/`** is a macOS framework target (the menu bar status item and Dock icon policy, the same sources as the Cordova client's `AppKitBridge`). It is only built and embedded for Catalyst; `AppDelegate` loads it at launch through `OutlineCatalystApp` from `OutlineAppleLib`.
 - `Info.plist` carries `LSUIElement` so the app starts as a menu bar app, as the Cordova macOS client does; iOS ignores the key.
 
@@ -186,7 +184,7 @@ From the **repository root**:
 npm run action client/capacitor/build macos
 ```
 
-This builds the web bundle, runs `cap sync ios`, builds the Capacitor xcframeworks if needed, and runs an **unsigned** `xcodebuild` of the workspace for `generic/platform=macOS,variant=Mac Catalyst`. The app lands in Xcode's DerivedData (`Build/Products/Debug-maccatalyst/App.app`) and can be launched with `open`; without signing, the VPN extension cannot run.
+This builds the web bundle, runs `cap sync ios`, and runs an **unsigned** `xcodebuild` of `ios/App/App.xcodeproj` for `generic/platform=macOS,variant=Mac Catalyst`. The app lands in Xcode's DerivedData (`Build/Products/Debug-maccatalyst/App.app`) and can be launched with `open`; without signing, the VPN extension cannot run.
 
 ### Build the release
 
@@ -198,11 +196,7 @@ Reads `SENTRY_DSN` and `DEVELOPMENT_TEAM` like the iOS release, and leaves the s
 
 ### Run from Xcode
 
-```sh
-open client/capacitor/ios/App/OutlineMacOS.xcworkspace
-```
-
-Pick the `Outline` scheme and the "My Mac (Mac Catalyst)" destination. Run `build_xcframeworks.sh` once first (or the build action), otherwise package resolution fails on the missing xcframeworks.
+Open `ios/App/App.xcodeproj` (`npx cap open ios`), pick the `Outline` scheme and the "My Mac (Mac Catalyst)" destination.
 
 ## Android (device or emulator)
 

@@ -35,7 +35,7 @@ const APPLE_PLATFORMS = ['ios', 'macos'];
 /**
  * @description Fully builds the Capacitor client: the web bundle, the
  * tun2socks native library, and the native app binary. "macos" builds the
- * iOS app for Mac Catalyst (see ios/App/OutlineMacOS.xcworkspace).
+ * iOS app for Mac Catalyst.
  *
  * @param {string[]} parameters
  */
@@ -269,38 +269,22 @@ async function iosRelease(teamId, versionName, buildNumber, verbose) {
   );
 }
 
-const iosDir = path.resolve(capacitorDir, 'ios');
-
-// The Mac Catalyst build goes through a workspace that pairs App.xcodeproj
-// with the local capacitor-swift-pm package, which vends Capacitor
-// xcframeworks that have a Mac Catalyst slice (the upstream binary package
-// ships iOS slices only). Xcode uses the local package in place of the remote
-// one for the whole dependency graph.
+// The Mac Catalyst build is the same project and scheme as iOS with a
+// different destination. Capacitor 9 is a source Swift package, so it compiles
+// for Catalyst like any other package in the graph.
 const MACOS_XCODE_BUILD_ARGS = [
-  '-workspace',
-  path.resolve(iosDir, 'App', 'OutlineMacOS.xcworkspace'),
+  '-project',
+  path.resolve(capacitorDir, 'ios', 'App', 'App.xcodeproj'),
   '-scheme',
   'Outline',
   '-destination',
   'generic/platform=macOS,variant=Mac Catalyst',
 ];
 
-/**
- * Builds the Capacitor and Cordova xcframeworks with a Mac Catalyst slice
- * from the Capacitor sources, if they are not already built for the
- * installed @capacitor/ios version.
- */
-async function buildCapacitorXcframeworks() {
-  await spawnStream(
-    path.join(iosDir, 'capacitor-swift-pm', 'build_xcframeworks.sh')
-  );
-}
-
 async function macosDebug(verbose) {
   console.warn(
     'WARNING: building "macos" in [DEBUG] mode. Do not publish this build!!'
   );
-  await buildCapacitorXcframeworks();
   await spawnStream(
     'xcodebuild',
     'clean',
@@ -328,7 +312,6 @@ async function macosRelease(teamId, versionName, buildNumber, verbose) {
   );
   await fs.rm(archivePath, {recursive: true, force: true});
 
-  await buildCapacitorXcframeworks();
   await spawnStream(
     'xcodebuild',
     'clean',
