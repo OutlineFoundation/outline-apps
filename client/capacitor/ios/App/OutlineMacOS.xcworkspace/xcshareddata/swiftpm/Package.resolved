@@ -1,0 +1,32 @@
+{
+  "pins": [
+    {
+      "identity": "cocoalumberjack",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/CocoaLumberjack/CocoaLumberjack.git",
+      "state": {
+        "revision": "a9ed4b6f9bdedce7d77046f43adfb8ce1fd54114",
+        "version": "3.9.0"
+      }
+    },
+    {
+      "identity": "sentry-cocoa",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/getsentry/sentry-cocoa",
+      "state": {
+        "revision": "8627bbc0e663238d516b541d8fc7edd62a627fde",
+        "version": "8.57.3"
+      }
+    },
+    {
+      "identity": "swift-log",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/apple/swift-log",
+      "state": {
+        "revision": "ce592ae52f982c847a4efc0dd881cc9eb32d29f2",
+        "version": "1.6.4"
+      }
+    }
+  ],
+  "version": 3
+}

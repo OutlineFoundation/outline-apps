@@ -26,11 +26,16 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
-const CAPACITOR_PLATFORMS = ['android', 'ios'];
+const CAPACITOR_PLATFORMS = ['android', 'ios', 'macos'];
+
+// The macOS client is the iOS app built for Mac Catalyst, so it shares the
+// Capacitor "ios" platform (native project, plugins, `cap sync`).
+const APPLE_PLATFORMS = ['ios', 'macos'];
 
 /**
  * @description Fully builds the Capacitor client: the web bundle, the
- * tun2socks native library, and the native app binary.
+ * tun2socks native library, and the native app binary. "macos" builds the
+ * iOS app for Mac Catalyst (see ios/App/OutlineMacOS.xcworkspace).
  *
  * @param {string[]} parameters
  */
@@ -46,12 +51,12 @@ export async function main(...parameters) {
   }
 
   // Check the release signing inputs before the (slow) web and Go builds.
-  if (platform === 'ios' && buildMode === 'release') {
+  if (APPLE_PLATFORMS.includes(platform) && buildMode === 'release') {
     // The app target has no development team of its own (see
     // ios/App/App.xcodeproj), so a signed build needs one from the caller.
     if (!process.env.DEVELOPMENT_TEAM) {
       throw new ReferenceError(
-        'DEVELOPMENT_TEAM must be defined in the environment to build an iOS Release!'
+        `DEVELOPMENT_TEAM must be defined in the environment to build a ${platform} Release!`
       );
     }
   }
@@ -87,7 +92,12 @@ export async function main(...parameters) {
   // project and refreshes the Capacitor plugins. The Capacitor CLI locates the
   // project from the working directory.
   process.chdir(capacitorDir);
-  await spawnStream('npx', 'cap', 'sync', platform);
+  await spawnStream(
+    'npx',
+    'cap',
+    'sync',
+    platform === 'macos' ? 'ios' : platform
+  );
 
   switch (platform + buildMode) {
     case 'android' + 'debug':
@@ -105,6 +115,15 @@ export async function main(...parameters) {
       return iosDebug(verbose);
     case 'ios' + 'release':
       return iosRelease(
+        process.env.DEVELOPMENT_TEAM,
+        versionName,
+        buildNumber,
+        verbose
+      );
+    case 'macos' + 'debug':
+      return macosDebug(verbose);
+    case 'macos' + 'release':
+      return macosRelease(
         process.env.DEVELOPMENT_TEAM,
         versionName,
         buildNumber,
@@ -244,6 +263,83 @@ async function iosRelease(teamId, versionName, buildNumber, verbose) {
     ...(verbose ? [] : ['-quiet']),
     // The Info.plist of the app and of the VpnExtension take their version
     // from these build settings.
+    `MARKETING_VERSION=${versionName}`,
+    `CURRENT_PROJECT_VERSION=${buildNumber}`,
+    `DEVELOPMENT_TEAM=${teamId}`
+  );
+}
+
+const iosDir = path.resolve(capacitorDir, 'ios');
+
+// The Mac Catalyst build goes through a workspace that pairs App.xcodeproj
+// with the local capacitor-swift-pm package, which vends Capacitor
+// xcframeworks that have a Mac Catalyst slice (the upstream binary package
+// ships iOS slices only). Xcode uses the local package in place of the remote
+// one for the whole dependency graph.
+const MACOS_XCODE_BUILD_ARGS = [
+  '-workspace',
+  path.resolve(iosDir, 'App', 'OutlineMacOS.xcworkspace'),
+  '-scheme',
+  'Outline',
+  '-destination',
+  'generic/platform=macOS,variant=Mac Catalyst',
+];
+
+/**
+ * Builds the Capacitor and Cordova xcframeworks with a Mac Catalyst slice
+ * from the Capacitor sources, if they are not already built for the
+ * installed @capacitor/ios version.
+ */
+async function buildCapacitorXcframeworks() {
+  await spawnStream(
+    path.join(iosDir, 'capacitor-swift-pm', 'build_xcframeworks.sh')
+  );
+}
+
+async function macosDebug(verbose) {
+  console.warn(
+    'WARNING: building "macos" in [DEBUG] mode. Do not publish this build!!'
+  );
+  await buildCapacitorXcframeworks();
+  await spawnStream(
+    'xcodebuild',
+    'clean',
+    ...MACOS_XCODE_BUILD_ARGS,
+    'build',
+    '-configuration',
+    'Debug',
+    ...(verbose ? [] : ['-quiet']),
+    'CODE_SIGN_IDENTITY=',
+    'CODE_SIGNING_ALLOWED=NO'
+  );
+}
+
+/**
+ * Archives the signed release app to output/client/macos/Outline.xcarchive,
+ * replacing any previous archive there.
+ */
+async function macosRelease(teamId, versionName, buildNumber, verbose) {
+  const archivePath = path.resolve(
+    getRootDir(),
+    'output',
+    'client',
+    'macos',
+    'Outline.xcarchive'
+  );
+  await fs.rm(archivePath, {recursive: true, force: true});
+
+  await buildCapacitorXcframeworks();
+  await spawnStream(
+    'xcodebuild',
+    'clean',
+    ...MACOS_XCODE_BUILD_ARGS,
+    'archive',
+    '-archivePath',
+    archivePath,
+    '-configuration',
+    'Release',
+    '-allowProvisioningUpdates',
+    ...(verbose ? [] : ['-quiet']),
     `MARKETING_VERSION=${versionName}`,
     `CURRENT_PROJECT_VERSION=${buildNumber}`,
     `DEVELOPMENT_TEAM=${teamId}`

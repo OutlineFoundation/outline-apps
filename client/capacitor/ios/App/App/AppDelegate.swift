@@ -15,11 +15,19 @@
 import UIKit
 import Capacitor
 import OutlineTunnel
+#if targetEnvironment(macCatalyst)
+import OutlineCatalystApp
+#endif
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        #if targetEnvironment(macCatalyst)
+        // Loads the AppKitIntegration framework (menu bar status item, Dock
+        // icon policy) and keeps its connection status in sync with the VPN.
+        OutlineCatalystApp.initApp()
+        #endif
         return true
     }
 

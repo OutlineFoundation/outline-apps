@@ -1,0 +1,4 @@
+# Built by build_xcframeworks.sh
+/Capacitor.xcframework
+/Cordova.xcframework
+/.built-version

@@ -277,6 +277,51 @@ jobs:
       - name: Build iOS Capacitor Client
         run: npm run action client/capacitor/build ios
 
+  capacitor_macos_debug_build:
+    name: MacOS Capacitor Debug Build
+    runs-on: macos-15
+    timeout-minutes: 40
+    needs: [web_test, backend_test]
+    steps:
+      - name: Display XCode
+        run: xcode-select --print-path
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: ./package-lock.json
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Install Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: '${{ github.workspace }}/go.mod'
+
+      # The Mac Catalyst build links Capacitor xcframeworks built from source
+      # (the upstream binary package has no Catalyst slice). Cache them per
+      # @capacitor/ios version; building them takes a few minutes.
+      - name: Cache Capacitor xcframeworks
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            client/capacitor/ios/capacitor-swift-pm/Capacitor.xcframework
+            client/capacitor/ios/capacitor-swift-pm/Cordova.xcframework
+            client/capacitor/ios/capacitor-swift-pm/.built-version
+          key: capacitor-xcframeworks-${{ runner.os }}-${{ hashFiles('client/node_modules/@capacitor/ios/package.json', 'client/capacitor/ios/capacitor-swift-pm/build_xcframeworks.sh') }}
+
+      # Builds the web bundle, runs `cap sync ios`, builds the Capacitor
+      # xcframeworks with a Mac Catalyst slice if not cached, and then runs an
+      # unsigned Mac Catalyst xcodebuild of ios/App/OutlineMacOS.xcworkspace.
+      - name: Build MacOS Capacitor Client
+        run: npm run action client/capacitor/build macos
+
   android_debug_build:
     name: Android Debug Build
     runs-on: ubuntu-22.04
