@@ -260,8 +260,9 @@ async function bootstrap() {
 
   // The migration has to finish first: main() builds the server repository from
   // localStorage, so replaying the Cordova data afterwards would leave the user
-  // staring at an empty server list until the next restart. A failed migration
-  // must not prevent the app from launching.
+  // staring at an empty server list until the next restart. Handling migration
+  // errors here lets main() still run, so a failed migration is logged without
+  // preventing the app from launching without migrated data.
   try {
     await migrateLegacyCordovaStorageIfNeeded();
   } catch (error) {

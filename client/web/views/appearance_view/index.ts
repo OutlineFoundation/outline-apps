@@ -19,6 +19,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
 import {Appearance} from '../../app/settings';
+import {focusRing} from '../../shared/focus_styles';
 
 export type AppearanceDefinition = {
   id: Appearance;
@@ -82,8 +83,7 @@ export class AppearanceView extends LitElement {
     }
 
     md-list-item:focus-within {
-      outline: 4px solid var(--outline-primary);
-      outline-offset: -4px;
+      ${focusRing({offset: -4})}
     }
 
     /* Direct override for appearance text - needed for dark mode */

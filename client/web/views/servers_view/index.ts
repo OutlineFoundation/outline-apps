@@ -26,6 +26,7 @@ import {ServerConnectionState as _ServerConnectionState} from './server_connecti
 import './server_connection_indicator';
 import './server_list';
 import {ServerListItem as _ServerListItem} from './server_list_item';
+import {focusRing} from '../../shared/focus_styles';
 
 export type ServerListItem = _ServerListItem;
 
@@ -111,9 +112,7 @@ export class ServerList extends LitElement {
         cursor: pointer;
       }
       button:focus-visible {
-        border-radius: var(--outline-corner);
-        outline: 4px solid var(--outline-primary);
-        outline-offset: 8px;
+        ${focusRing({offset: 8, shape: 'corner'})}
       }
       server-connection-indicator {
         height: 192px;

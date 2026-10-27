@@ -388,7 +388,32 @@ function handleBackbutton(event, root) {
   const navigation = overlays.find(
     element => element.localName === 'root-navigation'
   );
-  if (!menu && !dialog && !navigation) return;
+  if (!menu && !dialog && !navigation) {
+    // Android consumes Back to dismiss the IME before this event reaches the
+    // WebView. A text field can retain focus after that, so focus alone must
+    // not suppress the next Back navigation.
+    const appRoot = root.host;
+    const defaultPage = appRoot?.DEFAULT_PAGE;
+    if (
+      !appRoot ||
+      appRoot.page === undefined ||
+      defaultPage === undefined ||
+      appRoot.page === defaultPage
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    appRoot.dispatchEvent(
+      new globalThis.CustomEvent('ChangePage', {
+        detail: {page: defaultPage},
+        bubbles: true,
+        composed: true,
+      })
+    );
+    return;
+  }
 
   event.preventDefault();
   event.stopPropagation();

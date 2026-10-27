@@ -17,6 +17,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
 import navigationLogo from '../../../assets/logo-nav.png';
+import {focusRing} from '../../../shared/focus_styles';
 
 @customElement('root-navigation')
 export class RootNavigation extends LitElement {
@@ -120,8 +121,7 @@ export class RootNavigation extends LitElement {
     md-list-item:focus-within,
     li > button:focus-visible,
     a:focus-visible {
-      outline: 4px solid var(--outline-primary);
-      outline-offset: -4px;
+      ${focusRing({offset: -4})}
     }
 
     md-list-item > a {

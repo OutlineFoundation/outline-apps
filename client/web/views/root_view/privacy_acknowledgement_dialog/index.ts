@@ -15,6 +15,7 @@ import {LitElement, html, css} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 
 import privacyLock from '../../../assets/privacy-lock.png';
+import {focusRing} from '../../../shared/focus_styles';
 
 @customElement('privacy-acknowledgement-dialog')
 export class PrivacyAcknowledgementDialog extends LitElement {
@@ -90,9 +91,7 @@ export class PrivacyAcknowledgementDialog extends LitElement {
 
     a:focus-visible,
     md-filled-button:focus-within {
-      border-radius: var(--outline-corner);
-      outline: 4px solid var(--outline-primary);
-      outline-offset: 4px;
+      ${focusRing({offset: 4, shape: 'corner'})}
     }
 
     fieldset {

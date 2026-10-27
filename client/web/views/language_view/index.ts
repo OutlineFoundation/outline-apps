@@ -18,6 +18,8 @@ import {LitElement, html, css, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
+import {focusRing} from '../../shared/focus_styles';
+
 export type LanguageDef = {
   id: string;
   // The corresponding locale ID for the support site, if any.
@@ -57,8 +59,7 @@ export class LanguageView extends LitElement {
     }
 
     md-list-item:focus-within {
-      outline: 4px solid var(--outline-primary);
-      outline-offset: -4px;
+      ${focusRing({offset: -4})}
     }
 
     /* Important direct override for language text - needed for dark mode */

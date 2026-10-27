@@ -18,10 +18,11 @@ import {css, html, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {createRef, Ref, ref} from 'lit/directives/ref.js';
 
+import {ServerListItem, ServerListItemElement, ServerListItemEvent} from '..';
+import {focusRing} from '../../../../shared/focus_styles';
 import '../../server_connection_indicator';
 import './server_rename_dialog';
 import './server_info_dialog';
-import {ServerListItem, ServerListItemElement, ServerListItemEvent} from '..';
 import {ServerConnectionState} from '../../server_connection_indicator';
 
 const sharedCSS = css`
@@ -142,9 +143,7 @@ const sharedCSS = css`
 
   .card-menu-button:focus-within,
   .card-footer-button:focus-within {
-    border-radius: var(--outline-corner);
-    outline: 4px solid var(--outline-primary);
-    outline-offset: 2px;
+    ${focusRing({offset: 2, shape: 'corner'})}
   }
 `;
 

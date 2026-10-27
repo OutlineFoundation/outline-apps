@@ -660,6 +660,82 @@ describe('TV navigation', () => {
     expect(hideNavigation).toHaveBeenCalled();
   });
 
+  it('returns to the default page from an internal page with Android backbutton', () => {
+    const host = document.createElement('div');
+    const shadowRoot = host.attachShadow({mode: 'open'});
+    Object.defineProperties(host, {
+      DEFAULT_PAGE: {configurable: true, value: 'home'},
+      page: {configurable: true, value: 'language'},
+    });
+    const changePage = jasmine.createSpy('changePage');
+    host.addEventListener('ChangePage', changePage);
+    document.body.append(host);
+    cleanup = installTvNavigation(shadowRoot);
+
+    const event = new Event('backbutton', {
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeTrue();
+    expect(changePage).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({detail: {page: 'home'}})
+    );
+    host.remove();
+  });
+
+  it('navigates after the IME closes while an editable field keeps focus', () => {
+    const host = document.createElement('div');
+    const shadowRoot = host.attachShadow({mode: 'open'});
+    Object.defineProperties(host, {
+      DEFAULT_PAGE: {configurable: true, value: 'home'},
+      page: {configurable: true, value: 'contact'},
+    });
+    const textEntry = document.createElement('textarea');
+    shadowRoot.append(textEntry);
+    const changePage = jasmine.createSpy('changePage');
+    host.addEventListener('ChangePage', changePage);
+    document.body.append(host);
+    cleanup = installTvNavigation(shadowRoot);
+    textEntry.focus();
+
+    const event = new Event('backbutton', {
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeTrue();
+    expect(changePage).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({detail: {page: 'home'}})
+    );
+    host.remove();
+  });
+
+  it('does not handle Android backbutton from the default page', () => {
+    const host = document.createElement('div');
+    const shadowRoot = host.attachShadow({mode: 'open'});
+    Object.defineProperties(host, {
+      DEFAULT_PAGE: {configurable: true, value: 'home'},
+      page: {configurable: true, value: 'home'},
+    });
+    const changePage = jasmine.createSpy('changePage');
+    host.addEventListener('ChangePage', changePage);
+    document.body.append(host);
+    cleanup = installTvNavigation(shadowRoot);
+
+    const event = new Event('backbutton', {
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeFalse();
+    expect(changePage).not.toHaveBeenCalled();
+    host.remove();
+  });
+
   it('returns focus to the opener after a dialog closes', async () => {
     const opener = document.createElement('button');
     const dialog = document.createElement('div');

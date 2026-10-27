@@ -14,6 +14,8 @@
 import {LitElement, html, css} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 
+import {focusRing} from '../../../shared/focus_styles';
+
 @customElement('add-access-key-dialog')
 export class AddAccessKeyDialog extends LitElement {
   @property({type: String, attribute: true, reflect: true}) accessKey:
@@ -103,9 +105,7 @@ export class AddAccessKeyDialog extends LitElement {
     a:focus-visible,
     md-text-button:focus-within,
     md-filled-button:focus-within {
-      border-radius: var(--outline-corner);
-      outline: 4px solid var(--outline-primary);
-      outline-offset: 4px;
+      ${focusRing({offset: 4, shape: 'corner'})}
     }
 
     /* Explicit fixing for error text */
