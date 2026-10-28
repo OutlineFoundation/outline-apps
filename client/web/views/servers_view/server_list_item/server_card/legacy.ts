@@ -18,10 +18,11 @@ import {css, html, LitElement} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {createRef, Ref, ref} from 'lit/directives/ref.js';
 
+import {ServerListItem, ServerListItemElement, ServerListItemEvent} from '..';
+import {focusRing} from '../../../../shared/focus_styles';
 import '../../server_connection_indicator';
 import './server_rename_dialog';
 import './server_info_dialog';
-import {ServerListItem, ServerListItemElement, ServerListItemEvent} from '..';
 import {ServerConnectionState} from '../../server_connection_indicator';
 
 const sharedCSS = css`
@@ -139,6 +140,11 @@ const sharedCSS = css`
 
     text-transform: uppercase;
   }
+
+  .card-menu-button:focus-within,
+  .card-footer-button:focus-within {
+    ${focusRing({offset: 2, shape: 'corner'})}
+  }
 `;
 
 // TODO(daniellacosse): wrap components in a closure to avoid unnecessary work
@@ -180,7 +186,9 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
           composed: true,
         })
       ),
-    connectToggle: () =>
+    connectToggle: () => {
+      if (hasErrorMessage) return;
+
       element.dispatchEvent(
         new CustomEvent(
           isConnectedState
@@ -192,7 +200,8 @@ const getSharedComponents = (element: ServerListItemElement & LitElement) => {
             composed: true,
           }
         )
-      ),
+      );
+    },
   };
 
   const handleMenuOpen = () => {
@@ -401,12 +410,15 @@ export class ServerHeroCard
       `${this.server.connectionState}-server-state`
     );
     const connectToggleKeyboardDispatcher = (event: KeyboardEvent) => {
+      if (
+        (event.key !== 'Enter' && event.key !== ' ') ||
+        this.server.errorMessageId
+      ) {
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
-
-      if (event.key === 'Enter') {
-        dispatchers.connectToggle();
-      }
+      dispatchers.connectToggle();
     };
 
     return html`

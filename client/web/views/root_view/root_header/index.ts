@@ -15,6 +15,8 @@ import {LitElement, html, css} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
+import {focusRing} from '../../../shared/focus_styles';
+
 @customElement('root-header')
 export class RootHeader extends LitElement {
   @property({type: String}) title = '';
@@ -45,6 +47,10 @@ export class RootHeader extends LitElement {
 
     md-icon {
       color: var(--outline-white);
+    }
+
+    md-icon-button:focus-within {
+      ${focusRing({offset: 2, shape: 'circle'})}
     }
 
     .hidden {

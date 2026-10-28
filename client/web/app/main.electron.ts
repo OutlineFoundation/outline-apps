@@ -150,6 +150,7 @@ class ElectronMethodChannel implements MethodChannel {
 installDefaultMethodChannel(new ElectronMethodChannel());
 
 main({
+  isAndroidTv: false,
   getVpnApi(): VpnApi | undefined {
     if (isOsSupported) {
       return new ElectronVpnApi();

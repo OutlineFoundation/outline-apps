@@ -16,6 +16,7 @@ import {customElement, property, state} from 'lit/decorators.js';
 
 // TODO(daniellacosse): fix webpack copy such that we can co-locate this image asset with this folder
 import circle from '../../../assets/circle.png';
+import {focusRing} from '../../../shared/focus_styles';
 
 export const SERVER_CONNECTION_INDICATOR_DURATION_MS = 1750;
 export const SERVER_CONNECTION_INDICATOR_DELAY_MS = 500;
@@ -73,6 +74,10 @@ export class ServerConnectionIndicator extends LitElement {
       :host([darkMode]) {
         --circle-connected-color: grayscale(0) brightness(1);
         --circle-disconnected-color: grayscale(1) brightness(0.5);
+      }
+
+      :host(:focus-visible) {
+        ${focusRing({offset: 6, shape: 'circle'})}
       }
 
       /* Prevent images from being selectable on iOS, which can cause a crash when trying to save them. */

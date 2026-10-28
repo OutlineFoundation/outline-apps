@@ -19,6 +19,7 @@ import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
 import {Appearance} from '../../app/settings';
+import {focusRing} from '../../shared/focus_styles';
 
 export type AppearanceDefinition = {
   id: Appearance;
@@ -79,6 +80,10 @@ export class AppearanceView extends LitElement {
       --md-list-item-supporting-text-color: var(--outline-text-color);
       color: var(--outline-text-color);
       margin: 4px 0;
+    }
+
+    md-list-item:focus-within {
+      ${focusRing({offset: -4})}
     }
 
     /* Direct override for appearance text - needed for dark mode */
@@ -145,6 +150,7 @@ export class AppearanceView extends LitElement {
             <md-list-item
               class=${classMap({selected: this.selectedAppearance === id})}
               data-value="${id}"
+              type="button"
               @click=${() => this.handleAppearanceSelection(id)}
             >
               <md-icon

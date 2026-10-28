@@ -23,6 +23,9 @@ import {OutlineErrorReporter} from '../shared/error_reporter';
 // Provides platform-specific dependencies.
 // TODO(fortuna): pick platform-specific implementations at build time instead.
 export interface OutlinePlatform {
+  /** Whether the native host is an Android TV device. */
+  readonly isAndroidTv: boolean;
+
   getVpnApi(): VpnApi | undefined;
 
   getUrlInterceptor(): UrlInterceptor | undefined;
