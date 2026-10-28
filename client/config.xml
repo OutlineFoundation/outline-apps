@@ -31,9 +31,8 @@
 
     <!-- Android -->
     <platform name="android">
-        <!-- Let Android choose the natural orientation for the device. The web
-             UI enables D-pad navigation at runtime on Android TV devices. -->
-        <preference name="Orientation" value="unspecified" />
+        <!-- The global portrait preference keeps phones in portrait. The native
+             plugin switches Android TV to landscape after detecting Leanback. -->
         <!-- Keep one package compatible with phones, tablets and Android TV. -->
         <config-file parent="/manifest" target="AndroidManifest.xml">
             <uses-feature android:name="android.software.leanback" android:required="false" />

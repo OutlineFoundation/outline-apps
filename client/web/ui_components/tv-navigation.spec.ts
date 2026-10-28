@@ -321,25 +321,55 @@ describe('TV navigation', () => {
     expect(document.activeElement).toBe(input);
   });
 
-  it('moves vertically out of text fields', async () => {
+  it('leaves vertical arrows to multiline text fields', async () => {
     const input = document.createElement('textarea');
     const button = document.createElement('button');
+    input.value = 'first line\nsecond line';
+    input.selectionStart = 2;
+    input.selectionEnd = 2;
     root.append(input, button);
     setRect(input, 0, 0);
     setRect(button, 0, 100);
     cleanup = installTvNavigation(root);
     input.focus();
 
-    input.dispatchEvent(
-      new KeyboardEvent('keydown', {
-        bubbles: true,
-        composed: true,
-        key: 'ArrowDown',
-      })
-    );
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      key: 'ArrowDown',
+    });
+    input.dispatchEvent(event);
 
     await navigationSettled();
 
+    expect(event.defaultPrevented).toBeFalse();
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('moves down from the end of a multiline field', async () => {
+    const input = document.createElement('textarea');
+    const button = document.createElement('button');
+    input.value = 'first line\nsecond line';
+    input.selectionStart = input.value.length;
+    input.selectionEnd = input.value.length;
+    root.append(input, button);
+    setRect(input, 0, 0);
+    setRect(button, 0, 100);
+    cleanup = installTvNavigation(root);
+    input.focus();
+
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      key: 'ArrowDown',
+    });
+    input.dispatchEvent(event);
+
+    await navigationSettled();
+
+    expect(event.defaultPrevented).toBeTrue();
     expect(document.activeElement).toBe(button);
   });
 
@@ -464,6 +494,50 @@ describe('TV navigation', () => {
     );
 
     expect(focusCancel).toHaveBeenCalled();
+  });
+
+  it('leaves Down in the access-key textarea away from its last line', () => {
+    const modal = document.createElement('div');
+    Object.defineProperty(modal, 'localName', {
+      configurable: true,
+      value: 'md-dialog',
+    });
+    Object.defineProperty(modal, 'open', {value: true});
+    const dialog = document.createElement('div');
+    Object.defineProperty(dialog, 'localName', {
+      configurable: true,
+      value: 'add-access-key-dialog',
+    });
+    const dialogShadowRoot = dialog.attachShadow({mode: 'open'});
+    const textField = document.createElement('md-filled-text-field');
+    const fieldShadowRoot = textField.attachShadow({mode: 'open'});
+    const textArea = document.createElement('textarea');
+    const cancelButton = document.createElement('md-text-button');
+    textArea.value = 'first line\nsecond line';
+    textArea.selectionStart = 2;
+    textArea.selectionEnd = 2;
+    textArea.tabIndex = 0;
+    cancelButton.tabIndex = 0;
+    fieldShadowRoot.append(textArea);
+    dialogShadowRoot.append(textField, cancelButton);
+    modal.append(dialog);
+    root.append(modal);
+    setRect(textArea, 0, 0);
+    setRect(cancelButton, 0, 100);
+    cleanup = installTvNavigation(root);
+    textArea.focus();
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      key: 'ArrowDown',
+    });
+
+    textArea.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeFalse();
+    expect(dialogShadowRoot.activeElement).toBe(textField);
+    expect(fieldShadowRoot.activeElement).toBe(textArea);
   });
 
   it('routes arrow keys through an open menu', () => {
@@ -713,15 +787,15 @@ describe('TV navigation', () => {
     host.remove();
   });
 
-  it('does not handle Android backbutton from the default page', () => {
+  it('quits from the default page with the Android backbutton', () => {
     const host = document.createElement('div');
     const shadowRoot = host.attachShadow({mode: 'open'});
     Object.defineProperties(host, {
       DEFAULT_PAGE: {configurable: true, value: 'home'},
       page: {configurable: true, value: 'home'},
     });
-    const changePage = jasmine.createSpy('changePage');
-    host.addEventListener('ChangePage', changePage);
+    const quit = jasmine.createSpy('quit');
+    host.addEventListener('QuitPressed', quit);
     document.body.append(host);
     cleanup = installTvNavigation(shadowRoot);
 
@@ -731,8 +805,8 @@ describe('TV navigation', () => {
     });
     document.dispatchEvent(event);
 
-    expect(event.defaultPrevented).toBeFalse();
-    expect(changePage).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBeTrue();
+    expect(quit).toHaveBeenCalled();
     host.remove();
   });
 

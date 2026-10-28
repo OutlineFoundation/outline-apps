@@ -79,6 +79,31 @@ function isEditableTextEntry(element) {
   ].includes(element.type);
 }
 
+function isMultilineTextEntry(element) {
+  return (
+    element?.localName === 'textarea' ||
+    element instanceof globalThis.HTMLTextAreaElement ||
+    element?.isContentEditable
+  );
+}
+
+function isTextEntryAtBoundary(element, direction) {
+  if (!isMultilineTextEntry(element)) return true;
+  if (!(element instanceof globalThis.HTMLTextAreaElement)) return false;
+
+  const selectionStart = element.selectionStart ?? 0;
+  const selectionEnd = element.selectionEnd ?? selectionStart;
+  if (selectionStart !== selectionEnd) return false;
+  // Do not move focus while the caret is still inside the field. We use the
+  // text boundaries instead of measuring wrapped visual lines: recreating a
+  // textarea's layout is browser- and font-dependent, whereas preserving
+  // native vertical editing is reliable. A user can still leave at either end
+  // of the value with the D-pad.
+  return direction === 'up'
+    ? selectionStart === 0
+    : selectionStart === element.value.length;
+}
+
 function findNext(elements, current, direction) {
   if (!current) return undefined;
 
@@ -394,20 +419,16 @@ function handleBackbutton(event, root) {
     // not suppress the next Back navigation.
     const appRoot = root.host;
     const defaultPage = appRoot?.DEFAULT_PAGE;
-    if (
-      !appRoot ||
-      appRoot.page === undefined ||
-      defaultPage === undefined ||
-      appRoot.page === defaultPage
-    ) {
+    if (!appRoot || appRoot.page === undefined || defaultPage === undefined) {
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
+    const isDefaultPage = appRoot.page === defaultPage;
     appRoot.dispatchEvent(
-      new globalThis.CustomEvent('ChangePage', {
-        detail: {page: defaultPage},
+      new globalThis.CustomEvent(isDefaultPage ? 'QuitPressed' : 'ChangePage', {
+        ...(isDefaultPage ? {} : {detail: {page: defaultPage}}),
         bubbles: true,
         composed: true,
       })
@@ -456,6 +477,13 @@ function handleAccessKeyDialogKeydown(event, activeElement) {
     findComposedAncestor(activeElement, 'add-access-key-dialog');
   const dialogShadowRoot = dialog?.shadowRoot;
   if (!dialogShadowRoot) return false;
+
+  const textEntry =
+    [activeElement, ...path].find(isTextEntry) ??
+    (textField.shadowRoot
+      ? getDeepActiveElement(textField.shadowRoot)
+      : undefined);
+  if (!isTextEntryAtBoundary(textEntry, 'down')) return false;
 
   const confirmButton = dialogShadowRoot.querySelector('md-filled-button');
   const target = confirmButton?.disabled
@@ -777,6 +805,13 @@ export function installTvNavigation(root) {
     );
     if (textEntry && (direction === 'left' || direction === 'right')) {
       return;
+    }
+    if (
+      textEntry &&
+      isMultilineTextEntry(textEntry) &&
+      (direction === 'up' || direction === 'down')
+    ) {
+      if (!isTextEntryAtBoundary(textEntry, direction)) return;
     }
 
     event.preventDefault();
