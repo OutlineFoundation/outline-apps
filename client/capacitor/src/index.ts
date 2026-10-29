@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import {App} from '@capacitor/app';
 import {Browser} from '@capacitor/browser';
 import {Capacitor} from '@capacitor/core';
 import type {PluginListenerHandle} from '@capacitor/core';
@@ -230,14 +231,49 @@ function wireExternalLinkHandling() {
   );
 }
 
-// Bootstrap: install the method channel, wire external links, then hand off
-// to the shared main() — mirroring the Cordova and Electron entry points.
+interface BackNavigationHandler {
+  handleBackNavigation(): boolean;
+}
+
+/**
+ * Routes Android's system Back (button or gesture) through the app's UI: the
+ * app root closes the topmost menu, dialog or drawer, or returns to the home
+ * page. When there is nothing to go back from, the app moves to the
+ * background, as Android does for a root activity.
+ *
+ * The App plugin only emits Back to JS while a `backButton` listener is
+ * registered. Without one it falls back to the WebView history, which knows
+ * nothing about menus, dialogs or the drawer.
+ */
+function wireAndroidBackButton() {
+  if (Capacitor.getPlatform() !== 'android') {
+    return;
+  }
+  App.addListener('backButton', () => {
+    const appRoot = document.querySelector('app-root') as
+      | (Element & Partial<BackNavigationHandler>)
+      | null;
+    if (appRoot?.handleBackNavigation?.()) {
+      return;
+    }
+    App.minimizeApp().catch((err: unknown) => {
+      console.warn('Failed to minimize the app', err);
+    });
+  }).catch((err: unknown) => {
+    console.error('Failed to register the Back button listener', err);
+  });
+}
+
+// Bootstrap: install the method channel, wire external links and the Android
+// Back button, then hand off to the shared main() — mirroring the Cordova and
+// Electron entry points.
 installDefaultMethodChannel(
   hasDeviceSupport
     ? new CapacitorMethodChannel()
     : new CapacitorBrowserMethodChannel()
 );
 wireExternalLinkHandling();
+wireAndroidBackButton();
 
 // The migration has to finish first: main() builds the server repository from
 // localStorage, so replaying the Cordova data afterwards would leave the user

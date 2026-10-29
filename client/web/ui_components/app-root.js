@@ -70,6 +70,9 @@ import {mixinBehaviors} from '@polymer/polymer/lib/legacy/class.js';
 import {html} from '@polymer/polymer/lib/utils/html-tag.js';
 import {PolymerElement} from '@polymer/polymer/polymer-element.js';
 
+// eslint-disable-next-line n/no-missing-import
+import {dismissTopmostOverlay} from './dismiss_topmost_overlay';
+
 // Workaround:
 // https://github.com/PolymerElements/paper-menu-button/issues/101#issuecomment-297856912
 PaperMenuButton.prototype.properties.restoreFocusOnClose.value = false;
@@ -683,6 +686,28 @@ export class AppRoot extends mixinBehaviors(
 
   closeDrawer() {
     this.$.drawer.open = false;
+  }
+
+  /**
+   * Handles a system Back request, such as the Android Back button or gesture.
+   * Closes the topmost menu or dialog, then the navigation drawer, then returns
+   * from an inner page to the home page like the header's back arrow does.
+   * Returns false when there is nothing to go back from, so the caller can
+   * leave the app.
+   */
+  handleBackNavigation() {
+    if (dismissTopmostOverlay(this.shadowRoot)) {
+      return true;
+    }
+    if (this.$.drawer.open) {
+      this.closeDrawer();
+      return true;
+    }
+    if (this.page !== this.DEFAULT_PAGE) {
+      this.changePage(this.DEFAULT_PAGE);
+      return true;
+    }
+    return false;
   }
 
   showToast(text, duration, buttonText, buttonHandler, buttonUrl) {
