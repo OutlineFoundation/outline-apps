@@ -264,6 +264,10 @@ class OutlinePlugin: CDVPlugin {
         return event
       }
     }
+    // Sentry's crash handler registers for SIGPIPE, which would turn a harmless
+    // broken-pipe write (returning EPIPE) into a fatal crash. Restore the ignore
+    // disposition set in AppDelegate+Outline.m. See OUTLINE-CLIENTS-NMDQE.
+    signal(SIGPIPE, SIG_IGN)
     sendSuccess(true, callbackId: command.callbackId)
   }
 
