@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
+#include <signal.h>
 #import "AppDelegate+Outline.h"
 #import "Outline-Swift.h"
 
@@ -29,6 +30,14 @@
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:
         (NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+  // Sockets owned by this process (Go/Tun2socks fetches, WebKit, Sentry
+  // uploads) can be torn down by the OS when the VPN starts or the app is
+  // suspended. Without this, a later write to such a socket raises SIGPIPE,
+  // whose default action terminates the app. Ignoring it makes the write fail
+  // with EPIPE instead, which callers already handle as a regular error.
+  // Other fatal signals remain handled and reported by Sentry.
+  signal(SIGPIPE, SIG_IGN);
+
 #if TARGET_OS_MACCATALYST
     [OutlineCatalystApp initApp];
 #endif
