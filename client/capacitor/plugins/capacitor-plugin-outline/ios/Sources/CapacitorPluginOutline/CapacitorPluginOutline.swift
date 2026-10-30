@@ -118,6 +118,7 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
         dynamicLogLevel = .info
         #endif
 
+        Self.ignoreSigpipe()
         sentryLogger = OutlineSentryLogger(forAppGroup: Self.appGroupIdentifier)
         configureGoBackendDataDirectory()
         beginObservingVpnStatus()
@@ -248,8 +249,22 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
                 return event
             }
         }
+        // SentrySDK.start installs its own SIGPIPE handler, which replaces SIG_IGN and turns
+        // broken pipe writes back into fatal crashes. Re-apply the ignore disposition.
+        Self.ignoreSigpipe()
 
         call.resolve()
+    }
+
+    /// Ignores SIGPIPE so that writes to broken pipes/sockets fail with EPIPE instead of
+    /// terminating the process. After a VPN connection is started and the app is backgrounded,
+    /// iOS can tear down the app's sockets/pipes, and the default SIGPIPE action killed the app
+    /// (Sentry issue OUTLINE-CLIENTS-NMQZ2). Callers already handle write errors.
+    private static func ignoreSigpipe() {
+        // C function pointers are not Equatable in Swift, so we don't compare against SIG_ERR.
+        // signal() can only fail for invalid signal numbers, which SIGPIPE is not.
+        _ = signal(SIGPIPE, SIG_IGN)
+        DDLogDebug("SIGPIPE is ignored")
     }
 
     @objc public func reportEvents(_ call: CAPPluginCall) {
