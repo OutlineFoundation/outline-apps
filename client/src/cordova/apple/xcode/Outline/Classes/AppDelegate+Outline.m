@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
+#include <signal.h>
 #import "AppDelegate+Outline.h"
 #import "Outline-Swift.h"
 
@@ -29,6 +30,13 @@
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:
         (NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+  // Ignore SIGPIPE so that writing to a socket or pipe whose peer has gone away (e.g. sockets
+  // reclaimed by iOS while the app was suspended, or IPC with terminated WebKit processes)
+  // fails with EPIPE instead of terminating the app. This must run before the Go runtime
+  // (Tun2socks) is used, so that it observes SIGPIPE as ignored and does not forward it to the
+  // default (fatal) handler.
+  signal(SIGPIPE, SIG_IGN);
+
 #if TARGET_OS_MACCATALYST
     [OutlineCatalystApp initApp];
 #endif

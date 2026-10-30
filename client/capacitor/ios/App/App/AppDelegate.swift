@@ -20,6 +20,11 @@ import OutlineTunnel
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Ignore SIGPIPE so that writing to a socket or pipe whose peer has gone away (e.g. sockets
+        // reclaimed by iOS while the app was suspended, or IPC with terminated WebKit processes)
+        // fails with EPIPE instead of terminating the app. This must run before the Go runtime
+        // (Tun2socks) is used, so that it observes SIGPIPE as ignored.
+        signal(SIGPIPE, SIG_IGN)
         return true
     }
 
