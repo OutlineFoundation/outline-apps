@@ -264,6 +264,11 @@ class OutlinePlugin: CDVPlugin {
         return event
       }
     }
+    // Sentry installs its own SIGPIPE handler, which would report a broken-pipe write as a
+    // fatal crash. SIGPIPE is ignored on purpose (see AppDelegate+Outline.m): such writes
+    // return EPIPE and are handled by the caller, so re-assert SIG_IGN. Other fatal signals
+    // remain monitored by Sentry.
+    signal(SIGPIPE, SIG_IGN)
     sendSuccess(true, callbackId: command.callbackId)
   }
 
