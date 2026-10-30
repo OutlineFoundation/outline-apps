@@ -21,6 +21,9 @@
 
 import UIKit
 import Capacitor
+#if targetEnvironment(macCatalyst)
+import OutlineCatalystApp
+#endif
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -33,6 +36,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
+        #if targetEnvironment(macCatalyst)
+        OutlineCatalystApp.configureWindowScene(windowScene)
+        #endif
         let window = UIWindow(windowScene: windowScene)
         let rootViewController = OutlineViewController()
         window.rootViewController = rootViewController

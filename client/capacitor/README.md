@@ -58,14 +58,14 @@ Artifacts land in **`client/capacitor/www/`**, including for example:
 
 The source files follow the [`@capacitor/assets`](https://github.com/ionic-team/capacitor-assets) input convention:
 
-| File | Purpose |
-| --- | --- |
-| `assets/icon.png` | Base app icon (1024×1024) |
-| `assets/icon-only.png` | Icon without background (used where the platform composes its own shape) |
-| `assets/icon-foreground.png` | Android adaptive icon foreground layer |
-| `assets/icon-background.png` | Android adaptive icon background layer |
-| `assets/splash.png` | Splash screen (light mode, 2732×2732) |
-| `assets/splash-dark.png` | Splash screen (dark mode) |
+| File                         | Purpose                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `assets/icon.png`            | Base app icon (1024×1024)                                                |
+| `assets/icon-only.png`       | Icon without background (used where the platform composes its own shape) |
+| `assets/icon-foreground.png` | Android adaptive icon foreground layer                                   |
+| `assets/icon-background.png` | Android adaptive icon background layer                                   |
+| `assets/splash.png`          | Splash screen (light mode, 2732×2732)                                    |
+| `assets/splash-dark.png`     | Splash screen (dark mode)                                                |
 
 To regenerate the platform resources after changing any source image:
 
@@ -168,6 +168,35 @@ It reads `SENTRY_DSN` and `DEVELOPMENT_TEAM` from the environment, and needs tha
   cd client/capacitor
   npx cap doctor ios
   ```
+
+## macOS (Mac Catalyst)
+
+The macOS client is the iOS app built for Mac Catalyst, so it shares the `ios/` native project, the Capacitor plugins and `cap sync ios`. Capacitor 9 ships its iOS platform as a source Swift package, so it compiles for Catalyst like every other package in the graph (Capacitor 8's binary package had no Catalyst slice). What differs from iOS:
+
+- **`ios/App/AppKitIntegration/`** is a macOS framework target (the menu bar status item and Dock icon policy, the same sources as the Cordova client's `AppKitBridge`). It is only built and embedded for Catalyst; `AppDelegate` loads it at launch through `OutlineCatalystApp` from `OutlineAppleLib`.
+- `Info.plist` carries `LSUIElement` so the app starts as a menu bar app, as the Cordova macOS client does; iOS ignores the key.
+
+### Build the debug app (one command)
+
+From the **repository root**:
+
+```sh
+npm run action client/capacitor/build macos
+```
+
+This builds the web bundle, runs `cap sync ios`, and runs an **unsigned** `xcodebuild` of `ios/App/App.xcodeproj` for `generic/platform=macOS,variant=Mac Catalyst`. The app lands in Xcode's DerivedData (`Build/Products/Debug-maccatalyst/App.app`) and can be launched with `open`; without signing, the VPN extension cannot run.
+
+### Build the release
+
+```sh
+npm run action client/capacitor/build macos -- --buildMode=release --versionName=<version>
+```
+
+Reads `SENTRY_DSN` and `DEVELOPMENT_TEAM` like the iOS release, and leaves the signed archive at `output/client/macos/Outline.xcarchive`.
+
+### Run from Xcode
+
+Open `ios/App/App.xcodeproj` (`npx cap open ios`), pick the `Outline` scheme and the "My Mac (Mac Catalyst)" destination.
 
 ## Android (device or emulator)
 
