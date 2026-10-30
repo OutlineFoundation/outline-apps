@@ -31,6 +31,7 @@ import type {OutlinePlatform} from '@web/app/platform';
 import {AbstractUpdater} from '@web/app/updater';
 import {UrlInterceptor} from '@web/app/url_interceptor';
 import {NoOpVpnInstaller, type VpnInstaller} from '@web/app/vpn_installer';
+import {deserializeError} from '@web/model/platform_error';
 import {SentryErrorReporter, type Tags} from '@web/shared/error_reporter';
 
 import {CapacitorBrowserMethodChannel} from './browser_method_channel';
@@ -85,12 +86,25 @@ class CapacitorErrorReporter extends SentryErrorReporter {
   }
 }
 
+// The native plugin rejects with the PlatformError serialized as JSON in the
+// error message. Convert it back so callers can match on the error type (e.g.
+// SessionProviderError), as pluginExec does for Cordova.
+async function pluginCall<T>(call: Promise<T>): Promise<T> {
+  try {
+    return await call;
+  } catch (e) {
+    throw deserializeError(e);
+  }
+}
+
 class CapacitorMethodChannel implements MethodChannel {
   async invokeMethod(methodName: string, params: string): Promise<string> {
-    const response = await CapacitorPluginOutline.invokeMethod({
-      method: methodName,
-      input: params,
-    });
+    const response = await pluginCall(
+      CapacitorPluginOutline.invokeMethod({
+        method: methodName,
+        input: params,
+      })
+    );
     return response.value;
   }
 }
@@ -99,19 +113,23 @@ class CapacitorVpnApi implements AsyncVpnApi {
   private statusListener?: PluginListenerHandle;
 
   async start(request: StartRequestJson): Promise<void> {
-    await CapacitorPluginOutline.start({
-      tunnelId: request.id,
-      serverName: request.name,
-      transportConfig: request.client,
-    });
+    await pluginCall(
+      CapacitorPluginOutline.start({
+        tunnelId: request.id,
+        serverName: request.name,
+        transportConfig: request.client,
+      })
+    );
   }
 
   async stop(id: string): Promise<void> {
-    await CapacitorPluginOutline.stop({tunnelId: id});
+    await pluginCall(CapacitorPluginOutline.stop({tunnelId: id}));
   }
 
   async isRunning(id: string): Promise<boolean> {
-    const result = await CapacitorPluginOutline.isRunning({tunnelId: id});
+    const result = await pluginCall(
+      CapacitorPluginOutline.isRunning({tunnelId: id})
+    );
     return result.isRunning;
   }
 
