@@ -18,19 +18,19 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.2.1'
+        classpath 'com.android.tools.build:gradle:9.4.1'
     }
 }
 
 plugins {
-    id 'com.android.library' version '9.2.1' apply false
+    id 'com.android.library' version '9.4.1' apply false
 }
 
 ext {
     compileSdkVersion = 37
     minSdkVersion = 29
     targetSdkVersion = 36
-    androidxAppCompatVersion = '1.7.1'
+    androidxAppCompatVersion = '1.8.0'
 }
 
 allprojects {
