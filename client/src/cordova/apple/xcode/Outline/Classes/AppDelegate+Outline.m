@@ -30,10 +30,12 @@
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:
         (NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
-  // Ignore SIGPIPE so that writes to a closed socket or pipe fail with EPIPE
-  // instead of terminating the app. WebKit (e.g. when iOS kills the WKWebView
-  // GPU process while the app is backgrounded) and the embedded Go runtime can
-  // write to sockets whose peer has gone away; both handle EPIPE gracefully.
+  // Sockets owned by this process (Go/Tun2socks fetches, WebKit, Sentry
+  // uploads) can be torn down by the OS when the VPN starts or the app is
+  // suspended. Without this, a later write to such a socket raises SIGPIPE,
+  // whose default action terminates the app. Ignoring it makes the write fail
+  // with EPIPE instead, which callers already handle as a regular error.
+  // Other fatal signals remain handled and reported by Sentry.
   signal(SIGPIPE, SIG_IGN);
 
 #if TARGET_OS_MACCATALYST
