@@ -11,7 +11,7 @@
   limitations under the License.
 */
 
-import {LitElement, html, css} from 'lit';
+import {LitElement, PropertyValues, html, css} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 
 @customElement('error-details-dialog')
@@ -24,6 +24,20 @@ export class ErrorDetailsDialog extends LitElement {
   @property({type: Boolean}) open: boolean;
 
   @state() copied: boolean = false;
+
+  // Incremented whenever the dialog is closed or its details change, so that a
+  // copy that completes afterwards does not mark the new details as copied.
+  private copyGeneration = 0;
+
+  willUpdate(changedProperties: PropertyValues<this>) {
+    if (
+      changedProperties.has('errorDetails') ||
+      (changedProperties.has('open') && !this.open)
+    ) {
+      this.copyGeneration++;
+      this.copied = false;
+    }
+  }
 
   static styles = css`
     :host {
@@ -70,12 +84,7 @@ export class ErrorDetailsDialog extends LitElement {
         <pre>${this.errorDetails}</pre>
       </article>
       <fieldset slot="actions">
-        <md-text-button
-          @click="${() => {
-            navigator.clipboard.writeText(this.errorDetails);
-            this.copied = true;
-          }}"
-        >
+        <md-text-button @click="${this.copyErrorDetails}">
           ${this.localize(
             this.copied
               ? 'error-details-dialog-copied'
@@ -89,8 +98,65 @@ export class ErrorDetailsDialog extends LitElement {
     </md-dialog>`;
   }
 
+  async copyErrorDetails() {
+    const text = this.errorDetails ?? '';
+    const generation = this.copyGeneration;
+    // Only mark as copied if the dialog still shows the same details.
+    const markCopied = () => {
+      if (
+        generation === this.copyGeneration &&
+        this.open &&
+        (this.errorDetails ?? '') === text
+      ) {
+        this.copied = true;
+      }
+    };
+    try {
+      await navigator.clipboard.writeText(text);
+      markCopied();
+      return;
+    } catch (webClipboardError) {
+      // Some Android WebViews deny clipboard write permission to the Cordova
+      // page (NotAllowedError). Fall back to the native Cordova plugin.
+      const cordovaClipboard = (window as CordovaClipboardWindow).cordova
+        ?.plugins?.clipboard;
+      if (!cordovaClipboard) {
+        console.error('Failed to copy error details', webClipboardError);
+        throw webClipboardError;
+      }
+      try {
+        await new Promise<void>((resolve, reject) =>
+          cordovaClipboard.copy(text, () => resolve(), reject)
+        );
+        markCopied();
+      } catch (cordovaClipboardError) {
+        console.error(
+          'Failed to copy error details',
+          webClipboardError,
+          cordovaClipboardError
+        );
+        throw cordovaClipboardError;
+      }
+    }
+  }
+
   cleanup() {
+    this.copyGeneration++;
     this.open = false;
     this.copied = false;
   }
 }
+
+type CordovaClipboardWindow = Window & {
+  cordova?: {
+    plugins?: {
+      clipboard?: {
+        copy(
+          text: string,
+          onSuccess: () => void,
+          onFailure: (error: unknown) => void
+        ): void;
+      };
+    };
+  };
+};
