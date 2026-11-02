@@ -20,6 +20,10 @@ import OutlineTunnel
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Ignore SIGPIPE so that writes to a broken pipe or socket (e.g. sockets reclaimed by
+        // the OS while the app is suspended in the background) fail with EPIPE instead of
+        // terminating the process with the default SIGPIPE action.
+        signal(SIGPIPE, SIG_IGN)
         return true
     }
 
