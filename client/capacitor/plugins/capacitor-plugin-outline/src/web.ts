@@ -23,6 +23,10 @@ export class CapacitorPluginOutlineWeb
   extends WebPlugin
   implements CapacitorPluginOutline
 {
+  async isAndroidTv(): Promise<{isAndroidTv: boolean}> {
+    return {isAndroidTv: false};
+  }
+
   async invokeMethod(_options: {
     method: string;
     input: string;

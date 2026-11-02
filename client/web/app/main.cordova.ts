@@ -38,6 +38,19 @@ import {SentryErrorReporter, Tags} from '../shared/error_reporter';
 
 const hasDeviceSupport = cordova.platformId !== 'browser';
 
+async function detectAndroidTvDevice(): Promise<boolean> {
+  if (cordova.platformId !== 'android') {
+    return false;
+  }
+
+  try {
+    return await pluginExec<boolean>('isAndroidTv');
+  } catch (error) {
+    console.error('Failed to detect Android TV device', error);
+    return false;
+  }
+}
+
 // Pushes a clipboard event whenever the app is brought to the foreground.
 class CordovaClipboard extends AbstractClipboard {
   getContents() {
@@ -87,6 +100,8 @@ class CordovaMethodChannel implements MethodChannel {
 
 // This class should only be instantiated after Cordova fires the deviceready event.
 class CordovaPlatform implements OutlinePlatform {
+  constructor(readonly isAndroidTv: boolean) {}
+
   getVpnApi(): VpnApi | undefined {
     if (hasDeviceSupport) {
       return new CordovaVpnApi();
@@ -155,8 +170,9 @@ window.handleOpenURL = (url: string) => {
 // https://cordova.apache.org/docs/en/latest/cordova/events/events.html#deviceready
 document.addEventListener('deviceready', async () => {
   installDefaultMethodChannel(new CordovaMethodChannel());
+  const isAndroidTv = await detectAndroidTvDevice();
   try {
-    await main(new CordovaPlatform());
+    await main(new CordovaPlatform(isAndroidTv));
   } catch (e) {
     console.error('main() failed: ', e);
   }
