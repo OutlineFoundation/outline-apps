@@ -231,29 +231,22 @@ function wireExternalLinkHandling() {
   );
 }
 
-interface BackNavigationHandler {
-  handleBackNavigation(): boolean;
-}
-
 /**
- * Routes Android's system Back (button or gesture) through the app's UI: the
- * app root closes the topmost menu, dialog or drawer, or returns to the home
- * page. When there is nothing to go back from, the app moves to the
- * background, as Android does for a root activity.
+ * Handles Android's system Back (button or gesture) the way the Capacitor App
+ * plugin documents it: go back in the WebView history when there is any, and
+ * otherwise move the app to the background, as Android does for a root
+ * activity.
  *
- * The App plugin only emits Back to JS while a `backButton` listener is
- * registered. Without one it falls back to the WebView history, which knows
- * nothing about menus, dialogs or the drawer.
+ * Without a `backButton` listener the plugin swallows Back once the WebView
+ * history is empty, so Back on the home page never leaves the app.
  */
 function wireAndroidBackButton() {
   if (Capacitor.getPlatform() !== 'android') {
     return;
   }
-  App.addListener('backButton', () => {
-    const appRoot = document.querySelector('app-root') as
-      | (Element & Partial<BackNavigationHandler>)
-      | null;
-    if (appRoot?.handleBackNavigation?.()) {
+  App.addListener('backButton', ({canGoBack}) => {
+    if (canGoBack) {
+      window.history.back();
       return;
     }
     App.minimizeApp().catch((err: unknown) => {
