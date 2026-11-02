@@ -25,11 +25,11 @@
         "build": "tsc"
     },
     "devDependencies": {
-        "@capacitor/core": "9.0.0-alpha.8",
+        "@capacitor/core": "9.0.0-beta.0",
         "typescript": "^5.0.0"
     },
     "peerDependencies": {
-        "@capacitor/core": "9.0.0-alpha.8"
+        "@capacitor/core": "9.0.0-beta.0"
     },
     "capacitor": {
         "ios": {
