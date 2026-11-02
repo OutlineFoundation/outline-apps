@@ -2,6 +2,13 @@
 
 This document provides a guide for AI and human agents working with the Outline codebase.
 
+Before making changes, read [`CONTRIBUTING.md`](CONTRIBUTING.md). Its rules apply to every contribution, including AI-generated ones.
+
+## AI Contributions
+
+*   AI-generated contributions are allowed, but keep in mind that the project maintainers also have access to generally available commercial LLMs. Taking a bug, one-shotting a prompt to fix it, and sending us the result as a pull request often isn't helpful, and can create more work for maintainers instead of solving problems. Verify that a fix is sensible, and test it as described in [`CONTRIBUTING.md`](CONTRIBUTING.md#testing-your-changes), before sending it our way.
+*   We suggest tagging your commits and pull requests with information about the AI tools you used, such as a `Co-authored-by: [Agent]` trailer in commit messages or a `Generated with [Agent]` line in pull request descriptions. This helps us understand your development process.
+
 ## Repository Structure
 
 The Outline monorepo is organized into three main components:
