@@ -26,6 +26,20 @@ Please don't send changes that ask the maintainers to "build and test this on
 iOS" to verify them. This puts too much burden on the maintainers, and we cannot
 accept changes of this kind.
 
+## Code should pass CI
+
+Pull requests must pass CI before we can merge them. Some CI jobs depend on
+others, so a failure early on (for example, in the web client tests) can keep
+the rest of the jobs from running. Please fix any failures and make sure the
+tests pass.
+
+For security reasons, CI doesn't run automatically on pull requests from
+external contributors. A maintainer has to approve each run, so it may take a
+while for results to show up on your pull request. To get faster feedback, you
+can run CI in your own fork: enable GitHub Actions on your fork, then open a pull
+request within your fork from your feature branch into your fork's `master`
+branch. CI runs there without waiting for a maintainer's approval.
+
 ## AI-generated contributions
 
 AI-generated contributions are welcome, subject to the guidelines in the
