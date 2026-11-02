@@ -28,10 +28,8 @@ accept changes of this kind.
 
 ## Code should pass CI
 
-Pull requests must pass CI before we can merge them. Some CI jobs depend on
-others, so a failure early on (for example, in the web client tests) can keep
-the rest of the jobs from running. Please fix any failures and make sure the
-tests pass.
+Pull requests must pass CI before we can merge them. Please fix any failures and
+make sure the tests pass.
 
 For security reasons, CI doesn't run automatically on pull requests from
 external contributors. A maintainer has to approve each run, so it may take a
