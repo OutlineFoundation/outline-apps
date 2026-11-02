@@ -12,8 +12,13 @@ for more information on using pull requests.
 
 ## Testing your changes
 
-You must be able to reasonably test any change you submit. If your change needs
-to be tested on a real iOS device, for example, then you need to test it on an
+Changes should come with tests. When you fix a bug or add a feature, add or
+update unit tests that cover it, and make sure the existing tests still pass
+(for example, `npm run action client/web/test`).
+
+Some code can't easily be unit tested, such as the iOS VPN extension, which only
+runs on a real device. You must still be able to reasonably test any change you
+submit: if your change needs to be tested on a real iOS device, test it on an
 iOS device yourself and describe how you tested it in your pull request
 description.
 

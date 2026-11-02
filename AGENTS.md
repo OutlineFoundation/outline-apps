@@ -7,9 +7,7 @@ Before making changes, read [`CONTRIBUTING.md`](CONTRIBUTING.md). Its rules appl
 ## AI Contributions
 
 *   AI-generated contributions are allowed, but keep in mind that the project maintainers also have access to generally available commercial LLMs. Taking a bug, one-shotting a prompt to fix it, and sending us the result as a pull request often isn't helpful, and can create more work for maintainers instead of solving problems. Verify that a fix is sensible, and test it as described in [`CONTRIBUTING.md`](CONTRIBUTING.md#testing-your-changes), before sending it our way.
-*   Disclose AI assistance:
-    *   In pull request descriptions, add a `Generated with [Agent]` line naming the agent you used (for example, `🤖 Generated with [Claude Code](https://claude.com/claude-code)`).
-    *   In commit messages, add a [`Co-authored-by:` trailer](https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) for the agent (for example, `Co-authored-by: Claude <noreply@anthropic.com>`).
+*   It helps maintainers when you tag your commits and pull requests with information about the AI tools you used, such as a `Co-authored-by: [Agent]` trailer in commit messages or a `Generated with [Agent]` line in pull request descriptions. This helps us understand your development process.
 
 ## Repository Structure
 
