@@ -25,7 +25,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor", exact: "9.0.0-alpha.8"),
+        .package(name: "capacitor", path: "../../../../node_modules/@capacitor/ios"),
         .package(path: "../../../src/cordova/apple/OutlineAppleLib")
     ],
     targets: [
