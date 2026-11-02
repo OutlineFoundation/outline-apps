@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import {App} from '@capacitor/app';
 import {Browser} from '@capacitor/browser';
 import {Capacitor} from '@capacitor/core';
 import type {PluginListenerHandle} from '@capacitor/core';
@@ -248,14 +249,42 @@ function wireExternalLinkHandling() {
   );
 }
 
-// Bootstrap: install the method channel, wire external links, then hand off
-// to the shared main() — mirroring the Cordova and Electron entry points.
+/**
+ * Handles Android's system Back (button or gesture) the way the Capacitor App
+ * plugin documents it: go back in the WebView history when there is any, and
+ * otherwise move the app to the background, as Android does for a root
+ * activity.
+ *
+ * Without a `backButton` listener the plugin swallows Back once the WebView
+ * history is empty, so Back on the home page never leaves the app.
+ */
+function wireAndroidBackButton() {
+  if (Capacitor.getPlatform() !== 'android') {
+    return;
+  }
+  App.addListener('backButton', ({canGoBack}) => {
+    if (canGoBack) {
+      window.history.back();
+      return;
+    }
+    App.minimizeApp().catch((err: unknown) => {
+      console.warn('Failed to minimize the app', err);
+    });
+  }).catch((err: unknown) => {
+    console.error('Failed to register the Back button listener', err);
+  });
+}
+
+// Bootstrap: install the method channel, wire external links and the Android
+// Back button, then hand off to the shared main() — mirroring the Cordova and
+// Electron entry points.
 installDefaultMethodChannel(
   hasDeviceSupport
     ? new CapacitorMethodChannel()
     : new CapacitorBrowserMethodChannel()
 );
 wireExternalLinkHandling();
+wireAndroidBackButton();
 
 // The migration has to finish first: main() builds the server repository from
 // localStorage, so replaying the Cordova data afterwards would leave the user
