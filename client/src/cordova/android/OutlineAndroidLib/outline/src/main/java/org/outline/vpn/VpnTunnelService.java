@@ -638,7 +638,11 @@ public class VpnTunnelService extends VpnService {
     notificationBuilder = null;
   }
 
-  /** Retrieves the ID for a resource. This is equivalent to using the generated R class. */
+  /**
+   * Retrieves the ID for a resource. This is equivalent to using the generated R class, except
+   * that the resource shrinker cannot see the reference: every resource looked up through here must
+   * be listed in the app's res/raw/keep.xml (see client/capacitor/plugins/capacitor-plugin-outline).
+   */
   public int getResourceId(final String name, final String type) {
     return getResources().getIdentifier(name, type, getPackageName());
   }
