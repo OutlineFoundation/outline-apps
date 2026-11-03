@@ -273,7 +273,7 @@ jobs:
 
       # Builds the web bundle, runs `cap sync ios` (which builds the tun2socks
       # xcframework via the capacitor:sync:before hook), and then runs an
-      # unsigned xcodebuild of ios/App/App.xcodeproj.
+      # unsigned xcodebuild of apple/App/App.xcodeproj.
       - name: Build iOS Capacitor Client
         run: npm run action client/capacitor/build ios
 
