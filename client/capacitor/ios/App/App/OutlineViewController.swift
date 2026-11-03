@@ -19,14 +19,90 @@ import WebKit
 class OutlineViewController: CAPBridgeViewController {
     private var webViewRetryCount = 0
     private let maxWebViewRetries = 10
-    
+    // Track if working directory has been adjusted to prevent multiple adjustments
+    private var hasAdjustedWorkingDirectory = false
+    // Bound the retry loop so a bridge that never initializes can't reschedule forever
+    private var workingDirectoryRetryCount = 0
+    private let maxWorkingDirectoryRetries = 10
+    private var sceneObservers: [NSObjectProtocol] = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         #if DEBUG
         // Enable Safari Web Inspector for debugging in development builds
         enableSafariDebugging()
         #endif
+
+        observeSceneLifecycle()
+    }
+
+    deinit {
+        sceneObservers.forEach { NotificationCenter.default.removeObserver($0) }
+    }
+
+    // MARK: - Scene lifecycle
+
+    // With the SwiftUI entry point (App.swift) there is no scene delegate of
+    // our own to receive these, so the root view controller observes the
+    // scene notifications for its own window scene instead.
+    private func observeSceneLifecycle() {
+        let center = NotificationCenter.default
+        sceneObservers.append(center.addObserver(
+            forName: UIScene.willEnterForegroundNotification, object: nil, queue: .main
+        ) { [weak self] notification in
+            guard let self = self, self.isOwnScene(notification.object) else { return }
+            // Ensure WebView is visible when app returns from background
+            // viewWillAppear will also be called, but this ensures it happens immediately
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.ensureWebViewVisible()
+            }
+        })
+        sceneObservers.append(center.addObserver(
+            forName: UIScene.didActivateNotification, object: nil, queue: .main
+        ) { [weak self] notification in
+            guard let self = self, self.isOwnScene(notification.object) else { return }
+            self.adjustWorkingDirectoryIfNeeded()
+
+            // Ensure WebView is visible when app becomes active (e.g., after unlocking device)
+            // This is separate from viewWillAppear as it handles app state transitions
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.ensureWebViewVisible()
+            }
+        })
+    }
+
+    private func isOwnScene(_ object: Any?) -> Bool {
+        guard let scene = object as? UIScene else { return false }
+        // Before the view is in a window, there is only one scene to speak of.
+        guard let ownScene = view.window?.windowScene else { return true }
+        return scene === ownScene
+    }
+
+    private func adjustWorkingDirectoryIfNeeded() {
+        guard !hasAdjustedWorkingDirectory else { return }
+        guard let appPath = bridge?.config.appLocation.path else {
+            retryWorkingDirectoryAdjustment()
+            return
+        }
+
+        if FileManager.default.changeCurrentDirectoryPath(appPath) {
+            hasAdjustedWorkingDirectory = true
+        }
+    }
+
+    /**
+     * Retries working directory adjustment if the bridge isn't ready yet.
+     * This handles timing issues where the Capacitor bridge might not be initialized immediately.
+     * Retries are capped by `maxWorkingDirectoryRetries` so a bridge that never finishes
+     * initializing (e.g. SPM resolution or a plugin failing during load) can't reschedule forever.
+     */
+    private func retryWorkingDirectoryAdjustment() {
+        guard workingDirectoryRetryCount < maxWorkingDirectoryRetries else { return }
+        workingDirectoryRetryCount += 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.adjustWorkingDirectoryIfNeeded()
+        }
     }
     
     override open func capacitorDidLoad() {
