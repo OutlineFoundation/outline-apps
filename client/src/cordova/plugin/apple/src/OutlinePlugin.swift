@@ -42,6 +42,84 @@ class OutlinePlugin: CDVPlugin {
 
   private var sentryLogger: OutlineSentryLogger!
   private var statusCallbackId: String?
+  private var controlSocket: OutlineControlSocket?
+  private var controlCallbacks: [String: ([String: Any]) -> Void] = [:]
+  private var controlCallbackId: String?
+
+  func onControlCommand(_ command: CDVInvokedUrlCommand) {
+    #if os(macOS) || targetEnvironment(macCatalyst)
+      controlCallbackId = command.callbackId
+      guard controlSocket == nil else { return }
+      do {
+        controlSocket = try OutlineControlSocket { [weak self] request, completion in
+          guard let self else {
+            completion(["ok": false, "error": "app_not_ready"])
+            return
+          }
+          self.dispatchControlRequest(request, completion: completion)
+        }
+      } catch {
+        sendError("Cannot start local command bridge", callbackId: command.callbackId)
+      }
+    #else
+      sendError("Command bridge is macOS-only", callbackId: command.callbackId)
+    #endif
+  }
+
+  private func dispatchControlRequest(_ request: [String: Any], completion: @escaping ([String: Any]) -> Void) {
+    guard let id = request["id"] as? String, let callbackId = controlCallbackId else {
+      completion(["ok": false, "error": "app_not_ready"])
+      return
+    }
+    controlCallbacks[id] = completion
+    let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: request)
+    result?.setKeepCallbackAs(true)
+    commandDelegate.send(result, callbackId: callbackId)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 120) { [weak self] in
+      self?.controlCallbacks.removeValue(forKey: id)?(["ok": false, "error": "timeout_outcome_unknown"])
+    }
+  }
+
+  @objc private func controlMenuCommand(_ notification: Notification) {
+    guard let action = notification.userInfo?["action"] as? String,
+          ["connect", "disconnect"].contains(action) else { return }
+    var request = notification.userInfo as? [String: Any] ?? [:]
+    request["v"] = 1
+    request["id"] = UUID().uuidString
+    request["deadline"] = Date().addingTimeInterval(115).timeIntervalSince1970 * 1000
+    dispatchControlRequest(request) { _ in }
+  }
+
+  func controlReply(_ command: CDVInvokedUrlCommand) {
+    guard let id = command.argument(at: 0) as? String,
+          let response = command.argument(at: 1) as? [String: Any] else {
+      return sendError("Invalid command reply", callbackId: command.callbackId)
+    }
+    controlCallbacks.removeValue(forKey: id)?(response)
+    sendSuccess(callbackId: command.callbackId)
+  }
+
+  func controlSnapshot(_ command: CDVInvokedUrlCommand) {
+    Task {
+      let snapshot = await OutlineVpn.shared.controlSnapshot()
+      let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: snapshot)
+      self.commandDelegate.send(result, callbackId: command.callbackId)
+    }
+  }
+
+  func controlDisconnect(_ command: CDVInvokedUrlCommand) {
+    Task {
+      await OutlineVpn.shared.controlDisconnect()
+      let state = await OutlineVpn.shared.controlSnapshot()
+      guard state["state"] as? String == "disconnected", state["onDemand"] as? Bool == false else {
+        return sendError("VPN did not disconnect", callbackId: command.callbackId)
+      }
+      #if os(macOS) || targetEnvironment(macCatalyst)
+        NotificationCenter.default.post(name: .kVpnDisconnected, object: nil)
+      #endif
+      sendSuccess(callbackId: command.callbackId)
+    }
+  }
 
   #if os(macOS) || targetEnvironment(macCatalyst)
     private static let kPlatform = "macOS"
@@ -73,6 +151,10 @@ class OutlinePlugin: CDVPlugin {
     #endif
 
     #if os(macOS) || targetEnvironment(macCatalyst)
+      NotificationCenter.default.addObserver(
+        self, selector: #selector(self.controlMenuCommand),
+        name: Notification.Name("outlineControlMenuCommand"), object: nil
+      )
       NotificationCenter.default.addObserver(
         self,
         selector: #selector(self.stopVpnOnAppQuit),
@@ -162,7 +244,16 @@ class OutlinePlugin: CDVPlugin {
     }
     DDLogInfo("\(Action.stop) \(tunnelId)")
     Task {
-      await OutlineVpn.shared.stop(tunnelId)
+      #if os(macOS) || targetEnvironment(macCatalyst)
+        // A GUI Disconnect during a queued region switch still means off.
+        await OutlineVpn.shared.controlDisconnect()
+        let state = await OutlineVpn.shared.controlSnapshot()
+        guard state["state"] as? String == "disconnected", state["onDemand"] as? Bool == false else {
+          return sendError("VPN did not disconnect", callbackId: command.callbackId)
+        }
+      #else
+        await OutlineVpn.shared.stop(tunnelId)
+      #endif
       sendSuccess(callbackId: command.callbackId)
       #if os(macOS) || targetEnvironment(macCatalyst)
         NotificationCenter.default.post(
