@@ -10,7 +10,7 @@
     "mobile"
   ],
   "scripts": {
-    "assets:generate": "capacitor-assets generate --android && capacitor-assets generate --ios && node optimize_png.mjs android/app/src/main/res ios/App/App/Assets.xcassets",
+    "assets:generate": "capacitor-assets generate --android && capacitor-assets generate --ios --iosProject apple/App && node optimize_png.mjs android/app/src/main/res apple/App/App/Assets.xcassets",
     "clean": "rm -rf node_modules www",
     "start": "node ./start.action.mjs",
     "build:web": "node ./web_build.action.mjs",
