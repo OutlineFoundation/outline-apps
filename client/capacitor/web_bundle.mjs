@@ -23,7 +23,7 @@ import {runWebpack} from '../build/run_webpack.mjs';
 
 const capacitorDir = path.dirname(url.fileURLToPath(import.meta.url));
 
-const SUPPORTED_PLATFORMS = new Set(['browser', 'android', 'ios']);
+const SUPPORTED_PLATFORMS = new Set(['browser', 'android', 'ios', 'macos']);
 
 /**
  * Builds the Capacitor web bundle into client/capacitor/www/. Takes the
