@@ -27,9 +27,9 @@ import (
 	"strings"
 	"time"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
 	persistentcookiejar "go.nhat.io/cookiejar"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/configyaml"
 )
 
 type HTTPRequestConfig struct {
@@ -61,6 +61,7 @@ func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.
 		// Create HTTP Client.
 
 		httpClient := &http.Client{
+			Timeout: 30 * time.Second,
 			Transport: &http.Transport{
 				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 					if strings.HasPrefix(network, "tcp") {
