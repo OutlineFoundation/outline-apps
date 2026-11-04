@@ -246,12 +246,17 @@ jobs:
 
   capacitor_ios_debug_build:
     name: iOS Capacitor Debug Build
-    runs-on: macos-15
+    # Capacitor 9 requires Xcode 27 (https://capacitorjs.com/docs/next/updating/9-0).
+    # GitHub ships it on the xcode-27 image (macOS 26); the macos-* images stop at 26.x.
+    runs-on: xcode-27
     timeout-minutes: 30
     needs: [web_test, backend_test]
     steps:
-      - name: Display XCode
-        run: xcode-select --print-path
+      - name: Check Xcode 27
+        run: |
+          xcode-select --print-path
+          xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 27\.'
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
