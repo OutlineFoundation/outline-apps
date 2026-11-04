@@ -40,6 +40,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -109,6 +112,11 @@ public class VpnTunnelService extends VpnService {
   private VpnTunnelStore tunnelStore;
   private Notification.Builder notificationBuilder;
 
+  // Tear-down can block for a long time (it waits for the service lock held by startTunnel and
+  // calls into Go to close the remote device), so it must never run on the main thread.
+  private final ExecutorService teardownExecutor =
+      Executors.newSingleThreadExecutor(r -> new Thread(r, "outline-tunnel-teardown"));
+
   private final IVpnTunnelService.Stub binder = new IVpnTunnelService.Stub() {
     @Override
     public DetailedJsonError startTunnel(@NonNull TunnelConfig config) {
@@ -164,8 +172,7 @@ public class VpnTunnelService extends VpnService {
     if (intent != null) {
       if (intent.getBooleanExtra(STOP_ACTIVE_TUNNEL_EXTRA, false)) {
         broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
-        tearDownActiveTunnel();
-        stopSelf();
+        tearDownActiveTunnelAsync(this::stopSelf);
         return START_NOT_STICKY;
       }
       if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
@@ -188,14 +195,49 @@ public class VpnTunnelService extends VpnService {
   public void onRevoke() {
     LOG.info("VPN revoked.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
-    tearDownActiveTunnel();
+    tearDownActiveTunnelAsync(null);
   }
 
   @Override
   public void onDestroy() {
     LOG.info("Destroying VPN service.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
-    tearDownActiveTunnel();
+    tearDownActiveTunnelAsync(null);
+    // Let the queued tear-down finish, but do not block the main thread waiting for it.
+    teardownExecutor.shutdown();
+  }
+
+  /**
+   * Runs {@link #tearDownActiveTunnel()} on a background thread so lifecycle callbacks invoked on
+   * the main thread don't block (and trigger an ANR) while waiting for the service lock or for the
+   * Go remote device to close.
+   *
+   * @param onComplete optional action to run on the background thread after the tear-down.
+   */
+  private void tearDownActiveTunnelAsync(@Nullable final Runnable onComplete) {
+    final Runnable task = () -> {
+      final long startMs = System.currentTimeMillis();
+      try {
+        tearDownActiveTunnel();
+      } catch (Exception e) {
+        LOG.log(Level.SEVERE, "Failed to tear down the active tunnel", e);
+      } finally {
+        final long elapsedMs = System.currentTimeMillis() - startMs;
+        if (elapsedMs > 4000) {
+          LOG.warning(String.format(Locale.ROOT, "Tunnel tear-down took %d ms", elapsedMs));
+        }
+        if (onComplete != null) {
+          onComplete.run();
+        }
+      }
+    };
+    try {
+      teardownExecutor.execute(task);
+    } catch (RejectedExecutionException e) {
+      // The executor was shut down (service already destroyed); still tear down off the main thread.
+      LOG.log(Level.WARNING, "Tear-down executor rejected task, using a dedicated thread", e);
+      new Thread(task, "outline-tunnel-teardown").start();
+    }
   }
 
   // Tunnel API
@@ -342,7 +384,7 @@ public class VpnTunnelService extends VpnService {
   }
 
   /** Helper method to tear down an active tunnel. */
-  private void tearDownActiveTunnel() {
+  private synchronized void tearDownActiveTunnel() {
     // Stop monitoring network changes.
     try {
       final ConnectivityManager connectivityManager =
