@@ -17,13 +17,31 @@ import CapacitorPluginOutline
 import WebKit
 
 class OutlineViewController: CAPBridgeViewController {
+    // Capacitor's own router decides whether a request is for a file or for the
+    // app's index.html by building a file URL from the request path and looking
+    // at its extension. For the main-frame request the path is empty, so that
+    // URL is the process's current directory, and whether index.html gets
+    // served depends on where the process was started from, which the app does
+    // not control: started inside a directory whose name has an extension (an
+    // .app bundle, say), the web view stays blank. This router applies the
+    // same rule to the path string itself.
+    private struct Router: Capacitor.Router {
+        var basePath: String = ""
+
+        func route(for path: String) -> String {
+            if (path as NSString).pathExtension.isEmpty {
+                return basePath + "/index.html"
+            }
+            return basePath + path
+        }
+    }
+
+    override func router() -> Capacitor.Router {
+        return Router()
+    }
+
     private var webViewRetryCount = 0
     private let maxWebViewRetries = 10
-    // Track if working directory has been adjusted to prevent multiple adjustments
-    private var hasAdjustedWorkingDirectory = false
-    // Bound the retry loop so a bridge that never initializes can't reschedule forever
-    private var workingDirectoryRetryCount = 0
-    private let maxWorkingDirectoryRetries = 10
     private var sceneObservers: [NSObjectProtocol] = []
 
     override func viewDidLoad() {
@@ -62,8 +80,6 @@ class OutlineViewController: CAPBridgeViewController {
             forName: UIScene.didActivateNotification, object: nil, queue: .main
         ) { [weak self] notification in
             guard let self = self, self.isOwnScene(notification.object) else { return }
-            self.adjustWorkingDirectoryIfNeeded()
-
             // Ensure WebView is visible when app becomes active (e.g., after unlocking device)
             // This is separate from viewWillAppear as it handles app state transitions
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -79,31 +95,6 @@ class OutlineViewController: CAPBridgeViewController {
         return scene === ownScene
     }
 
-    private func adjustWorkingDirectoryIfNeeded() {
-        guard !hasAdjustedWorkingDirectory else { return }
-        guard let appPath = bridge?.config.appLocation.path else {
-            retryWorkingDirectoryAdjustment()
-            return
-        }
-
-        if FileManager.default.changeCurrentDirectoryPath(appPath) {
-            hasAdjustedWorkingDirectory = true
-        }
-    }
-
-    /**
-     * Retries working directory adjustment if the bridge isn't ready yet.
-     * This handles timing issues where the Capacitor bridge might not be initialized immediately.
-     * Retries are capped by `maxWorkingDirectoryRetries` so a bridge that never finishes
-     * initializing (e.g. SPM resolution or a plugin failing during load) can't reschedule forever.
-     */
-    private func retryWorkingDirectoryAdjustment() {
-        guard workingDirectoryRetryCount < maxWorkingDirectoryRetries else { return }
-        workingDirectoryRetryCount += 1
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.adjustWorkingDirectoryIfNeeded()
-        }
-    }
     
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
