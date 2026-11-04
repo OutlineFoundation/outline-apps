@@ -90,6 +90,12 @@ The web/browser build does not use this directory — its favicon and images com
 
 Use this flow when you need the real Outline iOS plugin (VPN, native method channel, and so on). All **`npx cap`** commands below are run from **`client/capacitor`** (the directory that contains `capacitor.config.json` and `ios/`).
 
+### Capacitor versions
+
+`package.json` pins every `@capacitor/*` package to an exact version, with no caret. The packages publish prereleases under several labels (`alpha`, `beta`, `dev`, `nightly`), and a caret range lets npm pick whichever of them sorts highest for the same version number, which is not necessarily the one intended. The core packages (`core`, `cli`, `ios`, `android`) are on the same Capacitor 9 beta.
+
+TODO: `@capacitor/app`, `@capacitor/browser` and `@capacitor/splash-screen` are still on `9.0.0-alpha.2`, the latest prerelease published for the plugins; move them to the beta (or the release) once one exists.
+
 ### Requirements (iOS)
 
 - A Mac with [Xcode](https://developer.apple.com/xcode/) installed, including the Xcode command-line tools, and a recent iOS SDK.
