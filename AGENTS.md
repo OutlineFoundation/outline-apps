@@ -48,7 +48,7 @@ npm run action client/src/cordova/setup macos -- --buildMode=release
 
 | Component | Version |
 |-----------|---------|
-| Node.js   | 22 — run `nvm use` if you have nvm |
+| Node.js   | 24 — run `nvm use` if you have nvm |
 | Go        | 1.22+   |
 
 Platform-specific requirements (Android SDK, Xcode, zig for cross-compilation) are documented in the relevant subdirectory AGENTS.md files.
