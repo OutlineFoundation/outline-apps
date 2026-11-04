@@ -40,8 +40,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -112,31 +110,26 @@ public class VpnTunnelService extends VpnService {
   private TunnelConfig tunnelConfig;
   private NetworkConnectivityMonitor networkConnectivityMonitor;
   private VpnTunnelStore tunnelStore;
-  // Starting and tearing down the tunnel can block for a long time (they wait for the service lock
-  // and call into Go for network setup / remote device close), so requests coming from lifecycle
-  // callbacks on the main thread run here instead. A single thread keeps start and stop requests in
-  // the order they were received, so an earlier stop can never tear down a newer tunnel.
-  private final ExecutorService tunnelExecutor =
-      Executors.newSingleThreadExecutor(r -> new Thread(r, "outline-tunnel"));
-  // Set in onDestroy so queued start requests don't bring a tunnel up after the service is gone.
-  private volatile boolean isDestroyed = false;
-  // device), so they must never run on the main thread, and serializing them guarantees that an
-  // earlier stop request can never tear down a tunnel started by a later request.
-  private final ExecutorService tunnelExecutor =
-      Executors.newSingleThreadExecutor(r -> new Thread(r, "outline-tunnel"));
+  private Notification.Builder notificationBuilder;
 
-  private final IVpnTunnelService.Stub binder = new IVpnTunnelService.Stub() {
+  private Notification.Builder notificationBuilder;
+
+  // All tunnel start/stop operations run one at a time on this thread, in the order they were
+  // requested. They can block for a long time (waiting for the service lock, network setup, health
+  // checks, closing the Go remote device), so they must never run on the main thread. Serializing
+  // them guarantees that an earlier stop request can never tear down a tunnel started later.
+  private final ExecutorService tunnelExecutor =
+      Executors.newSingleThreadExecutor(r -> new Thread(r, "outline-tunnel"));
     @Override
     public DetailedJsonError startTunnel(@NonNull TunnelConfig config) {
       // Binder threads may block; wait for the result while keeping request order.
       return callOnTunnelThread(() -> VpnTunnelService.this.startTunnel(config));
-    }
-
+      return VpnTunnelService.this.startTunnel(config);
     @Override
     public DetailedJsonError stopTunnel(String tunnelId) {
       return callOnTunnelThread(() -> VpnTunnelService.this.stopTunnel(tunnelId));
     }
-
+      return VpnTunnelService.this.stopTunnel(tunnelId);
     @Override
     public boolean isTunnelActive(String tunnelId) {
       return VpnTunnelService.this.isTunnelActive(tunnelId);
@@ -158,14 +151,14 @@ public class VpnTunnelService extends VpnService {
   @Override
   public IBinder onBind(Intent intent) {
     LOG.info(String.format(Locale.ROOT, "Binding VPN service: %s", intent));
-      startLastSuccessfulTunnel(NO_START_ID);
+    String action = intent.getAction();
     if (action != null && action.equals(SERVICE_INTERFACE)) {
-      return super.onBind(intent);
+    String action = intent.getAction();
     }
     if (intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false)) {
-      startLastSuccessfulTunnelAsync();
+      startLastSuccessfulTunnel(NO_START_ID);
     }
-    String errorReportingApiKey =
+      startLastSuccessfulTunnel(NO_START_ID);
         intent.getStringExtra(MessageData.ERROR_REPORTING_API_KEY.value);
     if (errorReportingApiKey != null) {
       initErrorReporting(errorReportingApiKey);
@@ -176,115 +169,81 @@ public class VpnTunnelService extends VpnService {
   /** This is the entrypoint when started by the OS. */
   @Override
   public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
-        // Only stop the service if no newer start request arrived in the meantime.
-        runOnTunnelThread("tear down (stop request)", () -> {
-          tearDownActiveTunnel();
-          stopSelf(startId);
-        });
+    LOG.info(String.format(Locale.ROOT, "Starting VPN service: %s", intent));
+    int superOnStartReturnValue = super.onStartCommand(intent, flags, startId);
+    LOG.info(String.format(Locale.ROOT, "Starting VPN service: %s", intent));
     int superOnStartReturnValue = super.onStartCommand(intent, flags, startId);
     if (intent != null) {
       if (intent.getBooleanExtra(STOP_ACTIVE_TUNNEL_EXTRA, false)) {
-        startLastSuccessfulTunnel(startId);
+        broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
+    if (intent != null) {
+      if (intent.getBooleanExtra(STOP_ACTIVE_TUNNEL_EXTRA, false)) {
+        broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
         // Only stop the service if no newer start request arrived in the meantime.
-        tearDownActiveTunnelAsync(() -> stopSelf(startId));
-        return START_NOT_STICKY;
-      }
-      if (intent.getBooleanExtra(START_LAST_TUNNEL_EXTRA, false)) {
-        startLastSuccessfulTunnelAsync();
+        runOnTunnelThread("tear down (stop request)", () -> {
+        startLastSuccessfulTunnel(startId);
         QuickSettingsTileService.requestTileUpdate(this);
         return superOnStartReturnValue;
         startLastSuccessfulTunnel(startId);
       // VpnServiceStarter puts AUTOSTART_EXTRA in the intent when the service starts automatically.
       boolean startedByVpnStarter =
-          intent.getBooleanExtra(VpnServiceStarter.AUTOSTART_EXTRA, false);
+      }
       boolean startedByAlwaysOn = VpnService.SERVICE_INTERFACE.equals(intent.getAction());
       if (startedByVpnStarter || startedByAlwaysOn) {
-        startLastSuccessfulTunnelAsync();
+        startLastSuccessfulTunnel(startId);
       }
     }
-    return superOnStartReturnValue;
-    runOnTunnelThread("tear down (revoke)", this::tearDownActiveTunnel);
+        startLastSuccessfulTunnel(startId);
+  }
 
   @Override
-  public void onRevoke() {
+  }
     LOG.info("VPN revoked.");
     broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
-    isDestroyed = true;
-    tearDownActiveTunnelAsync(null);
-    runOnTunnelThread("tear down (destroy)", this::tearDownActiveTunnel);
+    runOnTunnelThread("tear down (revoke)", this::tearDownActiveTunnel);
+  }
 
+    runOnTunnelThread("tear down (revoke)", this::tearDownActiveTunnel);
+  }
+    isDestroyed = true;
+  @Override
+    runOnTunnelThread("tear down (destroy)", this::tearDownActiveTunnel);
+    // Let queued operations finish, but do not block the main thread waiting for them.
+    isDestroyed = true;
     tunnelExecutor.shutdown();
-  public void onDestroy() {
-    LOG.info("Destroying VPN service.");
-    broadcastVpnConnectivityChange(TunnelStatus.DISCONNECTED);
-   * Runs blocking tunnel work on {@link #tunnelExecutor} so lifecycle callbacks invoked on the main
-   * thread don't block (and trigger an ANR) while waiting for the service lock, network setup, or
-   * for the Go remote device to close. Tasks run one at a time in submission order.
+    runOnTunnelThread("tear down (destroy)", this::tearDownActiveTunnel);
+    // Let the queued tear-down finish, but do not block the main thread waiting for it.
+    tunnelExecutor.shutdown();
+  }
+
   /**
-  private void runOnTunnelThread(final String name, final Runnable work) {
-   * the main thread don't block (and trigger an ANR) while waiting for the service lock or for the
-   * Go remote device to close.
-   *
-        work.run();
-   */
-        LOG.log(Level.SEVERE, String.format(Locale.ROOT, "Tunnel task failed: %s", name), e);
-    final Runnable task = () -> {
+  }
+
+  /**
       final long startMs = System.currentTimeMillis();
-      try {
-          LOG.warning(String.format(Locale.ROOT, "Tunnel task '%s' took %d ms", name, elapsedMs));
+  private void runOnTunnelThread(final String name, final Runnable work) {
+        work.run();
+      } catch (Exception e) {
+        LOG.log(Level.SEVERE, String.format(Locale.ROOT, "Tunnel task failed: %s", name), e);
+        work.run();
+      } catch (Exception e) {
+        LOG.log(Level.SEVERE, String.format(Locale.ROOT, "Tunnel task failed: %s", name), e);
+      } finally {
         final long elapsedMs = System.currentTimeMillis() - startMs;
         if (elapsedMs > 4000) {
-          LOG.warning(String.format(Locale.ROOT, "Tunnel tear-down took %d ms", elapsedMs));
+          LOG.warning(String.format(Locale.ROOT, "Tunnel task '%s' took %d ms", name, elapsedMs));
         }
-      tunnelExecutor.execute(task);
-          onComplete.run();
-      // The service was already destroyed. Still run the work off the main thread so tear-down
-      // happens; start requests check isDestroyed and bail out.
-      LOG.log(Level.WARNING,
-          String.format(Locale.ROOT, "Tunnel executor rejected '%s', using a dedicated thread", name),
-          e);
-      new Thread(task, "outline-tunnel").start();
-    runOnTunnelThread(task);
-  }
-
-  /** Queues {@code task} on the tunnel thread, preserving request order. Never blocks. */
-  private void runOnTunnelThread(@NonNull final Runnable task) {
-    try {
-      tunnelExecutor.execute(task);
-    } catch (RejectedExecutionException e) {
-      // The executor was shut down (service already destroyed); still run off the main thread.
-      LOG.log(Level.WARNING, "Tunnel executor rejected task, using a dedicated thread", e);
-      new Thread(task, "outline-tunnel").start();
-    }
-  }
-
-  /**
-   * Runs {@code task} on the tunnel thread and waits for its result. Must only be called from
-   * threads that are allowed to block (e.g. binder threads), never from the main thread.
-   */
-  private <T> T callOnTunnelThread(@NonNull final Callable<T> task) {
-    try {
-      return tunnelExecutor.submit(task).get();
-    } catch (RejectedExecutionException e) {
-      LOG.log(Level.WARNING, "Tunnel executor rejected task, running on the calling thread", e);
-      try {
-        return task.call();
-      } catch (Exception callError) {
-        throw new RuntimeException(callError);
       }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e.getCause());
-    }
-  }
-
-  // Tunnel API
-
-  /**  This is the entry point when called from the Outline plugin, via the service IPC. */
-  private DetailedJsonError startTunnel(@NonNull final TunnelConfig config) {
-    return Errors.toDetailedJsonError(startTunnel(config, false));
+    };
+    try {
+      }
+    } catch (RejectedExecutionException e) {
+    try {
+      tunnelExecutor.execute(task);
+    } catch (RejectedExecutionException e) {
+      // The service was already destroyed. Still run the work off the main thread so tear-down
+      // happens; queued start requests check isDestroyed and bail out.
+      LOG.log(Level.WARNING,
   }
 
   /** Shared logic between the manual and automated entry points. */
@@ -521,47 +480,18 @@ public class VpnTunnelService extends VpnService {
                                  .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                                  .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
                                  .build();
-  /** Start ID used when the auto-connect request did not come through onStartCommand. */
-  private static final int NO_START_ID = -1;
-
-  /**
-   * Handles an auto-connect request. The foreground notification is shown right away on the
-   * calling (main) thread to meet Android's 5-second startForeground deadline; the blocking
-   * tunnel start is queued on {@link #tunnelExecutor}, behind any earlier stop request.
-   *
-   * @param startId the onStartCommand start ID, or {@link #NO_START_ID}.
-   */
-  private void startLastSuccessfulTunnel(final int startId) {
+    // `registerNetworkCallback` returns the VPN interface as the default network since Android P.
     // Use `requestNetwork` instead (requires android.permission.CHANGE_NETWORK_STATE).
-    final JSONObject tunnel = tunnelStore.load();
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
       connectivityManager.registerNetworkCallback(request, networkConnectivityMonitor);
     } else {
       connectivityManager.requestNetwork(request, networkConnectivityMonitor);
     }
   }
-
-  // Broadcasts
-
-  /* Broadcast change in the VPN connectivity. */
-  private void broadcastVpnConnectivityChange(TunnelStatus status) {
-    this.tunnelStore.setTunnelStatus(status);
-    QuickSettingsTileService.requestTileUpdate(this);
-      abortAutoConnect(startId);
-    // tearDownActiveTunnel) can set the field to null between the null-check and the read below.
-    final TunnelConfig config = this.tunnelConfig;
-    if (config == null) {
+    // `registerNetworkCallback` returns the VPN interface as the default network since Android P.
       LOG.warning("Tunnel disconnected, not sending VPN connectivity broadcast");
-      return;
-      abortAutoConnect(startId);
-      return;
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
     }
-    runOnTunnelThread("start last tunnel", () -> startTunnelFromStore(tunnel, startId));
-  }
-
-  /** Blocking part of auto-connect; must run on {@link #tunnelExecutor}. */
-  private void startTunnelFromStore(@NonNull final JSONObject tunnel, final int startId) {
-    if (isDestroyed) {
-      LOG.info("VPN service destroyed, skipping queued auto-connect.");
     Intent statusChange = new Intent(STATUS_BROADCAST_KEY);
     statusChange.addCategory(getPackageName());
     // We must explicitly set the package for security reasons: https://developer.android.com/about/versions/14/behavior-changes-14#security
@@ -573,90 +503,101 @@ public class VpnTunnelService extends VpnService {
 
   // Autostart
 
-      abortAutoConnect(startId);
-   * Handles an auto-connect request. The foreground notification is shown immediately on the
-   * calling thread to meet Android's startForeground() deadline; the (potentially slow) tunnel
-   * start is queued on the tunnel thread, after any pending stop requests.
-   */
-  private void startLastSuccessfulTunnelAsync() {
-    LOG.info("Received an auto-connect request, loading last successful tunnel.");
-    final JSONObject tunnel = tunnelStore.load();
+    // Capture tunnelConfig into a local variable to avoid a TOCTOU race: another thread (e.g.
+  private static final int NO_START_ID = -1;
 
-   * path of {@link #startLastSuccessfulTunnel(int)}.
-    // Fall back to an empty string when no tunnel is stored.
+  /**
+   * Handles an auto-connect request. The foreground notification is shown right away on the
+   * calling (main) thread to meet the startForeground() deadline; the blocking tunnel start is
+   * @param startId the onStartCommand start ID, or {@link #NO_START_ID}.
     String serverName = tunnel != null ? tunnel.optString(TUNNEL_SERVER_NAME, "") : "";
 
     // Always call startForeground before any early return. Android 8+ requires that a service
     // started via startForegroundService() calls startForeground() within 5 seconds, regardless
-  private void abortAutoConnect(final int startId) {
+    // of the code path taken. Requires android.permission.FOREGROUND_SERVICE since Android P.
     startForegroundWithNotification(serverName);
 
-    runOnTunnelThread(() -> startLastSuccessfulTunnel(tunnel));
-    // Tie the stop to the originating request so a stale abort can't stop a newer start.
-    if (startId == NO_START_ID) {
-      stopSelf();
-    } else {
-      stopSelf(startId);
-    }
-
-  private void startLastSuccessfulTunnel(@Nullable final JSONObject tunnel) {
     if (tunnel == null) {
       LOG.info("Last successful tunnel not found. User not connected at shutdown/install.");
-      abortAutoConnect();
+      abortAutoConnect(startId);
       return;
-    }
-    if (VpnTunnelService.prepare(VpnTunnelService.this) != null) {
-      // We cannot prepare the VPN when running as a background service, as it requires UI.
-      LOG.warning("VPN not prepared, aborting auto-connect.");
-      abortAutoConnect();
-      return;
-    }
-    try {
-      final TunnelConfig tunnelConfig = new TunnelConfig();
-      tunnelConfig.id = tunnel.getString(TUNNEL_ID_KEY);
-      tunnelConfig.name = tunnel.getString(TUNNEL_SERVER_NAME);
-      tunnelConfig.transportConfig = tunnel.getString(TUNNEL_CONFIG_KEY);
-
-      startTunnel(tunnelConfig, true);
-    } catch (Exception e) {
-      LOG.log(Level.SEVERE, "Failed to retrieve JSON tunnel data", e);
-      abortAutoConnect();
-    }
-  }
+  /** Start ID used when the auto-connect request did not come through onStartCommand. */
+  private static final int NO_START_ID = -1;
 
   /**
+   * Handles an auto-connect request. The foreground notification is shown right away on the
+   * calling (main) thread to meet Android's 5-second startForeground deadline; the blocking
+   * tunnel start is queued on {@link #tunnelExecutor}, behind any earlier stop request.
+   *
+   * @param startId the onStartCommand start ID, or {@link #NO_START_ID}.
+      abortAutoConnect(startId);
+  private void startLastSuccessfulTunnel(final int startId) {
+    }
+    runOnTunnelThread("start last tunnel", () -> startTunnelFromStore(tunnel, startId));
+  }
+    // Retrieve the server name early so we can pass it to startForegroundWithNotification.
+  /** Blocking part of auto-connect; must run on {@link #tunnelExecutor}. */
+  private void startTunnelFromStore(@NonNull final JSONObject tunnel, final int startId) {
+    if (isDestroyed) {
+      LOG.info("VPN service destroyed, skipping queued auto-connect.");
+      return;
+    // of the code path taken. Requires android.permission.FOREGROUND_SERVICE since Android P.
+    try {
+      final TunnelConfig tunnelConfig = new TunnelConfig();
+  }
+
+      abortAutoConnect(startId);
    * Cleans up after a failed auto-connect attempt: marks the tunnel as disconnected, refreshes the
    * Quick Settings tile, removes the foreground notification, and stops the service.
    *
    * <p>Centralising these steps avoids repeating the same lifecycle transition in every early-exit
-   * path of {@link #startLastSuccessfulTunnel(JSONObject)}.
-   *
+   * path of {@link #startLastSuccessfulTunnel(int)}.
+      abortAutoConnect(startId);
+      return;
+    }
+    runOnTunnelThread("start last tunnel", () -> startTunnelFromStore(tunnel, startId));
+  }
+
+  /** Blocking part of auto-connect; must run on {@link #tunnelExecutor}. */
+  private void startTunnelFromStore(@NonNull final JSONObject tunnel, final int startId) {
+    if (isDestroyed) {
+      LOG.info("VPN service destroyed, skipping queued auto-connect.");
    * <p>Note: {@link #stopForeground(boolean)} must be called explicitly because {@link #stopSelf()}
    * alone does not dismiss the notification while the service remains bound (e.g. via
    * BIND_AUTO_CREATE from the app or crash-recovery rebind).
    */
-  private void abortAutoConnect() {
+  private void abortAutoConnect(final int startId) {
     tunnelStore.setTunnelStatus(TunnelStatus.DISCONNECTED);
     QuickSettingsTileService.requestTileUpdate(this);
     stopForeground(true);
-    stopSelf();
+    // Tie the stop to the originating request so a stale abort can't stop a newer start.
+    if (startId == NO_START_ID) {
+      stopSelf();
+      abortAutoConnect(startId);
+      stopSelf(startId);
+    }
   }
 
   private void storeActiveTunnel(@NonNull final TunnelConfig config) {
     LOG.info("Storing active tunnel.");
     JSONObject tunnel = new JSONObject();
     try {
-      tunnel.put(TUNNEL_ID_KEY, config.id).put(
+   * path of {@link #startLastSuccessfulTunnel(int)}.
         TUNNEL_CONFIG_KEY, config.transportConfig).put(TUNNEL_SERVER_NAME, config.name);
       tunnelStore.save(tunnel);
     } catch (JSONException e) {
       LOG.log(Level.SEVERE, "Failed to store JSON tunnel data", e);
     }
-    broadcastVpnConnectivityChange(TunnelStatus.CONNECTED);
+  private void abortAutoConnect(final int startId) {
   }
 
   // Error reporting
-
+    // Tie the stop to the originating request so a stale abort can't stop a newer start.
+    if (startId == NO_START_ID) {
+      stopSelf();
+    } else {
+      stopSelf(startId);
+    }
   private void initErrorReporting(final String apiKey) {
     try {
       SentryErrorReporter.init(this, apiKey);
