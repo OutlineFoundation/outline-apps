@@ -6,7 +6,7 @@ Run all `npm run action` commands from the **repository root**.
 
 ## Requirements (browser)
 
-- [Node.js](https://nodejs.org/) 22 (see root `package.json` `engines`)
+- [Node.js](https://nodejs.org/) 24 (see `.nvmrc` and the root `package.json` `engines`)
 - Install dependencies after clone:
 
   ```sh
