@@ -15,6 +15,9 @@
 import UIKit
 import Capacitor
 import OutlineTunnel
+#if targetEnvironment(macCatalyst)
+import OutlineCatalystApp
+#endif
 
 // Installed by App.swift through @UIApplicationDelegateAdaptor. Not the entry
 // point: the SwiftUI `OutlineApp` struct is. URL and user-activity handling
@@ -22,6 +25,24 @@ import OutlineTunnel
 class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        #if targetEnvironment(macCatalyst)
+        // Loads the AppKitIntegration framework (menu bar status item, Dock
+        // icon policy) and keeps its connection status in sync with the VPN.
+        OutlineCatalystApp.initApp()
+        // The window's title bar and fixed size are UIWindowScene properties
+        // SwiftUI has no modifier for. No scene exists yet at this point, and
+        // SceneDelegate stays empty (see there), so configure each scene as
+        // UIKit announces it.
+        NotificationCenter.default.addObserver(
+            forName: UIScene.willConnectNotification, object: nil, queue: .main
+        ) { notification in
+            guard let windowScene = notification.object as? UIWindowScene else { return }
+            windowScene.titlebar?.titleVisibility = .hidden
+            windowScene.titlebar?.toolbar = nil
+            windowScene.sizeRestrictions?.minimumSize = CGSize(width: 400, height: 680)
+            windowScene.sizeRestrictions?.maximumSize = CGSize(width: 400, height: 680)
+        }
+        #endif
         return true
     }
 
