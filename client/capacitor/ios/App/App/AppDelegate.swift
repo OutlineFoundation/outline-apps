@@ -16,19 +16,29 @@ import UIKit
 import Capacitor
 import OutlineTunnel
 
-@UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+// Installed by App.swift through @UIApplicationDelegateAdaptor. Not the entry
+// point: the SwiftUI `OutlineApp` struct is. URL and user-activity handling
+// live on the SwiftUI scene (App.swift), not here.
+class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         return true
     }
 
-    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = SceneDelegate.self
+        return configuration
     }
 
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
-        return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    func application(
+        _ application: UIApplication,
+        supportedInterfaceOrientationsFor window: UIWindow?
+    ) -> UIInterfaceOrientationMask {
+        ApplicationDelegateProxy.shared.application(application, supportedInterfaceOrientationsFor: window)
     }
-
 }
