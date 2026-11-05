@@ -253,10 +253,7 @@ jobs:
     needs: [web_test, backend_test]
     steps:
       - name: Check Xcode 27
-        run: |
-          xcode-select --print-path
-          xcodebuild -version
-          xcodebuild -version | grep -q '^Xcode 27\.'
+        run: xcodebuild -version | grep '^Xcode 27\.'
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
