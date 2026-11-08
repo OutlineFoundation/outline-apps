@@ -77,6 +77,10 @@ Polymer({
       >
         &gt;
       </p>
+      <p id="donate">
+        [[localize('donate-prompt')]]
+        <a href$="[[donateUrl]]">[[localize('nav-donate')]]</a>
+      </p>
       <div class="buttons">
         <paper-button dialog-dismiss="" autofocus=""
           >[[localize('close')]]</paper-button
@@ -90,6 +94,7 @@ Polymer({
   properties: {
     localize: Function,
     outlineVersion: String,
+    donateUrl: String,
   },
 
   open() {

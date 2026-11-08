@@ -97,6 +97,9 @@ const polymerElementWithLocalize = mixinBehaviors(
   PolymerElement
 ) as new () => PolymerElement & LegacyElementMixin & AppLocalizeBehavior;
 
+const DONATE_URL =
+  'https://givebutter.com/outline-lt1azu?utm_source=outline-manager&utm_medium=app';
+
 export class AppRoot extends polymerElementWithLocalize {
   static get template() {
     return html`
@@ -279,6 +282,25 @@ export class AppRoot extends polymerElementWithLocalize {
         align-items: center;
         gap: 0.25rem;
       }
+      #appDrawer .donate-section {
+        padding-right: 24px;
+      }
+      #appDrawer .donate-link {
+        color: var(--primary-green);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      #appDrawer .donate-prompt {
+        margin: 0 0 12px 0;
+        font-size: 12px;
+        line-height: 16px;
+        color: var(--medium-gray);
+      }
+      #donate-icon {
+        width: 16px;
+        height: 16px;
+      }
       .legal-links {
         margin: 0 -6px;
       }
@@ -398,6 +420,14 @@ export class AppRoot extends polymerElementWithLocalize {
                   <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
             </if-messages>
+            <div class="donate-section" on-tap="maybeCloseDrawer">
+              <a class="donate-link" href\$="[[donateUrl]]">
+                <iron-icon id="donate-icon" icon="favorite"></iron-icon>
+                <span>[[localize('nav-donate')]]</span>
+                <iron-icon id="open-in-new-icon" icon="open-in-new" />
+              </a>
+              <p class="donate-prompt">[[localize('donate-prompt')]]</p>
+            </div>
             <span on-tap="maybeCloseDrawer">
               <a href="https://getoutline.org/policies/data-collection">
                 <span>[[localize('nav-data-collection')]]</span>
@@ -471,7 +501,7 @@ export class AppRoot extends polymerElementWithLocalize {
       <!-- Modal dialogs must be outside the app container; otherwise the backdrop covers them.  -->
       <outline-survey-dialog id="surveyDialog" localize="[[localize]]"></outline-survey-dialog>
       <outline-feedback-dialog id="feedbackDialog" localize="[[localize]]"></outline-feedback-dialog>
-      <outline-about-dialog id="aboutDialog" outline-version="[[outlineVersion]]" localize="[[localize]]"></outline-about-dialog>
+      <outline-about-dialog id="aboutDialog" outline-version="[[outlineVersion]]" donate-url="[[donateUrl]]" localize="[[localize]]"></outline-about-dialog>
       <outline-modal-dialog id="modalDialog"></outline-modal-dialog>
       <outline-share-dialog id="shareDialog" localize="[[localize]]"></outline-share-dialog>
       <outline-metrics-option-dialog id="metricsDialog" localize="[[localize]]"></outline-metrics-option-dialog>
@@ -715,6 +745,7 @@ export class AppRoot extends polymerElementWithLocalize {
       digitalOceanAccount: Object,
       gcpAccount: Object,
       outlineVersion: String,
+      donateUrl: {type: String, value: DONATE_URL},
       userAcceptedTos: {
         type: Boolean,
         // Get notified when the user clicks the OK button in the ToS view
@@ -747,6 +778,7 @@ export class AppRoot extends polymerElementWithLocalize {
   digitalOceanAccount: AccountListEntry = null;
   gcpAccount: AccountListEntry = null;
   outlineVersion = '';
+  donateUrl = DONATE_URL;
   currentPage = 'intro';
   shouldShowSideBar = false;
   showManagerResourcesLink = false;
