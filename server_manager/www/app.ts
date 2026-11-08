@@ -18,6 +18,7 @@ import * as Sentry from '@sentry/electron/renderer';
 import * as semver from 'semver';
 
 import {DisplayDataAmount, displayDataAmountToBytes} from './data_formatting';
+import {dismissDonateBanner, shouldShowDonateBanner} from './donate';
 import {filterOptions, getShortName, sortOptions} from './location_formatting';
 import {parseManualServerConfig} from './management_urls';
 import type {AppRoot, ServerListEntry} from './ui_components/app-root';
@@ -224,6 +225,10 @@ export class App {
 
     appRoot.addEventListener('ForgetServerRequested', (event: CustomEvent) => {
       this.forgetServer(event.detail.serverId);
+    });
+
+    appRoot.addEventListener('DonateBannerDismissed', () => {
+      dismissDonateBanner();
     });
 
     appRoot.addEventListener('AddAccessKeyRequested', (_: CustomEvent) => {
@@ -912,6 +917,7 @@ export class App {
     view.serverManagementApiUrl = server.getManagementApiUrl();
     view.serverPortForNewAccessKeys = server.getPortForNewAccessKeys();
     view.serverCreationDate = server.getCreatedDate();
+    view.showDonateBanner = shouldShowDonateBanner(server.getCreatedDate());
     view.serverVersion = version;
     view.defaultDataLimitBytes = server.getDefaultDataLimit()?.bytes;
     view.isDefaultDataLimitEnabled = view.defaultDataLimitBytes !== undefined;

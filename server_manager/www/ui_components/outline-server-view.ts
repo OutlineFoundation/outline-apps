@@ -36,6 +36,7 @@ import './outline-server-settings';
 import './outline-share-dialog';
 import './outline-sort-span';
 
+import '../views/server_view/donate_banner';
 import '../views/server_view/server_metrics_row/bandwidth';
 import '../views/server_view/server_metrics_row/tunnel_time';
 import {html, PolymerElement} from '@polymer/polymer';
@@ -47,12 +48,14 @@ import type {OutlineHelpBubble} from './outline-help-bubble';
 import type {OutlineServerSettings} from './outline-server-settings';
 import type {CloudLocation} from '../../model/location';
 import * as formatting from '../data_formatting';
+import {DONATE_URL} from '../donate';
 import {getShortName} from '../location_formatting';
 import {
   AccessKeyDataTableEvent,
   AccessKeyDataTableRow,
 } from '../views/server_view/access_key_data_table';
 import {DataTableSortDirection} from '../views/server_view/access_key_data_table/data_table';
+import {DONATE_BANNER_DISMISS_EVENT} from '../views/server_view/donate_banner';
 import type {ServerMetricsData} from '../views/server_view/server_metrics_row';
 import {ServerMetricsBandwidthLocation} from '../views/server_view/server_metrics_row/bandwidth';
 import {ServerMetricsTunnelTimeLocation} from '../views/server_view/server_metrics_row/tunnel_time';
@@ -95,6 +98,9 @@ export class ServerView extends DirMixin(PolymerElement) {
           display: flex;
           flex-direction: row;
           border-bottom: 1px solid var(--border-color);
+        }
+        donate-banner {
+          margin: 24px 0 0 0;
         }
         .tabs-spacer {
           flex: 2;
@@ -457,6 +463,12 @@ export class ServerView extends DirMixin(PolymerElement) {
         </paper-tabs>
         <div class="tabs-spacer"></div>
       </div>
+      <template is="dom-if" if="[[showDonateBanner]]">
+        <donate-banner
+          link="[[donateUrl]]"
+          localize="[[localize]]"
+        ></donate-banner>
+      </template>
       <iron-pages
         id="pages"
         selected="[[selectedTab]]"
@@ -607,6 +619,7 @@ export class ServerView extends DirMixin(PolymerElement) {
           '_computeAccessKeyTabMessage(hasAccessKeyData, accessKeyData, localize)',
       },
       cloudId: String,
+      donateUrl: String,
       cloudLocation: Object,
       defaultDataLimitBytes: Number,
       featureFlags: Object,
@@ -643,6 +656,7 @@ export class ServerView extends DirMixin(PolymerElement) {
       serverName: String,
       serverPortForNewAccessKeys: Number,
       serverVersion: String,
+      showDonateBanner: Boolean,
       showFeatureMetricsDisclaimer: Boolean,
       supportsDefaultDataLimit: Boolean,
     };
@@ -650,6 +664,11 @@ export class ServerView extends DirMixin(PolymerElement) {
 
   ready() {
     super.ready();
+
+    // Hide the banner right away; the app persists the dismissal.
+    this.addEventListener(DONATE_BANNER_DISMISS_EVENT, () => {
+      this.showDonateBanner = false;
+    });
 
     this.addEventListener(
       AccessKeyDataTableEvent.SORT,
@@ -712,6 +731,7 @@ export class ServerView extends DirMixin(PolymerElement) {
   accessKeyDataSortDirection: DataTableSortDirection;
   accessKeyDataSortColumnId: string;
   cloudId = '';
+  donateUrl = DONATE_URL;
   cloudLocation: CloudLocation = null;
   defaultDataLimitBytes: number = null;
   isAccessKeyPortEditable = false;
@@ -733,6 +753,7 @@ export class ServerView extends DirMixin(PolymerElement) {
   hasPerKeyDataLimitDialog = false;
   /** Whether the server supports default data limits. */
   supportsDefaultDataLimit = false;
+  showDonateBanner = false;
   showFeatureMetricsDisclaimer = false;
   installProgress = 0;
   isServerReachable = false;

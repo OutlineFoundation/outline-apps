@@ -72,6 +72,7 @@ import type {
 } from './outline-server-list';
 import type {ServerView} from './outline-server-view';
 import type {OutlineShareDialog} from './outline-share-dialog';
+import {DONATE_URL} from '../donate';
 import type {GcpCreateServerApp} from '../outline-gcp-create-server-app';
 
 const TOS_ACK_LOCAL_STORAGE_KEY = 'tos-ack';
@@ -96,9 +97,6 @@ const polymerElementWithLocalize = mixinBehaviors(
   AppLocalizeBehavior,
   PolymerElement
 ) as new () => PolymerElement & LegacyElementMixin & AppLocalizeBehavior;
-
-const DONATE_URL =
-  'https://givebutter.com/outline-lt1azu?utm_source=outline-manager&utm_medium=app';
 
 export class AppRoot extends polymerElementWithLocalize {
   static get template() {
@@ -255,6 +253,23 @@ export class AppRoot extends polymerElementWithLocalize {
       .add-server-section paper-icon-item iron-icon {
         margin-right: 24px;
       }
+      .donate-section {
+        border-top: none;
+      }
+      .donate-section a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .donate-section .donate-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        vertical-align: middle;
+      }
+      .donate-section #open-in-new-icon {
+        width: 14px;
+        height: 14px;
+      }
       #appDrawer > paper-listbox {
         color: var(--medium-gray);
         background-color: var(--background-contrast-color);
@@ -281,25 +296,6 @@ export class AppRoot extends polymerElementWithLocalize {
         display: flex;
         align-items: center;
         gap: 0.25rem;
-      }
-      #appDrawer .donate-section {
-        padding-right: 24px;
-      }
-      #appDrawer .donate-link {
-        color: var(--primary-green);
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-      }
-      #appDrawer .donate-prompt {
-        margin: 0 0 12px 0;
-        font-size: 12px;
-        line-height: 16px;
-        color: var(--medium-gray);
-      }
-      #donate-icon {
-        width: 16px;
-        height: 16px;
       }
       .legal-links {
         margin: 0 -6px;
@@ -373,7 +369,7 @@ export class AppRoot extends polymerElementWithLocalize {
         opacity: 0.54;
         filter: grayscale(100%);
       }
-      .side-bar-section.add-server-section {
+      .side-bar-section.donate-section {
         flex: 1 0 24px;
         border-bottom: none;
       }
@@ -410,6 +406,19 @@ export class AppRoot extends polymerElementWithLocalize {
             </paper-icon-item>
           </div>
 
+          <!-- Donate -->
+          <div class="add-server-section donate-section" on-tap="maybeCloseDrawer">
+            <a href\$="[[donateUrl]]">
+              <paper-icon-item>
+                <iron-icon icon="favorite" slot="item-icon"></iron-icon>
+                <span class="donate-label">
+                  <span>[[localize('nav-donate')]]</span>
+                  <iron-icon id="open-in-new-icon" icon="open-in-new"></iron-icon>
+                </span>
+              </paper-icon-item>
+            </a>
+          </div>
+
           <!-- Links section -->
           <paper-listbox>
             <if-messages message-ids="manager-resources" localize="[[localize]]">
@@ -420,14 +429,6 @@ export class AppRoot extends polymerElementWithLocalize {
                   <iron-icon id="open-in-new-icon" icon="open-in-new" />
               </a>
             </if-messages>
-            <div class="donate-section" on-tap="maybeCloseDrawer">
-              <a class="donate-link" href\$="[[donateUrl]]">
-                <iron-icon id="donate-icon" icon="favorite"></iron-icon>
-                <span>[[localize('nav-donate')]]</span>
-                <iron-icon id="open-in-new-icon" icon="open-in-new" />
-              </a>
-              <p class="donate-prompt">[[localize('donate-prompt')]]</p>
-            </div>
             <span on-tap="maybeCloseDrawer">
               <a href="https://getoutline.org/policies/data-collection">
                 <span>[[localize('nav-data-collection')]]</span>
@@ -493,6 +494,11 @@ export class AppRoot extends polymerElementWithLocalize {
               <iron-icon icon="add" slot="item-icon"></iron-icon>
             </paper-icon-item>
           </div>
+          <a class="side-bar-section donate-section" href\$="[[donateUrl]]" title\$="[[localize('nav-donate')]]">
+            <paper-icon-item>
+              <iron-icon icon="favorite" slot="item-icon"></iron-icon>
+            </paper-icon-item>
+          </a>
         </div>
       </app-drawer>
 
