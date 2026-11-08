@@ -204,15 +204,16 @@ export class GcpCreateServerApp extends LitElement {
 
   private renderProjectSetup() {
     return html` <outline-step-view id="projectSetup" display-action="">
-      <span slot="step-title">Create your Google Cloud Platform project.</span>
+      <span slot="step-title">${this.localize('gcp-create-server')}</span>
       <span slot="step-description"
-        >This will create a new project on your GCP account to hold your Outline
-        servers.</span
+        >${this.localize('gcp-create-server-description')}</span
       >
       <span slot="step-action">
         ${this.isProjectBeingCreated
           ? // TODO: Support canceling server creation.
-            html`<paper-button disabled="true">IN PROGRESS...</paper-button>`
+            html`<paper-button disabled="true"
+              >${this.localize('gcp-create-server-in-progress')}</paper-button
+            >`
           : html`<paper-button
               id="createServerButton"
               @tap="${this.handleProjectSetupNextTap}"
@@ -221,20 +222,22 @@ export class GcpCreateServerApp extends LitElement {
                 this.selectedBillingAccountId
               )}"
             >
-              CREATE PROJECT
+              ${this.localize('gcp-create-project')}
             </paper-button>`}
       </span>
       <div class="section">
         <div class="section-header">
           <span class="stepcircle">1</span>
-          <div class="instructions">Name your new Google Cloud Project</div>
+          <div class="instructions">
+            ${this.localize('gcp-create-server-name-project')}
+          </div>
         </div>
         <div class="section-content">
           <!-- TODO: Make readonly if project already exists -->
           <paper-input
             id="projectName"
             value="${this.selectedProjectId}"
-            label="Project ID"
+            label="${this.localize('gcp-create-server-project-id')}"
             always-float-label=""
             maxlength="100"
             @value-changed="${this.onProjectIdChanged}"
@@ -246,7 +249,7 @@ export class GcpCreateServerApp extends LitElement {
         <div class="section-header">
           <span class="stepcircle">2</span>
           <div class="instructions">
-            Choose your preferred billing method for this project
+            ${this.localize('gcp-create-server-choose-billing')}
           </div>
         </div>
         <div class="section-content">

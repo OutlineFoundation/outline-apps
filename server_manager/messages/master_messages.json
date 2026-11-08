@@ -698,6 +698,26 @@
     "message": "Create your Google Cloud Project",
     "description": "This string appears in the server setup view as a section header for creating a new Google Cloud project"
   },
+  "gcp_create_server_choose_billing": {
+    "message": "Choose your preferred billing method for this project",
+    "description": "Label for the section asking the user to choose a billing method for the new project"
+  },
+  "gcp_create_server_description": {
+    "message": "This will create a new project on your GCP account to hold your Outline servers.",
+    "description": "Description shown on the project setup step of the Google Cloud server creation flow"
+  },
+  "gcp_create_server_in_progress": {
+    "message": "IN PROGRESS...",
+    "description": "Button text shown while the Google Cloud project is being created"
+  },
+  "gcp_create_server_name_project": {
+    "message": "Name your new Google Cloud Project",
+    "description": "Instruction to name the new Google Cloud project"
+  },
+  "gcp_create_server_project_id": {
+    "message": "Project ID",
+    "description": "Label for the project ID input field"
+  },
   "gcp_create_vm": {
     "message": "Create a VM Instance",
     "description": "This string appears as a header for a set of instructions for creating a new Google Cloud VM"
