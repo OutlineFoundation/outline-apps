@@ -1,0 +1,7 @@
+label: control-race1
+build: 1 1.0
+cycles: 1  storms per cycle: 3  racers/victims per storm: 600/300
+victims with unexpected EOF (all cycles): 3
+cycles where :vpn crashed during the storms: 0
+cycles where :vpn crashed at teardown: 1
+tombstones for org.outline.android.client: 1

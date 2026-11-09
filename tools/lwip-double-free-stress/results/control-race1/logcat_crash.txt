@@ -1,0 +1,40 @@
+--------- beginning of crash
+11-09 18:07:09.925  2089  2089 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 2089 (roid.client:vpn), pid 2089 (roid.client:vpn)
+11-09 18:07:10.053  2238  2238 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+11-09 18:07:10.053  2238  2238 F DEBUG   : Build fingerprint: 'Android/sdk_phone64_arm64/emu64a:15/AE3A.240806.019/12368160:userdebug/test-keys'
+11-09 18:07:10.053  2238  2238 F DEBUG   : Revision: '0'
+11-09 18:07:10.053  2238  2238 F DEBUG   : ABI: 'arm64'
+11-09 18:07:10.053  2238  2238 F DEBUG   : Timestamp: 2026-11-09 18:07:09.967511756-0500
+11-09 18:07:10.053  2238  2238 F DEBUG   : Process uptime: 171s
+11-09 18:07:10.053  2238  2238 F DEBUG   : Cmdline: org.outline.android.client:vpn
+11-09 18:07:10.053  2238  2238 F DEBUG   : pid: 2089, tid: 2089, name: roid.client:vpn  >>> org.outline.android.client:vpn <<<
+11-09 18:07:10.053  2238  2238 F DEBUG   : uid: 10210
+11-09 18:07:10.053  2238  2238 F DEBUG   : tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+11-09 18:07:10.053  2238  2238 F DEBUG   : pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+11-09 18:07:10.053  2238  2238 F DEBUG   : signal 6 (SIGABRT), code -1 (SI_QUEUE), fault addr --------
+11-09 18:07:10.053  2238  2238 F DEBUG   : Abort message: 'Scudo ERROR: corrupted chunk header at address 0x2000076ea7289f0'
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x0  0000000000000000  x1  0000000000000829  x2  0000000000000006  x3  0000007fce670de0
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x4  6064671f6a6d7467  x5  6064671f6a6d7467  x6  6064671f6a6d7467  x7  7f7f7f7f7f7f7f7f
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x8  00000000000000f0  x9  000000784a040468  x10 ffffff80fffffb9f  x11 0000000000000001
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x12 000000006af2521d  x13 000000007fffffff  x14 000000000000d5de  x15 000003c382b67ad3
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x16 000000784a0efff8  x17 000000784a0da1c0  x18 000000785bee0000  x19 0000000000000829
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x20 0000000000000829  x21 00000000ffffffff  x22 0000000000000001  x23 0000007fce671430
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x24 00000074c002c2d0  x25 0000000000000001  x26 00000040001b59e0  x27 0000000000000010
+11-09 18:07:10.053  2238  2238 F DEBUG   :     x28 0000004000002540  x29 0000007fce670e60
+11-09 18:07:10.053  2238  2238 F DEBUG   :     lr  000000784a0786a4  sp  0000007fce670dc0  pc  000000784a0786d4  pst 0000000000000000
+11-09 18:07:10.053  2238  2238 F DEBUG   : 14 total frames
+11-09 18:07:10.053  2238  2238 F DEBUG   : backtrace:
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #00 pc 000000000005b6d4  /apex/com.android.runtime/lib64/bionic/libc.so (abort+168) (BuildId: 1b9fecf834d610f77e641f026ca7269b)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #01 pc 0000000000048eb8  /apex/com.android.runtime/lib64/bionic/libc.so (scudo::die()+8) (BuildId: 1b9fecf834d610f77e641f026ca7269b)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #02 pc 000000000004983c  /apex/com.android.runtime/lib64/bionic/libc.so (scudo::reportRawError(char const*)+28) (BuildId: 1b9fecf834d610f77e641f026ca7269b)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #03 pc 00000000000497b8  /apex/com.android.runtime/lib64/bionic/libc.so (scudo::ScopedErrorReport::~ScopedErrorReport()+12) (BuildId: 1b9fecf834d610f77e641f026ca7269b)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #04 pc 0000000000049910  /apex/com.android.runtime/lib64/bionic/libc.so (scudo::reportHeaderCorruption(void*)+96) (BuildId: 1b9fecf834d610f77e641f026ca7269b)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #05 pc 000000000004b260  /apex/com.android.runtime/lib64/bionic/libc.so (scudo::Allocator<scudo::AndroidNormalConfig, &scudo_malloc_postinit>::deallocate(void*, scudo::Chunk::Origin, unsigned long, unsigned long)+280) (BuildId: 1b9fecf834d610f77e641f026ca7269b)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #06 pc 00000000004d3eac  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (mem_free+180) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #07 pc 00000000004d41e0  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #08 pc 00000000004d4274  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (memp_free+132) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #09 pc 00000000004db08c  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (tcp_free+100) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #10 pc 00000000004dc67c  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (tcp_abandon+204) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #11 pc 00000000004dcd64  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (tcp_abort+24) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #12 pc 00000000004fbc94  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (_cgo_c84da3f5921d_Cfunc_tcp_abort+32) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
+11-09 18:07:10.053  2238  2238 F DEBUG   :       #13 pc 0000000000217078  /data/app/~~ifUvDw7_xfE919l7jKjaQw==/org.outline.android.client-ZSPiW6gr7K4LD1NdIhdcaw==/base.apk (offset 0xadc000) (BuildId: 2e4665f60bc5f4e4c696b1a734ab6c72fc3bc6f0)
