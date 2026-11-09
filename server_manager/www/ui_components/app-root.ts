@@ -253,23 +253,6 @@ export class AppRoot extends polymerElementWithLocalize {
       .add-server-section paper-icon-item iron-icon {
         margin-right: 24px;
       }
-      .donate-section {
-        border-top: none;
-      }
-      .donate-section a {
-        color: inherit;
-        text-decoration: none;
-      }
-      .donate-section .donate-label {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        vertical-align: middle;
-      }
-      .donate-section #open-in-new-icon {
-        width: 14px;
-        height: 14px;
-      }
       #appDrawer > paper-listbox {
         color: var(--medium-gray);
         background-color: var(--background-contrast-color);
@@ -291,11 +274,17 @@ export class AppRoot extends polymerElementWithLocalize {
       #links-footer {
         margin-top: 36px;
       }
-      #appDrawer .manager-resources-link {
+      #appDrawer .manager-resources-link,
+      #appDrawer .donate-link {
         color: var(--primary-green);
         display: flex;
         align-items: center;
         gap: 0.25rem;
+      }
+      #donate-icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 2px;
       }
       .legal-links {
         margin: 0 -6px;
@@ -406,21 +395,15 @@ export class AppRoot extends polymerElementWithLocalize {
             </paper-icon-item>
           </div>
 
-          <!-- Donate -->
-          <div class="add-server-section donate-section" on-tap="maybeCloseDrawer">
-            <a href\$="[[donateUrl]]">
-              <paper-icon-item>
-                <iron-icon icon="favorite" slot="item-icon"></iron-icon>
-                <span class="donate-label">
-                  <span>[[localize('nav-donate')]]</span>
-                  <iron-icon id="open-in-new-icon" icon="open-in-new"></iron-icon>
-                </span>
-              </paper-icon-item>
-            </a>
-          </div>
-
           <!-- Links section -->
           <paper-listbox>
+            <span on-tap="maybeCloseDrawer">
+              <a class="donate-link" href\$="[[donateUrl]]">
+                <iron-icon id="donate-icon" icon="favorite"></iron-icon>
+                <span>[[localize('nav-donate')]]</span>
+                <iron-icon id="open-in-new-icon" icon="open-in-new" />
+              </a>
+            </span>
             <if-messages message-ids="manager-resources" localize="[[localize]]">
               <a
                 class="manager-resources-link"
