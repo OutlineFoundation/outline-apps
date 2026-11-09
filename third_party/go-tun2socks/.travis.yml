@@ -1,0 +1,26 @@
+sudo: required
+
+services:
+  - docker
+
+language: go
+go:
+  - "1.13"
+
+before_install:
+  - go get github.com/karalabe/xgo
+
+install: go get -d ./...
+
+script: make travisbuild
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "gKUd0FGXESP45sNjHfqnTGcPNgKgIe41jt/qGG8C1zdKZduXm4PlfHOu5Mx91w4fi1dJt4M+S1z0xWFh/4K6E4Y6/Y0QbCu7Va6psQdwYV0h1twMpEp3VSUBUxLGCyup4E4h1k53GYqTEBB/um37g99YVVC8A0NgjDOxQtbQFkrk4WO9bj38P0sJtXORAITRsFEH+5x7P39O7h5EstJLxaqq4uaOq4DRjfVrqgUr5BhI+VgzN80ReRyo4IJjkBbRbyHp/TOHmxiGhQuxncvH719ZtuC53IXbCrEpJvmzGdanEon5FScr1ToLgx0AlvGRigx3A9DF2326pSN2NboLg8AOqEa0SWp3g2r2jLp3PSaet62BfyKqIWXzuigxHm0RCGg1+7/n2fe2ZntrHedpSrZoqRQJwfJ3yUUx4+refnnhmxjZPQcNgH/caUoBlYUbmzNGJIFgRInpzozvGNVpj6E1AbW7nKMSehW8OzhYxFJ1o6kjQWILxe4lb3aZY4yuTfRxw+WBICP9Nm2SzlNaiTs5WjS7TP6eaJb5uaXlK1WoGd8lvCESqpoUE6l5onurobYUWrgIpKLqCcVhmmcsecPFllDeJf7sqzOM1umTijY9rBoHvT/1/l0lLcShgdYAoaNcDXch0VvWnO60Km9FzeiRRuerkH0v/QAiOG+lzd0="
+  file_glob: true
+  file:
+    - "build/tun2socks*"
+  skip_cleanup: true
+  on:
+    tags: true

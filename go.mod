@@ -90,3 +90,5 @@ tool (
 	github.com/google/addlicense
 	github.com/google/go-licenses/v2
 )
+
+replace github.com/eycorsican/go-tun2socks => ./third_party/go-tun2socks

@@ -1,0 +1,21 @@
+name: "go-tun2socks"
+description:
+    "lwIP-based TCP/UDP to proxy translation library. Vendored copy of "
+    "upstream v1.16.11 so the lwIP TCP pcb double free can be fixed in the "
+    "Go glue (core/tcp_conn.go, core/lwip.go) without waiting on a new "
+    "release of golang.getoutline.org/sdk. Pulled in through the replace "
+    "directive in the repository root go.mod. Upstream is archived; "
+    "the long-term home for this fix is the OutlineFoundation fork."
+
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://github.com/eycorsican/go-tun2socks"
+  }
+  url {
+    type: GIT
+    value: "https://github.com/OutlineFoundation/go-tun2socks"
+  }
+  version: "v1.16.11"
+  last_upgrade_date { year: 2025 month: 11 day: 9 }
+}
