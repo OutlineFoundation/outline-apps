@@ -33,6 +33,10 @@ type lwipStack struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	// closeOnce makes Close idempotent. A second Close used to run
+	// tcp_close/udp_remove on listening pcbs that were already freed.
+	closeOnce sync.Once
 }
 
 // NewLWIPStack listens for any incoming connections/packets and registers
@@ -125,12 +129,25 @@ func (s *lwipStack) RestartTimeouts() {
 // Note this function will not free objects allocated in lwIP initialization
 // stage, e.g. the loop interface.
 func (s *lwipStack) Close() error {
+	s.closeOnce.Do(s.close)
+	return nil
+}
+
+func (s *lwipStack) close() {
 	// Stop firing timer events.
 	s.cancel()
 
+	// Hold lwipMutex for the whole teardown. The timer goroutine above may
+	// still be inside sys_check_timeouts when cancel() runs, and packets
+	// may still be written to the stack; both can free TCP pcbs. Aborting
+	// every connection under one lock acquisition means no pcb can change
+	// hands between the moment we look at a conn and the moment we abort it.
+	lwipMutex.Lock()
+	defer lwipMutex.Unlock()
+
 	// Abort and close all TCP and UDP connections.
 	tcpConns.Range(func(_, c interface{}) bool {
-		c.(*tcpConn).Abort()
+		c.(*tcpConn).abortLocked()
 		return true
 	})
 	udpConns.Range(func(_, c interface{}) bool {
@@ -143,14 +160,10 @@ func (s *lwipStack) Close() error {
 	})
 
 	// Remove callbacks and close listening pcbs.
-	lwipMutex.Lock()
 	C.tcp_accept(s.tpcb, nil)
 	C.udp_recv(s.upcb, nil, nil)
 	C.tcp_close(s.tpcb) // FIXME handle error
 	C.udp_remove(s.upcb)
-	lwipMutex.Unlock()
-
-	return nil
 }
 
 func init() {

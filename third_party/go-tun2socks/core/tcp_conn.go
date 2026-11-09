@@ -112,20 +112,28 @@ func newTCPConn(pcb *C.struct_tcp_pcb, handler TCPConnHandler) (TCPConn, error) 
 		err := handler.Handle(TCPConn(conn), conn.remoteAddr)
 		if err != nil {
 			conn.Abort()
-		} else {
-			conn.Lock()
-			if conn.state != tcpConnecting {
-				conn.Unlock()
-				return
-			}
-			conn.state = tcpConnected
-			conn.Unlock()
+			return
+		}
 
-			lwipMutex.Lock()
-			if pcb.refused_data != nil {
-				C.tcp_process_refused_data(pcb)
-			}
-			lwipMutex.Unlock()
+		// Take lwipMutex before inspecting the state: lwIP (which runs under
+		// lwipMutex) may close or free the pcb at any time, and once that has
+		// happened the conn is no longer in tcpConnecting. Checking the state
+		// and then touching pcb without holding lwipMutex throughout would
+		// let lwIP free the pcb between the two steps.
+		lwipMutex.Lock()
+		defer lwipMutex.Unlock()
+
+		conn.Lock()
+		if conn.state != tcpConnecting {
+			conn.Unlock()
+			return
+		}
+		conn.state = tcpConnected
+		conn.Unlock()
+
+		// Still tcpConnecting under lwipMutex means Go still owns the pcb.
+		if pcb.refused_data != nil {
+			C.tcp_process_refused_data(pcb)
 		}
 	}()
 
@@ -170,10 +178,12 @@ func (conn *tcpConn) receiveCheck() error {
 	case tcpReceiveClosed:
 		fallthrough
 	case tcpClosing:
-		return NewLWIPError(LWIP_ERR_CLSD)
+		fallthrough
 	case tcpErrored:
-		conn.abortInternal()
-		return NewLWIPError(LWIP_ERR_ABRT)
+		// tcpErrored means lwIP already freed the pcb (see Err), so the
+		// pcb must not be aborted again. Report the connection as closed
+		// instead; the caller only ever touches the pcb lwIP handed it.
+		return NewLWIPError(LWIP_ERR_CLSD)
 	default:
 		panic("unexpected error")
 	}
@@ -291,23 +301,39 @@ func (conn *tcpConn) Write(data []byte) (int, error) {
 }
 
 func (conn *tcpConn) CloseWrite() error {
+	// Lock order is lwipMutex, then conn.Mutex: lwIP callbacks run with
+	// lwipMutex held and lock the conn inside. Taking lwipMutex first here
+	// keeps the state check and the pcb call atomic with respect to lwIP.
+	lwipMutex.Lock()
+	defer lwipMutex.Unlock()
+
 	conn.Lock()
+	defer conn.Unlock()
+
 	if conn.state >= tcpClosing || conn.state == tcpWriteClosed {
-		conn.Unlock()
 		return nil
 	}
-	if conn.state == tcpReceiveClosed {
-		conn.state = tcpClosing
-	} else {
-		conn.state = tcpWriteClosed
-	}
-	conn.Unlock()
 
-	lwipMutex.Lock()
+	if conn.state == tcpReceiveClosed {
+		// lwIP already delivered the peer's FIN (the pcb is in CLOSE_WAIT)
+		// and the handler is now done writing, so both directions are
+		// finished. Hand the pcb back to lwIP right now with a full close.
+		//
+		// The previous code only sent a FIN here (tcp_shutdown tx) and left
+		// the conn in tcpClosing, relying on a later sent/poll callback to
+		// run closeInternal. lwIP does not guarantee such a callback: when
+		// the peer ACKs our FIN in LAST_ACK, lwIP frees the pcb and, if the
+		// receive side was already shut down with TF_RXCLOSED (which the
+		// ERR_CLSD path in tcpRecvFn does), it skips the err callback as
+		// well. The conn then stayed in tcpConns pointing at freed memory
+		// and the next Abort() (e.g. from lwipStack.Close) double freed it.
+		conn.state = tcpClosing
+		return conn.closeInternal()
+	}
+
+	conn.state = tcpWriteClosed
 	// FIXME Handle tcp_shutdown error.
 	C.tcp_shutdown(conn.pcb, 0, 1)
-	lwipMutex.Unlock()
-
 	return nil
 }
 
@@ -406,8 +432,23 @@ func (conn *tcpConn) setLocalClosed() error {
 	return nil
 }
 
-// Never call this function outside of the lwIP thread.
+// pcbOwned reports whether Go still owns conn.pcb. The caller must hold
+// conn.Mutex. release() is the single place that gives the pcb up: it moves
+// the state to tcpClosed (Err then moves it on to tcpErrored), so any state
+// at or past tcpClosed means lwIP has the pcb and may already have freed it.
+func (conn *tcpConn) pcbOwned() bool {
+	return conn.state < tcpClosed
+}
+
+// Never call this function outside of the lwIP thread. The caller must hold
+// conn.Mutex.
 func (conn *tcpConn) closeInternal() error {
+	if !conn.pcbOwned() {
+		// The pcb was already handed back to lwIP; touching it again would
+		// be a use after free.
+		return nil
+	}
+
 	C.tcp_arg(conn.pcb, nil)
 	C.tcp_recv(conn.pcb, nil)
 	C.tcp_sent(conn.pcb, nil)
@@ -426,23 +467,39 @@ func (conn *tcpConn) closeInternal() error {
 }
 
 // Never call this function outside of the lwIP thread since it calls
-// tcp_abort() and in that case we must return ERR_ABRT to lwIP.
+// tcp_abort() and in that case we must return ERR_ABRT to lwIP. The caller
+// must hold conn.Mutex.
 func (conn *tcpConn) abortInternal() {
+	if !conn.pcbOwned() {
+		// Already closed, aborted or errored: lwIP owns (and has probably
+		// freed) the pcb. Aborting it again is the double free behind the
+		// tcp_abort -> tcp_abandon -> tcp_free -> mem_free crash.
+		return
+	}
 	conn.release()
 	C.tcp_abort(conn.pcb)
 }
 
 func (conn *tcpConn) Abort() {
+	lwipMutex.Lock()
+	defer lwipMutex.Unlock()
+	conn.abortLocked()
+}
+
+// abortLocked aborts the connection. The caller must hold lwipMutex, which
+// keeps lwIP from closing or freeing the pcb between the state change and
+// the tcp_abort call in checkState.
+func (conn *tcpConn) abortLocked() {
 	conn.Lock()
-	// If it's in tcpErrored state, the pcb was already freed.
+	// Only move to tcpAborting from live states. tcpClosed and tcpErrored
+	// mean the pcb was already handed back to lwIP (see pcbOwned), and
+	// checkState is a no-op for them.
 	if conn.state < tcpAborting {
 		conn.state = tcpAborting
 	}
 	conn.Unlock()
 
-	lwipMutex.Lock()
 	conn.checkState()
-	lwipMutex.Unlock()
 }
 
 func (conn *tcpConn) Err(err error) {
@@ -459,6 +516,12 @@ func (conn *tcpConn) LocalClosed() error {
 	return conn.checkState()
 }
 
+// release hands the pcb back to lwIP from Go's point of view: it removes the
+// conn from tcpConns so no lwIP callback can reach it any more, wakes up any
+// reader or writer, and marks the state tcpClosed. Every path that gives the
+// pcb to lwIP for freeing (closeInternal, abortInternal, Err) goes through
+// here, which makes the state the single source of truth for pcb ownership.
+// The caller must hold conn.Mutex.
 func (conn *tcpConn) release() {
 	if _, found := tcpConns.Load(conn.connKey); found {
 		freeConnKeyArg(conn.connKeyArg)
