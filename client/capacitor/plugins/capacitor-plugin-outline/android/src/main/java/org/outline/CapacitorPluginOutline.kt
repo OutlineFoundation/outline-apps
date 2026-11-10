@@ -460,7 +460,7 @@ class CapacitorPluginOutline : Plugin() {
       }
       StartDecision.Queued -> {
         call.setKeepAlive(true)
-        saveCall(call)
+        bridge.saveCall(call)
       }
       is StartDecision.Dispatch -> executor.execute {
         try {

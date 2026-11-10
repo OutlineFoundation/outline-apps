@@ -17,7 +17,7 @@ import PackageDescription
 
 let package = Package(
     name: "CapacitorPluginOutline",
-    platforms: [.iOS("15.5")],
+    platforms: [.iOS("16.0")],
     products: [
         .library(
             name: "CapacitorPluginOutline",
@@ -25,14 +25,14 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0"),
+        .package(name: "capacitor", path: "../../../../node_modules/@capacitor/ios"),
         .package(path: "../../../src/cordova/apple/OutlineAppleLib")
     ],
     targets: [
         .target(
             name: "CapacitorPluginOutline",
             dependencies: [
-                .product(name: "Capacitor", package: "capacitor-swift-pm"),
+                .product(name: "Capacitor", package: "capacitor"),
                 .product(name: "OutlineAppleLib", package: "OutlineAppleLib")
             ],
             path: "ios/Sources/CapacitorPluginOutline"
