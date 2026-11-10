@@ -789,43 +789,49 @@ export class AppRoot extends polymerElementWithLocalize {
   }
 
   /**
-   * Loads a new translation file and returns a Promise which resolves when the file is loaded or
-   *  rejects when there was an error loading translations.
+   * Fetches a translation file and returns a Promise which resolves with its messages or rejects
+   * when there was an error loading it.
+   *
+   *  @param language The language code of the translation file to fetch, eg 'en'
+   */
+  private fetchMessages(language: string): Promise<{[key: string]: string}> {
+    // AppLocalizeBehavior.loadResources is not used here: it caches each file's parsed response
+    // and, when not merging, stores that cached object directly as the language's resources.
+    // Merging another language into it would then corrupt the cached file for subsequent loads.
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open('GET', `./messages/${language}.json`);
+      request.responseType = 'json';
+      request.onload = () => {
+        if (request.response && typeof request.response === 'object') {
+          resolve(request.response);
+        } else {
+          reject(
+            new Error(`Failed to load resources for language ${language}`)
+          );
+        }
+      };
+      request.onerror = () =>
+        reject(new Error(`Failed to load resources for language ${language}`));
+      request.send();
+    });
+  }
+
+  /**
+   * Loads the translations for a language and returns a Promise which resolves when they are
+   * loaded or rejects when there was an error loading translations.
+   *
+   * The requested language is merged on top of English, so that strings which have not been
+   * translated yet are displayed in English instead of as raw message keys.
    *
    *  @param language The language code to load translations for, eg 'en'
    */
-  loadLanguageResources(language: string) {
-    const localizeResourcesResponder = new Promise<void>((resolve, reject) => {
-      // loadResources uses events and continuation instead of Promises.  In order to make this
-      // function easier to use, we wrap the language-changing logic in event handlers which
-      // resolve or reject the Promise.  Note that they need to clean up whichever event handler
-      // didn't fire so we don't leak it, which could cause future language changes to not work
-      // properly by triggering old event listeners.
-      const successHandler = () => {
-        this.removeEventListener(
-          'app-localize-resources-error',
-          failureHandler
-        );
-        resolve();
-      };
-      const failureHandler = () => {
-        this.removeEventListener(
-          'app-localize-resources-loaded',
-          successHandler
-        );
-        reject(new Error(`Failed to load resources for language ${language}`));
-      };
-      this.addEventListener('app-localize-resources-loaded', successHandler, {
-        once: true,
-      });
-      this.addEventListener('app-localize-resources-error', failureHandler, {
-        once: true,
-      });
-    });
-
-    const messagesUrl = `./messages/${language}.json`;
-    this.loadResources(messagesUrl, language, /* merge= */ false);
-    return localizeResourcesResponder;
+  async loadLanguageResources(language: string) {
+    const [english, translated] = await Promise.all([
+      this.fetchMessages('en'),
+      language === 'en' ? Promise.resolve({}) : this.fetchMessages(language),
+    ]);
+    this.resources = {[language]: {...english, ...translated}};
   }
 
   /**
