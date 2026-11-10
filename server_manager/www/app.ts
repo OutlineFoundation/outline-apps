@@ -229,6 +229,7 @@ export class App {
 
     appRoot.addEventListener('DonateBannerDismissed', () => {
       dismissDonateBanner();
+      void this.hideDonateBannerOnAllServers();
     });
 
     appRoot.addEventListener('AddAccessKeyRequested', (_: CustomEvent) => {
@@ -894,6 +895,31 @@ export class App {
     this.appRoot.selectedServerId = server.getId();
     localStorage.setItem(LAST_DISPLAYED_SERVER_STORAGE_KEY, server.getId());
     this.appRoot.showServerView();
+    void this.refreshDonateBanner(server);
+  }
+
+  // Recomputes whether the donate banner is shown for a server. The server views are kept
+  // around and only hidden when switching servers, so the banner visibility must be refreshed
+  // when a server is shown again: it may have been dismissed on another server since, or the
+  // server may have become old enough for the banner in the meantime.
+  private async refreshDonateBanner(server: server_model.Server) {
+    const view = await this.appRoot.getServerView(server.getId());
+    // Only servers whose management view is shown have their configuration loaded, which
+    // the creation date comes from.
+    if (view?.selectedPage === 'managementView') {
+      view.showDonateBanner = shouldShowDonateBanner(server.getCreatedDate());
+    }
+  }
+
+  // Hides the donate banner on every loaded server view, since dismissing it applies to all
+  // servers and the views of the other servers are kept around while hidden.
+  private async hideDonateBannerOnAllServers() {
+    for (const serverEntry of this.appRoot.serverList) {
+      const view = await this.appRoot.getServerView(serverEntry.id);
+      if (view) {
+        view.showDonateBanner = false;
+      }
+    }
   }
 
   private async updateServerView(server: server_model.Server): Promise<void> {
