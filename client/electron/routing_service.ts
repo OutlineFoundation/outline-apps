@@ -143,6 +143,8 @@ export class RoutingDaemon {
           JSON.stringify({
             action: RoutingServiceAction.CONFIGURE_ROUTING,
             parameters: {
+              // Keep this field even when empty: the Windows service uses null
+              // to distinguish an inactive session when the network changes.
               proxyIp: this.proxyAddress,
               isAutoConnect: this.isAutoConnect,
             },
