@@ -20,10 +20,9 @@ import (
 	"fmt"
 	"net/netip"
 
-	"golang.getoutline.org/sdk/transport"
-
 	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/iptable"
+	"golang.getoutline.org/sdk/transport"
 )
 
 type ipTableRootConfig struct {
@@ -96,14 +95,14 @@ func parseIPTableStreamDialer(
 	}
 
 	var fallbackDialer transport.StreamDialer
-	fallbackFirstHop := ""
+
 	if rootCfg.Fallback != nil {
 		parsedFallbackDialer, err := parseSD(ctx, rootCfg.Fallback)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse nested stream dialer fallback: %w", err)
 		}
-		fallbackFirstHop = parsedFallbackDialer.ConnectionProviderInfo.FirstHop
+
 		if parsedFallbackDialer.ConnType != ConnTypeBlocked {
 			allConnBlocked = false
 			if parsedFallbackDialer.ConnType != ConnTypeTunneled {
@@ -141,7 +140,6 @@ func parseIPTableStreamDialer(
 		Dial: dialer.DialStream,
 		ConnectionProviderInfo: ConnectionProviderInfo{
 			ConnType: connType,
-			FirstHop: fallbackFirstHop,
 		},
 	}, nil
 }

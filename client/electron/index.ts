@@ -356,16 +356,18 @@ async function createVpnTunnel(
   request: StartRequestJson,
   isAutoConnect: boolean
 ): Promise<VpnTunnel> {
-  // We must convert the host from a potential "hostname" to an "IP" address
-  // because startVpn will add a routing table entry that prefixed with this
-  // host (e.g. "<host>/32"), therefore <host> must be an IP address.
-  // TODO: make sure we resolve it in the native code
-  const {host} = net.splitHostPort(request.firstHop);
-  if (!host) {
-    throw new errors.IllegalServerConfiguration('host is missing');
+  // Multi-path configurations may not have a single first hop. Windows binds
+  // outbound sockets to the gateway adapter, so routing can start without a
+  // proxy IP. Preserve the existing lookup when first-hop metadata is present.
+  let hostIp = '';
+  if (request.firstHop) {
+    const {host} = net.splitHostPort(request.firstHop);
+    if (!host) {
+      throw new errors.IllegalServerConfiguration('host is missing');
+    }
+    hostIp = (await lookupIp(host)) || '';
   }
-  const hostIp = await lookupIp(host);
-  const routing = new RoutingDaemon(hostIp || '', isAutoConnect);
+  const routing = new RoutingDaemon(hostIp, isAutoConnect);
   const tunnel = new GoVpnTunnel(routing, request.id, request.client);
   routing.onNetworkChange = tunnel.networkChanged.bind(tunnel);
   return tunnel;
