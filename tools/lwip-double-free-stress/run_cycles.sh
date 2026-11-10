@@ -36,6 +36,14 @@ log "build under test: $(installed_version)"
 
 crashes=0
 for cycle in $(seq 1 "${cycles}"); do
+  if ! device_alive; then
+    log "cycle ${cycle}: EMULATOR FROZE; restarting it"
+    echo "${cycle},,,emulator-froze,," >> "${csv}"
+    restart_emulator
+    device_fakess_start
+    launch_app
+    sleep 3
+  fi
   if ! has_tun0; then
     vpn_start
     if ! wait_tun0 up 15; then

@@ -1,0 +1,5 @@
+label: control-mix-compare
+build: 1 1.0
+cycles: 40  connections per cycle: 120
+cycles with a :vpn crash: 0
+tombstones for org.outline.android.client: 0
