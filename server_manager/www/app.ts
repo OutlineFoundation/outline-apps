@@ -904,10 +904,11 @@ export class App {
   // server may have become old enough for the banner in the meantime.
   private async refreshDonateBanner(server: server_model.Server) {
     const view = await this.appRoot.getServerView(server.getId());
-    // Only servers whose management view is shown have their configuration loaded, which
-    // the creation date comes from.
-    if (view?.selectedPage === 'managementView') {
-      view.showDonateBanner = shouldShowDonateBanner(server.getCreatedDate());
+    // The creation date is only known once the server configuration has been loaded, at which
+    // point setServerManagementView stores it on the view. Until then the view holds its
+    // default, the epoch, and asking the server for it would throw.
+    if (view && view.serverCreationDate.getTime() > 0) {
+      view.showDonateBanner = shouldShowDonateBanner(view.serverCreationDate);
     }
   }
 
