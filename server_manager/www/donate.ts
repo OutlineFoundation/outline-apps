@@ -14,8 +14,13 @@
   limitations under the License.
 */
 
+/**
+ * The Outline Foundation's donation page. It redirects to the current
+ * fundraising campaign and forwards query parameters, so the campaign can
+ * change without a Manager release.
+ */
 export const DONATE_URL =
-  'https://givebutter.com/outline-lt1azu?utm_source=outline-manager&utm_medium=app';
+  'https://donate.outline.org/?utm_source=outline-manager&utm_medium=app';
 
 /** How long a server must have existed before the donate banner is shown. */
 export const DONATE_BANNER_MIN_SERVER_AGE_MS = 30 * 24 * 60 * 60 * 1000;
