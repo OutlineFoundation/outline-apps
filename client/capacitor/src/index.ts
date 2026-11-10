@@ -249,7 +249,7 @@ function wireExternalLinkHandling() {
 }
 
 // Bootstrap: install the method channel, wire external links, then hand off
-// to the shared main() — mirroring the Cordova and Electron entry points.
+// to the shared main() — mirroring the Electron entry point.
 installDefaultMethodChannel(
   hasDeviceSupport
     ? new CapacitorMethodChannel()
