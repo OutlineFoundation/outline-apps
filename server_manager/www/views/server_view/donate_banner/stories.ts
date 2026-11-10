@@ -30,7 +30,7 @@ export const Default = {
       return {
         'donate-prompt':
           'Outline is run by a small team. A donation to the Outline Foundation pays for the security updates and maintenance that keep Outline free and open source.',
-        'nav-donate': 'Donate',
+        'nav-donate': 'Support us',
         close: 'Close',
       }[msgId];
     },
