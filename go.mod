@@ -3,13 +3,13 @@ module localhost
 go 1.25.0
 
 require (
+	github.com/OutlineFoundation/go-tun2socks v0.0.0-20261109155258-912c3d7abed3
 	github.com/Wifx/gonetworkmanager/v2 v2.1.0
-	github.com/eycorsican/go-tun2socks v1.16.11
 	github.com/goccy/go-yaml v1.18.0
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/stretchr/testify v1.10.0
 	go.nhat.io/cookiejar v0.3.0
-	golang.getoutline.org/sdk v0.1.0-rc1
+	golang.getoutline.org/sdk v0.1.0-rc1.0.20261109155512-47697b8b2a54
 	golang.getoutline.org/sdk/x v0.0.9-alpha.1
 	golang.org/x/mobile v0.0.0-20250813145510-f12310a0cfd9
 	golang.org/x/sys v0.36.0

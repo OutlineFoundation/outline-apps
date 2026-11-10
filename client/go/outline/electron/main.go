@@ -27,13 +27,13 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/OutlineFoundation/go-tun2socks/common/log/simple" // Register a simple logger.
+	"github.com/OutlineFoundation/go-tun2socks/tun"
 	"localhost/client/go/outline"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/connectivity"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/vpn"
-	_ "github.com/eycorsican/go-tun2socks/common/log/simple" // Register a simple logger.
-	"github.com/eycorsican/go-tun2socks/tun"
 )
 
 // tun2socks exit codes. Must be kept in sync with definitions in "go_vpn_tunnel.ts"
