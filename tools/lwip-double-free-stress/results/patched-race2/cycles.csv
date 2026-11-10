@@ -1,0 +1,6 @@
+cycle,vpn_pid_before,vpn_pid_after,crashed_during_storm,crashed_at_teardown,racers,victims_ok,victims_unexpected_eof,victims_unexpected_err
+1,7048,7048,0,clean,1805,895,0,0
+2,7269,7269,0,clean,1834,866,0,0
+3,7495,7495,0,clean,1810,890,0,0
+4,7715,7715,0,clean,1839,861,0,0
+5,7941,7941,0,clean,1806,894,0,0

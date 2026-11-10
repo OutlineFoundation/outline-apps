@@ -11,6 +11,7 @@ Emulator: `outline-spike` AVD, Android 15 (API 35) `default` arm64 image
 | `control-race1` | control | race (`run_race.sh 1 3`) | 1 | 3 | 1 |
 | `control-race-compare` | control | race (`run_race.sh 5 3`) | 5 | 30 | 3 |
 | `patched-race-compare` | patched | race (`run_race.sh 5 3`) | 5 | 0 | 0 |
+| `patched-race2` | patched | race, fresh install, `SEED_START=100` | 5 | 0 | 0 |
 
 Notes:
 
