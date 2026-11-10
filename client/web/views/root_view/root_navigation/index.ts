@@ -66,6 +66,7 @@ export class RootNavigation extends LitElement {
       will-change: transform;
       visibility: hidden;
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
     }
 
     md-list {
@@ -104,6 +105,10 @@ export class RootNavigation extends LitElement {
       align-items: center;
       justify-content: center;
       height: 124px;
+      /* Like root-header: where the WebView extends under the status/title
+       * bar (iOS with viewport-fit=cover, Mac Catalyst), grow by the inset so
+       * the logo sits below it. Elsewhere the inset is 0. */
+      padding-top: env(safe-area-inset-top, 0px);
       z-index: 1;
     }
 
