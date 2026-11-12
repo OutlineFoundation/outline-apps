@@ -284,7 +284,6 @@ export class AppRoot extends polymerElementWithLocalize {
       #donate-icon {
         width: 18px;
         height: 18px;
-        margin-right: 2px;
       }
       .legal-links {
         margin: 0 -6px;
