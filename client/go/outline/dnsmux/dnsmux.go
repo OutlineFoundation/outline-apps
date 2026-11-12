@@ -31,6 +31,8 @@
 //
 //   - Queries are demultiplexed by DNS message ID. The relay rewrites the ID of every query to
 //     one that is unique among the in-flight queries and restores the original ID on the response.
+//     A response must also carry the question of the query, because IDs are reused once a query
+//     finishes and a late response to an earlier query may arrive.
 //   - If the upstream does not answer a query within [Config.FallbackAfter], the relay answers it
 //     with a truncated response. That makes the OS retry the query over TCP, which does not depend
 //     on the UDP path.
@@ -38,9 +40,11 @@
 //     sent, the relay stops trusting the UDP path: queries are answered with a truncated response
 //     immediately, except for one probe every [Config.ProbeInterval] that is sent over a fresh
 //     upstream association. The first response re-enables UDP.
+//   - [Relay.Reset] retires the queries in flight, so that they cannot affect the new network.
 package dnsmux
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
@@ -104,6 +108,8 @@ type Relay struct {
 	degraded     bool      // Whether the UDP path is not trusted.
 	lastProbe    time.Time // When the last query was sent upstream while degraded.
 	lastResponse time.Time // When the upstream last answered a query.
+
+	randID func() uint16 // Returns a random ID. Replaceable in tests.
 }
 
 var _ packetrelay.PacketRelay = (*Relay)(nil)
@@ -120,8 +126,13 @@ type query struct {
 	origID  [2]byte
 	dst     netip.AddrPort
 	payload []byte // A copy of the original query, used to build the truncated response.
-	sentAt  time.Time
-	timer   *time.Timer // Fires the fallback.
+	// The question section of the query, or nil if it could not be parsed. A response must
+	// carry the same question: IDs are reused once a query finishes, so a late response to an
+	// earlier query can arrive with the ID of a later one.
+	question []byte
+	nameLen  int // Length of the QNAME in question.
+	sentAt   time.Time
+	timer    *time.Timer // Fires the fallback.
 }
 
 // NewRelay creates a [Relay] that sends queries over associations of inner.
@@ -132,7 +143,7 @@ func NewRelay(inner packetrelay.PacketRelay, cfg Config) (*Relay, error) {
 	if inner == nil {
 		return nil, errors.New("inner relay must not be nil")
 	}
-	return &Relay{inner: inner, cfg: cfg.withDefaults(), pending: make(map[uint16]*query)}, nil
+	return &Relay{inner: inner, cfg: cfg.withDefaults(), pending: make(map[uint16]*query), randID: randomID}, nil
 }
 
 // NewAssociation implements [packetrelay.PacketRelay]. The returned association is virtual:
@@ -151,11 +162,19 @@ func (r *Relay) NewAssociation() (packetrelay.PacketSender, packetrelay.PacketRe
 
 // Reset drops the upstream association and trusts the UDP path again. Call it when the
 // underlying network changes: the next query will go over a new upstream association.
+//
+// Queries in flight are retired without an answer: they were sent on the old network, so their
+// fallback must not mark the new network's UDP path as broken. The OS retransmits them, and the
+// retransmissions go over the new upstream association.
 func (r *Relay) Reset() {
 	r.mu.Lock()
 	up := r.up
 	r.up = nil
 	r.degraded = false
+	for id, q := range r.pending {
+		delete(r.pending, id)
+		q.timer.Stop()
+	}
 	r.mu.Unlock()
 	if up != nil {
 		_ = up.sender.Close()
@@ -192,6 +211,7 @@ func (r *Relay) send(a *association, p []byte, dst netip.AddrPort) error {
 		return err
 	}
 	q := &query{assoc: a, id: r.newIDLocked(), dst: dst, payload: append([]byte(nil), p...), sentAt: time.Now()}
+	q.question, q.nameLen = parseQuestion(q.payload)
 	copy(q.origID[:], p[:2])
 	r.pending[q.id] = q
 	q.timer = time.AfterFunc(r.cfg.FallbackAfter, func() { r.fallback(q) })
@@ -247,14 +267,18 @@ func (r *Relay) dropUpstream(up *upstream) {
 
 // newIDLocked returns a random ID that no in-flight query is using.
 func (r *Relay) newIDLocked() uint16 {
-	var b [2]byte
 	for {
-		_, _ = rand.Read(b[:])
-		id := binary.BigEndian.Uint16(b[:])
+		id := r.randID()
 		if _, used := r.pending[id]; !used {
 			return id
 		}
 	}
+}
+
+func randomID() uint16 {
+	var b [2]byte
+	_, _ = rand.Read(b[:])
+	return binary.BigEndian.Uint16(b[:])
 }
 
 // remove forgets q. It returns false if q was already answered or removed.
@@ -310,7 +334,7 @@ func (h upstreamHandler) HandlePacket(p []byte, source netip.AddrPort) error {
 	id := binary.BigEndian.Uint16(p)
 	r.mu.Lock()
 	q := r.pending[id]
-	if q == nil || !sameAddrPort(q.dst, source) {
+	if q == nil || !sameAddrPort(q.dst, source) || !q.answeredBy(p) {
 		// Late, duplicate or unsolicited response.
 		r.mu.Unlock()
 		return nil
@@ -325,6 +349,75 @@ func (h upstreamHandler) HandlePacket(p []byte, source netip.AddrPort) error {
 	copy(resp[:2], q.origID[:])
 	q.assoc.deliver(resp, source)
 	return nil
+}
+
+// answeredBy reports whether the DNS response p carries the question of q.
+func (q *query) answeredBy(p []byte) bool {
+	if q.question == nil {
+		return true // The query could not be parsed: match by ID and source only.
+	}
+	question, nameLen := parseQuestion(p)
+	if question == nil || len(question) != len(q.question) || nameLen != q.nameLen {
+		return false
+	}
+	// The name compares case-insensitively, because resolvers may echo it in a different case.
+	// QDCOUNT, QTYPE and QCLASS compare exactly.
+	return bytes.Equal(question[:2], q.question[:2]) &&
+		equalFoldASCII(question[2:nameLen], q.question[2:nameLen]) &&
+		bytes.Equal(question[nameLen:], q.question[nameLen:])
+}
+
+// equalFoldASCII reports whether a and b are equal, treating ASCII letters case-insensitively.
+// Unlike bytes.EqualFold it compares raw bytes, which DNS names are.
+func equalFoldASCII(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		x, y := a[i], b[i]
+		if 'A' <= x && x <= 'Z' {
+			x += 'a' - 'A'
+		}
+		if 'A' <= y && y <= 'Z' {
+			y += 'a' - 'A'
+		}
+		if x != y {
+			return false
+		}
+	}
+	return true
+}
+
+// parseQuestion returns the QDCOUNT field followed by the first question (QNAME, QTYPE, QCLASS)
+// of the DNS message p, and the offset where the QNAME ends in the returned slice. It returns nil
+// if p has no question or the question cannot be parsed, for example because the name is
+// compressed.
+func parseQuestion(p []byte) (question []byte, nameLen int) {
+	if len(p) < dnsHeaderLen || binary.BigEndian.Uint16(p[4:6]) == 0 {
+		return nil, 0
+	}
+	i := dnsHeaderLen
+	for {
+		if i >= len(p) {
+			return nil, 0
+		}
+		labelLen := int(p[i])
+		if labelLen == 0 {
+			i++
+			break
+		}
+		if labelLen&0xc0 != 0 {
+			return nil, 0 // Compressed or reserved label type.
+		}
+		i += 1 + labelLen
+	}
+	end := i + 4 // QTYPE and QCLASS.
+	if end > len(p) {
+		return nil, 0
+	}
+	// Include QDCOUNT, so that a response with a different number of questions does not match.
+	question = append(append([]byte(nil), p[4:6]...), p[dnsHeaderLen:end]...)
+	return question, 2 + i - dnsHeaderLen
 }
 
 func sameAddrPort(a, b netip.AddrPort) bool {

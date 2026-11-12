@@ -517,3 +517,112 @@ func TestBehindDNSInterceptorABurstOfQueriesUsesOneUpstreamAssociation(t *testin
 	require.Equal(t, queries, dnsUp.assoc(0).sentCount())
 	require.Zero(t, otherUp.count())
 }
+
+// sentPacket returns the i-th packet sent on a, with the response bit set. It also waits until
+// the relay is receiving on a, so that the caller can use a.handler.
+func sentPacket(a *fakeAssoc, i int) []byte {
+	<-a.ready
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	p := append([]byte(nil), a.sent[i]...)
+	p[dnsFlagsByte] |= dnsResponseBit
+	return p
+}
+
+func expectNothing(t *testing.T, c collector) {
+	t.Helper()
+	select {
+	case p := <-c:
+		require.FailNow(t, "unexpected response", "%x", p)
+	case <-time.After(60 * time.Millisecond):
+	}
+}
+
+// A query ID is free again once its query finishes. A late response to the earlier query must
+// not be taken as the answer to a later query that reuses the ID.
+func TestLateResponseAfterIDReuseIsIgnored(t *testing.T) {
+	up := &fakeUpstream{silent: true}
+	relay, err := NewRelay(up, Config{FallbackAfter: time.Minute})
+	require.NoError(t, err)
+	relay.randID = func() uint16 { return 0x0101 } // Force ID reuse.
+
+	sOld, _ := open(t, relay)
+	require.NoError(t, sOld.SendPacket(newQuery(1, "old"), resolver))
+	require.NoError(t, sOld.Close()) // The old query finishes; its ID is free.
+
+	sNew, cNew := open(t, relay)
+	newQ := newQuery(2, "new")
+	require.NoError(t, sNew.SendPacket(newQ, resolver))
+	a := up.assoc(0)
+	lateOld, answerNew := sentPacket(a, 0), sentPacket(a, 1)
+	require.Equal(t, lateOld[:2], answerNew[:2], "the test needs both queries to use the same ID")
+
+	require.NoError(t, a.handler.HandlePacket(lateOld, resolver))
+	expectNothing(t, cNew)
+
+	require.NoError(t, a.handler.HandlePacket(answerNew, resolver))
+	resp := cNew.next(t, 2*time.Second)
+	require.Equal(t, newQ[:2], resp[:2])
+	require.Equal(t, newQ[dnsHeaderLen:], resp[dnsHeaderLen:])
+}
+
+func TestResponseMustCarryTheQuestion(t *testing.T) {
+	up := &fakeUpstream{silent: true}
+	relay, err := NewRelay(up, Config{FallbackAfter: time.Minute})
+	require.NoError(t, err)
+
+	s, c := open(t, relay)
+	query := newQuery(1, "example")
+	require.NoError(t, s.SendPacket(query, resolver))
+	a := up.assoc(0)
+	answer := sentPacket(a, 0)
+
+	otherType := append([]byte(nil), answer...)
+	otherType[len(otherType)-3] = 28 // AAAA instead of A.
+	require.NoError(t, a.handler.HandlePacket(otherType, resolver))
+
+	noQuestion := append([]byte(nil), answer[:dnsHeaderLen]...)
+	binary.BigEndian.PutUint16(noQuestion[4:], 0)
+	require.NoError(t, a.handler.HandlePacket(noQuestion, resolver))
+
+	truncatedName := answer[:dnsHeaderLen+3]
+	require.NoError(t, a.handler.HandlePacket(truncatedName, resolver))
+	expectNothing(t, c)
+
+	// The resolver may echo the name in another case.
+	upperCase := append([]byte(nil), answer...)
+	copy(upperCase[dnsHeaderLen+1:], "EXAMPLE")
+	require.NoError(t, a.handler.HandlePacket(upperCase, resolver))
+	require.Equal(t, query[:2], c.next(t, 2*time.Second)[:2])
+}
+
+func TestEqualFoldASCIIComparesRawBytes(t *testing.T) {
+	require.True(t, equalFoldASCII([]byte("Example"), []byte("eXAMPLE")))
+	require.False(t, equalFoldASCII([]byte{0xfe}, []byte{0xff}), "bytes.EqualFold treats these as equal")
+	require.False(t, equalFoldASCII([]byte("a"), []byte("ab")))
+	require.False(t, equalFoldASCII([]byte("["), []byte("{")))
+}
+
+// Queries sent before a network change must not affect the new network: when they time out,
+// they must not mark the new network's UDP path as broken.
+func TestResetRetiresPendingQueries(t *testing.T) {
+	up := &fakeUpstream{silent: true}
+	relay, err := NewRelay(up, Config{FallbackAfter: 30 * time.Millisecond, ProbeInterval: time.Minute})
+	require.NoError(t, err)
+
+	sOld, cOld := open(t, relay)
+	require.NoError(t, sOld.SendPacket(newQuery(1, "old"), resolver))
+	relay.Reset() // The network changes while the query is in flight.
+	relay.mu.Lock()
+	pending := len(relay.pending)
+	relay.mu.Unlock()
+	require.Zero(t, pending)
+
+	up.setSilent(false)
+	expectNothing(t, cOld) // Its fallback would have fired by now.
+
+	sNew, cNew := open(t, relay)
+	require.NoError(t, sNew.SendPacket(newQuery(2, "new"), resolver))
+	require.False(t, isTruncated(cNew.next(t, 2*time.Second)), "UDP must still be trusted")
+	require.Equal(t, 2, up.count())
+}
