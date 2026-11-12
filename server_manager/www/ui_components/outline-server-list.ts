@@ -34,6 +34,8 @@ export class OutlineServerList extends LitElement {
   @property({type: Function}) localize: Function;
   @property({type: String}) language: string;
   @property({type: Object}) featureFlags: {[key: string]: boolean};
+  @property({type: String}) donateUrl: string;
+  @property({type: Boolean}) showDonateBanner = false;
 
   render() {
     if (!this.serverList) {
@@ -52,6 +54,8 @@ export class OutlineServerList extends LitElement {
             .language="${this.language}"
             .localize="${this.localize}"
             .featureFlags="${this.featureFlags}"
+            .donateUrl="${this.donateUrl}"
+            .showDonateBanner="${this.showDonateBanner}"
             ?hidden="${e.id !== this.selectedServerId}"
           >
           </outline-server-view>

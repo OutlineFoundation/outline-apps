@@ -456,7 +456,7 @@ export class AppRoot extends polymerElementWithLocalize {
               <outline-manual-server-entry id="manualEntry" localize="[[localize]]"></outline-manual-server-entry>
               <!-- TODO: Move to a new outline-do-oauth-step. -->
               <outline-region-picker-step id="regionPicker" localize="[[localize]]" language="[[language]]"></outline-region-picker-step>
-              <outline-server-list id="serverView" server-list="[[_serverViewList(serverList)]]" selected-server-id="[[selectedServerId]]" language="[[language]]" localize="[[localize]]" feature-flags="[[featureFlags]]"></outline-server-list>
+              <outline-server-list id="serverView" server-list="[[_serverViewList(serverList)]]" selected-server-id="[[selectedServerId]]" language="[[language]]" localize="[[localize]]" feature-flags="[[featureFlags]]" donate-url="[[donateUrl]]" show-donate-banner="[[showDonateBanner]]"></outline-server-list>
               </div>
             </iron-pages>
           </div>
@@ -735,6 +735,7 @@ export class AppRoot extends polymerElementWithLocalize {
       gcpAccount: Object,
       outlineVersion: String,
       donateUrl: {type: String, value: DONATE_URL},
+      showDonateBanner: {type: Boolean, value: false},
       userAcceptedTos: {
         type: Boolean,
         // Get notified when the user clicks the OK button in the ToS view
@@ -768,6 +769,7 @@ export class AppRoot extends polymerElementWithLocalize {
   gcpAccount: AccountListEntry = null;
   outlineVersion = '';
   donateUrl = DONATE_URL;
+  showDonateBanner = false;
   currentPage = 'intro';
   shouldShowSideBar = false;
   showManagerResourcesLink = false;

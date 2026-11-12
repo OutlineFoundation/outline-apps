@@ -16,7 +16,8 @@
 
 import {
   DONATE_BANNER_MIN_SERVER_AGE_MS,
-  dismissDonateBanner,
+  isDonateBannerDismissed,
+  saveDonateBannerDismissal,
   shouldShowDonateBanner,
 } from './donate';
 
@@ -48,18 +49,23 @@ describe('shouldShowDonateBanner', () => {
   const tooNew = new Date(now.getTime() - DONATE_BANNER_MIN_SERVER_AGE_MS + 1);
 
   it('is false for a server younger than the minimum age', () => {
-    expect(shouldShowDonateBanner(tooNew, now, new FakeStorage())).toBeFalse();
+    expect(shouldShowDonateBanner(tooNew, false, now)).toBeFalse();
   });
 
   it('is true once the server reaches the minimum age', () => {
-    expect(
-      shouldShowDonateBanner(oldEnough, now, new FakeStorage())
-    ).toBeTrue();
+    expect(shouldShowDonateBanner(oldEnough, false, now)).toBeTrue();
   });
 
   it('is false after the banner has been dismissed', () => {
+    expect(shouldShowDonateBanner(oldEnough, true, now)).toBeFalse();
+  });
+});
+
+describe('donate banner dismissal', () => {
+  it('is not dismissed until saved', () => {
     const storage = new FakeStorage();
-    dismissDonateBanner(storage);
-    expect(shouldShowDonateBanner(oldEnough, now, storage)).toBeFalse();
+    expect(isDonateBannerDismissed(storage)).toBeFalse();
+    saveDonateBannerDismissal(storage);
+    expect(isDonateBannerDismissed(storage)).toBeTrue();
   });
 });

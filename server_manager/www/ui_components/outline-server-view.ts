@@ -48,14 +48,12 @@ import type {OutlineHelpBubble} from './outline-help-bubble';
 import type {OutlineServerSettings} from './outline-server-settings';
 import type {CloudLocation} from '../../model/location';
 import * as formatting from '../data_formatting';
-import {DONATE_URL} from '../donate';
 import {getShortName} from '../location_formatting';
 import {
   AccessKeyDataTableEvent,
   AccessKeyDataTableRow,
 } from '../views/server_view/access_key_data_table';
 import {DataTableSortDirection} from '../views/server_view/access_key_data_table/data_table';
-import {DONATE_BANNER_DISMISS_EVENT} from '../views/server_view/donate_banner';
 import type {ServerMetricsData} from '../views/server_view/server_metrics_row';
 import {ServerMetricsBandwidthLocation} from '../views/server_view/server_metrics_row/bandwidth';
 import {ServerMetricsTunnelTimeLocation} from '../views/server_view/server_metrics_row/tunnel_time';
@@ -665,11 +663,6 @@ export class ServerView extends DirMixin(PolymerElement) {
   ready() {
     super.ready();
 
-    // Hide the banner right away; the app persists the dismissal.
-    this.addEventListener(DONATE_BANNER_DISMISS_EVENT, () => {
-      this.showDonateBanner = false;
-    });
-
     this.addEventListener(
       AccessKeyDataTableEvent.SORT,
       (event: CustomEvent) => {
@@ -731,7 +724,7 @@ export class ServerView extends DirMixin(PolymerElement) {
   accessKeyDataSortDirection: DataTableSortDirection;
   accessKeyDataSortColumnId: string;
   cloudId = '';
-  donateUrl = DONATE_URL;
+  donateUrl = '';
   cloudLocation: CloudLocation = null;
   defaultDataLimitBytes: number = null;
   isAccessKeyPortEditable = false;

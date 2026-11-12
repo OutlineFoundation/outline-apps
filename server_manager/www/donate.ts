@@ -28,25 +28,28 @@ export const DONATE_BANNER_MIN_SERVER_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const DONATE_BANNER_DISMISSED_KEY = 'donate-banner-dismissed';
 
 /**
- * Whether the donate banner should be shown for a server created at
- * `serverCreatedDate`. The banner is shown once a server has been around for
- * DONATE_BANNER_MIN_SERVER_AGE_MS, and never again after it has been dismissed.
+ * Whether the donate banner should be shown given a server created at
+ * `serverCreationDate`. The banner is due once a server has existed for
+ * DONATE_BANNER_MIN_SERVER_AGE_MS, unless it has been dismissed.
  */
 export function shouldShowDonateBanner(
-  serverCreatedDate: Date,
-  now: Date = new Date(),
-  storage: Storage = window.localStorage
+  serverCreationDate: Date,
+  dismissed: boolean,
+  now = new Date()
 ): boolean {
-  if (storage.getItem(DONATE_BANNER_DISMISSED_KEY)) {
+  if (dismissed) {
     return false;
   }
-  const serverAgeMs = now.getTime() - serverCreatedDate.getTime();
+  const serverAgeMs = now.getTime() - serverCreationDate.getTime();
   return serverAgeMs >= DONATE_BANNER_MIN_SERVER_AGE_MS;
 }
 
-/** Permanently hides the donate banner on this install. */
-export function dismissDonateBanner(
-  storage: Storage = window.localStorage
-): void {
+/** Whether the donate banner has been dismissed on this install. */
+export function isDonateBannerDismissed(storage: Storage): boolean {
+  return storage.getItem(DONATE_BANNER_DISMISSED_KEY) !== null;
+}
+
+/** Records that the donate banner has been dismissed on this install. */
+export function saveDonateBannerDismissal(storage: Storage): void {
   storage.setItem(DONATE_BANNER_DISMISSED_KEY, 'true');
 }

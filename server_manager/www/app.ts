@@ -18,7 +18,11 @@ import * as Sentry from '@sentry/electron/renderer';
 import * as semver from 'semver';
 
 import {DisplayDataAmount, displayDataAmountToBytes} from './data_formatting';
-import {dismissDonateBanner, shouldShowDonateBanner} from './donate';
+import {
+  isDonateBannerDismissed,
+  saveDonateBannerDismissal,
+  shouldShowDonateBanner,
+} from './donate';
 import {filterOptions, getShortName, sortOptions} from './location_formatting';
 import {parseManualServerConfig} from './management_urls';
 import type {AppRoot, ServerListEntry} from './ui_components/app-root';
@@ -228,8 +232,8 @@ export class App {
     });
 
     appRoot.addEventListener('DonateBannerDismissed', () => {
-      dismissDonateBanner();
-      void this.hideDonateBannerOnAllServers();
+      saveDonateBannerDismissal(localStorage);
+      this.appRoot.showDonateBanner = false;
     });
 
     appRoot.addEventListener('AddAccessKeyRequested', (_: CustomEvent) => {
@@ -895,32 +899,6 @@ export class App {
     this.appRoot.selectedServerId = server.getId();
     localStorage.setItem(LAST_DISPLAYED_SERVER_STORAGE_KEY, server.getId());
     this.appRoot.showServerView();
-    void this.refreshDonateBanner(server);
-  }
-
-  // Recomputes whether the donate banner is shown for a server. The server views are kept
-  // around and only hidden when switching servers, so the banner visibility must be refreshed
-  // when a server is shown again: it may have been dismissed on another server since, or the
-  // server may have become old enough for the banner in the meantime.
-  private async refreshDonateBanner(server: server_model.Server) {
-    const view = await this.appRoot.getServerView(server.getId());
-    // The creation date is only known once the server configuration has been loaded, at which
-    // point setServerManagementView stores it on the view. Until then the view holds its
-    // default, the epoch, and asking the server for it would throw.
-    if (view && view.serverCreationDate.getTime() > 0) {
-      view.showDonateBanner = shouldShowDonateBanner(view.serverCreationDate);
-    }
-  }
-
-  // Hides the donate banner on every loaded server view, since dismissing it applies to all
-  // servers and the views of the other servers are kept around while hidden.
-  private async hideDonateBannerOnAllServers() {
-    for (const serverEntry of this.appRoot.serverList) {
-      const view = await this.appRoot.getServerView(serverEntry.id);
-      if (view) {
-        view.showDonateBanner = false;
-      }
-    }
   }
 
   private async updateServerView(server: server_model.Server): Promise<void> {
@@ -944,7 +922,7 @@ export class App {
     view.serverManagementApiUrl = server.getManagementApiUrl();
     view.serverPortForNewAccessKeys = server.getPortForNewAccessKeys();
     view.serverCreationDate = server.getCreatedDate();
-    view.showDonateBanner = shouldShowDonateBanner(server.getCreatedDate());
+    this.showDonateBannerIfDue(server.getCreatedDate());
     view.serverVersion = version;
     view.defaultDataLimitBytes = server.getDefaultDataLimit()?.bytes;
     view.isDefaultDataLimitEnabled = view.defaultDataLimitBytes !== undefined;
@@ -996,6 +974,20 @@ export class App {
       }
       this.showServerMetrics(server, view);
     }, 0);
+  }
+
+  // The donate banner is shown to the whole app once any server has existed for long enough,
+  // so a server that qualifies turns it on for all servers. Called whenever a server's
+  // configuration has been loaded, since that is when its creation date is known.
+  private showDonateBannerIfDue(serverCreationDate: Date) {
+    if (
+      shouldShowDonateBanner(
+        serverCreationDate,
+        isDonateBannerDismissed(localStorage)
+      )
+    ) {
+      this.appRoot.showDonateBanner = true;
+    }
   }
 
   private async setServerUnreachableView(
