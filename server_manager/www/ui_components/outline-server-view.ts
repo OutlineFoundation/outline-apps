@@ -36,6 +36,7 @@ import './outline-server-settings';
 import './outline-share-dialog';
 import './outline-sort-span';
 
+import '../views/server_view/donate_banner';
 import '../views/server_view/server_metrics_row/bandwidth';
 import '../views/server_view/server_metrics_row/tunnel_time';
 import {html, PolymerElement} from '@polymer/polymer';
@@ -95,6 +96,9 @@ export class ServerView extends DirMixin(PolymerElement) {
           display: flex;
           flex-direction: row;
           border-bottom: 1px solid var(--border-color);
+        }
+        donate-banner {
+          margin: 24px 0 0 0;
         }
         .tabs-spacer {
           flex: 2;
@@ -457,6 +461,12 @@ export class ServerView extends DirMixin(PolymerElement) {
         </paper-tabs>
         <div class="tabs-spacer"></div>
       </div>
+      <template is="dom-if" if="[[showDonateBanner]]">
+        <donate-banner
+          link="[[donateUrl]]"
+          localize="[[localize]]"
+        ></donate-banner>
+      </template>
       <iron-pages
         id="pages"
         selected="[[selectedTab]]"
@@ -607,6 +617,7 @@ export class ServerView extends DirMixin(PolymerElement) {
           '_computeAccessKeyTabMessage(hasAccessKeyData, accessKeyData, localize)',
       },
       cloudId: String,
+      donateUrl: String,
       cloudLocation: Object,
       defaultDataLimitBytes: Number,
       featureFlags: Object,
@@ -643,6 +654,7 @@ export class ServerView extends DirMixin(PolymerElement) {
       serverName: String,
       serverPortForNewAccessKeys: Number,
       serverVersion: String,
+      showDonateBanner: Boolean,
       showFeatureMetricsDisclaimer: Boolean,
       supportsDefaultDataLimit: Boolean,
     };
@@ -712,6 +724,7 @@ export class ServerView extends DirMixin(PolymerElement) {
   accessKeyDataSortDirection: DataTableSortDirection;
   accessKeyDataSortColumnId: string;
   cloudId = '';
+  donateUrl = '';
   cloudLocation: CloudLocation = null;
   defaultDataLimitBytes: number = null;
   isAccessKeyPortEditable = false;
@@ -733,6 +746,7 @@ export class ServerView extends DirMixin(PolymerElement) {
   hasPerKeyDataLimitDialog = false;
   /** Whether the server supports default data limits. */
   supportsDefaultDataLimit = false;
+  showDonateBanner = false;
   showFeatureMetricsDisclaimer = false;
   installProgress = 0;
   isServerReachable = false;

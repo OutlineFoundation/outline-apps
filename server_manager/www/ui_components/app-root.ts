@@ -72,6 +72,7 @@ import type {
 } from './outline-server-list';
 import type {ServerView} from './outline-server-view';
 import type {OutlineShareDialog} from './outline-share-dialog';
+import {DONATE_URL} from '../donate';
 import type {GcpCreateServerApp} from '../outline-gcp-create-server-app';
 
 const TOS_ACK_LOCAL_STORAGE_KEY = 'tos-ack';
@@ -273,11 +274,16 @@ export class AppRoot extends polymerElementWithLocalize {
       #links-footer {
         margin-top: 36px;
       }
-      #appDrawer .manager-resources-link {
+      #appDrawer .manager-resources-link,
+      #appDrawer .donate-link {
         color: var(--primary-green);
         display: flex;
         align-items: center;
         gap: 0.25rem;
+      }
+      #donate-icon {
+        width: 18px;
+        height: 18px;
       }
       .legal-links {
         margin: 0 -6px;
@@ -351,7 +357,7 @@ export class AppRoot extends polymerElementWithLocalize {
         opacity: 0.54;
         filter: grayscale(100%);
       }
-      .side-bar-section.add-server-section {
+      .side-bar-section.donate-section {
         flex: 1 0 24px;
         border-bottom: none;
       }
@@ -390,6 +396,13 @@ export class AppRoot extends polymerElementWithLocalize {
 
           <!-- Links section -->
           <paper-listbox>
+            <span on-tap="maybeCloseDrawer">
+              <a class="donate-link" href\$="[[donateUrl]]">
+                <iron-icon id="donate-icon" icon="favorite"></iron-icon>
+                <span>[[localize('nav-donate')]]</span>
+                <iron-icon id="open-in-new-icon" icon="open-in-new" />
+              </a>
+            </span>
             <if-messages message-ids="manager-resources" localize="[[localize]]">
               <a
                 class="manager-resources-link"
@@ -442,7 +455,7 @@ export class AppRoot extends polymerElementWithLocalize {
               <outline-manual-server-entry id="manualEntry" localize="[[localize]]"></outline-manual-server-entry>
               <!-- TODO: Move to a new outline-do-oauth-step. -->
               <outline-region-picker-step id="regionPicker" localize="[[localize]]" language="[[language]]"></outline-region-picker-step>
-              <outline-server-list id="serverView" server-list="[[_serverViewList(serverList)]]" selected-server-id="[[selectedServerId]]" language="[[language]]" localize="[[localize]]" feature-flags="[[featureFlags]]"></outline-server-list>
+              <outline-server-list id="serverView" server-list="[[_serverViewList(serverList)]]" selected-server-id="[[selectedServerId]]" language="[[language]]" localize="[[localize]]" feature-flags="[[featureFlags]]" donate-url="[[donateUrl]]" show-donate-banner="[[showDonateBanner]]"></outline-server-list>
               </div>
             </iron-pages>
           </div>
@@ -463,6 +476,11 @@ export class AppRoot extends polymerElementWithLocalize {
               <iron-icon icon="add" slot="item-icon"></iron-icon>
             </paper-icon-item>
           </div>
+          <a class="side-bar-section donate-section" href\$="[[donateUrl]]" title\$="[[localize('nav-donate')]]">
+            <paper-icon-item>
+              <iron-icon icon="favorite" slot="item-icon"></iron-icon>
+            </paper-icon-item>
+          </a>
         </div>
       </app-drawer>
 
@@ -471,7 +489,7 @@ export class AppRoot extends polymerElementWithLocalize {
       <!-- Modal dialogs must be outside the app container; otherwise the backdrop covers them.  -->
       <outline-survey-dialog id="surveyDialog" localize="[[localize]]"></outline-survey-dialog>
       <outline-feedback-dialog id="feedbackDialog" localize="[[localize]]"></outline-feedback-dialog>
-      <outline-about-dialog id="aboutDialog" outline-version="[[outlineVersion]]" localize="[[localize]]"></outline-about-dialog>
+      <outline-about-dialog id="aboutDialog" outline-version="[[outlineVersion]]" donate-url="[[donateUrl]]" localize="[[localize]]"></outline-about-dialog>
       <outline-modal-dialog id="modalDialog"></outline-modal-dialog>
       <outline-share-dialog id="shareDialog" localize="[[localize]]"></outline-share-dialog>
       <outline-metrics-option-dialog id="metricsDialog" localize="[[localize]]"></outline-metrics-option-dialog>
@@ -715,6 +733,8 @@ export class AppRoot extends polymerElementWithLocalize {
       digitalOceanAccount: Object,
       gcpAccount: Object,
       outlineVersion: String,
+      donateUrl: {type: String, value: DONATE_URL},
+      showDonateBanner: {type: Boolean, value: false},
       userAcceptedTos: {
         type: Boolean,
         // Get notified when the user clicks the OK button in the ToS view
@@ -747,6 +767,8 @@ export class AppRoot extends polymerElementWithLocalize {
   digitalOceanAccount: AccountListEntry = null;
   gcpAccount: AccountListEntry = null;
   outlineVersion = '';
+  donateUrl = DONATE_URL;
+  showDonateBanner = false;
   currentPage = 'intro';
   shouldShowSideBar = false;
   showManagerResourcesLink = false;
@@ -768,43 +790,49 @@ export class AppRoot extends polymerElementWithLocalize {
   }
 
   /**
-   * Loads a new translation file and returns a Promise which resolves when the file is loaded or
-   *  rejects when there was an error loading translations.
+   * Fetches a translation file and returns a Promise which resolves with its messages or rejects
+   * when there was an error loading it.
+   *
+   *  @param language The language code of the translation file to fetch, eg 'en'
+   */
+  private fetchMessages(language: string): Promise<{[key: string]: string}> {
+    // AppLocalizeBehavior.loadResources is not used here: it caches each file's parsed response
+    // and, when not merging, stores that cached object directly as the language's resources.
+    // Merging another language into it would then corrupt the cached file for subsequent loads.
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open('GET', `./messages/${language}.json`);
+      request.responseType = 'json';
+      request.onload = () => {
+        if (request.response && typeof request.response === 'object') {
+          resolve(request.response);
+        } else {
+          reject(
+            new Error(`Failed to load resources for language ${language}`)
+          );
+        }
+      };
+      request.onerror = () =>
+        reject(new Error(`Failed to load resources for language ${language}`));
+      request.send();
+    });
+  }
+
+  /**
+   * Loads the translations for a language and returns a Promise which resolves when they are
+   * loaded or rejects when there was an error loading translations.
+   *
+   * The requested language is merged on top of English, so that strings which have not been
+   * translated yet are displayed in English instead of as raw message keys.
    *
    *  @param language The language code to load translations for, eg 'en'
    */
-  loadLanguageResources(language: string) {
-    const localizeResourcesResponder = new Promise<void>((resolve, reject) => {
-      // loadResources uses events and continuation instead of Promises.  In order to make this
-      // function easier to use, we wrap the language-changing logic in event handlers which
-      // resolve or reject the Promise.  Note that they need to clean up whichever event handler
-      // didn't fire so we don't leak it, which could cause future language changes to not work
-      // properly by triggering old event listeners.
-      const successHandler = () => {
-        this.removeEventListener(
-          'app-localize-resources-error',
-          failureHandler
-        );
-        resolve();
-      };
-      const failureHandler = () => {
-        this.removeEventListener(
-          'app-localize-resources-loaded',
-          successHandler
-        );
-        reject(new Error(`Failed to load resources for language ${language}`));
-      };
-      this.addEventListener('app-localize-resources-loaded', successHandler, {
-        once: true,
-      });
-      this.addEventListener('app-localize-resources-error', failureHandler, {
-        once: true,
-      });
-    });
-
-    const messagesUrl = `./messages/${language}.json`;
-    this.loadResources(messagesUrl, language, /* merge= */ false);
-    return localizeResourcesResponder;
+  async loadLanguageResources(language: string) {
+    const [english, translated] = await Promise.all([
+      this.fetchMessages('en'),
+      language === 'en' ? Promise.resolve({}) : this.fetchMessages(language),
+    ]);
+    this.resources = {[language]: {...english, ...translated}};
   }
 
   /**
