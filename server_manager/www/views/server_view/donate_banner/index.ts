@@ -33,58 +33,44 @@ export class DonateBanner extends LitElement {
   @property({type: Object}) localize: (messageId: string) => string;
   @property({type: String}) link: string;
 
+  // Colors come from the palette shared through cloud-install-styles, which the server view
+  // includes, so the banner matches the rest of the Manager.
   static styles = css`
     :host {
-      --donate-banner-max-width: 1920px;
-      --donate-banner-background: hsla(174, 100%, 34%, 0.12);
-      --donate-banner-border-color: hsla(174, 100%, 34%, 0.4);
-      --donate-banner-text-color: hsla(0, 0%, 100%, 0.87);
-      --donate-banner-accent-color: hsl(174, 100%, 34%);
-      --donate-banner-padding: 0.75rem 1rem;
-      --donate-banner-gap: 1rem;
-      --donate-banner-icon-size: 1.5rem;
-      --donate-banner-link-icon-size: 1rem;
-      --donate-banner-font-family: 'Roboto', system-ui;
-
-      background-color: var(--donate-banner-background);
-      border: 1px solid var(--donate-banner-border-color);
+      background-color: var(--background-contrast-color);
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       box-sizing: border-box;
-      color: var(--donate-banner-text-color);
+      color: var(--light-gray);
       display: block;
-      font-family: var(--donate-banner-font-family);
       font-size: 0.875rem;
       line-height: 1.4;
-      padding: var(--donate-banner-padding);
+      padding: 0.75rem 1rem;
       width: 100%;
     }
 
     aside {
       align-items: center;
       display: flex;
-      gap: var(--donate-banner-gap);
-      margin: 0 auto;
-      max-width: var(--donate-banner-max-width);
-      width: 100%;
+      gap: 1rem;
     }
 
     .content {
       align-items: center;
       display: flex;
       flex-grow: 1;
-      gap: var(--donate-banner-gap);
+      gap: 1rem;
     }
 
     .content > mwc-icon {
-      --mdc-icon-size: var(--donate-banner-icon-size);
-      color: var(--donate-banner-accent-color);
+      --mdc-icon-size: 1.5rem;
+      color: var(--primary-green);
       flex-shrink: 0;
     }
 
     a {
       align-items: center;
-      color: var(--donate-banner-accent-color);
-      cursor: pointer;
+      color: var(--primary-green);
       display: inline-flex;
       flex-shrink: 0;
       font-weight: bold;
@@ -98,13 +84,12 @@ export class DonateBanner extends LitElement {
     }
 
     a > mwc-icon {
-      --mdc-icon-size: var(--donate-banner-link-icon-size);
+      --mdc-icon-size: 1rem;
     }
 
     mwc-icon-button {
       --mdc-icon-button-size: 2rem;
       --mdc-icon-size: 1.25rem;
-      color: var(--donate-banner-text-color);
       flex-shrink: 0;
     }
 

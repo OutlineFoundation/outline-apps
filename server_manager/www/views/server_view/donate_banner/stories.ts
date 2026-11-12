@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+import {html} from 'lit';
+
 import './index';
 
 export default {
@@ -22,6 +24,24 @@ export default {
   argTypes: {
     link: {control: 'text'},
   },
+  decorators: [
+    // The palette the banner uses is provided by the server view in the app.
+    (story: () => unknown) => html`
+      <div
+        style="
+          --primary-green: #00bfa5;
+          --background-color: #263238;
+          --background-contrast-color: #2e3a3f;
+          --light-gray: rgba(255, 255, 255, 0.87);
+          --border-color: rgba(255, 255, 255, 0.12);
+          background: var(--background-color);
+          padding: 1rem;
+        "
+      >
+        ${story()}
+      </div>
+    `,
+  ],
 };
 
 export const Default = {
