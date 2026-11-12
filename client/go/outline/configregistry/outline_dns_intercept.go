@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"localhost/client/go/outline/connectivity"
+	"localhost/client/go/outline/dnsmux"
 
 	"golang.getoutline.org/sdk/network/dnsintercept"
 	"golang.getoutline.org/sdk/network/dnstruncate"
@@ -42,6 +43,9 @@ var outlineDNSResolvers = []netip.AddrPort{
 //
 // TODO: make this configurable via a new VpnConfig
 var linkLocalDNS = netip.MustParseAddrPort("169.254.113.53:53")
+
+// How long the shared upstream DNS association stays open without queries.
+const dnsUpstreamIdleTimeout = 30 * time.Second
 
 // wrapTransportPairWithOutlineDNS intercepts DNS over TCP and UDP at a link-local address and forwards them to the remote resolver.
 //
@@ -66,12 +70,20 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 		return nil, fmt.Errorf("failed to create base PacketRelay: %w", err)
 	}
 	// Forward relay: intercept DNS at link-local address, forward to remote resolver.
-	// DNS gets a shorter 5s timeout on its own independent listener.
-	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener, 5*time.Second)
+	// The interceptor opens one association per DNS packet. Backing each of them with its own
+	// socket makes every query, and every retransmission, a new UDP flow to the proxy, which trips
+	// per-destination flow limits in NAT gateways and leaves name resolution broken while the VPN
+	// is up. So we multiplex all queries over a single long-lived association instead, and fall
+	// back to DNS-over-TCP when UDP does not answer.
+	dnsListener, err := packetrelay.NewPacketRelayFromPacketListener(pl.PacketListener, dnsUpstreamIdleTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DNS PacketRelay: %w", err)
 	}
-	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsListener, baseListener, linkLocalDNS, remoteDNS)
+	dnsMux, err := dnsmux.NewRelay(dnsListener, dnsmux.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DNS multiplexing relay: %w", err)
+	}
+	relayForward := dnsintercept.NewInterceptDNSPacketRelay(dnsMux, baseListener, linkLocalDNS, remoteDNS)
 	// Truncate relay: intercept DNS at link-local address, return truncated response (forces TCP retry).
 	// Non-DNS traffic passes through to baseListener.
 	dnsTruncRelay, err := dnstruncate.NewPacketRelay()
@@ -86,6 +98,8 @@ func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *Packe
 	}
 
 	onNetworkChanged := func() {
+		// The upstream DNS association is bound to the old network.
+		dnsMux.Reset()
 		go func() {
 			if err := connectivity.CheckUDPConnectivity(pl); err == nil {
 				slog.Info("remote device UDP is healthy")
