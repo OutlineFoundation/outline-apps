@@ -145,7 +145,13 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
     /// app. With SIGPIPE ignored, the write fails with EPIPE instead, which is
     /// surfaced as a regular error through the existing reject path.
     private static func ignoreSigpipe() {
-        if signal(SIGPIPE, SIG_IGN) == SIG_ERR {
+        // Use sigaction, which returns an Int32 status; `signal` returns a C
+        // function value that Swift cannot compare against SIG_ERR.
+        var action = sigaction()
+        action.__sigaction_u.__sa_handler = SIG_IGN
+        sigemptyset(&action.sa_mask)
+        action.sa_flags = 0
+        if sigaction(SIGPIPE, &action, nil) != 0 {
             DDLogWarn("Failed to ignore SIGPIPE: errno \(errno)")
         } else {
             DDLogDebug("SIGPIPE is ignored")
