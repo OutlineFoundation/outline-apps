@@ -50,12 +50,28 @@ class OutlinePlugin: CDVPlugin {
   #endif
   private static let kAppGroup = "group.org.getoutline.client"
 
+  /// Ignores SIGPIPE for the whole app process.
+  ///
+  /// The Go backend (via `OutlineInvokeMethod`) performs network I/O in this
+  /// process. If a socket is torn down by iOS (e.g. while the app is
+  /// suspended), a later write raises SIGPIPE, whose default action kills the
+  /// app. With SIGPIPE ignored, the write fails with EPIPE instead, which is
+  /// surfaced as a regular error through the existing error path.
+  private static func ignoreSigpipe() {
+    if signal(SIGPIPE, SIG_IGN) == SIG_ERR {
+      DDLogWarn("Failed to ignore SIGPIPE: errno \(errno)")
+    } else {
+      DDLogDebug("SIGPIPE is ignored")
+    }
+  }
+
   override func pluginInitialize() {
     #if DEBUG
       dynamicLogLevel = .all
     #else
       dynamicLogLevel = .info
     #endif
+    OutlinePlugin.ignoreSigpipe()
     self.sentryLogger = OutlineSentryLogger(
       forAppGroup: OutlinePlugin.kAppGroup
     )
@@ -264,6 +280,9 @@ class OutlinePlugin: CDVPlugin {
         return event
       }
     }
+    // Sentry's crash handler installs its own SIGPIPE handler, which would
+    // make broken-socket writes fatal again. Restore the ignore disposition.
+    OutlinePlugin.ignoreSigpipe()
     sendSuccess(true, callbackId: command.callbackId)
   }
 

@@ -118,6 +118,7 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
         dynamicLogLevel = .info
         #endif
 
+        Self.ignoreSigpipe()
         sentryLogger = OutlineSentryLogger(forAppGroup: Self.appGroupIdentifier)
         configureGoBackendDataDirectory()
         beginObservingVpnStatus()
@@ -134,6 +135,21 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
         #if os(iOS)
         migrateLocalStorage()
         #endif
+    }
+
+    /// Ignores SIGPIPE for the whole app process.
+    ///
+    /// The Go backend (via `OutlineInvokeMethod`) performs network I/O in this
+    /// process. If a socket is torn down by iOS (e.g. while the app is
+    /// suspended), a later write raises SIGPIPE, whose default action kills the
+    /// app. With SIGPIPE ignored, the write fails with EPIPE instead, which is
+    /// surfaced as a regular error through the existing reject path.
+    private static func ignoreSigpipe() {
+        if signal(SIGPIPE, SIG_IGN) == SIG_ERR {
+            DDLogWarn("Failed to ignore SIGPIPE: errno \(errno)")
+        } else {
+            DDLogDebug("SIGPIPE is ignored")
+        }
     }
 
     // MARK: - Plugin API
@@ -248,6 +264,9 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
                 return event
             }
         }
+        // Sentry's crash handler installs its own SIGPIPE handler, which would
+        // make broken-socket writes fatal again. Restore the ignore disposition.
+        Self.ignoreSigpipe()
 
         call.resolve()
     }
