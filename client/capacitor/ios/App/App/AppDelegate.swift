@@ -20,6 +20,11 @@ import OutlineTunnel
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Ignore SIGPIPE so that writing to a socket whose peer has gone away (e.g. after iOS
+        // reclaims the app's sockets when it is backgrounded) returns EPIPE instead of
+        // terminating the process. The embedded Go runtime forwards SIGPIPE raised on non-Go
+        // threads to the default handler, which would otherwise kill the app.
+        signal(SIGPIPE, SIG_IGN)
         return true
     }
 
