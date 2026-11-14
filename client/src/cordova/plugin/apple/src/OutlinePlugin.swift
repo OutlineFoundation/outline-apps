@@ -264,6 +264,11 @@ class OutlinePlugin: CDVPlugin {
         return event
       }
     }
+    // Sentry installs its own SIGPIPE handler, which overrides the SIG_IGN set at
+    // launch and turns broken-pipe writes (e.g. sockets reclaimed by iOS while the
+    // app is in the background) into fatal crashes. Ignore SIGPIPE again so those
+    // writes fail with EPIPE and are handled as regular errors.
+    signal(SIGPIPE, SIG_IGN)
     sendSuccess(true, callbackId: command.callbackId)
   }
 
