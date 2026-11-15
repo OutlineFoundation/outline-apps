@@ -24,7 +24,7 @@ We use the `github.com/goccy/go-yaml` library for parsing. This library was chos
 
 ## Core concepts
 
-A `configyaml.ParseFunc[T]` transforms a `composer.Node` into a Go value of type `T`. The registered parsers currently create connection objects during parsing.
+A `composer.ParseFunc[T]` transforms a `composer.Node` into a Go value of type `T`. The registered parsers currently create connection objects during parsing.
 
 ```go
 type ParseFunc[T any] func(ctx context.Context, input composer.Node) (T, error)
@@ -34,9 +34,11 @@ type ParseFunc[T any] func(ctx context.Context, input composer.Node) (T, error)
 
 YAML merges follow the conventional merge extension: explicit fields override merged fields regardless of their position, and earlier mappings in a merge sequence override later ones. Native validation and saved-config normalization use these same rules. Expansion is bounded. Node accepts one document and rejects explicit YAML tags, duplicate keys/anchors, and non-string mapping keys.
 
-For the existing configuration structs, use `configyaml.Decode`. This compatibility helper preserves the existing defaults, scalar conversions, and unknown-field checks. Fields typed as `composer.Node` receive the original child node for delegation. It does not serialize a subtree and parse it again. Reserved keys beginning with `$`, including `$type`, are ignored at the root of the decoded schema.
+For configuration structs, use `composer.Decoder`. Its zero value uses strict scalar conversions; the migrated parsers explicitly select `composer.Decoder{CoerceScalars: true}` to retain existing scalar conversions. Both modes preserve defaults and reject unknown fields unless `AllowUnknownFields` is explicitly enabled. Fields typed as `composer.Node` receive the original child node for delegation. It does not serialize a subtree and parse it again. Reserved keys beginning with `$`, including `$type`, are ignored at the root of the decoded schema.
 
 Decode errors include the field path and original line and column. Use `node.WrapError(err)` for additional validation errors; wrapping preserves an already located child error and `errors.Is`/`errors.As` checks. An alias retains its access path and the source position of its definition.
+
+`Node.MarshalJSON` expands aliases and merges for storage with bounded traversal. The application supplies the native response envelope.
 
 The context is passed to nested parsers. Dependencies between parsers are still supplied when constructing them.
 
@@ -90,12 +92,13 @@ To introduce a new network capability (e.g., custom proxy protocol, dialing stra
    Accept a `composer.Node` and return the runtime object. Request any nested parser as a constructor argument. Keep delegated fields as nodes so aliases and source locations survive. For example, this endpoint wrapper delegates its `endpoint` field:
 
    ```go
-   func NewAliasEndpointSubParser[T any](parseEndpoint configyaml.ParseFunc[*Endpoint[T]]) configyaml.ParseFunc[*Endpoint[T]] {
+   func NewAliasEndpointSubParser[T any](parseEndpoint composer.ParseFunc[*Endpoint[T]]) composer.ParseFunc[*Endpoint[T]] {
        return func(ctx context.Context, input composer.Node) (*Endpoint[T], error) {
            var config struct {
                Endpoint composer.Node
            }
-           if err := configyaml.Decode(input, &config); err != nil {
+           var decoder composer.Decoder
+           if err := decoder.Decode(input, &config); err != nil {
                return nil, err
            }
            return parseEndpoint(ctx, config.Endpoint)

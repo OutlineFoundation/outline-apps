@@ -20,7 +20,6 @@ import (
 
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 // TCPUDPConfig is the format for the TCPUDP config. It specifies separate TCP and UDP configs
@@ -31,16 +30,16 @@ type TCPUDPConfig struct {
 }
 
 func NewTCPUDPTransportPairSubParser(
-	parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]],
-	parsePL configyaml.ParseFunc[*PacketListener]) configyaml.ParseFunc[*TransportPair] {
+	parseSD composer.ParseFunc[*Dialer[transport.StreamConn]],
+	parsePL composer.ParseFunc[*PacketListener]) composer.ParseFunc[*TransportPair] {
 	return func(ctx context.Context, input composer.Node) (*TransportPair, error) {
 		return parseTCPUDPTransportPair(ctx, input, parseSD, parsePL)
 	}
 }
 
-func parseTCPUDPTransportPair(ctx context.Context, configMap composer.Node, parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]], parsePL configyaml.ParseFunc[*PacketListener]) (*TransportPair, error) {
+func parseTCPUDPTransportPair(ctx context.Context, configMap composer.Node, parseSD composer.ParseFunc[*Dialer[transport.StreamConn]], parsePL composer.ParseFunc[*PacketListener]) (*TransportPair, error) {
 	var config TCPUDPConfig
-	if err := configyaml.Decode(configMap, &config); err != nil {
+	if err := (composer.Decoder{CoerceScalars: true}).Decode(configMap, &config); err != nil {
 		return nil, fmt.Errorf("invalid config format: %w", err)
 	}
 

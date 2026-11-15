@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 // DialEndpointConfig is the format for the Dial Endpoint config.
@@ -33,13 +32,13 @@ type DialEndpointConfig struct {
 	Dialer  composer.Node
 }
 
-func NewDialEndpointSubParser[ConnType any](parse configyaml.ParseFunc[*Dialer[ConnType]]) configyaml.ParseFunc[*Endpoint[ConnType]] {
+func NewDialEndpointSubParser[ConnType any](parse composer.ParseFunc[*Dialer[ConnType]]) composer.ParseFunc[*Endpoint[ConnType]] {
 	return func(ctx context.Context, input composer.Node) (*Endpoint[ConnType], error) {
 		return parseDirectDialerEndpoint(ctx, input, parse)
 	}
 }
 
-func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config composer.Node, newDialer configyaml.ParseFunc[*Dialer[ConnType]]) (*Endpoint[ConnType], error) {
+func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config composer.Node, newDialer composer.ParseFunc[*Dialer[ConnType]]) (*Endpoint[ConnType], error) {
 	if config.IsAbsent() {
 		return nil, config.WrapError(errors.New("endpoint config cannot be nil"))
 	}
@@ -126,7 +125,7 @@ func toDialEndpointConfig(node composer.Node) (*DialEndpointConfig, error) {
 	case composer.KindMapping:
 		// TODO: Make it type-based
 		var config DialEndpointConfig
-		if err := configyaml.Decode(node, &config); err != nil {
+		if err := (composer.Decoder{CoerceScalars: true}).Decode(node, &config); err != nil {
 			return nil, err
 		}
 		return &config, nil

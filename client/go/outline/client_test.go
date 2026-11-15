@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/reporting"
 )
@@ -396,7 +396,7 @@ request:
     Authorization: [Bearer SECRET]
   body: '{"foo": "bar"}'
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
 	require.NoError(t, err)
@@ -419,7 +419,7 @@ func Test_ParseReporter_NoInterval(t *testing.T) {
 $type: http
 request:
   url: https://your-callback-server.com/outline_callback`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
 	require.NoError(t, err)
@@ -438,7 +438,7 @@ request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	tempDir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
@@ -459,7 +459,7 @@ request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	_, err = NewReporterParser("", nil).Parse(context.Background(), yamlNode)
 	require.Error(t, err)

@@ -26,7 +26,6 @@ import (
 	"golang.getoutline.org/sdk/network/packetrelay"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
@@ -97,7 +96,7 @@ type NewClientResult struct {
 // ClientConfig is used to create a session Client.
 type ClientConfig struct {
 	DataDir         string
-	TransportParser *configyaml.TypeParser[*configregistry.TransportPair]
+	TransportParser *composer.TypeParser[*configregistry.TransportPair]
 }
 
 // New creates a new session client. It's used by the native code, so it returns a NewClientResult.
@@ -186,8 +185,8 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 	return client, nil
 }
 
-func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *configyaml.TypeParser[reporting.Reporter] {
-	parser := configyaml.NewTypeParser(func(ctx context.Context, input composer.Node) (reporting.Reporter, error) {
+func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *composer.TypeParser[reporting.Reporter] {
+	parser := composer.NewTypeParser(func(ctx context.Context, input composer.Node) (reporting.Reporter, error) {
 		return nil, errors.New("parser not specified")
 	})
 	parser.RegisterSubParser("first-supported", configregistry.NewFirstSupportedSubParser(parser.Parse))

@@ -24,7 +24,6 @@ import (
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/x/websocket"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/useragent"
 )
 
@@ -33,13 +32,13 @@ type WebsocketEndpointConfig struct {
 	Endpoint composer.Node
 }
 
-func NewWebsocketStreamEndpointSubParser(parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) configyaml.ParseFunc[*Endpoint[transport.StreamConn]] {
+func NewWebsocketStreamEndpointSubParser(parseSE composer.ParseFunc[*Endpoint[transport.StreamConn]]) composer.ParseFunc[*Endpoint[transport.StreamConn]] {
 	return func(ctx context.Context, input composer.Node) (*Endpoint[transport.StreamConn], error) {
 		return parseWebsocketEndpoint(ctx, input, parseSE, websocket.NewStreamEndpoint)
 	}
 }
 
-func NewWebsocketPacketEndpointSubParser(parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) configyaml.ParseFunc[*Endpoint[net.Conn]] {
+func NewWebsocketPacketEndpointSubParser(parseSE composer.ParseFunc[*Endpoint[transport.StreamConn]]) composer.ParseFunc[*Endpoint[net.Conn]] {
 	return func(ctx context.Context, input composer.Node) (*Endpoint[net.Conn], error) {
 		return parseWebsocketEndpoint(ctx, input, parseSE, websocket.NewPacketEndpoint)
 	}
@@ -47,9 +46,9 @@ func NewWebsocketPacketEndpointSubParser(parseSE configyaml.ParseFunc[*Endpoint[
 
 type newWebsocketEndpoint[ConnType any] func(urlStr string, se transport.StreamEndpoint, opts ...websocket.Option) (func(context.Context) (ConnType, error), error)
 
-func parseWebsocketEndpoint[ConnType any](ctx context.Context, configMap composer.Node, parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]], newWE newWebsocketEndpoint[ConnType]) (*Endpoint[ConnType], error) {
+func parseWebsocketEndpoint[ConnType any](ctx context.Context, configMap composer.Node, parseSE composer.ParseFunc[*Endpoint[transport.StreamConn]], newWE newWebsocketEndpoint[ConnType]) (*Endpoint[ConnType], error) {
 	var config WebsocketEndpointConfig
-	if err := configyaml.Decode(configMap, &config); err != nil {
+	if err := (composer.Decoder{CoerceScalars: true}).Decode(configMap, &config); err != nil {
 		return nil, fmt.Errorf("invalid config format: %w", err)
 	}
 	var fields map[string]composer.Node

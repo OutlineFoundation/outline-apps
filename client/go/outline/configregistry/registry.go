@@ -21,13 +21,12 @@ import (
 
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
-// newTypeParser is a wrapper around [configyaml.NewTypeParser] that allows us to centralize the registration
+// newTypeParser is a wrapper around [composer.NewTypeParser] that allows us to centralize the registration
 // of subparsers that should apply to all supported types.
-func newTypeParser[T any](fallbackHandler func(context.Context, composer.Node) (T, error)) *configyaml.TypeParser[T] {
-	parser := configyaml.NewTypeParser(fallbackHandler)
+func newTypeParser[T any](fallbackHandler func(context.Context, composer.Node) (T, error)) *composer.TypeParser[T] {
+	parser := composer.NewTypeParser(fallbackHandler)
 
 	// Registrations that should apply to all supported type.
 	parser.RegisterSubParser("first-supported", NewFirstSupportedSubParser(parser.Parse))
@@ -36,9 +35,9 @@ func newTypeParser[T any](fallbackHandler func(context.Context, composer.Node) (
 }
 
 // NewDefaultTransportProvider provider a [TransportPair].
-func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD transport.PacketDialer) *configyaml.TypeParser[*TransportPair] {
-	var streamEndpoints *configyaml.TypeParser[*Endpoint[transport.StreamConn]]
-	var packetEndpoints *configyaml.TypeParser[*Endpoint[net.Conn]]
+func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD transport.PacketDialer) *composer.TypeParser[*TransportPair] {
+	var streamEndpoints *composer.TypeParser[*Endpoint[transport.StreamConn]]
+	var packetEndpoints *composer.TypeParser[*Endpoint[net.Conn]]
 
 	var directWrappedSD *Dialer[transport.StreamConn]
 	if directSD != nil {

@@ -19,10 +19,9 @@ import (
 	"errors"
 
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
-func NewBlockDialerSubParser[ConnType any]() configyaml.ParseFunc[*Dialer[ConnType]] {
+func NewBlockDialerSubParser[ConnType any]() composer.ParseFunc[*Dialer[ConnType]] {
 	return func(ctx context.Context, input composer.Node) (*Dialer[ConnType], error) {
 		return &Dialer[ConnType]{
 			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeBlocked},

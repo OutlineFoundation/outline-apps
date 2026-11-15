@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 func TestParseIPTableStreamDialer(t *testing.T) {
@@ -286,7 +285,7 @@ table:
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			node, err := configyaml.ParseConfigYAML(tc.configYAML)
+			node, err := composer.ParseYAML([]byte(tc.configYAML))
 			require.NoError(t, err)
 			dialer, err := parseIPTableStreamDialer(ctx, node, parseSE)
 
@@ -309,10 +308,11 @@ table:
 			return nil, errors.New("sub-parser failed")
 		}
 
-		config, err := configyaml.ParseConfigYAML(`table:
+		config, err := composer.ParseYAML([]byte(`table:
   - ips: [192.168.1.0/24]
     dialer: {name: dialerA}
-`)
+`))
+
 		require.NoError(t, err)
 
 		_, err = parseIPTableStreamDialer(ctx, config, errorParser)
@@ -336,11 +336,12 @@ table:
 			return parseSE(ctx, config)
 		}
 
-		config, err := configyaml.ParseConfigYAML(`table:
+		config, err := composer.ParseYAML([]byte(`table:
   - ips: [192.168.1.0/24]
     dialer: {name: dialerA}
 fallback: {name: dialerB}
-`)
+`))
+
 		require.NoError(t, err)
 
 		_, err = parseIPTableStreamDialer(ctx, config, fallbackErrorParser)

@@ -21,7 +21,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 func TestFirstSupportedPreservesChildNodes(t *testing.T) {
@@ -40,7 +39,7 @@ transport:
 			return "", node.WrapError(errors.ErrUnsupported)
 		}
 		var config struct{ Value string }
-		err := configyaml.Decode(node, &config)
+		err := (composer.Decoder{CoerceScalars: true}).Decode(node, &config)
 		return config.Value, err
 	}
 

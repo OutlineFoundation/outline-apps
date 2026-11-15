@@ -21,8 +21,6 @@ import (
 	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
-
-	"github.com/goccy/go-yaml"
 )
 
 // providerConfig decodes provider errors. Client configuration is parsed separately
@@ -84,27 +82,31 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 			Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
 		}}
 	}
-	remaining := 100_000
-	value, err := configJSONValue(node, &remaining)
-	if err != nil {
-		return &InvokeMethodResult{Error: &platerrors.PlatformError{
-			Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to normalize config: %s", err),
-		}}
-	}
-
 	// Input may be an ss:// link, a transport mapping (including legacy
 	// Shadowsocks JSON), or a full client/provider-error mapping.
-	var clientConfigMap map[string]any
+	var clientConfig any
 	var isClientConfig bool
-	switch value := value.(type) {
-	case string:
-		clientConfigMap = map[string]any{"transport": value}
-	case map[string]any:
-		isClientConfig = hasKey(value, "transport") || hasKey(value, "error")
+	switch node.Kind() {
+	case composer.KindScalar:
+		var url string
+		if err := node.Decode(&url); err != nil {
+			return &InvokeMethodResult{Error: &platerrors.PlatformError{
+				Code: platerrors.InvalidConfig, Message: "config must be a URL or mapping",
+			}}
+		}
+		clientConfig = map[string]composer.Node{"transport": node}
+	case composer.KindMapping:
+		var fields map[string]composer.Node
+		if err := node.Decode(&fields); err != nil {
+			return &InvokeMethodResult{Error: &platerrors.PlatformError{
+				Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
+			}}
+		}
+		isClientConfig = hasKey(fields, "transport") || hasKey(fields, "error")
 		if isClientConfig {
-			clientConfigMap = value
+			clientConfig = node
 		} else {
-			clientConfigMap = map[string]any{"transport": value}
+			clientConfig = map[string]composer.Node{"transport": node}
 		}
 	default:
 		return &InvokeMethodResult{Error: &platerrors.PlatformError{
@@ -115,7 +117,7 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	// Use JSON marshaling from the standard library because the YAML library is buggy.
 	// See https://github.com/OutlineFoundation/outline-apps/issues/2576.
 	// JSON is a subset of YAML, so that's valid YAML.
-	clientConfigBytes, err := json.Marshal(clientConfigMap)
+	clientConfigBytes, err := json.Marshal(clientConfig)
 	if err != nil {
 		return &InvokeMethodResult{
 			Error: &platerrors.PlatformError{
@@ -126,10 +128,11 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	}
 
 	if isClientConfig {
-		// Merges are already expanded. Keep the existing permissive decoding of
-		// provider error fields without invoking the YAML library's merge rules.
+		// Provider errors allow extra fields and scalar coercion, preserving the
+		// existing envelope behavior while using the shared Composer decoder.
 		var providerConfig providerConfig
-		if err := yaml.Unmarshal(clientConfigBytes, &providerConfig); err != nil {
+		decoder := composer.Decoder{CoerceScalars: true, AllowUnknownFields: true}
+		if err := decoder.Decode(node, &providerConfig); err != nil {
 			return &InvokeMethodResult{Error: &platerrors.PlatformError{
 				Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
 			}}
@@ -185,60 +188,5 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 
 	return &InvokeMethodResult{
 		Value: string(responseBytes),
-	}
-}
-
-// configJSONValue expands a Node into JSON-compatible values. The shared budget
-// bounds total alias expansion, in addition to Node's per-operation limits.
-func configJSONValue(node composer.Node, remaining *int) (any, error) {
-	*remaining--
-	if *remaining < 0 {
-		return nil, node.WrapError(fmt.Errorf("config normalization exceeds 100000 values"))
-	}
-	switch node.Kind() {
-	case composer.KindAbsent:
-		return nil, nil
-	case composer.KindMapping:
-		var fields map[string]composer.Node
-		if err := node.Decode(&fields); err != nil {
-			return nil, err
-		}
-		values := make(map[string]any, len(fields))
-		for key, child := range fields {
-			value, err := configJSONValue(child, remaining)
-			if err != nil {
-				return nil, err
-			}
-			values[key] = value
-		}
-		return values, nil
-	case composer.KindSequence:
-		var children []composer.Node
-		if err := node.Decode(&children); err != nil {
-			return nil, err
-		}
-		values := make([]any, len(children))
-		for i, child := range children {
-			value, err := configJSONValue(child, remaining)
-			if err != nil {
-				return nil, err
-			}
-			values[i] = value
-		}
-		return values, nil
-	default:
-		var text string
-		if node.Decode(&text) == nil {
-			return text, nil
-		}
-		var boolean bool
-		if node.Decode(&boolean) == nil {
-			return boolean, nil
-		}
-		var number json.Number
-		if err := node.Decode(&number); err != nil {
-			return nil, err
-		}
-		return number, nil
 	}
 }

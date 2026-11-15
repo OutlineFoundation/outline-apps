@@ -27,7 +27,6 @@ import (
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/shadowsocks"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 // ShadowsocksConfig is the format for the Shadowsocks config. It can specify Dialers or PacketListener.
@@ -47,25 +46,25 @@ type LegacyShadowsocksConfig struct {
 	Prefix      string
 }
 
-func NewShadowsocksStreamDialerSubParser(parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) configyaml.ParseFunc[*Dialer[transport.StreamConn]] {
+func NewShadowsocksStreamDialerSubParser(parseSE composer.ParseFunc[*Endpoint[transport.StreamConn]]) composer.ParseFunc[*Dialer[transport.StreamConn]] {
 	return func(ctx context.Context, input composer.Node) (*Dialer[transport.StreamConn], error) {
 		return parseShadowsocksStreamDialer(ctx, input, parseSE)
 	}
 }
 
-func NewShadowsocksPacketDialerSubParser(parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) configyaml.ParseFunc[*Dialer[net.Conn]] {
+func NewShadowsocksPacketDialerSubParser(parsePE composer.ParseFunc[*Endpoint[net.Conn]]) composer.ParseFunc[*Dialer[net.Conn]] {
 	return func(ctx context.Context, input composer.Node) (*Dialer[net.Conn], error) {
 		return parseShadowsocksPacketDialer(ctx, input, parsePE)
 	}
 }
 
-func NewShadowsocksPacketListenerSubParser(parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) configyaml.ParseFunc[*PacketListener] {
+func NewShadowsocksPacketListenerSubParser(parsePE composer.ParseFunc[*Endpoint[net.Conn]]) composer.ParseFunc[*PacketListener] {
 	return func(ctx context.Context, input composer.Node) (*PacketListener, error) {
 		return parseShadowsocksPacketListener(ctx, input, parsePE)
 	}
 }
 
-func parseShadowsocksTransport(ctx context.Context, config composer.Node, parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]], parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) (*TransportPair, error) {
+func parseShadowsocksTransport(ctx context.Context, config composer.Node, parseSE composer.ParseFunc[*Endpoint[transport.StreamConn]], parsePE composer.ParseFunc[*Endpoint[net.Conn]]) (*TransportPair, error) {
 	params, err := parseShadowsocksParams(config)
 	if err != nil {
 		return nil, err
@@ -100,7 +99,7 @@ func parseShadowsocksTransport(ctx context.Context, config composer.Node, parseS
 	)
 }
 
-func parseShadowsocksStreamDialer(ctx context.Context, config composer.Node, parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) (*Dialer[transport.StreamConn], error) {
+func parseShadowsocksStreamDialer(ctx context.Context, config composer.Node, parseSE composer.ParseFunc[*Endpoint[transport.StreamConn]]) (*Dialer[transport.StreamConn], error) {
 	params, err := parseShadowsocksParams(config)
 	if err != nil {
 		return nil, err
@@ -121,7 +120,7 @@ func parseShadowsocksStreamDialer(ctx context.Context, config composer.Node, par
 	return &Dialer[transport.StreamConn]{ConnectionProviderInfo{ConnTypeTunneled, se.FirstHop}, sd.DialStream}, nil
 }
 
-func parseShadowsocksPacketDialer(ctx context.Context, config composer.Node, parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) (*Dialer[net.Conn], error) {
+func parseShadowsocksPacketDialer(ctx context.Context, config composer.Node, parsePE composer.ParseFunc[*Endpoint[net.Conn]]) (*Dialer[net.Conn], error) {
 	pl, err := parseShadowsocksPacketListener(ctx, config, parsePE)
 	if err != nil {
 		return nil, err
@@ -130,7 +129,7 @@ func parseShadowsocksPacketDialer(ctx context.Context, config composer.Node, par
 	return &Dialer[net.Conn]{ConnectionProviderInfo{ConnTypeTunneled, pl.FirstHop}, pd.DialPacket}, nil
 }
 
-func parseShadowsocksPacketListener(ctx context.Context, config composer.Node, parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) (*PacketListener, error) {
+func parseShadowsocksPacketListener(ctx context.Context, config composer.Node, parsePE composer.ParseFunc[*Endpoint[net.Conn]]) (*PacketListener, error) {
 	params, err := parseShadowsocksParams(config)
 	if err != nil {
 		return nil, err
@@ -176,14 +175,14 @@ func parseShadowsocksConfig(node composer.Node) (_ *ShadowsocksConfig, err error
 		// If the map has an "endpoint" field, we assume the new format.
 		if _, ok := fields["endpoint"]; ok {
 			config := ShadowsocksConfig{}
-			if err := configyaml.Decode(node, &config); err != nil {
+			if err := (composer.Decoder{CoerceScalars: true}).Decode(node, &config); err != nil {
 				return nil, err
 			}
 			return &config, nil
 		} else if _, ok := fields["server"]; ok {
 			// Else, we assume the legacy format if "server" is present.
 			config := LegacyShadowsocksConfig{}
-			if err := configyaml.Decode(node, &config); err != nil {
+			if err := (composer.Decoder{CoerceScalars: true}).Decode(node, &config); err != nil {
 				return nil, err
 			}
 			return &ShadowsocksConfig{

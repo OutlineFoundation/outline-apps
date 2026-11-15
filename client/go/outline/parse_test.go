@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 
@@ -185,6 +184,22 @@ error:
 			"details": "Account expired",
 		},
 	})
+}
+
+func Test_doParseTunnelConfig_ProviderErrorPermissiveFields(t *testing.T) {
+	result := doParseTunnelConfig(`
+extra: ignored
+error:
+  message: 42
+  details: true
+  extra: ignored
+`)
+
+	require.Equal(t, &platerrors.PlatformError{
+		Code:    platerrors.ProviderError,
+		Message: "42",
+		Details: map[string]any{"details": "true"},
+	}, result.Error)
 }
 
 func Test_doParseTunnelConfig_ProviderErrorJSON(t *testing.T) {
@@ -709,7 +724,7 @@ func Test_doParseTunnelConfig_NumericSecretNormalization(t *testing.T) {
 				var config struct {
 					Transport configregistry.ShadowsocksConfig
 				}
-				require.NoError(t, configyaml.Decode(node, &config))
+				require.NoError(t, (composer.Decoder{CoerceScalars: true}).Decode(node, &config))
 				require.Equal(t, tc.secret, config.Transport.Secret)
 			}
 		})
@@ -760,13 +775,4 @@ func Test_doParseTunnelConfig_RejectsRecursiveAliases(t *testing.T) {
 	require.NotNil(t, result.Error)
 	require.Equal(t, platerrors.InvalidConfig, result.Error.Code)
 	require.ErrorContains(t, result.Error, "node nesting exceeds")
-}
-
-func TestConfigNormalizationBoundsAliasExpansion(t *testing.T) {
-	node, err := composer.ParseYAML([]byte(`base: &base [1, 2]
-repeated: [*base, *base, *base]`))
-	require.NoError(t, err)
-	remaining := 10
-	_, err = configJSONValue(node, &remaining)
-	require.ErrorContains(t, err, "config normalization exceeds")
 }

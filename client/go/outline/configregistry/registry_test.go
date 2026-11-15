@@ -23,10 +23,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
-func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
+func newTestTransportProvider() *composer.TypeParser[*TransportPair] {
 	tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 	udpDialer := &transport.UDPDialer{}
 	return NewDefaultTransportProvider(tcpDialer, udpDialer)
@@ -35,14 +34,15 @@ func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
 func TestRegisterDefaultProviders(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`
+	node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp: &shared
   $type: shadowsocks
   endpoint: example.com:1234
   cipher: chacha20-ietf-poly1305
   secret: SECRET
-udp: *shared`)
+udp: *shared`))
+
 	require.NoError(t, err)
 
 	d, err := provider.Parse(context.Background(), node)
@@ -59,7 +59,7 @@ udp: *shared`)
 func TestRegisterParseURL(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server`)
+	node, err := composer.ParseYAML([]byte(`ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server`))
 	require.NoError(t, err)
 
 	d, err := provider.Parse(context.Background(), node)
@@ -76,7 +76,7 @@ func TestRegisterParseURL(t *testing.T) {
 func TestRegisterParseURLInQuotes(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server"`)
+	node, err := composer.ParseYAML([]byte(`"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server"`))
 	require.NoError(t, err)
 
 	d, err := provider.Parse(context.Background(), node)
@@ -120,7 +120,7 @@ tcp:
       dialer: *shared
 udp: null`
 
-	node, err := configyaml.ParseConfigYAML(yamlConfig)
+	node, err := composer.ParseYAML([]byte(yamlConfig))
 	require.NoError(t, err)
 
 	transportPair, err := tp.Parse(context.Background(), node)
@@ -145,11 +145,12 @@ func TestParseDefaultAndBlockTCP(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("direct", func(t *testing.T) {
-		node, err := configyaml.ParseConfigYAML(`
+		node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp:
   $type: direct
-udp: null`)
+udp: null`))
+
 		require.NoError(t, err)
 
 		transportPair, err := provider.Parse(ctx, node)
@@ -160,11 +161,12 @@ udp: null`)
 	})
 
 	t.Run("block", func(t *testing.T) {
-		node, err := configyaml.ParseConfigYAML(`
+		node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp:
   $type: block
-udp: null`)
+udp: null`))
+
 		require.NoError(t, err)
 
 		transportPair, err := provider.Parse(ctx, node)

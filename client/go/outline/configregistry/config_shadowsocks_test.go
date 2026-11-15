@@ -25,11 +25,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 func parseFromYAMLText(configText string) (*ShadowsocksConfig, error) {
-	node, err := configyaml.ParseConfigYAML(configText)
+	node, err := composer.ParseYAML([]byte(configText))
 	if err != nil {
 		return nil, err
 	}
@@ -145,11 +144,11 @@ func TestParseShadowsocksConfig_LegacyJSON(t *testing.T) {
 }
 
 func TestParseShadowsocksConfig_YAML(t *testing.T) {
-	streamEndpoints := configyaml.NewTypeParser(func(ctx context.Context, config composer.Node) (*Endpoint[transport.StreamConn], error) {
+	streamEndpoints := composer.NewTypeParser(func(ctx context.Context, config composer.Node) (*Endpoint[transport.StreamConn], error) {
 		require.Equal(t, "example.com:1234", nodeString(t, config))
 		return &Endpoint[transport.StreamConn]{}, nil
 	})
-	packetEndpoints := configyaml.NewTypeParser(func(ctx context.Context, config composer.Node) (*Endpoint[net.Conn], error) {
+	packetEndpoints := composer.NewTypeParser(func(ctx context.Context, config composer.Node) (*Endpoint[net.Conn], error) {
 		require.Equal(t, "example.com:1234", nodeString(t, config))
 		return &Endpoint[net.Conn]{}, nil
 	})
@@ -190,14 +189,15 @@ extra: "NOT SUPPORTED"
 	})
 
 	t.Run("Prefix", func(t *testing.T) {
-		yamlNode, err := configyaml.ParseConfigYAML(`{
+		yamlNode, err := composer.ParseYAML([]byte(`{
   "server": "123.x.x.x",
   "server_port": 443,
   "password": "xxxxx",
   "method": "chacha20-ietf-poly1305",
   "prefix": "SSH-2.0\r\n"
 }
-`)
+`))
+
 		require.NoError(t, err)
 		config, err := parseShadowsocksConfig(yamlNode)
 		require.NoError(t, err)

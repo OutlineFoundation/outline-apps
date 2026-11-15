@@ -30,7 +30,6 @@ import (
 	persistentcookiejar "go.nhat.io/cookiejar"
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 )
 
 type HTTPRequestConfig struct {
@@ -47,10 +46,10 @@ type HTTPReporterConfig struct {
 	Enable_Cookies bool
 }
 
-func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) configyaml.ParseFunc[Reporter] {
+func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) composer.ParseFunc[Reporter] {
 	return func(ctx context.Context, input composer.Node) (Reporter, error) {
 		var config HTTPReporterConfig
-		if err := configyaml.Decode(input, &config); err != nil {
+		if err := (composer.Decoder{CoerceScalars: true}).Decode(input, &config); err != nil {
 			return nil, fmt.Errorf("invalid config format: %w", err)
 		}
 

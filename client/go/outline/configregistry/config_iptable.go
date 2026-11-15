@@ -22,7 +22,6 @@ import (
 
 	"golang.getoutline.org/sdk/transport"
 	"localhost/client/go/composer"
-	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/iptable"
 )
 
@@ -39,10 +38,10 @@ type ipTableEntryConfig struct {
 func parseIPTableStreamDialer(
 	ctx context.Context,
 	configMap composer.Node,
-	parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]],
+	parseSD composer.ParseFunc[*Dialer[transport.StreamConn]],
 ) (*Dialer[transport.StreamConn], error) {
 	var rootCfg ipTableRootConfig
-	if err := configyaml.Decode(configMap, &rootCfg); err != nil {
+	if err := (composer.Decoder{CoerceScalars: true}).Decode(configMap, &rootCfg); err != nil {
 		return nil, fmt.Errorf("failed to map iptable stream config: %w", err)
 	}
 
@@ -145,7 +144,7 @@ func parseIPTableStreamDialer(
 	}, nil
 }
 
-func NewIPTableStreamDialerSubParser(parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]]) configyaml.ParseFunc[*Dialer[transport.StreamConn]] {
+func NewIPTableStreamDialerSubParser(parseSD composer.ParseFunc[*Dialer[transport.StreamConn]]) composer.ParseFunc[*Dialer[transport.StreamConn]] {
 	return func(ctx context.Context, input composer.Node) (*Dialer[transport.StreamConn], error) {
 		return parseIPTableStreamDialer(ctx, input, parseSD)
 	}
