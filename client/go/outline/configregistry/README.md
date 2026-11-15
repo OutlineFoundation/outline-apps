@@ -32,7 +32,7 @@ type ParseFunc[T any] func(ctx context.Context, input composer.Node) (T, error)
 
 `composer.ParseYAML` parses a document once. A `Node` retains the original source position, configuration path, and document anchors when passed to another parser. Use `Node.Decode` for scalar values and shallow `map[string]composer.Node` or `[]composer.Node` containers. `Node.IsAbsent` recognizes both missing fields and explicit nulls.
 
-YAML merges retain the existing decoder's document-order behavior: the last assignment wins, including merge sequences and explicit fields. This differs from the YAML merge-key specification. Expansion is bounded. Node accepts one document and rejects explicit YAML tags, duplicate keys/anchors, and non-string mapping keys.
+YAML merges follow the conventional merge extension: explicit fields override merged fields regardless of their position, and earlier mappings in a merge sequence override later ones. Native validation and saved-config normalization use these same rules. Expansion is bounded. Node accepts one document and rejects explicit YAML tags, duplicate keys/anchors, and non-string mapping keys.
 
 For the existing configuration structs, use `configyaml.Decode`. This compatibility helper preserves the existing defaults, scalar conversions, and unknown-field checks. Fields typed as `composer.Node` receive the original child node for delegation. It does not serialize a subtree and parse it again. Reserved keys beginning with `$`, including `$type`, are ignored at the root of the decoded schema.
 

@@ -641,8 +641,8 @@ transport:
 
 func Test_doParseTunnelConfig_MergeSequenceNormalization(t *testing.T) {
 	for _, tc := range []struct{ name, fields, firstHop string }{
-		{"sequence", "  <<: [*first, *last]", "last.example.com:4321"},
-		{"explicit before merge", "  endpoint: explicit.example.com:4321\n  <<: *last", "last.example.com:4321"},
+		{"sequence", "  <<: [*first, *last]", "first.example.com:4321"},
+		{"explicit before merge", "  endpoint: explicit.example.com:4321\n  <<: *last", "explicit.example.com:4321"},
 		{"explicit after merge", "  <<: *last\n  endpoint: explicit.example.com:4321", "explicit.example.com:4321"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -655,8 +655,8 @@ transport:
   secret: SECRET`, tc.fields))
 			require.Nil(t, result.Error, "Got %v", result.Error)
 			parsed := parseFirstHopAndTunnelConfigJSON(t, result.Value)
-			// Preserve the existing YAML decoder's last-value-wins behavior. The
-			// original YAML and normalized config returned to native code must agree.
+			// Conventional merge precedence must agree in the original YAML and
+			// the normalized config returned to native code.
 			require.Equal(t, tc.firstHop, parsed.FirstHop)
 			clientResult := (&ClientConfig{}).New("", parsed.Client)
 			require.Nil(t, clientResult.Error, "Got %v", clientResult.Error)
@@ -714,4 +714,59 @@ func Test_doParseTunnelConfig_NumericSecretNormalization(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_doParseTunnelConfig_LegacyMergeNormalization(t *testing.T) {
+	result := doParseTunnelConfig(`server_port: 4321
+<<: [{server: first.example.com, server_port: 80}, {server: last.example.com}]
+method: chacha20-ietf-poly1305
+password: SECRET`)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	parsed := parseFirstHopAndTunnelConfigJSON(t, result.Value)
+	require.Equal(t, "first.example.com:4321", parsed.FirstHop)
+	clientResult := (&ClientConfig{}).New("", parsed.Client)
+	require.Nil(t, clientResult.Error, "Got %v", clientResult.Error)
+	require.Equal(t, parsed.FirstHop, clientResult.Client.sd.FirstHop)
+}
+
+func Test_doParseTunnelConfig_ProviderErrorMerge(t *testing.T) {
+	result := doParseTunnelConfig(`error:
+  message: explicit
+  <<: [{message: first, details: first}, {message: last, details: last}]`)
+	require.Equal(t, &platerrors.PlatformError{
+		Code:    platerrors.ProviderError,
+		Message: "explicit",
+		Details: map[string]any{"details": "first"},
+	}, result.Error)
+}
+
+func Test_doParseTunnelConfig_NullMergeOverride(t *testing.T) {
+	result := doParseTunnelConfig(`transport:
+  tcp: null
+  <<: {$type: tcpudp, tcp: {$type: block}}`)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	parsed := parseFirstHopAndTunnelConfigJSON(t, result.Value)
+	clientResult := (&ClientConfig{}).New("", parsed.Client)
+	require.Nil(t, clientResult.Error, "Got %v", clientResult.Error)
+	require.Equal(t, configregistry.ConnTypeDirect, clientResult.Client.sd.ConnType)
+	var saved struct{ Transport map[string]any }
+	require.NoError(t, json.Unmarshal([]byte(parsed.Client), &saved))
+	require.Contains(t, saved.Transport, "tcp")
+	require.Nil(t, saved.Transport["tcp"])
+}
+
+func Test_doParseTunnelConfig_RejectsRecursiveAliases(t *testing.T) {
+	result := doParseTunnelConfig(`transport: &cycle {child: *cycle}`)
+	require.NotNil(t, result.Error)
+	require.Equal(t, platerrors.InvalidConfig, result.Error.Code)
+	require.ErrorContains(t, result.Error, "node nesting exceeds")
+}
+
+func TestConfigNormalizationBoundsAliasExpansion(t *testing.T) {
+	node, err := composer.ParseYAML([]byte(`base: &base [1, 2]
+repeated: [*base, *base, *base]`))
+	require.NoError(t, err)
+	remaining := 10
+	_, err = configJSONValue(node, &remaining)
+	require.ErrorContains(t, err, "config normalization exceeds")
 }

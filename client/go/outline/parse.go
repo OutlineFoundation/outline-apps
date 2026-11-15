@@ -17,8 +17,8 @@ package outline
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 
@@ -76,62 +76,40 @@ func combinedConnectionType(streamConnType, packetConnType configregistry.ConnTy
 }
 
 func doParseTunnelConfig(input string) *InvokeMethodResult {
-	originalInput := input
-	input = strings.TrimSpace(input)
-	// Input may be one of:
-	// - ss:// link
-	// - Legacy Shadowsocks JSON (parsed as YAML)
-	// - Advanced YAML format
-	var stringValue string
+	// Traverse Node for normalization too, so saved configs and validation use
+	// the same merge semantics. Retain the original YAML for source diagnostics.
+	node, err := composer.ParseYAML([]byte(input))
+	if err != nil {
+		return &InvokeMethodResult{Error: &platerrors.PlatformError{
+			Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
+		}}
+	}
+	remaining := 100_000
+	value, err := configJSONValue(node, &remaining)
+	if err != nil {
+		return &InvokeMethodResult{Error: &platerrors.PlatformError{
+			Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to normalize config: %s", err),
+		}}
+	}
+
+	// Input may be an ss:// link, a transport mapping (including legacy
+	// Shadowsocks JSON), or a full client/provider-error mapping.
 	var clientConfigMap map[string]any
 	var isClientConfig bool
-	if err := yaml.Unmarshal([]byte(input), &stringValue); err == nil {
-		// Legacy URL format. Input is the transport configregistry.
-		clientConfigMap = map[string]any{"transport": stringValue}
-	} else {
-		var yamlValue map[string]any
-		if err := yaml.Unmarshal([]byte(input), &yamlValue); err != nil {
-			return &InvokeMethodResult{
-				Error: &platerrors.PlatformError{
-					Code:    platerrors.InvalidConfig,
-					Message: fmt.Sprintf("failed to parse: %s", err),
-				},
-			}
-		}
-
-		if hasKey(yamlValue, "transport") || hasKey(yamlValue, "error") {
-			// New format. Parse provider errors separately from the client config.
-			isClientConfig = true
-			providerConfig := providerConfig{}
-			if err := yaml.Unmarshal([]byte(input), &providerConfig); err != nil {
-				return &InvokeMethodResult{
-					Error: &platerrors.PlatformError{
-						Code:    platerrors.InvalidConfig,
-						Message: fmt.Sprintf("failed to parse: %s", err),
-					},
-				}
-			}
-
-			// Process provider error, if present.
-			if providerConfig.Error != nil {
-				platErr := &platerrors.PlatformError{
-					Code:    platerrors.ProviderError,
-					Message: providerConfig.Error.Message,
-				}
-				if providerConfig.Error.Details != "" {
-					platErr.Details = map[string]any{
-						"details": providerConfig.Error.Details,
-					}
-				}
-				return &InvokeMethodResult{Error: platErr}
-			}
-
-			// Extract client configregistry.
-			clientConfigMap = yamlValue
+	switch value := value.(type) {
+	case string:
+		clientConfigMap = map[string]any{"transport": value}
+	case map[string]any:
+		isClientConfig = hasKey(value, "transport") || hasKey(value, "error")
+		if isClientConfig {
+			clientConfigMap = value
 		} else {
-			// Legacy JSON format. Input is the transport configregistry.
-			clientConfigMap = map[string]any{"transport": yamlValue}
+			clientConfigMap = map[string]any{"transport": value}
 		}
+	default:
+		return &InvokeMethodResult{Error: &platerrors.PlatformError{
+			Code: platerrors.InvalidConfig, Message: "config must be a URL or mapping",
+		}}
 	}
 
 	// Use JSON marshaling from the standard library because the YAML library is buggy.
@@ -147,11 +125,31 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 	}
 
+	if isClientConfig {
+		// Merges are already expanded. Keep the existing permissive decoding of
+		// provider error fields without invoking the YAML library's merge rules.
+		var providerConfig providerConfig
+		if err := yaml.Unmarshal(clientConfigBytes, &providerConfig); err != nil {
+			return &InvokeMethodResult{Error: &platerrors.PlatformError{
+				Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
+			}}
+		}
+		if providerConfig.Error != nil {
+			platErr := &platerrors.PlatformError{
+				Code: platerrors.ProviderError, Message: providerConfig.Error.Message,
+			}
+			if providerConfig.Error.Details != "" {
+				platErr.Details = map[string]any{"details": providerConfig.Error.Details}
+			}
+			return &InvokeMethodResult{Error: platErr}
+		}
+	}
+
 	// Validate advanced configs from their original YAML so delegated parsers
 	// report source locations. Keep the normalized JSON in the native response.
 	clientConfigText := string(clientConfigBytes)
 	if isClientConfig {
-		clientConfigText = originalInput
+		clientConfigText = input
 	}
 	result := (&ClientConfig{
 		DataDir: GetBackendConfig().DataDir,
@@ -187,5 +185,60 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 
 	return &InvokeMethodResult{
 		Value: string(responseBytes),
+	}
+}
+
+// configJSONValue expands a Node into JSON-compatible values. The shared budget
+// bounds total alias expansion, in addition to Node's per-operation limits.
+func configJSONValue(node composer.Node, remaining *int) (any, error) {
+	*remaining--
+	if *remaining < 0 {
+		return nil, node.WrapError(fmt.Errorf("config normalization exceeds 100000 values"))
+	}
+	switch node.Kind() {
+	case composer.KindAbsent:
+		return nil, nil
+	case composer.KindMapping:
+		var fields map[string]composer.Node
+		if err := node.Decode(&fields); err != nil {
+			return nil, err
+		}
+		values := make(map[string]any, len(fields))
+		for key, child := range fields {
+			value, err := configJSONValue(child, remaining)
+			if err != nil {
+				return nil, err
+			}
+			values[key] = value
+		}
+		return values, nil
+	case composer.KindSequence:
+		var children []composer.Node
+		if err := node.Decode(&children); err != nil {
+			return nil, err
+		}
+		values := make([]any, len(children))
+		for i, child := range children {
+			value, err := configJSONValue(child, remaining)
+			if err != nil {
+				return nil, err
+			}
+			values[i] = value
+		}
+		return values, nil
+	default:
+		var text string
+		if node.Decode(&text) == nil {
+			return text, nil
+		}
+		var boolean bool
+		if node.Decode(&boolean) == nil {
+			return boolean, nil
+		}
+		var number json.Number
+		if err := node.Decode(&number); err != nil {
+			return nil, err
+		}
+		return number, nil
 	}
 }
