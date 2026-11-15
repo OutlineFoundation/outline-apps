@@ -15,6 +15,7 @@
 package composer_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"localhost/client/go/composer"
@@ -28,6 +29,9 @@ func FuzzNode(f *testing.F) {
 		"base: &base {port: 443}\nendpoint: {<<: *base}",
 		"a: *missing",
 		"18446744073709551615",
+		"18446744073709551616",
+		"1e6",
+		"1000000.0",
 	} {
 		f.Add(seed)
 	}
@@ -60,8 +64,12 @@ func FuzzNode(f *testing.F) {
 				var unsigned uint64
 				var number float64
 				var boolean bool
+				precise := json.Number("unchanged")
 				for _, target := range []any{&str, &integer, &unsigned, &number, &boolean} {
 					_ = node.Decode(target)
+				}
+				if err := node.Decode(&precise); err != nil && precise != "unchanged" {
+					t.Fatal("failed json.Number decode changed the destination")
 				}
 			}
 		}

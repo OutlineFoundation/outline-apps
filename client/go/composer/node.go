@@ -21,12 +21,15 @@ import (
 
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
+	"github.com/goccy/go-yaml/token"
 )
 
 const (
 	maxNodeDepth     = 100
 	maxDocumentNodes = 100_000
 	maxAliasDepth    = 20
+	maxMergeDepth    = 20
+	maxMergeNodes    = 100_000
 )
 
 // Kind describes the shape of a configuration node.
@@ -94,6 +97,7 @@ type Node struct {
 //
 // The document scan is limited to 100,000 values and 100 levels. Child access
 // also limits descent to 100 levels, including descent through aliases.
+// Merge expansion is limited to 20 levels and 100,000 visited values.
 // These limits bound individual operations, not arbitrary loops in callers.
 // Syntax errors retain the YAML parser's source diagnostics.
 func ParseYAML(text []byte) (Node, error) {
@@ -177,6 +181,18 @@ func (n Node) IsAbsent() bool { return n.Kind() == KindAbsent }
 // bracketed, quoted notation. Aliases use the path where they are accessed.
 func (n Node) Path() string { return n.path }
 
+// WithString returns a string node derived from n, retaining its source
+// location and access path. It is useful when a parser extracts an endpoint
+// from a URL and delegates it to another parser. The original node is unchanged.
+func (n Node) WithString(value string) Node {
+	var position *token.Position
+	if n.ast != nil && n.ast.GetToken() != nil {
+		position = n.ast.GetToken().Position
+	}
+	n.ast = ast.String(token.DoubleQuote(value, value, position))
+	return n
+}
+
 // WrapError adds this node's path and source position to err. It returns nil
 // for nil, and leaves errors already containing a composer.Error unchanged so
 // the more specific child location is retained. Aliases use the definition's
@@ -232,28 +248,86 @@ func (n Node) child(value ast.Node, path string) (Node, error) {
 }
 
 func (n Node) mapping() (map[string]Node, error) {
+	return n.mappingWithMerges(0, &mergeState{active: make(map[*ast.MappingNode]bool)})
+}
+
+// A shared budget bounds repeated aliases, including acyclic merge graphs
+// whose expansion is much larger than the source document.
+type mergeState struct {
+	visited int
+	active  map[*ast.MappingNode]bool
+}
+
+func (s *mergeState) visit(n Node, count int) error {
+	if count > maxMergeNodes-s.visited {
+		return n.errorf("merge expansion exceeds %d values", maxMergeNodes)
+	}
+	s.visited += count
+	return nil
+}
+
+func (n Node) mappingWithMerges(depth int, state *mergeState) (map[string]Node, error) {
+	if depth > maxMergeDepth {
+		return nil, n.errorf("merge key nesting exceeds %d levels", maxMergeDepth)
+	}
 	mapping, ok := n.ast.(*ast.MappingNode)
 	if !ok {
 		return nil, n.errorf("expected a mapping, found %s", n.Kind())
 	}
+	if state.active[mapping] {
+		return nil, n.errorf("cyclic YAML merge")
+	}
+	state.active[mapping] = true
+	defer delete(state.active, mapping)
+	if err := state.visit(n, 1+len(mapping.Values)); err != nil {
+		return nil, err
+	}
+	explicit := make(map[string]bool, len(mapping.Values))
 	out := make(map[string]Node, len(mapping.Values))
 	for _, entry := range mapping.Values {
 		keyNode := Node{ast: entry.Key, path: n.path}
-		if entry.Key.IsMergeKey() {
-			return nil, keyNode.errorf("YAML merge keys are not supported")
+		if _, isMerge := entry.Key.(*ast.MergeKeyNode); isMerge {
+			source, err := n.child(entry.Value, n.path)
+			if err != nil {
+				return nil, err
+			}
+			sources := []Node{source}
+			if source.Kind() == KindSequence {
+				sources, err = source.sequence()
+				if err != nil {
+					return nil, err
+				}
+				if err := state.visit(source, len(sources)); err != nil {
+					return nil, err
+				}
+			}
+			// Later mappings take precedence, matching the existing config
+			// decoder. This differs from the YAML merge-key specification.
+			for _, source := range sources {
+				fields, err := source.mappingWithMerges(depth+1, state)
+				if err != nil {
+					return nil, err
+				}
+				for key, child := range fields {
+					child.path = joinPath(n.path, key)
+					out[key] = child
+				}
+			}
+			continue
 		}
 		key, ok := entry.Key.(*ast.StringNode)
 		_, numeric := keyNode.plainJSONNumber()
 		if !ok || numeric {
 			return nil, keyNode.errorf("mapping key must be a string")
 		}
-		if _, exists := out[key.Value]; exists {
+		if _, exists := explicit[key.Value]; exists {
 			return nil, keyNode.errorf("duplicate mapping key %q", key.Value)
 		}
 		child, err := n.child(entry.Value, joinPath(n.path, key.Value))
 		if err != nil {
 			return nil, err
 		}
+		explicit[key.Value] = true
 		out[key.Value] = child
 	}
 	return out, nil

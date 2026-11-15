@@ -15,6 +15,7 @@
 package composer_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -244,7 +245,7 @@ func TestNodeInvalidDocumentsAndMappings(t *testing.T) {
 	}
 	for _, text := range []string{
 		"1: value", "1e2: value", "true: value", "a: 1\na: 2", "a: 1\n\"a\": 2",
-		"<<: {a: 1}", "endpoint: *unknown",
+		"endpoint: *unknown",
 	} {
 		t.Run(text, func(t *testing.T) {
 			node, err := composer.ParseYAML([]byte(text))
@@ -276,4 +277,27 @@ func TestNodeBoundsRecursiveTraversal(t *testing.T) {
 
 	_, err = composer.ParseYAML([]byte(strings.Repeat("[", 300) + "0" + strings.Repeat("]", 300)))
 	require.Error(t, err, "excessive syntax nesting must be rejected")
+}
+
+func TestNodeJSONNumber(t *testing.T) {
+	for _, test := range []struct{ text, want string }{
+		{"123", "123"}, {"-123", "-123"}, {"0x10", "16"},
+		{"1.5", "1.5"}, {"1000000.0", "1000000"},
+		{"0.0000001", "1e-7"}, {"1e6", "1e6"}, {"1E-6", "1E-6"},
+		{"18446744073709551615", "18446744073709551615"},
+		{"18446744073709551616", "18446744073709551616"},
+		{"-9223372036854775809", "-9223372036854775809"},
+	} {
+		node := parseNode(t, test.text)
+		var value json.Number
+		require.NoError(t, node.Decode(&value), test.text)
+		require.Equal(t, test.want, value.String(), test.text)
+		var text string
+		require.Error(t, node.Decode(&text), "ordinary string decoding remains strict")
+	}
+	for _, text := range []string{`"123"`, `"1e6"`, "true", "null", ".inf", ".nan", "[1]", "{}"} {
+		value := json.Number("123")
+		require.Error(t, parseNode(t, text).Decode(&value), text)
+		require.Equal(t, json.Number("123"), value, "failure leaves the destination unchanged")
+	}
 }

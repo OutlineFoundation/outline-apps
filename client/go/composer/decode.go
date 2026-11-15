@@ -26,16 +26,21 @@ import (
 )
 
 // Decode reads a value into a non-nil pointer. Supported targets are string,
-// bool, signed and unsigned integers (except uintptr), float32, float64, Node,
+// bool, signed and unsigned integers (except uintptr), float32, float64, json.Number, Node,
 // map[string]Node, and []Node. Named scalar types are supported too.
 //
 // Maps and slices decode one level, retaining children as Nodes for delegation.
 // Keys are literal strings, including "$type" and "field?"; no schema or
-// dispatch rules apply. Duplicate or non-string keys and YAML merge keys are
-// rejected. Structs and other collection targets are not supported.
+// dispatch rules apply. Duplicate or non-string keys are rejected. YAML merge
+// keys are expanded in document order, with the last assignment winning;
+// quoted "<<" keys stay literal. Structs and other collection
+// targets are not supported.
 //
 // Scalars are not coerced between strings, booleans, and numbers. Integers may
 // decode into floats with ordinary Go rounding; numeric overflow is an error.
+// json.Number retains exact text for JSON numbers outside the integer range and
+// scientific notation. Parsed integer and float values use their JSON spelling;
+// floats have the precision of the YAML parser's float64 representation.
 // Absent/null nodes can decode into Node but not into scalar or collection
 // targets. On failure, out is unchanged.
 func (n Node) Decode(out any) error {
@@ -44,6 +49,13 @@ func (n Node) Decode(out any) error {
 		return n.errorf("Decode requires a non-nil pointer, got %T", out)
 	}
 	switch dst := out.(type) {
+	case *json.Number:
+		number, err := n.jsonNumber()
+		if err != nil {
+			return err
+		}
+		*dst = number
+		return nil
 	case *Node:
 		*dst = n
 		return nil
@@ -203,4 +215,31 @@ func (n Node) plainJSONNumber() (string, bool) {
 		return "", false
 	}
 	return value.Value, json.Valid([]byte(value.Value))
+}
+
+// jsonNumber avoids converting integer text through float64. The YAML parser
+// represents ordinary integers and floats as Go numbers, so those values use
+// JSON's canonical spelling; its numeric StringNodes retain their exact text.
+func (n Node) jsonNumber() (json.Number, error) {
+	if text, numeric := n.plainJSONNumber(); numeric {
+		return json.Number(text), nil
+	}
+	var value any
+	switch number := n.ast.(type) {
+	case *ast.IntegerNode:
+		var err error
+		value, err = n.integer()
+		if err != nil {
+			return "", err
+		}
+	case *ast.FloatNode:
+		value = number.Value
+	default:
+		return "", n.errorf("expected a number")
+	}
+	text, err := json.Marshal(value)
+	if err != nil {
+		return "", n.errorf("invalid JSON number: %v", err)
+	}
+	return json.Number(text), nil
 }

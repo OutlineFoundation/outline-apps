@@ -25,8 +25,10 @@
 // operations, not the total work performed by a caller.
 //
 // This package currently supports strings, booleans, finite numeric scalars,
-// null, sequences, string-keyed mappings, and anchors/aliases. YAML merge keys
-// and explicit tags are rejected. Mapping keys are read literally:
+// null, sequences, string-keyed mappings, anchors/aliases, and bounded YAML
+// merges. Fields and merge sources are applied in document order, with the last
+// assignment winning, preserving the existing client decoder (this differs from
+// the YAML merge-key specification). Explicit tags are rejected. Other keys are literal:
 // "$type", "$defs", and "field?" have no special meaning here.
 //
 // Configuration schemas, optional-field rules, registry dispatch, and runtime
