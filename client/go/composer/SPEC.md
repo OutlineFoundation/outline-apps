@@ -21,6 +21,33 @@ YAML anchors (`&name`) and aliases (`*name`) are supported. An alias may
 refer to an anchor defined anywhere in the document, including later in it.
 YAML tags (`!!str`, `!custom`) are not supported.
 
+### Merge keys
+
+The YAML merge key `<<` inserts the entries of another mapping into the
+mapping that holds it, so that shared config sections are written once:
+
+```yaml
+tcp:
+  $type: shadowsocks
+  endpoint: ss.example.com:80
+  <<: &cipher
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET
+udp:
+  $type: shadowsocks
+  endpoint: ss.example.com:53
+  <<: *cipher
+```
+
+- A key written in the mapping itself wins over a merged key, wherever the
+  `<<` appears.
+- The value of `<<` is a mapping or a sequence of mappings. Earlier mappings
+  in the sequence win over later ones.
+- A merge is shallow: it adds top-level keys only. A merged mapping may
+  itself contain `<<`, up to 20 levels.
+- Merges are expanded before fields are matched, so they apply to every use
+  of a mapping.
+
 ## Reserved key namespace: `$`
 
 Mapping keys starting with `$` are reserved for the format and are never
@@ -83,6 +110,7 @@ into a list.
 To protect against adversarial configs:
 
 - Alias indirection: at most 20 levels.
+- Merge expansion: at most 100,000 mapping and sequence values.
 - Nesting: at most 100 levels per decoded value.
 - Work: at most 100,000 values visited per decoded value. This defeats
   alias amplification ("billion laughs").

@@ -16,6 +16,8 @@ package composer
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -122,6 +124,135 @@ func TestNode_AliasCycles(t *testing.T) {
 	sub, err := entries[0].value.mappingEntries() // a -> {b: *y}
 	require.NoError(t, err)
 	require.Equal(t, KindMapping, sub[0].value.Kind())
+}
+
+// mergeDocExample is taken verbatim from the official access-key config
+// documentation, which uses merge keys to de-duplicate config sections:
+// https://developer.getoutline.org/vpn/reference/access-key-config/
+const mergeDocExample = `
+tcp:
+  $type: shadowsocks
+  endpoint: ss.example.com:80
+  <<: &cipher
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET
+  prefix: "POST "
+
+udp:
+  $type: shadowsocks
+  endpoint: ss.example.com:53
+  <<: *cipher
+`
+
+func TestNode_MergeKeys(t *testing.T) {
+	type ssConfig struct {
+		Endpoint string
+		Cipher   string
+		Secret   string
+		Prefix   Optional[string]
+	}
+	n := mustParse(t, mergeDocExample)
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	require.Len(t, entries, 2)
+
+	var tcp ssConfig
+	require.NoError(t, entries[0].value.Decode(&tcp))
+	require.Equal(t, ssConfig{
+		Endpoint: "ss.example.com:80",
+		Cipher:   "chacha20-ietf-poly1305",
+		Secret:   "SECRET",
+		Prefix:   NewOptional("POST "),
+	}, tcp)
+
+	var udp ssConfig
+	require.NoError(t, entries[1].value.Decode(&udp))
+	require.Equal(t, "ss.example.com:53", udp.Endpoint)
+	require.Equal(t, "chacha20-ietf-poly1305", udp.Cipher)
+	require.Equal(t, "SECRET", udp.Secret)
+	_, hasPrefix := udp.Prefix.Get()
+	require.False(t, hasPrefix)
+}
+
+// An anchor defined inside a merge value and used again later is the "YAML
+// Anchors with Merge Key" example of the access-key documentation. The YAML
+// library's own decoder fails on it with "could not find alias".
+func TestNode_MergeAnchorDefinedInMergeValue(t *testing.T) {
+	n := mustParse(t, "tcp:\n  <<: &shared\n    endpoint: ss.example.com:4321\n    secret: SECRET\n  prefix: \"POST \"\nudp: *shared")
+	var out map[string]map[string]string
+	require.NoError(t, n.Decode(&out))
+	require.Equal(t, map[string]map[string]string{
+		"tcp": {"endpoint": "ss.example.com:4321", "secret": "SECRET", "prefix": "POST "},
+		"udp": {"endpoint": "ss.example.com:4321", "secret": "SECRET"},
+	}, out)
+}
+
+func TestNode_MergeExplicitKeysWin(t *testing.T) {
+	n := mustParse(t, "$defs:\n  base: &base\n    a: 1\n    b: 2\nhost:\n  <<: *base\n  a: 10")
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	var out map[string]int
+	require.NoError(t, entries[1].value.Decode(&out))
+	require.Equal(t, map[string]int{"a": 10, "b": 2}, out)
+}
+
+func TestNode_MergeSequenceEarlierWins(t *testing.T) {
+	n := mustParse(t, "$defs:\n  one: &one\n    a: 1\n  two: &two\n    a: 2\n    b: 2\nhost:\n  <<: [*one, *two]")
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	var out map[string]int
+	require.NoError(t, entries[1].value.Decode(&out))
+	require.Equal(t, map[string]int{"a": 1, "b": 2}, out)
+}
+
+func TestNode_MergeChainAndCycle(t *testing.T) {
+	// Chained merges expand recursively.
+	n := mustParse(t, "l1: &l1\n  a: 1\nl2: &l2\n  <<: *l1\n  b: 2\nhost:\n  <<: *l2")
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	var out map[string]int
+	require.NoError(t, entries[2].value.Decode(&out))
+	require.Equal(t, map[string]int{"a": 1, "b": 2}, out)
+
+	// A mapping that merges itself must error, not hang.
+	n = mustParse(t, "host: &m\n  <<: *m\n  a: 1")
+	entries, err = n.mappingEntries()
+	require.NoError(t, err)
+	_, err = entries[0].value.mappingEntries()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "merge")
+}
+
+func TestNode_MergeOfNonMapping(t *testing.T) {
+	n := mustParse(t, "host:\n  <<: just-a-string")
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	_, err = entries[0].value.mappingEntries()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "expected a map")
+}
+
+func TestNode_MergeAliasAmplificationBudget(t *testing.T) {
+	var text strings.Builder
+	text.WriteString("base: &base\n")
+	for i := 0; i < 400; i++ {
+		fmt.Fprintf(&text, "  key%d: %d\n", i, i)
+	}
+	text.WriteString("host:\n  <<: [")
+	for i := 0; i < 300; i++ {
+		if i > 0 {
+			text.WriteString(", ")
+		}
+		text.WriteString("*base")
+	}
+	text.WriteString("]\n")
+
+	root := mustParse(t, text.String())
+	entries, err := root.mappingEntries()
+	require.NoError(t, err)
+	_, err = entries[1].value.mappingEntries()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "merge expansion exceeds 100000")
 }
 
 func TestError_Format(t *testing.T) {
