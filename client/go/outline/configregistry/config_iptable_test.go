@@ -20,28 +20,28 @@ import (
 	"fmt"
 	"testing"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
+	"localhost/client/go/configyaml"
 )
 
 func TestParseIPTableStreamDialer(t *testing.T) {
 	ctx := context.Background()
 
 	// Define a set of mock dialers for our tests to use.
-	parseSE := func(ctx context.Context, config configyaml.ConfigNode) (*Dialer[transport.StreamConn], error) {
-		if config == nil {
+	parseSE := func(ctx context.Context, config composer.Node) (*Dialer[transport.StreamConn], error) {
+		if config.IsAbsent() {
 			return &Dialer[transport.StreamConn]{Dial: (&errorStreamDialer{name: "direct"}).DialStream, ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeDirect}}, nil
 		}
 
-		configMap, ok := config.(map[string]any)
-		if !ok {
-			return nil, errors.New("config is not a map[string]any")
+		var configMap map[string]composer.Node
+		if err := config.Decode(&configMap); err != nil {
+			return nil, err
 		}
-
-		name, ok := configMap["name"].(string)
-		if !ok {
-			return nil, errors.New("mock dialer config must have a 'name'")
+		var name string
+		if err := configMap["name"].Decode(&name); err != nil {
+			return nil, err
 		}
 
 		var dialer transport.StreamDialer
@@ -111,6 +111,24 @@ table:
       - 192.168.1.0/24
     dialer: {name: dialerA}
 `,
+			expectedConnType: ConnTypeTunneled,
+		},
+		{
+			name: "Happy Path - aliased dialer",
+			configYAML: `
+table:
+  - ips: [192.168.1.0/24]
+    dialer: &shared {name: dialerA}
+  - ips: [10.0.0.0/8]
+    dialer: *shared
+fallback: *shared
+`,
+			checkDialer: func(t *testing.T, dialer *Dialer[transport.StreamConn]) {
+				_, err := dialer.Dial(ctx, "10.1.2.3:80")
+				require.ErrorContains(t, err, "dialer 'dialerA' called for address '10.1.2.3:80'")
+				_, err = dialer.Dial(ctx, "8.8.8.8:53")
+				require.ErrorContains(t, err, "dialer 'dialerA' called for address '8.8.8.8:53'")
+			},
 			expectedConnType: ConnTypeTunneled,
 		},
 		{
@@ -270,10 +288,7 @@ table:
 		t.Run(tc.name, func(t *testing.T) {
 			node, err := configyaml.ParseConfigYAML(tc.configYAML)
 			require.NoError(t, err)
-			configMap, ok := node.(map[string]any)
-			require.True(t, ok, "parsed yaml is not a map")
-
-			dialer, err := parseIPTableStreamDialer(ctx, configMap, parseSE)
+			dialer, err := parseIPTableStreamDialer(ctx, node, parseSE)
 
 			if tc.expectErr != "" {
 				require.Error(t, err)
@@ -290,44 +305,56 @@ table:
 	}
 
 	t.Run("Error - sub-dialer parser fails", func(t *testing.T) {
-		errorParser := func(ctx context.Context, configMap configyaml.ConfigNode) (*Dialer[transport.StreamConn], error) {
+		errorParser := func(ctx context.Context, configMap composer.Node) (*Dialer[transport.StreamConn], error) {
 			return nil, errors.New("sub-parser failed")
 		}
 
-		config := map[string]any{
-			"table": []any{
-				map[string]any{"ips": []string{"192.168.1.0/24"}, "dialer": map[string]any{"name": "dialerA"}},
-			},
-		}
+		config, err := configyaml.ParseConfigYAML(`table:
+  - ips: [192.168.1.0/24]
+    dialer: {name: dialerA}
+`)
+		require.NoError(t, err)
 
-		_, err := parseIPTableStreamDialer(ctx, config, errorParser)
+		_, err = parseIPTableStreamDialer(ctx, config, errorParser)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to parse nested stream dialer")
 		require.Contains(t, err.Error(), "sub-parser failed")
 	})
 
 	t.Run("Error - fallback parser fails", func(t *testing.T) {
-		fallbackErrorParser := func(ctx context.Context, config configyaml.ConfigNode) (*Dialer[transport.StreamConn], error) {
-			configMap := config.(map[string]any)
+		fallbackErrorParser := func(ctx context.Context, config composer.Node) (*Dialer[transport.StreamConn], error) {
+			var configMap map[string]composer.Node
+			require.NoError(t, config.Decode(&configMap))
+			var name string
+			require.NoError(t, configMap["name"].Decode(&name))
 
 			// Fail only for dialerB in this mock
-			if name, _ := configMap["name"].(string); name == "dialerB" {
+			if name == "dialerB" {
 				return nil, errors.New("fallback sub-parser failed")
 			}
 
 			return parseSE(ctx, config)
 		}
 
-		config := map[string]any{
-			"table": []any{
-				map[string]any{"ips": []string{"192.168.1.0/24"}, "dialer": map[string]any{"name": "dialerA"}},
-			},
-			"fallback": map[string]any{"name": "dialerB"},
-		}
+		config, err := configyaml.ParseConfigYAML(`table:
+  - ips: [192.168.1.0/24]
+    dialer: {name: dialerA}
+fallback: {name: dialerB}
+`)
+		require.NoError(t, err)
 
-		_, err := parseIPTableStreamDialer(ctx, config, fallbackErrorParser)
+		_, err = parseIPTableStreamDialer(ctx, config, fallbackErrorParser)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to parse nested stream dialer fallback")
 		require.Contains(t, err.Error(), "fallback sub-parser failed")
+	})
+
+	t.Run("Error - nested dialer retains its source location", func(t *testing.T) {
+		config := testNode(t, "table:\n  - ips: [192.168.1.0/24]\n    dialer: {name: true}")
+		_, err := parseIPTableStreamDialer(ctx, config, parseSE)
+		var located *composer.Error
+		require.ErrorAs(t, err, &located)
+		require.Equal(t, "table[0].dialer.name", located.Path)
+		require.Equal(t, 3, located.Line)
 	})
 }

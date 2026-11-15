@@ -19,13 +19,14 @@ import (
 	"errors"
 	"net"
 
-	"localhost/client/go/configyaml"
 	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
+	"localhost/client/go/configyaml"
 )
 
 // newTypeParser is a wrapper around [configyaml.NewTypeParser] that allows us to centralize the registration
 // of subparsers that should apply to all supported types.
-func newTypeParser[T any](fallbackHandler func(context.Context, configyaml.ConfigNode) (T, error)) *configyaml.TypeParser[T] {
+func newTypeParser[T any](fallbackHandler func(context.Context, composer.Node) (T, error)) *configyaml.TypeParser[T] {
 	parser := configyaml.NewTypeParser(fallbackHandler)
 
 	// Registrations that should apply to all supported type.
@@ -43,12 +44,12 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	if directSD != nil {
 		directWrappedSD = &Dialer[transport.StreamConn]{ConnectionProviderInfo{ConnTypeDirect, ""}, directSD.DialStream}
 	}
-	streamDialers := newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*Dialer[transport.StreamConn], error) {
-		switch input.(type) {
-		case nil:
+	streamDialers := newTypeParser(func(ctx context.Context, input composer.Node) (*Dialer[transport.StreamConn], error) {
+		switch input.Kind() {
+		case composer.KindAbsent:
 			// An absent config implicitly means direct access.
 			return directWrappedSD, nil
-		case string:
+		case composer.KindScalar:
 			// Parse URL-style config.
 			return parseShadowsocksStreamDialer(ctx, input, streamEndpoints.Parse)
 		default:
@@ -60,12 +61,12 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	if directPD != nil {
 		directWrappedPD = &Dialer[net.Conn]{ConnectionProviderInfo{ConnTypeDirect, ""}, directPD.DialPacket}
 	}
-	packetDialers := newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*Dialer[net.Conn], error) {
-		switch input.(type) {
-		case nil:
+	packetDialers := newTypeParser(func(ctx context.Context, input composer.Node) (*Dialer[net.Conn], error) {
+		switch input.Kind() {
+		case composer.KindAbsent:
 			// An absent config implicitly means direct access.
 			return directWrappedPD, nil
-		case string:
+		case composer.KindScalar:
 			// Parse URL-style config.
 			return parseShadowsocksPacketDialer(ctx, input, packetEndpoints.Parse)
 		default:
@@ -74,9 +75,9 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	})
 
 	directWrappedPL := &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, &transport.UDPListener{}}
-	packetListeners := newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*PacketListener, error) {
-		switch input.(type) {
-		case nil:
+	packetListeners := newTypeParser(func(ctx context.Context, input composer.Node) (*PacketListener, error) {
+		switch input.Kind() {
+		case composer.KindAbsent:
 			// An absent config implicitly means UDP.
 			return directWrappedPL, nil
 		default:
@@ -84,16 +85,16 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 		}
 	})
 
-	streamEndpoints = newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*Endpoint[transport.StreamConn], error) {
+	streamEndpoints = newTypeParser(func(ctx context.Context, input composer.Node) (*Endpoint[transport.StreamConn], error) {
 		// TODO: perhaps only support string here to force the struct to have an explicit parser.
 		return parseDirectDialerEndpoint(ctx, input, streamDialers.Parse)
 	})
 
-	packetEndpoints = newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*Endpoint[net.Conn], error) {
+	packetEndpoints = newTypeParser(func(ctx context.Context, input composer.Node) (*Endpoint[net.Conn], error) {
 		return parseDirectDialerEndpoint(ctx, input, packetDialers.Parse)
 	})
 
-	transports := newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*TransportPair, error) {
+	transports := newTypeParser(func(ctx context.Context, input composer.Node) (*TransportPair, error) {
 		// If parser directive is missing, parse as Shadowsocks for backwards-compatibility.
 		return parseShadowsocksTransport(ctx, input, streamEndpoints.Parse, packetEndpoints.Parse)
 	})
@@ -108,7 +109,7 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 
 	// Stream dialers.
 	streamDialers.RegisterSubParser("block", NewBlockDialerSubParser[transport.StreamConn]())
-	streamDialers.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
+	streamDialers.RegisterSubParser("direct", func(ctx context.Context, input composer.Node) (*Dialer[transport.StreamConn], error) {
 		return directWrappedSD, nil
 	})
 	streamDialers.RegisterSubParser("iptable", NewIPTableStreamDialerSubParser(streamDialers.Parse))
@@ -116,13 +117,13 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 
 	// Packet dialers.
 	packetDialers.RegisterSubParser("block", NewBlockDialerSubParser[net.Conn]())
-	packetDialers.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*Dialer[net.Conn], error) {
+	packetDialers.RegisterSubParser("direct", func(ctx context.Context, input composer.Node) (*Dialer[net.Conn], error) {
 		return directWrappedPD, nil
 	})
 	packetDialers.RegisterSubParser("shadowsocks", NewShadowsocksPacketDialerSubParser(packetEndpoints.Parse))
 
 	// Packet listeners.
-	packetListeners.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*PacketListener, error) {
+	packetListeners.RegisterSubParser("direct", func(ctx context.Context, input composer.Node) (*PacketListener, error) {
 		return directWrappedPL, nil
 	})
 	packetListeners.RegisterSubParser("shadowsocks", NewShadowsocksPacketListenerSubParser(packetEndpoints.Parse))

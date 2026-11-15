@@ -16,8 +16,11 @@ package outline
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	"localhost/client/go/composer"
+	"localhost/client/go/configyaml"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 
@@ -618,4 +621,97 @@ func Test_Demonstrate_ValueToNode_IsBroken(t *testing.T) {
 	stringNode, ok := yamlNode.(*ast.StringNode)
 	require.True(t, ok)
 	require.Equal(t, "SECRET/!@#", string(stringNode.Value))
+}
+
+func Test_doParseTunnelConfig_NestedSourceLocation(t *testing.T) {
+	result := doParseTunnelConfig(`
+transport:
+  $type: tcpudp
+  tcp:
+    $type: shadowsocks
+    endpoint:
+      $type: dial
+      address: example.com:not-a-port
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET`)
+	require.NotNil(t, result.Error)
+	require.Equal(t, platerrors.InvalidConfig, result.Error.Code)
+	require.ErrorContains(t, result.Error, "transport.tcp.endpoint.address (line 8, column 16)")
+}
+
+func Test_doParseTunnelConfig_MergeSequenceNormalization(t *testing.T) {
+	for _, tc := range []struct{ name, fields, firstHop string }{
+		{"sequence", "  <<: [*first, *last]", "last.example.com:4321"},
+		{"explicit before merge", "  endpoint: explicit.example.com:4321\n  <<: *last", "last.example.com:4321"},
+		{"explicit after merge", "  <<: *last\n  endpoint: explicit.example.com:4321", "explicit.example.com:4321"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result := doParseTunnelConfig(fmt.Sprintf(`defaults:
+  first: &first {endpoint: first.example.com:4321}
+  last: &last {endpoint: last.example.com:4321}
+transport:
+%s
+  cipher: chacha20-ietf-poly1305
+  secret: SECRET`, tc.fields))
+			require.Nil(t, result.Error, "Got %v", result.Error)
+			parsed := parseFirstHopAndTunnelConfigJSON(t, result.Value)
+			// Preserve the existing YAML decoder's last-value-wins behavior. The
+			// original YAML and normalized config returned to native code must agree.
+			require.Equal(t, tc.firstHop, parsed.FirstHop)
+			clientResult := (&ClientConfig{}).New("", parsed.Client)
+			require.Nil(t, clientResult.Error, "Got %v", clientResult.Error)
+			require.Equal(t, parsed.FirstHop, clientResult.Client.sd.FirstHop)
+			require.Equal(t, parsed.FirstHop, clientResult.Client.pr.FirstHop)
+		})
+	}
+}
+
+func Test_doParseTunnelConfig_LegacyPortCoercion(t *testing.T) {
+	for _, port := range []string{`"4321"`, `4321.0`} {
+		t.Run(port, func(t *testing.T) {
+			result := doParseTunnelConfig(fmt.Sprintf(`transport:
+  server: example.com
+  server_port: %s
+  method: chacha20-ietf-poly1305
+  password: SECRET`, port))
+			require.Nil(t, result.Error, "Got %v", result.Error)
+			parsed := parseFirstHopAndTunnelConfigJSON(t, result.Value)
+			require.Equal(t, "example.com:4321", parsed.FirstHop)
+			clientResult := (&ClientConfig{}).New("", parsed.Client)
+			require.Nil(t, clientResult.Error, "Got %v", clientResult.Error)
+			require.Equal(t, parsed.FirstHop, clientResult.Client.sd.FirstHop)
+			require.Equal(t, parsed.FirstHop, clientResult.Client.pr.FirstHop)
+		})
+	}
+}
+
+func Test_doParseTunnelConfig_NumericSecretNormalization(t *testing.T) {
+	for _, tc := range []struct{ literal, secret string }{
+		{`1000000.0`, "1000000"},
+		{`1.5e+6`, "1500000"},
+		{`0.00001`, "1e-05"},
+		{`1e6`, "1e6"},
+		{`1e+6`, "1e+6"},
+		{`1e-6`, "1e-6"},
+		{`18446744073709551616`, "18446744073709551616"},
+	} {
+		t.Run(tc.literal, func(t *testing.T) {
+			input := fmt.Sprintf(`transport:
+  endpoint: example.com:4321
+  cipher: chacha20-ietf-poly1305
+  secret: %s`, tc.literal)
+			result := doParseTunnelConfig(input)
+			require.Nil(t, result.Error, "Got %v", result.Error)
+			parsed := parseFirstHopAndTunnelConfigJSON(t, result.Value)
+			for _, text := range []string{input, parsed.Client} {
+				node, err := composer.ParseYAML([]byte(text))
+				require.NoError(t, err)
+				var config struct {
+					Transport configregistry.ShadowsocksConfig
+				}
+				require.NoError(t, configyaml.Decode(node, &config))
+				require.Equal(t, tc.secret, config.Transport.Secret)
+			}
+		})
+	}
 }

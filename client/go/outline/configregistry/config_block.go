@@ -17,10 +17,13 @@ package configregistry
 import (
 	"context"
 	"errors"
+
+	"localhost/client/go/composer"
+	"localhost/client/go/configyaml"
 )
 
-func NewBlockDialerSubParser[ConnType any]() func(ctx context.Context, input map[string]any) (*Dialer[ConnType], error) {
-	return func(ctx context.Context, input map[string]any) (*Dialer[ConnType], error) {
+func NewBlockDialerSubParser[ConnType any]() configyaml.ParseFunc[*Dialer[ConnType]] {
+	return func(ctx context.Context, input composer.Node) (*Dialer[ConnType], error) {
 		return &Dialer[ConnType]{
 			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeBlocked},
 			Dial: func(ctx context.Context, address string) (ConnType, error) {

@@ -25,10 +25,10 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-// providerConfig is the config fetched from the provider. It may be either an error, or a tunnel configregistry.
+// providerConfig decodes provider errors. Client configuration is parsed separately
+// through Node so nested parsers retain their configuration subtrees.
 type providerConfig struct {
-	ProviderErrorConfig  `yaml:",inline"`
-	ProviderTunnelConfig `yaml:",inline"`
+	ProviderErrorConfig `yaml:",inline"`
 }
 
 // ProviderErrorConfig is config returned by the provider with a custom error to
@@ -47,8 +47,8 @@ type ProviderTunnelConfig struct {
 
 // firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in configregistry.ts.
 type firstHopAndTunnelConfigJSON struct {
-	Client         string          `json:"client"`
-	FirstHop       string          `json:"firstHop"`
+	Client         string                  `json:"client"`
+	FirstHop       string                  `json:"firstHop"`
 	ConnectionType configregistry.ConnType `json:"connectionType"`
 }
 
@@ -76,6 +76,7 @@ func combinedConnectionType(streamConnType, packetConnType configregistry.ConnTy
 }
 
 func doParseTunnelConfig(input string) *InvokeMethodResult {
+	originalInput := input
 	input = strings.TrimSpace(input)
 	// Input may be one of:
 	// - ss:// link
@@ -83,6 +84,7 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	// - Advanced YAML format
 	var stringValue string
 	var clientConfigMap map[string]any
+	var isClientConfig bool
 	if err := yaml.Unmarshal([]byte(input), &stringValue); err == nil {
 		// Legacy URL format. Input is the transport configregistry.
 		clientConfigMap = map[string]any{"transport": stringValue}
@@ -98,7 +100,8 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 
 		if hasKey(yamlValue, "transport") || hasKey(yamlValue, "error") {
-			// New format. Parse as tunnel config
+			// New format. Parse provider errors separately from the client config.
+			isClientConfig = true
 			providerConfig := providerConfig{}
 			if err := yaml.Unmarshal([]byte(input), &providerConfig); err != nil {
 				return &InvokeMethodResult{
@@ -144,9 +147,15 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 	}
 
+	// Validate advanced configs from their original YAML so delegated parsers
+	// report source locations. Keep the normalized JSON in the native response.
+	clientConfigText := string(clientConfigBytes)
+	if isClientConfig {
+		clientConfigText = originalInput
+	}
 	result := (&ClientConfig{
 		DataDir: GetBackendConfig().DataDir,
-	}).New("", string(clientConfigBytes))
+	}).New("", clientConfigText)
 	if result.Error != nil {
 		return &InvokeMethodResult{
 			Error: result.Error,

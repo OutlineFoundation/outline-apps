@@ -27,9 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
 	persistentcookiejar "go.nhat.io/cookiejar"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
+	"localhost/client/go/configyaml"
 )
 
 type HTTPRequestConfig struct {
@@ -46,10 +47,10 @@ type HTTPReporterConfig struct {
 	Enable_Cookies bool
 }
 
-func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) func(ctx context.Context, input map[string]any) (Reporter, error) {
-	return func(ctx context.Context, input map[string]any) (Reporter, error) {
+func NewHTTPReporterConfigParser(cookiesFilename string, streamDialer transport.StreamDialer) configyaml.ParseFunc[Reporter] {
+	return func(ctx context.Context, input composer.Node) (Reporter, error) {
 		var config HTTPReporterConfig
-		if err := configyaml.MapToAny(input, &config); err != nil {
+		if err := configyaml.Decode(input, &config); err != nil {
 			return nil, fmt.Errorf("invalid config format: %w", err)
 		}
 

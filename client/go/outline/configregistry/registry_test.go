@@ -20,9 +20,10 @@ import (
 	"net"
 	"testing"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
+	"localhost/client/go/configyaml"
 )
 
 func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
@@ -176,4 +177,67 @@ udp: null`)
 		require.Error(t, err)
 		require.Equal(t, "blocked by config", err.Error())
 	})
+}
+
+func testNode(t *testing.T, text string) composer.Node {
+	t.Helper()
+	node, err := composer.ParseYAML([]byte(text))
+	require.NoError(t, err)
+	return node
+}
+
+// Exercise the registered parsers together, through an actual dial attempt.
+// The fake base dialer keeps the test independent of external networking.
+func TestRegisteredNodeComposition(t *testing.T) {
+	provider := NewDefaultTransportProvider(&errorStreamDialer{name: "base"}, &transport.UDPDialer{})
+	node := testNode(t, `$defs:
+  cipher: &cipher
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET
+  endpoint: &endpoint
+    $type: dial
+    address: entry.example.com:443
+$type: tcpudp
+tcp:
+  $type: first-supported
+  options:
+    - $type: future-protocol
+    - $type: shadowsocks
+      <<: *cipher
+      endpoint:
+        $type: websocket
+        url: wss://cdn.example.com/tunnel
+        endpoint: *endpoint
+udp:
+  $type: direct`)
+
+	pair, err := provider.Parse(context.Background(), node)
+	require.NoError(t, err)
+	require.Equal(t, "entry.example.com:443", pair.StreamDialer.FirstHop)
+	require.Equal(t, ConnTypeTunneled, pair.StreamDialer.ConnType)
+	require.Equal(t, ConnTypeDirect, pair.PacketRelay.ConnType)
+	_, err = pair.DialStream(context.Background(), "target.example.com:80")
+	require.ErrorContains(t, err, "dialer 'base' called for address 'entry.example.com:443'")
+}
+
+func TestRegisteredNodeAliasErrorLocation(t *testing.T) {
+	provider := newTestTransportProvider()
+	node := testNode(t, `$defs:
+  endpoint: &endpoint
+    address: example.com:invalid
+$type: tcpudp
+tcp: {$type: direct}
+udp:
+  $type: shadowsocks
+  endpoint: *endpoint
+  cipher: chacha20-ietf-poly1305
+  secret: SECRET`)
+
+	_, err := provider.Parse(context.Background(), node)
+	var located *composer.Error
+	require.ErrorAs(t, err, &located)
+	// The path describes the use; the coordinates point to the definition.
+	require.Equal(t, "udp.endpoint.address", located.Path)
+	require.Equal(t, 3, located.Line)
+	require.Equal(t, 14, located.Column)
 }

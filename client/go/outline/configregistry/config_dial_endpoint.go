@@ -23,24 +23,25 @@ import (
 	"strconv"
 	"testing"
 
+	"localhost/client/go/composer"
 	"localhost/client/go/configyaml"
 )
 
 // DialEndpointConfig is the format for the Dial Endpoint config.
 type DialEndpointConfig struct {
 	Address string
-	Dialer  any
+	Dialer  composer.Node
 }
 
-func NewDialEndpointSubParser[ConnType any](parse configyaml.ParseFunc[*Dialer[ConnType]]) func(ctx context.Context, input map[string]any) (*Endpoint[ConnType], error) {
-	return func(ctx context.Context, input map[string]any) (*Endpoint[ConnType], error) {
+func NewDialEndpointSubParser[ConnType any](parse configyaml.ParseFunc[*Dialer[ConnType]]) configyaml.ParseFunc[*Endpoint[ConnType]] {
+	return func(ctx context.Context, input composer.Node) (*Endpoint[ConnType], error) {
 		return parseDirectDialerEndpoint(ctx, input, parse)
 	}
 }
 
-func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config any, newDialer configyaml.ParseFunc[*Dialer[ConnType]]) (*Endpoint[ConnType], error) {
-	if config == nil {
-		return nil, errors.New("endpoint config cannot be nil")
+func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config composer.Node, newDialer configyaml.ParseFunc[*Dialer[ConnType]]) (*Endpoint[ConnType], error) {
+	if config.IsAbsent() {
+		return nil, config.WrapError(errors.New("endpoint config cannot be nil"))
 	}
 
 	dialParams, err := parseEndpointConfig(config)
@@ -78,45 +79,59 @@ func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config any, ne
 	return endpoint, nil
 }
 
-func parseEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, error) {
+func parseEndpointConfig(node composer.Node) (*DialEndpointConfig, error) {
 	config, err := toDialEndpointConfig(node)
 	if err != nil {
 		return nil, err
 	}
+	addressNode := node
+	if node.Kind() == composer.KindMapping {
+		var fields map[string]composer.Node
+		if err := node.Decode(&fields); err != nil {
+			return nil, err
+		}
+		if address, ok := fields["address"]; ok {
+			addressNode = address
+		}
+	}
 	host, portText, err := net.SplitHostPort(config.Address)
 	if err != nil {
-		return nil, fmt.Errorf("invalid address format: %w", err)
+		return nil, addressNode.WrapError(fmt.Errorf("invalid address format: %w", err))
 	}
 	if host == "" {
-		return nil, errors.New("host must not be empty")
+		return nil, addressNode.WrapError(errors.New("host must not be empty"))
 	}
 	if portText == "" {
-		return nil, errors.New("port must not be empty")
+		return nil, addressNode.WrapError(errors.New("port must not be empty"))
 	}
 	port, err := strconv.ParseUint(portText, 10, 16)
 	if err != nil {
-		return nil, fmt.Errorf("invalid port number: %w", err)
+		return nil, addressNode.WrapError(fmt.Errorf("invalid port number: %w", err))
 	}
 	if port == 0 {
-		return nil, errors.New("port must not be zero")
+		return nil, addressNode.WrapError(errors.New("port must not be zero"))
 	}
 	return config, err
 }
 
-func toDialEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, error) {
-	switch typed := node.(type) {
-	case string:
-		return &DialEndpointConfig{Address: typed}, nil
+func toDialEndpointConfig(node composer.Node) (*DialEndpointConfig, error) {
+	switch node.Kind() {
+	case composer.KindScalar:
+		var address string
+		if err := node.Decode(&address); err != nil {
+			return nil, err
+		}
+		return &DialEndpointConfig{Address: address}, nil
 
-	case map[string]any:
+	case composer.KindMapping:
 		// TODO: Make it type-based
 		var config DialEndpointConfig
-		if err := configyaml.MapToAny(typed, &config); err != nil {
+		if err := configyaml.Decode(node, &config); err != nil {
 			return nil, err
 		}
 		return &config, nil
 
 	default:
-		return nil, fmt.Errorf("endpoint config of type %T is not supported", typed)
+		return nil, node.WrapError(fmt.Errorf("endpoint config of kind %s is not supported", node.Kind()))
 	}
 }

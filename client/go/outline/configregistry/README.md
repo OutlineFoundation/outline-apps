@@ -24,28 +24,35 @@ We use the `github.com/goccy/go-yaml` library for parsing. This library was chos
 
 ## Core concepts
 
-A `ParseFunc[T any]` is a generic function that defines how to transform a configuration (typically a YAML config pre-parsed as a map, list or primitive type) into a specific Go type `T`.
+A `configyaml.ParseFunc[T]` transforms a `composer.Node` into a Go value of type `T`. The registered parsers currently create connection objects during parsing.
 
 ```go
-type ParseFunc[T any] func(ctx context.Context, input ConfigNode) (OutputType, error)
+type ParseFunc[T any] func(ctx context.Context, input composer.Node) (T, error)
 ```
 
-The `Context` was added to enable parse-time context and sharing between parsers. This is useful for
-implementing features like named objects in the config that can be referred to by other parts of the configuration.
+`composer.ParseYAML` parses a document once. A `Node` retains the original source position, configuration path, and document anchors when passed to another parser. Use `Node.Decode` for scalar values and shallow `map[string]composer.Node` or `[]composer.Node` containers. `Node.IsAbsent` recognizes both missing fields and explicit nulls.
+
+YAML merges retain the existing decoder's document-order behavior: the last assignment wins, including merge sequences and explicit fields. This differs from the YAML merge-key specification. Expansion is bounded. Node accepts one document and rejects explicit YAML tags, duplicate keys/anchors, and non-string mapping keys.
+
+For the existing configuration structs, use `configyaml.Decode`. This compatibility helper preserves the existing defaults, scalar conversions, and unknown-field checks. Fields typed as `composer.Node` receive the original child node for delegation. It does not serialize a subtree and parse it again. Reserved keys beginning with `$`, including `$type`, are ignored at the root of the decoded schema.
+
+Decode errors include the field path and original line and column. Use `node.WrapError(err)` for additional validation errors; wrapping preserves an already located child error and `errors.Is`/`errors.As` checks. An alias retains its access path and the source position of its definition.
+
+The context is passed to nested parsers. Dependencies between parsers are still supplied when constructing them.
 
 A `TypeParser[T any]` is a utility that manages the parsing of a specific type `T` which can have multiple implementations or "subtypes".
 It allows for the registration of different subparsers (`ParseFunc`s), each associated with a unique subtype name.
 
-When a `TypeParser` encounters a YAML map with a `$type` attribute, it uses the value of `$type` to look up the corresponding registered subparser and delegates the parsing of that map to it.
+When a `TypeParser` encounters a YAML map with a `$type` attribute, it uses the value of `$type` to look up the corresponding registered subparser and delegates the original node to it, including `$type`.
 
 Example of `$type` usage in YAML:
 
 ```yaml
 endpoint:
   $type: shadowsocks
-  address: "127.0.0.1:8080"
+  endpoint: "127.0.0.1:8080"
   cipher: "chacha20-ietf-poly1305"
-  password: "your_password"
+  secret: "your_password"
 ```
 
 Here, a `TypeParser` for an "endpoint" would see `$type: shadowsocks` and delegate to the "shadowsocks" subparser.
@@ -53,7 +60,7 @@ Here, a `TypeParser` for an "endpoint" would see `$type: shadowsocks` and delega
 When you create a `TypeParser`, a _fallback handler_ must be specified. If the input config is not
 a map, or is a map without a `$type` attribute, the fallback handler is called. This is helpful
 for handling cases like parsing strings and the empty value. For example, a stream endpoint
-can be specified simply as a string address (e.g., `"proxy.example.com:443"`). This string would be parsed by the stream dialer `TypeParser`'s fallback handler.
+can be specified simply as a string address (e.g., `"proxy.example.com:443"`). This string would be parsed by the stream endpoint `TypeParser`'s fallback handler.
 
 ## Application Concepts
 
@@ -79,23 +86,31 @@ and will cause compile-time errors if not provided.
 
 To introduce a new network capability (e.g., custom proxy protocol, dialing strategy), follow these steps:
 
-1. **Create the Parser Function**:
-   Write a parser package or function (`SubParser`) that transforms the YAML block (`map[string]any`) into a native connection interface, such as `*Dialer[transport.StreamConn]`. If your dialer delegates downward to a nested endpoint, require that parser as an argument.
+1. **Create the parser function**:
+   Accept a `composer.Node` and return the runtime object. Request any nested parser as a constructor argument. Keep delegated fields as nodes so aliases and source locations survive. For example, this endpoint wrapper delegates its `endpoint` field:
 
    ```go
-   func NewMyStrategyDialerSubParser(parseEndpoint configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-       return func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-           // 1. Unmarshal `input` logic into your custom struct
-           // 2. Instantiate your streaming strategy
-           // 3. Return a `Dialer` conforming to the interface requirements
+   func NewAliasEndpointSubParser[T any](parseEndpoint configyaml.ParseFunc[*Endpoint[T]]) configyaml.ParseFunc[*Endpoint[T]] {
+       return func(ctx context.Context, input composer.Node) (*Endpoint[T], error) {
+           var config struct {
+               Endpoint composer.Node
+           }
+           if err := configyaml.Decode(input, &config); err != nil {
+               return nil, err
+           }
+           return parseEndpoint(ctx, config.Endpoint)
        }
    }
    ```
 
-2. **Register the Strategy**:
-   Locate the `NewDefaultTransportProvider` function in [`registry.go`](registry.go).
-   Register your parsing function into the relevant parser category (`streamDialers` or `packetDialers`). The string key you provide will act as the native identifier for the matching `$type` field inside Outline configuration files.
+   Given `endpoint: {$type: alias, endpoint: proxy.example.com:443}`, the nested parser receives the child at `endpoint.endpoint`, with its original source position. The wrapper does not need to know whether that child is a string, mapping, or alias.
+
+2. **Register the strategy**:
+   Locate `NewDefaultTransportProvider` in [`registry.go`](registry.go). Register the parser for the appropriate result type. The registration name selects the parser through `$type`:
 
    ```go
-   streamDialers.RegisterSubParser("my_strategy", NewMyStrategyDialerSubParser(streamEndpoints.Parse))
+   streamEndpoints.RegisterSubParser("alias", NewAliasEndpointSubParser(streamEndpoints.Parse))
    ```
+
+3. **Test delegation and errors**:
+   Exercise the registered parser with a complete YAML document, including nested configuration and aliases defined outside its subtree. Assert the runtime behavior and the path and source position of a nested error. Preserve existing metadata and parse-time behavior when migrating a parser.
