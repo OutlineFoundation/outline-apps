@@ -32,9 +32,9 @@ import (
 // Maps and slices decode one level, retaining children as Nodes for delegation.
 // Keys are literal strings, including "$type" and "field?"; no schema or
 // dispatch rules apply. Duplicate or non-string keys are rejected. YAML merge
-// keys are expanded in document order, with the last assignment winning;
-// quoted "<<" keys stay literal. Structs and other collection
-// targets are not supported.
+// keys follow the YAML merge extension: explicit fields override merged fields,
+// and earlier mappings in a merge sequence override later ones. Quoted "<<" keys
+// stay literal. Structs and other collection targets are not supported.
 //
 // Scalars are not coerced between strings, booleans, and numbers. Integers may
 // decode into floats with ordinary Go rounding; numeric overflow is an error.

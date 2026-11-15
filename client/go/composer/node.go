@@ -282,7 +282,7 @@ func (n Node) mappingWithMerges(depth int, state *mergeState) (map[string]Node, 
 	if err := state.visit(n, 1+len(mapping.Values)); err != nil {
 		return nil, err
 	}
-	explicit := make(map[string]bool, len(mapping.Values))
+	explicit := make(map[string]Node, len(mapping.Values))
 	out := make(map[string]Node, len(mapping.Values))
 	for _, entry := range mapping.Values {
 		keyNode := Node{ast: entry.Key, path: n.path}
@@ -301,16 +301,17 @@ func (n Node) mappingWithMerges(depth int, state *mergeState) (map[string]Node, 
 					return nil, err
 				}
 			}
-			// Later mappings take precedence, matching the existing config
-			// decoder. This differs from the YAML merge-key specification.
+			// Earlier mappings in a merge sequence take precedence.
 			for _, source := range sources {
 				fields, err := source.mappingWithMerges(depth+1, state)
 				if err != nil {
 					return nil, err
 				}
 				for key, child := range fields {
-					child.path = joinPath(n.path, key)
-					out[key] = child
+					if _, exists := out[key]; !exists {
+						child.path = joinPath(n.path, key)
+						out[key] = child
+					}
 				}
 			}
 			continue
@@ -327,8 +328,11 @@ func (n Node) mappingWithMerges(depth int, state *mergeState) (map[string]Node, 
 		if err != nil {
 			return nil, err
 		}
-		explicit[key.Value] = true
-		out[key.Value] = child
+		explicit[key.Value] = child
+	}
+	// Explicit fields always override merged fields, regardless of their order.
+	for key, child := range explicit {
+		out[key] = child
 	}
 	return out, nil
 }

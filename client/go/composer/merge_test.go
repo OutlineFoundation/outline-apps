@@ -40,12 +40,12 @@ other:
 	require.Len(t, endpoint, 3)
 	var text string
 	require.NoError(t, endpoint["host"].Decode(&text))
-	require.Equal(t, "second", text, "a later merge replaces an earlier explicit field")
+	require.Equal(t, "explicit", text, "explicit fields win before a merge too")
 	require.NoError(t, endpoint["extra"].Decode(&text))
 	require.Equal(t, "second", text)
 	other := fields(t, values["other"])
 	require.NoError(t, other["host"].Decode(&text))
-	require.Equal(t, "second", text, "later merge sources win, preserving existing client configs")
+	require.Equal(t, "first", text, "earlier merge sources win")
 	require.NoError(t, other["extra"].Decode(&text))
 	require.Equal(t, "explicit", text, "explicit fields win after a merge too")
 	var port uint16
@@ -128,4 +128,35 @@ func TestNodeWithStringPreservesOrigin(t *testing.T) {
 	require.Equal(t, "https://example.com:443", original)
 	require.NoError(t, (composer.Node{}).WithString("default").Decode(&original))
 	require.Equal(t, "default", original)
+}
+
+func TestNodeMergeNullOverridesAndShallowMaps(t *testing.T) {
+	root := parseNode(t, `base: &base
+  value: inherited
+  settings: {host: inherited, port: 443}
+explicit:
+  value: null
+  settings: {host: explicit}
+  <<: *base
+sequence:
+  <<: [{value: null}, *base]
+nested:
+  <<: [{<<: *base, value: first}, {value: second}]
+`)
+	values := fields(t, root)
+	explicit := fields(t, values["explicit"])
+	require.Contains(t, explicit, "value")
+	require.True(t, explicit["value"].IsAbsent(), "explicit null overrides a merged value")
+	require.Equal(t, "explicit.value", explicit["value"].Path())
+	settings := fields(t, explicit["settings"])
+	require.Len(t, settings, 1, "merge keys do not recursively combine child mappings")
+	var host string
+	require.NoError(t, settings["host"].Decode(&host))
+	require.Equal(t, "explicit", host)
+	sequence := fields(t, values["sequence"])
+	require.Contains(t, sequence, "value")
+	require.True(t, sequence["value"].IsAbsent(), "an earlier source's null overrides a later value")
+	var value string
+	require.NoError(t, fields(t, values["nested"])["value"].Decode(&value))
+	require.Equal(t, "first", value, "nested merges use the same precedence")
 }
