@@ -89,6 +89,21 @@ func TestNode_SequenceItems(t *testing.T) {
 	require.Equal(t, "options[1]", items[1].Path())
 }
 
+func TestNode_TypeName(t *testing.T) {
+	n := mustParse(t, "$type: shadowsocks\ncipher: aes")
+	name, found, err := n.typeName()
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "shadowsocks", name)
+
+	_, found, err = mustParse(t, "cipher: aes").typeName()
+	require.NoError(t, err)
+	require.False(t, found)
+
+	_, _, err = mustParse(t, "$type: {bad: map}").typeName()
+	require.Error(t, err)
+}
+
 func TestNode_AliasResolution(t *testing.T) {
 	n := mustParse(t, "proxy: &p\n  host: example.com\nendpoint: *p")
 	entries, err := n.mappingEntries()
