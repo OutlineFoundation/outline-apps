@@ -15,6 +15,7 @@
 package composer_test
 
 import (
+	"context"
 	"fmt"
 
 	"localhost/client/go/composer"
@@ -50,4 +51,42 @@ func ExampleNode_Decode() {
 	// Output:
 	// example.com:443
 	// endpoint
+}
+
+func ExampleTypeParser() {
+	// The fallback accepts a plain string. The registered parser adds a prefix
+	// to a delegated value, which may itself select another registered parser.
+	parser := composer.NewTypeParser(func(_ context.Context, node composer.Node) (string, error) {
+		var value string
+		err := node.Decode(&value)
+		return value, err
+	})
+	var decoder composer.Decoder
+	parser.RegisterSubParser("prefix", func(ctx context.Context, node composer.Node) (string, error) {
+		var config struct {
+			Prefix string
+			Value  composer.Node
+		}
+		if err := decoder.Decode(node, &config); err != nil {
+			return "", err
+		}
+		value, err := parser.Parse(ctx, config.Value)
+		if err != nil {
+			return "", err
+		}
+		return config.Prefix + value, nil
+	})
+	node, err := composer.ParseYAML([]byte(`$defs: &name World
+$type: prefix
+prefix: "Hello, "
+value: *name`))
+	if err != nil {
+		panic(err)
+	}
+	value, err := parser.Parse(context.Background(), node)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(value)
+	// Output: Hello, World
 }

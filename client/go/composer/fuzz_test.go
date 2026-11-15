@@ -40,6 +40,10 @@ func FuzzNode(f *testing.F) {
 		if err != nil {
 			return
 		}
+		// Serialization is a bounded complete traversal, including aliases/merges.
+		if encoded, err := root.MarshalJSON(); err == nil && !json.Valid(encoded) {
+			t.Fatal("successful serialization returned invalid JSON")
+		}
 		pending := []composer.Node{root}
 		// Bound the caller's work too: repeated aliases can share subtrees.
 		for visited := 0; len(pending) > 0 && visited < 256; visited++ {

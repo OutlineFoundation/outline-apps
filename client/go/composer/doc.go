@@ -28,9 +28,20 @@
 // null, sequences, string-keyed mappings, anchors/aliases, and bounded YAML
 // merges. Explicit fields override merged fields regardless of their order;
 // earlier sources in a merge sequence take precedence. Explicit tags are
-// rejected. Other keys are literal:
-// "$type", "$defs", and "field?" have no special meaning here.
+// rejected. Node treats other keys literally, including "$type", "$defs", and
+// "field?". Higher-level parsers and decoders may interpret those keys.
 //
-// Configuration schemas, optional-field rules, registry dispatch, and runtime
-// construction are separate layers.
+// Decoder reads struct schemas and nested collections while retaining Node
+// fields for delegation. Its zero value uses strict scalar conversions;
+// CoerceScalars explicitly enables the existing config conversions, and
+// AllowUnknownFields permits additional struct fields. Missing fields preserve
+// defaults; required/optional field rules are not imposed.
+//
+// TypeParser[T] dispatches $type names to registered ParseFunc[T] callbacks or
+// a fallback. T may be any Go type. Parsers receive the original Node and
+// context; parser dependencies are currently supplied at construction time.
+//
+// Node.MarshalJSON normalizes nodes for storage using the same merge semantics
+// and bounded traversal. Application registrations, protocol parsing, metadata,
+// and runtime construction remain outside this package.
 package composer
