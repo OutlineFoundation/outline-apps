@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
+#import <signal.h>
 #import "AppDelegate+Outline.h"
 #import "Outline-Swift.h"
 
@@ -29,6 +30,11 @@
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:
         (NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+  // Ignore SIGPIPE so that writing to a broken socket (e.g. one reclaimed by
+  // iOS while the app is in the background, used by the Go library or WebKit)
+  // fails with EPIPE instead of terminating the whole app.
+  signal(SIGPIPE, SIG_IGN);
+
 #if TARGET_OS_MACCATALYST
     [OutlineCatalystApp initApp];
 #endif
