@@ -352,7 +352,7 @@ export class AppRoot extends polymerElementWithLocalize {
         opacity: 0.54;
         filter: grayscale(100%);
       }
-      .side-bar-section.donate-section {
+      .side-bar-section:last-child {
         flex: 1 0 24px;
         border-bottom: none;
       }
@@ -471,7 +471,7 @@ export class AppRoot extends polymerElementWithLocalize {
               <iron-icon icon="add" slot="item-icon"></iron-icon>
             </paper-icon-item>
           </div>
-          <a class="side-bar-section donate-section" href\$="[[donateUrl]]" title\$="[[localize('nav-donate')]]">
+          <a class="side-bar-section" href\$="[[donateUrl]]" title\$="[[localize('nav-donate')]]">
             <paper-icon-item>
               <iron-icon icon="favorite" slot="item-icon"></iron-icon>
             </paper-icon-item>
