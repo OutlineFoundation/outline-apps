@@ -18,6 +18,11 @@ import * as Sentry from '@sentry/electron/renderer';
 import * as semver from 'semver';
 
 import {DisplayDataAmount, displayDataAmountToBytes} from './data_formatting';
+import {
+  isDonateBannerDismissed,
+  saveDonateBannerDismissal,
+  shouldShowDonateBanner,
+} from './donate';
 import {filterOptions, getShortName, sortOptions} from './location_formatting';
 import {parseManualServerConfig} from './management_urls';
 import type {AppRoot, ServerListEntry} from './ui_components/app-root';
@@ -224,6 +229,11 @@ export class App {
 
     appRoot.addEventListener('ForgetServerRequested', (event: CustomEvent) => {
       this.forgetServer(event.detail.serverId);
+    });
+
+    appRoot.addEventListener('DonateBannerDismissed', () => {
+      saveDonateBannerDismissal(localStorage);
+      this.appRoot.showDonateBanner = false;
     });
 
     appRoot.addEventListener('AddAccessKeyRequested', (_: CustomEvent) => {
@@ -912,6 +922,7 @@ export class App {
     view.serverManagementApiUrl = server.getManagementApiUrl();
     view.serverPortForNewAccessKeys = server.getPortForNewAccessKeys();
     view.serverCreationDate = server.getCreatedDate();
+    this.showDonateBannerIfDue(server.getCreatedDate());
     view.serverVersion = version;
     view.defaultDataLimitBytes = server.getDefaultDataLimit()?.bytes;
     view.isDefaultDataLimitEnabled = view.defaultDataLimitBytes !== undefined;
@@ -963,6 +974,20 @@ export class App {
       }
       this.showServerMetrics(server, view);
     }, 0);
+  }
+
+  // The donate banner is shown to the whole app once any server has existed for long enough,
+  // so a server that qualifies turns it on for all servers. Called whenever a server's
+  // configuration has been loaded, since that is when its creation date is known.
+  private showDonateBannerIfDue(serverCreationDate: Date) {
+    if (
+      shouldShowDonateBanner(
+        serverCreationDate,
+        isDonateBannerDismissed(localStorage)
+      )
+    ) {
+      this.appRoot.showDonateBanner = true;
+    }
   }
 
   private async setServerUnreachableView(

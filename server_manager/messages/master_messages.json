@@ -357,6 +357,10 @@
     "message": "Disabled",
     "description": "This string appears across the application as a drop-down menu option. It allows the user to deactivate features."
   },
+  "donate_prompt": {
+    "message": "Outline is run by a small team. A donation to the Outline Foundation pays for the security updates and maintenance that keep Outline free and open source.",
+    "description": "This string appears in the server view's donation banner and in the About dialog. It explains why a donation to the Outline Foundation matters and is followed by the 'nav_donate' link."
+  },
   "done": {
     "message": "Done",
     "description": "This string appears across the application as a button. It lets the user indicate that an action, such as entering text or reading a dialog, has been completed."
@@ -885,6 +889,10 @@
   "nav_data_collection": {
     "message": "Data collection",
     "description": "This string appears in an application drawer as a navigation link. Clicking it opens Outline's data collection policy in the browser."
+  },
+  "nav_donate": {
+    "message": "Support us",
+    "description": "This string appears in the application drawer as a navigation link, in the server view's donation banner, and in the About dialog. Clicking it opens the Outline Foundation's donation page in the browser."
   },
   "nav_feedback": {
     "message": "Feedback",
