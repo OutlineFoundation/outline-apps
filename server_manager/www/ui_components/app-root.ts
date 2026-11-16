@@ -793,12 +793,17 @@ export class AppRoot extends polymerElementWithLocalize {
    * Fetches a translation file and returns a Promise which resolves with its messages or rejects
    * when there was an error loading it.
    *
+   * The translation files are fetched directly rather than through
+   * AppLocalizeBehavior.loadResources, which only loads a single file per language and leaves
+   * strings missing from it to render as their message key. English is used as the fallback for
+   * those strings instead (see loadLanguageResources), which loadResources cannot do: it caches
+   * each file's parsed response and, when not merging, stores that cached object directly as the
+   * language's resources, so merging another language into it would corrupt the cached English
+   * file for every language loaded afterwards.
+   *
    *  @param language The language code of the translation file to fetch, eg 'en'
    */
   private fetchMessages(language: string): Promise<{[key: string]: string}> {
-    // AppLocalizeBehavior.loadResources is not used here: it caches each file's parsed response
-    // and, when not merging, stores that cached object directly as the language's resources.
-    // Merging another language into it would then corrupt the cached file for subsequent loads.
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open('GET', `./messages/${language}.json`);
