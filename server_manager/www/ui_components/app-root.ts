@@ -274,16 +274,11 @@ export class AppRoot extends polymerElementWithLocalize {
       #links-footer {
         margin-top: 36px;
       }
-      #appDrawer .manager-resources-link,
-      #appDrawer .donate-link {
+      #appDrawer .manager-resources-link {
         color: var(--primary-green);
         display: flex;
         align-items: center;
         gap: 0.25rem;
-      }
-      #donate-icon {
-        width: 18px;
-        height: 18px;
       }
       .legal-links {
         margin: 0 -6px;
@@ -298,7 +293,7 @@ export class AppRoot extends polymerElementWithLocalize {
       #language-icon {
         padding-top: 10px;
       }
-      #open-in-new-icon {
+      .link-icon {
         width: 16px;
         height: 16px;
       }
@@ -397,10 +392,10 @@ export class AppRoot extends polymerElementWithLocalize {
           <!-- Links section -->
           <paper-listbox>
             <span on-tap="maybeCloseDrawer">
-              <a class="donate-link" href\$="[[donateUrl]]">
-                <iron-icon id="donate-icon" icon="favorite"></iron-icon>
+              <a class="manager-resources-link" href\$="[[donateUrl]]">
+                <iron-icon class="link-icon" icon="favorite"></iron-icon>
                 <span>[[localize('nav-donate')]]</span>
-                <iron-icon id="open-in-new-icon" icon="open-in-new" />
+                <iron-icon class="link-icon" icon="open-in-new" />
               </a>
             </span>
             <if-messages message-ids="manager-resources" localize="[[localize]]">
@@ -408,20 +403,20 @@ export class AppRoot extends polymerElementWithLocalize {
                 class="manager-resources-link"
                 href="https://www.reddit.com/r/outlinevpn/wiki/index/">
                   <span>[[localize('manager-resources')]]</span>
-                  <iron-icon id="open-in-new-icon" icon="open-in-new" />
+                  <iron-icon class="link-icon" icon="open-in-new" />
               </a>
             </if-messages>
             <span on-tap="maybeCloseDrawer">
               <a href="https://getoutline.org/policies/data-collection">
                 <span>[[localize('nav-data-collection')]]</span>
-                <iron-icon id="open-in-new-icon" icon="open-in-new" />
+                <iron-icon class="link-icon" icon="open-in-new" />
               </a>
             </span>
             <span on-tap="submitFeedbackTapped">[[localize('nav-feedback')]]</span>
             <span on-tap="maybeCloseDrawer">
               <a href="https://support.getoutline.org">
                 <span>[[localize('nav-help')]]</span>
-                <iron-icon id="open-in-new-icon" icon="open-in-new" />
+                <iron-icon class="link-icon" icon="open-in-new" />
               </a>
             </span>
             <span on-tap="aboutTapped">[[localize('nav-about')]]</span>
@@ -433,11 +428,11 @@ export class AppRoot extends polymerElementWithLocalize {
               <div class="legal-links" on-tap="maybeCloseDrawer">
                 <a href="https://getoutline.org/policies/privacy">
                   <span>[[localize('nav-privacy')]]</span>
-                  <iron-icon id="open-in-new-icon" icon="open-in-new" />
+                  <iron-icon class="link-icon" icon="open-in-new" />
                 </a>
                 <a href="https://getoutline.org/policies/terms-of-service">
                   <span>[[localize('nav-terms')]]</span>
-                  <iron-icon id="open-in-new-icon" icon="open-in-new" />
+                  <iron-icon class="link-icon" icon="open-in-new" />
                 </a>
                 <span on-tap="showLicensesTapped">[[localize('nav-licenses')]]</span>
               </div>
