@@ -20,6 +20,11 @@ import OutlineTunnel
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // The Go library (Tun2socks) runs in this process. iOS closes sockets when the
+        // app is backgrounded, and a later write raises a process-directed SIGPIPE. If it
+        // lands on a non-Go thread, the Go runtime forwards it to the default handler and
+        // the app is killed. Ignore it so writes fail with EPIPE, which Go already handles.
+        signal(SIGPIPE, SIG_IGN)
         return true
     }
 

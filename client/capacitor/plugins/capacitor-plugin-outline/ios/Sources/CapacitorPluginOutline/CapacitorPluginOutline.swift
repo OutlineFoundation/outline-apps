@@ -248,6 +248,10 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
                 return event
             }
         }
+        // SentrySDK.start installs its own SIGPIPE handler, which would turn the signal
+        // raised by Go writing to a socket closed in the background into a fatal crash.
+        // Re-ignore it so those writes fail with EPIPE instead (handled by Go).
+        signal(SIGPIPE, SIG_IGN)
 
         call.resolve()
     }
