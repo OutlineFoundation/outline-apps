@@ -20,6 +20,10 @@ import OutlineTunnel
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Ignore SIGPIPE so that writing to a socket closed by the peer, or reclaimed
+        // by iOS while the app is suspended, fails with EPIPE instead of terminating
+        // the app. Re-applied after Sentry starts, see CapacitorPluginOutline.
+        signal(SIGPIPE, SIG_IGN)
         return true
     }
 

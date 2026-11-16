@@ -14,6 +14,7 @@
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
+#import <signal.h>
 #import "AppDelegate+Outline.h"
 #import "Outline-Swift.h"
 
@@ -29,6 +30,11 @@
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:
         (NSDictionary<UIApplicationLaunchOptionsKey, id> *)launchOptions {
+  // Ignore SIGPIPE so that writing to a socket closed by the peer, or reclaimed
+  // by iOS while the app is suspended, fails with EPIPE instead of terminating
+  // the app. Re-applied after Sentry starts, see OutlinePlugin.
+  signal(SIGPIPE, SIG_IGN);
+
 #if TARGET_OS_MACCATALYST
     [OutlineCatalystApp initApp];
 #endif
