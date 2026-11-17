@@ -48,7 +48,7 @@ export async function main(...parameters) {
   // Check the release signing inputs before the (slow) web and Go builds.
   if (platform === 'ios' && buildMode === 'release') {
     // The app target has no development team of its own (see
-    // ios/App/App.xcodeproj), so a signed build needs one from the caller.
+    // apple/App/App.xcodeproj), so a signed build needs one from the caller.
     if (!process.env.DEVELOPMENT_TEAM) {
       throw new ReferenceError(
         'DEVELOPMENT_TEAM must be defined in the environment to build an iOS Release!'
@@ -82,7 +82,7 @@ export async function main(...parameters) {
   // `cap sync` first runs the capacitor:sync:before hook (see package.json in
   // this directory), which builds the tun2socks native library for the
   // platform: the gomobile AAR (plus client:android:configure) on Android, and
-  // the Tun2socks.xcframework that ios/App/App.xcodeproj links from
+  // the Tun2socks.xcframework that apple/App/App.xcodeproj links from
   // output/client/apple/ on iOS. It then copies the web assets into the native
   // project and refreshes the Capacitor plugins. The Capacitor CLI locates the
   // project from the working directory.
@@ -188,7 +188,7 @@ async function androidRelease(
 
 const IOS_XCODE_BUILD_ARGS = [
   '-project',
-  path.resolve(capacitorDir, 'ios', 'App', 'App.xcodeproj'),
+  path.resolve(capacitorDir, 'apple', 'App', 'App.xcodeproj'),
   '-scheme',
   'Outline',
   '-destination',
