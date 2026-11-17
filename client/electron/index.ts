@@ -33,6 +33,7 @@ import {
 } from 'electron';
 import {autoUpdater} from 'electron-updater';
 
+import {installBrokenPipeGuard} from './broken_pipe_guard';
 import {lookupIp} from './connectivity';
 import {invokeGoMethod} from './go_plugin';
 import {GoVpnTunnel} from './go_vpn_tunnel';
@@ -55,6 +56,10 @@ declare const APP_VERSION: string;
 
 // Run-time environment variables:
 const debugMode = process.env.OUTLINE_DEBUG === 'true';
+
+// Logging to a closed terminal or pipe must not crash the app (EPIPE).
+installBrokenPipeGuard(process.stdout);
+installBrokenPipeGuard(process.stderr);
 
 const IS_LINUX = os.platform() === 'linux';
 const IS_WINDOWS = os.platform() === 'win32';
