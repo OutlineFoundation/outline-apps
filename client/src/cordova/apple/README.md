@@ -6,7 +6,7 @@ This document describes how to develop and debug the Outline Client for iOS and 
 
 You will need:
 
-- Node (`lts/hydrogen` - [download](https://nodejs.org/en/download/)),
+- Node 24 (see `.nvmrc`; [download](https://nodejs.org/en/download/)),
 - An Apple Device and Developer Account.
 - XCode 15.2 ([download](https://developer.apple.com/xcode/))
 - XCode command line tools: `xcode-select --install`
