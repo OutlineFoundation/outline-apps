@@ -18,5 +18,6 @@ import UIKit
 // delegate that implements scene(_:openURLContexts:) or scene(_:continue:)
 // would take URL delivery away from App.swift's .onOpenURL. The class exists
 // so per-scene UIKit APIs that SwiftUI does not surface have somewhere to go;
-// AppDelegate names it in configurationForConnecting.
+// AppDelegate names it in configurationForConnecting. The Catalyst window
+// setup lives in AppDelegate (a UIScene.willConnectNotification observer).
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {}
