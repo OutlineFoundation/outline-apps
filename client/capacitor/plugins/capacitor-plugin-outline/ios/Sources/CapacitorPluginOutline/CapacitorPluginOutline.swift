@@ -248,6 +248,11 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
                 return event
             }
         }
+        // Sentry installs its own SIGPIPE handler, which would report a broken-pipe write as a
+        // fatal crash. Writes to a broken pipe or socket (e.g. reclaimed while the app was
+        // suspended) should fail with EPIPE instead of terminating the app, so ignore SIGPIPE.
+        // Other fatal signals remain monitored by Sentry.
+        signal(SIGPIPE, SIG_IGN)
 
         call.resolve()
     }
