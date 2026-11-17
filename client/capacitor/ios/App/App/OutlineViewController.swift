@@ -17,104 +17,38 @@ import CapacitorPluginOutline
 import WebKit
 
 class OutlineViewController: CAPBridgeViewController {
-    private var webViewRetryCount = 0
-    private let maxWebViewRetries = 10
-    
+    // Capacitor's own router decides whether a request is for a file or for the
+    // app's index.html by building a file URL from the request path and looking
+    // at its extension. For the main-frame request the path is empty, so that
+    // URL is the process's current directory, and whether index.html gets
+    // served depends on where the process was started from, which the app does
+    // not control: started inside a directory whose name has an extension (an
+    // .app bundle, say), the web view stays blank. This router applies the
+    // same rule to the path string itself.
+    private struct Router: Capacitor.Router {
+        var basePath: String = ""
+
+        func route(for path: String) -> String {
+            if (path as NSString).pathExtension.isEmpty {
+                return basePath + "/index.html"
+            }
+            return basePath + path
+        }
+    }
+
+    override func router() -> Capacitor.Router {
+        return Router()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         #if DEBUG
         // Enable Safari Web Inspector for debugging in development builds
         enableSafariDebugging()
         #endif
     }
-    
-    override open func capacitorDidLoad() {
-        super.capacitorDidLoad()
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        // Ensure view is visible and has transparent background
-        view.isHidden = false
-        view.backgroundColor = .clear
-        // Ensure WebView is properly configured and loaded
-        ensureWebViewVisible()
-    }
-    
-    /**
-     * Ensures the WebView is visible, properly configured, and loaded.
-     * This function handles:
-     * - Making the WebView visible if it was hidden
-     * - Setting transparent backgrounds
-     * - Reloading the WebView if it hasn't loaded properly (nil URL, empty, or about:blank)
-     * - Triggering layout updates to ensure proper rendering
-     */
-    func ensureWebViewVisible() {
-        guard let webView = webView else {
-            guard webViewRetryCount < maxWebViewRetries else {
-                return
-            }
-            webViewRetryCount += 1
-            // WebView not ready yet, retry after a short delay
-            // This handles timing issues where the WebView might not be initialized immediately
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.ensureWebViewVisible()
-            }
-            return
-        }
 
-        webViewRetryCount = 0
-        
-        // Ensure WebView is visible and has transparent background
-        webView.isHidden = false
-        webView.backgroundColor = .clear
-        webView.scrollView.backgroundColor = .clear
-        
-        // Check if WebView needs to be reloaded (hasn't loaded or loaded blank page)
-        if webViewNeedsReload(webView) {
-            // Wait a bit for Capacitor bridge to be fully ready before loading
-            // This handles cases where Capacitor hasn't finished initializing the WebView yet
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                guard let self = self, let webView = self.webView, let bridge = self.bridge else { return }
-
-                // Re-check before forcing a load: on cold start Capacitor's initial
-                // navigation is still in flight when the first check runs, so the URL is
-                // nil then but has become capacitor://localhost/index.html by now. Reloading
-                // unconditionally would cancel that navigation and re-run the JS bootstrap,
-                // double-initialising the app (duplicate VPN listeners, double load() hooks).
-                guard self.webViewNeedsReload(webView) else { return }
-
-                // Load the start URL from Capacitor config
-                // This ensures the WebView loads even if Capacitor's automatic loading failed
-                let config = bridge.config
-                let startUrl = config.serverURL.absoluteString
-                if let url = URL(string: startUrl) {
-                    let request = URLRequest(url: url)
-                    webView.load(request)
-                }
-            }
-        }
-        
-        // Trigger layout updates to ensure WebView renders correctly
-        webView.setNeedsLayout()
-        webView.layoutIfNeeded()
-        view.setNeedsLayout()
-        view.layoutIfNeeded()
-    }
-
-    /**
-     * Returns true when the WebView has no real content loaded (nil, empty, or about:blank URL)
-     * and therefore needs to be (re)loaded. Once Capacitor has navigated to its real URL this
-     * returns false, which lets the deferred reload skip itself and avoid re-running the JS bootstrap.
-     */
-    private func webViewNeedsReload(_ webView: WKWebView) -> Bool {
-        return webView.url == nil ||
-               webView.url?.absoluteString.isEmpty == true ||
-               webView.url?.absoluteString == "about:blank"
-    }
-        
-    
     /**
      * Enables Safari Web Inspector for debugging.
      * Only available on iOS 16.4+ and only in DEBUG builds.

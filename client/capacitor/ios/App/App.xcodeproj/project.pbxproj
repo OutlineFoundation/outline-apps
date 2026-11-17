@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1A5F0C0D2FE0A00100A1B2C3 /* CapacitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A5F0C0C2FE0A00100A1B2C3 /* CapacitorView.swift */; };
+		1A5F0C0B2FE0A00100A1B2C3 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A5F0C0A2FE0A00100A1B2C3 /* App.swift */; };
 		04BEED342FDAC45A00127BCE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BEED332FDAC45300127BCE /* SceneDelegate.swift */; };
 		182DA39E2EBBEDA40059C856 /* OutlineViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 182DA39D2EBBEDA40059C856 /* OutlineViewController.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
@@ -65,6 +67,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1A5F0C0C2FE0A00100A1B2C3 /* CapacitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapacitorView.swift; sourceTree = "<group>"; };
+		1A5F0C0A2FE0A00100A1B2C3 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		04BEED332FDAC45300127BCE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		182DA39D2EBBEDA40059C856 /* OutlineViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutlineViewController.swift; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -117,6 +121,8 @@
 		504EC3061FED79650016851F /* App */ = {
 			isa = PBXGroup;
 			children = (
+				1A5F0C0A2FE0A00100A1B2C3 /* App.swift */,
+				1A5F0C0C2FE0A00100A1B2C3 /* CapacitorView.swift */,
 				04BEED332FDAC45300127BCE /* SceneDelegate.swift */,
 				182DA39D2EBBEDA40059C856 /* OutlineViewController.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
@@ -250,6 +256,8 @@
 			files = (
 				182DA39E2EBBEDA40059C856 /* OutlineViewController.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				1A5F0C0B2FE0A00100A1B2C3 /* App.swift in Sources */,
+				1A5F0C0D2FE0A00100A1B2C3 /* CapacitorView.swift in Sources */,
 				04BEED342FDAC45A00127BCE /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
