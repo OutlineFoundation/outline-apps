@@ -1,15 +1,13 @@
 # Outline Client Android Development Instructions
 
-This document describes how to develop and debug the native side of the Outline Client for Android. It is built from the Capacitor project in [`client/capacitor`](../../../capacitor); for the requirements and the build commands, see the [Capacitor client README](../../../capacitor/README.md).
+This document describes how to develop and debug the native side of the Outline Client for Android. It is built from the Capacitor project in [`client/capacitor`](../capacitor); for the requirements and the build commands, see the [Capacitor client README](../capacitor/README.md).
 
 ## Layout
 
-- [`client/capacitor/android`](../../../capacitor/android): the Gradle project. Its `app` module is the app (`org.outline.client.MainActivity`, the manifest, resources and the release signing configuration).
-- [`OutlineAndroidLib/outline`](./OutlineAndroidLib/outline): the `:outline-lib` module of that project. It implements most of the native functionality and does not depend on Capacitor: the VPN service (`org.outline.vpn.VpnTunnelService`), the tunnel store, the boot receiver and the Quick Settings tile. It is consumed by the plugin.
-- The plugin itself (`org.outline.CapacitorPluginOutline`) is in [`client/capacitor/plugins/capacitor-plugin-outline/android`](../../../capacitor/plugins/capacitor-plugin-outline/android).
+- [`client/capacitor/android`](../capacitor/android): the Gradle project. Its `app` module is the app (`org.outline.client.MainActivity`, the manifest, resources and the release signing configuration).
+- [`outline`](./outline): the `:outline-lib` module of that project. It implements most of the native functionality and does not depend on Capacitor: the VPN service (`org.outline.vpn.VpnTunnelService`), the tunnel store, the boot receiver and the Quick Settings tile. It is consumed by the plugin.
+- The plugin itself (`org.outline.CapacitorPluginOutline`) is in [`client/capacitor/plugins/capacitor-plugin-outline/android`](../capacitor/plugins/capacitor-plugin-outline/android).
 - The tun2socks library is consumed as a Maven artifact from `output/client/android/`, which `npm run action client/go/build android` produces (`cap sync android` runs it for you).
-
-`OutlineAndroidLib` lives under `client/src/cordova` for historical reasons: the Cordova client it was written for is gone, and the Capacitor project references it here.
 
 ## Set up your environment
 
@@ -46,7 +44,7 @@ Install these pre-requisites:
       sdkmanager "platforms;android-37.0" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
       ```
 
-      The NDK version must match the `ndkVersion` pin in [app/build.gradle](../../../capacitor/android/app/build.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
+      The NDK version must match the `ndkVersion` pin in [app/build.gradle](../capacitor/android/app/build.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
 
   1. Install optional components that help development (source code, emulator and image):
 
@@ -60,11 +58,11 @@ Install these pre-requisites:
 
 | Component  | version  | constrained by | set in  |
 |---|---|---|---|
-| Android API Level | compile 37, target 36 | [Play Store](https://developer.android.com/google/play/requirements/target-sdk), androidx | [variables.gradle](../../../capacitor/android/variables.gradle), [outline/build.gradle](./OutlineAndroidLib/outline/build.gradle) |
-| JDK | 21 | [app/build.gradle](../../../capacitor/android/app/build.gradle) | install instructions |
-| Gradle | see [gradle-wrapper.properties](../../../capacitor/android/gradle/wrapper/gradle-wrapper.properties) | Android Gradle Plugin | wrapper |
-| Android Gradle Plugin (AGP) | see [build.gradle](../../../capacitor/android/build.gradle) | Capacitor | [build.gradle](../../../capacitor/android/build.gradle) |
-| Android NDK | 28.2.13676358 | [native-lib stripping](../../../capacitor/android/app/build.gradle) | [app/build.gradle](../../../capacitor/android/app/build.gradle), install instructions |
+| Android API Level | compile 37, target 36 | [Play Store](https://developer.android.com/google/play/requirements/target-sdk), androidx | [variables.gradle](../capacitor/android/variables.gradle), [outline/build.gradle](./outline/build.gradle) |
+| JDK | 21 | [app/build.gradle](../capacitor/android/app/build.gradle) | install instructions |
+| Gradle | see [gradle-wrapper.properties](../capacitor/android/gradle/wrapper/gradle-wrapper.properties) | Android Gradle Plugin | wrapper |
+| Android Gradle Plugin (AGP) | see [build.gradle](../capacitor/android/build.gradle) | Capacitor | [build.gradle](../capacitor/android/build.gradle) |
+| Android NDK | 28.2.13676358 | [native-lib stripping](../capacitor/android/app/build.gradle) | [app/build.gradle](../capacitor/android/app/build.gradle), install instructions |
 
 ## Build the app
 

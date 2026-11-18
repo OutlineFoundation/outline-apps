@@ -9,7 +9,8 @@ The `/client` directory contains the source code for all Outline client applicat
 *   `/electron`: Contains the Electron-specific code for the desktop client, including the main process, preload scripts, and build configurations.
 *   `/go`: Contains shared Go source code that is used across platforms for networking and other functionality that cannot be done on the browser.
 *   `/capacitor`: Contains the Capacitor project for the mobile (iOS and Android) and macOS (via Mac Catalyst) clients: the native Xcode and Gradle projects, the Outline plugin, and the web entry point.
-*   `/src/cordova`: Contains native libraries shared by the Capacitor projects (`apple/OutlineAppleLib`, `apple/OutlineLib` with the VPN extension, `android/OutlineAndroidLib`). The Cordova client they were written for has been deleted; the directory name is historical.
+*   `/apple`: Contains the native Apple code the Capacitor project builds on: the `OutlineAppleLib` Swift package and `OutlineLib` with the VPN extension.
+*   `/android`: Contains the native Android code the Capacitor project builds on: the `outline` library module with the VPN service.
 *   `/web`: Contains the shared web-based UI, built with TypeScript. This code is used by both the Electron and Capacitor applications.
 
 ## Key Technologies
@@ -63,13 +64,13 @@ SENTRY_DSN=<your sentry dsn> DEVELOPMENT_TEAM=<your team id> npm run action clie
 
 *   **Web Components**: `npm run action client/web/test`
 *   **Go Backend**: `go test -race -bench=. -benchtime=100ms ./client/...`
-*   **VpnExtension (macOS)**: `npm run action client/src/cordova/test macos`
-*   **VpnExtension (iOS)**: `npm run action client/src/cordova/test ios`
+*   **VpnExtension (macOS)**: `npm run action client/apple/test macos`
+*   **VpnExtension (iOS)**: `npm run action client/apple/test ios`
 
 ## Additional Resources
 
 *   [Life of a Packet](/docs/life_of_a_packet.md): Learn how the Outline Client works.
 *   [Building the Capacitor clients (iOS, macOS and Android)](capacitor)
-*   [Developing for Apple (macOS and iOS)](src/cordova/apple)
-*   [Developing for Android](src/cordova/android)
+*   [Developing for Apple (macOS and iOS)](apple)
+*   [Developing for Android](android)
 *   [Developing for Electron (Windows and Linux)](electron)

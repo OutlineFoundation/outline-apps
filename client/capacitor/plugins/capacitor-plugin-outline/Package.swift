@@ -26,7 +26,7 @@ let package = Package(
     ],
     dependencies: [
         .package(name: "capacitor", path: "../../../../node_modules/@capacitor/ios"),
-        .package(path: "../../../src/cordova/apple/OutlineAppleLib")
+        .package(path: "../../../apple/OutlineAppleLib")
     ],
     targets: [
         .target(

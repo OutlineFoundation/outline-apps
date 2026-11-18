@@ -68,8 +68,8 @@ SENTRY_DSN=<your sentry dsn> DEVELOPMENT_TEAM=<your team id> npm run action clie
 Each platform is handled differently:
 
 1. [Building the Capacitor clients **(Android, iOS and MacOS)**](capacitor)
-2. [Developing for Apple **(MacOS and iOS)**](src/cordova/apple)
-3. [Developing for **Android**](src/cordova/android)
+2. [Developing for Apple **(MacOS and iOS)**](apple)
+3. [Developing for **Android**](android)
 4. [Developing for Electron **(Windows and Linux)**](electron)
 
 ## Error reporting

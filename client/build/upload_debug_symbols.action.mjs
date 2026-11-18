@@ -21,7 +21,7 @@ import url from 'node:url';
 import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
 import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 
-import {getBuildParameters} from '../../build/get_build_parameters.mjs';
+import {getBuildParameters} from './get_build_parameters.mjs';
 
 // Sentry destination. Authentication is handled by sentry-cli itself: it reads
 // a token from `sentry-cli login` (~/.sentryclirc) or from SENTRY_AUTH_TOKEN if
