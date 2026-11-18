@@ -31,7 +31,7 @@ let package = Package(
         .library(
             // OutlineAppleLib is used by the Capacitor app and its Outline plugin
             name: "OutlineAppleLib",
-            targets: ["OutlineSentryLogger", "OutlineTunnel", "OutlineCatalystApp", "OutlineNotification", "OutlineError"]
+            targets: ["OutlineSentryLogger", "OutlineTunnel", "CatalystAppIntegration", "OutlineNotification", "OutlineError"]
         ),
         .library(
             // OutlineVPNExtensionLib is used by the VPN extension
@@ -45,7 +45,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "OutlineCatalystApp",
+            name: "CatalystAppIntegration",
             dependencies: [
                 .product(name: "CocoaLumberjackSwift", package: "CocoaLumberjack"),
                 "OutlineNotification",
