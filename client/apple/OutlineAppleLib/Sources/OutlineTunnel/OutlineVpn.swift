@@ -15,6 +15,7 @@
 import CocoaLumberjackSwift
 import NetworkExtension
 import OutlineError
+import OutlineNotification
 
 // Manages the system's VPN tunnel through the VpnExtension process.
 @objcMembers
@@ -45,6 +46,11 @@ public class OutlineVpn: NSObject {
     NotificationCenter.default.removeObserver(self, name: .NEVPNStatusDidChange, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(self.vpnStatusChanged),
                                            name: .NEVPNStatusDidChange, object: nil)
+    #if os(macOS) || targetEnvironment(macCatalyst)
+    // Quitting from the menu bar item stops the VPN.
+    NotificationCenter.default.addObserver(self, selector: #selector(self.stopVpnOnAppQuit),
+                                           name: .kAppQuit, object: nil)
+    #endif
   }
 
   // MARK: - Interface
@@ -134,10 +140,12 @@ public class OutlineVpn: NSObject {
     catch {
       DDLogWarn("OutlineVpn.start: Failed to save on-demand preference change: \(error.localizedDescription)")
     }
+    postToMenuBar(.kVpnConnected)
   }
 
   /** Tears down the VPN if the tunnel with id |tunnelId| is active. */
   public func stop(_ tunnelId: String) async {
+    defer { postToMenuBar(.kVpnDisconnected) }
     guard let manager = await getTunnelManager(),
           getTunnelId(forManager: manager) == tunnelId,
           isActiveSession(manager.connection) else {
@@ -228,8 +236,32 @@ public class OutlineVpn: NSObject {
         await setConnectVpnOnDemand(manager, true)
       }
     }
+    switch session.status {
+    case .connected:
+      postToMenuBar(.kVpnConnected)
+    case .disconnected:
+      postToMenuBar(.kVpnDisconnected)
+    default:
+      break
+    }
     self.vpnStatusObserver?(session.status, tunnelId)
   }
+
+  // On macOS, tells the menu bar item (AppKitIntegration, through
+  // OutlineCatalystApp) that the VPN connected or disconnected.
+  private func postToMenuBar(_ name: Notification.Name) {
+    #if os(macOS) || targetEnvironment(macCatalyst)
+    NotificationCenter.default.post(name: name, object: nil)
+    #endif
+  }
+
+  #if os(macOS) || targetEnvironment(macCatalyst)
+  func stopVpnOnAppQuit() {
+    Task {
+      await stopActiveVpn()
+    }
+  }
+  #endif
 }
 
 // Retrieves the application's tunnel provider manager from the VPN preferences.

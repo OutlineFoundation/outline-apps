@@ -18,27 +18,12 @@ import CocoaLumberjackSwift
 import Foundation
 import NetworkExtension
 import OutlineError
-import OutlineNotification
 import OutlineSentryLogger
 import OutlineTunnel
-import Sentry
 import Tun2socks
 
-// =============================================================================
-// This plugin was ported from the Cordova plugin (OutlinePlugin.swift, deleted
-// with the Cordova client). `migrateLocalStorage()` still carries the WebView
-// origin history of that app: it ran from `file://` under UIWebView and from
-// `app://localhost` under WKWebView, which Capacitor is configured to match via
-// `server.iosScheme` so that upgrading users keep their servers.
-// =============================================================================
-
-public enum TunnelStatus: Int {
-    case connected = 0
-    case disconnected = 1
-    case reconnecting = 2
-    case disconnecting = 3
-}
-
+// Adapts OutlineAppleLib to Capacitor: translates plugin calls into calls on
+// the library and forwards the VPN status to the web UI.
 @objc(CapacitorPluginOutline)
 public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "CapacitorPluginOutline"
@@ -63,16 +48,7 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
         static let uuid = "uuid"
     }
 
-    private static let platformName: String = {
-        #if os(macOS) || targetEnvironment(macCatalyst)
-        return "macOS"
-        #else
-        return "iOS"
-        #endif
-    }()
-
     private static let appGroupIdentifier = "group.org.getoutline.client"
-    private static let maxBreadcrumbs: UInt = 100
 
     private var sentryLogger: OutlineSentryLogger?
 
@@ -87,17 +63,8 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
         configureGoBackendDataDirectory()
         beginObservingVpnStatus()
 
-        #if os(macOS) || targetEnvironment(macCatalyst)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(self.stopVpnOnAppQuit),
-            name: .kAppQuit,
-            object: nil
-        )
-        #endif
-
         #if os(iOS)
-        migrateLocalStorage()
+        migrateUIWebViewLocalStorage()
         #endif
     }
 
@@ -143,12 +110,6 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
         Task {
             do {
                 try await OutlineVpn.shared.start(tunnelId, named: serverName, withTransport: transportConfig)
-                #if os(macOS) || targetEnvironment(macCatalyst)
-                NotificationCenter.default.post(
-                    name: .kVpnConnected,
-                    object: nil
-                )
-                #endif
                 await MainActor.run {
                     call.resolve()
                 }
@@ -167,12 +128,6 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
 
         Task {
             await OutlineVpn.shared.stop(tunnelId)
-            #if os(macOS) || targetEnvironment(macCatalyst)
-            NotificationCenter.default.post(
-                name: .kVpnDisconnected,
-                object: nil
-            )
-            #endif
             await MainActor.run {
                 call.resolve()
             }
@@ -197,33 +152,14 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
             return call.reject("Missing error reporting API key")
         }
 
-        SentrySDK.start { options in
-            options.dsn = dsn
-            options.maxBreadcrumbs = Self.maxBreadcrumbs
-            options.beforeSend = { event in
-                event.context?["app"]?.removeValue(forKey: "device_app_hash")
-                if var device = event.context?["device"] {
-                    device.removeValue(forKey: "timezone")
-                    device.removeValue(forKey: "memory_size")
-                    device.removeValue(forKey: "free_memory")
-                    device.removeValue(forKey: "usable_memory")
-                    device.removeValue(forKey: "storage_size")
-                    event.context?["device"] = device
-                }
-                return event
-            }
-        }
+        SentryErrorReporter.start(dsn: dsn)
 
         call.resolve()
     }
 
     @objc public func reportEvents(_ call: CAPPluginCall) {
         let uuid = call.getString(CallKeys.uuid) ?? UUID().uuidString
-        sentryLogger?.addVpnExtensionLogsToSentry(maxBreadcrumbsToAdd: Int(Self.maxBreadcrumbs / 2))
-        SentrySDK.capture(message: "\(Self.platformName) report (\(uuid))") { scope in
-            scope.setLevel(.info)
-            scope.setTag(value: uuid, key: "user_event_id")
-        }
+        SentryErrorReporter.send(uuid: uuid, vpnExtensionLogsFrom: sentryLogger)
         call.resolve()
     }
 
@@ -240,39 +176,14 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
     }
 
     private func emitVpnStatus(_ status: NEVPNStatus, tunnelId: String) {
-        let mappedStatus: Int32
-        switch status {
-        case .connected:
-            #if os(macOS) || targetEnvironment(macCatalyst)
-            NotificationCenter.default.post(
-                name: .kVpnConnected,
-                object: nil
-            )
-            #endif
-            mappedStatus = Int32(TunnelStatus.connected.rawValue)
-        case .disconnected:
-            #if os(macOS) || targetEnvironment(macCatalyst)
-            NotificationCenter.default.post(
-                name: .kVpnDisconnected,
-                object: nil
-            )
-            #endif
-            mappedStatus = Int32(TunnelStatus.disconnected.rawValue)
-        case .disconnecting:
-            mappedStatus = Int32(TunnelStatus.disconnecting.rawValue)
-        case .reasserting:
-            mappedStatus = Int32(TunnelStatus.reconnecting.rawValue)
-        case .connecting:
-            mappedStatus = Int32(TunnelStatus.reconnecting.rawValue)
-        default:
+        guard let tunnelStatus = TunnelStatus(status) else {
             return  // Do not report transient or invalid states.
         }
-
         notifyListeners(
             "onStatusChange",
             data: [
                 "id": tunnelId,
-                "status": mappedStatus
+                "status": Int32(tunnelStatus.rawValue)
             ],
             retainUntilConsumed: true
         )
@@ -294,111 +205,4 @@ public class CapacitorPluginOutline: CAPPlugin, CAPBridgedPlugin {
             DDLogError("Failed to configure Go backend data directory: \(error)")
         }
     }
-
-    // MARK: - App Quit Handler
-
-    #if os(macOS) || targetEnvironment(macCatalyst)
-    @objc private func stopVpnOnAppQuit() {
-        Task {
-            await OutlineVpn.shared.stopActiveVpn()
-        }
-    }
-    #endif
-
-    // MARK: - Local Storage Migration (iOS only)
-
-    #if os(iOS)
-    private func migrateLocalStorage() {
-        // Local storage backing files have the following naming format: $scheme_$hostname_$port.localstorage
-        // With UIWebView, the app used the file:// scheme with no hostname and any port.
-        let kUIWebViewLocalStorageFilename = "file__0.localstorage"
-        // With WKWebView, the app uses the app:// scheme with localhost as a hostname and any port.
-        let kWKWebViewLocalStorageFilename = "app_localhost_0.localstorage"
-
-        let fileManager = FileManager.default
-        let appLibraryDir = fileManager.urls(
-            for: .libraryDirectory,
-            in: .userDomainMask
-        )[0]
-
-        let uiWebViewLocalStorageDir: URL
-        #if targetEnvironment(macCatalyst)
-        guard let bundleID = Bundle.main.bundleIdentifier else {
-            return
-        }
-        let appSupportDir = fileManager.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        )[0]
-        uiWebViewLocalStorageDir = appSupportDir.appendingPathComponent(bundleID)
-        #else
-        if fileManager.fileExists(
-            atPath: appLibraryDir.appendingPathComponent(
-                "WebKit/LocalStorage/\(kUIWebViewLocalStorageFilename)"
-            ).relativePath
-        ) {
-            uiWebViewLocalStorageDir = appLibraryDir.appendingPathComponent("WebKit/LocalStorage")
-        } else {
-            uiWebViewLocalStorageDir = appLibraryDir.appendingPathComponent("Caches")
-        }
-        #endif
-        let uiWebViewLocalStorage = uiWebViewLocalStorageDir.appendingPathComponent(kUIWebViewLocalStorageFilename)
-        if !fileManager.fileExists(atPath: uiWebViewLocalStorage.relativePath) {
-            return
-        }
-
-        let wkWebViewLocalStorageDir = appLibraryDir.appendingPathComponent("WebKit/WebsiteData/LocalStorage/")
-        let wkWebViewLocalStorage = wkWebViewLocalStorageDir.appendingPathComponent(kWKWebViewLocalStorageFilename)
-        // Only copy the local storage files if they don't exist for WKWebView.
-        if fileManager.fileExists(atPath: wkWebViewLocalStorage.relativePath) {
-            return
-        }
-
-        // Create the WKWebView local storage directory; this is safe if the directory already exists.
-        do {
-            try fileManager.createDirectory(
-                at: wkWebViewLocalStorageDir,
-                withIntermediateDirectories: true
-            )
-        } catch {
-            return
-        }
-
-        // Create a tmp directory and copy onto it the local storage files.
-        guard let tmpDir = try? fileManager.url(
-            for: .itemReplacementDirectory,
-            in: .userDomainMask,
-            appropriateFor: wkWebViewLocalStorage,
-            create: true
-        ) else {
-            return
-        }
-        do {
-            try fileManager.copyItem(
-                at: uiWebViewLocalStorage,
-                to: tmpDir.appendingPathComponent(wkWebViewLocalStorage.lastPathComponent)
-            )
-            try fileManager.copyItem(
-                at: URL(fileURLWithPath: "\(uiWebViewLocalStorage.relativePath)-shm"),
-                to: tmpDir.appendingPathComponent("\(kWKWebViewLocalStorageFilename)-shm")
-            )
-            try fileManager.copyItem(
-                at: URL(fileURLWithPath: "\(uiWebViewLocalStorage.relativePath)-wal"),
-                to: tmpDir.appendingPathComponent("\(kWKWebViewLocalStorageFilename)-wal")
-            )
-        } catch {
-            return
-        }
-
-        // Atomically move the tmp directory to the WKWebView local storage directory.
-        guard (try? fileManager.replaceItemAt(
-            wkWebViewLocalStorageDir,
-            withItemAt: tmpDir,
-            backupItemName: nil,
-            options: .usingNewMetadataOnly
-        )) != nil else {
-            return
-        }
-    }
-    #endif
 }
