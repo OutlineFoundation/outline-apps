@@ -5,8 +5,8 @@ This document describes how to develop and debug the native side of the Outline 
 ## Layout
 
 - [`client/capacitor/android`](../capacitor/android): the Gradle project. Its `app` module is the app (`org.outline.client.MainActivity`, the manifest, resources and the release signing configuration).
-- [`outline`](./outline): the `:outline-lib` module of that project. It implements most of the native functionality and does not depend on Capacitor: the VPN service (`org.outline.vpn.VpnTunnelService`), the tunnel store, the boot receiver and the Quick Settings tile. It is consumed by the plugin.
-- The plugin itself (`org.outline.CapacitorPluginOutline`) is in [`client/capacitor/plugins/capacitor-plugin-outline/android`](../capacitor/plugins/capacitor-plugin-outline/android).
+- [`outline`](./outline): the `:outline-lib` module of that project. It implements most of the native functionality and does not depend on Capacitor: the VPN service (`org.outline.vpn.VpnTunnelService`), the app's handle on it (`org.outline.vpn.OutlineVpn`), the tunnel store, the boot receiver and the Quick Settings tile. It is consumed by the plugin.
+- The plugin (`org.outline.CapacitorPluginOutline`) adapts the library to Capacitor: it translates plugin calls, and owns what needs the activity (the VPN permission dialog). It is in [`client/capacitor/plugins/capacitor-plugin-outline/android`](../capacitor/plugins/capacitor-plugin-outline/android).
 - The tun2socks library is consumed as a Maven artifact from `output/client/android/`, which `npm run action client/go/build android` produces (`cap sync android` runs it for you).
 
 ## Set up your environment
