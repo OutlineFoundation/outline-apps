@@ -8,9 +8,9 @@ The `/client` directory contains the source code for all Outline client applicat
 
 *   `/electron`: Contains the Electron-specific code for the desktop client, including the main process, preload scripts, and build configurations.
 *   `/go`: Contains shared Go source code that is used across platforms for networking and other functionality that cannot be done on the browser.
-*   `/capacitor`: Contains the Capacitor project for the mobile (iOS and Android) and macOS (via Mac Catalyst) clients: the native Xcode and Gradle projects, the Outline plugin, and the web entry point.
-*   `/apple`: Contains the native Apple code the Capacitor project builds on: the `OutlineAppleLib` Swift package and `OutlineLib` with the VPN extension.
-*   `/android`: Contains the native Android code the Capacitor project builds on: the `outline` library module with the VPN service.
+*   `/capacitor`: Contains the Capacitor project for the mobile (iOS and Android) and macOS (via Mac Catalyst) clients: the Capacitor configuration, the Outline plugin, the web entry point and the build actions. The native projects it drives are in `/apple` and `/android`.
+*   `/apple`: Contains the Xcode project of the iOS and macOS apps (`App`) and the native code it builds on: the `OutlineAppleLib` Swift package and `OutlineLib` with the VPN extension.
+*   `/android`: Contains the Gradle project of the Android app: the `app` module and the `outline` library module with the VPN service.
 *   `/web`: Contains the shared web-based UI, built with TypeScript. This code is used by both the Electron and Capacitor applications.
 
 ## Key Technologies

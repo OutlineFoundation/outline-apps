@@ -4,7 +4,7 @@ This document describes how to develop and debug the native side of the Outline 
 
 ## Layout
 
-- [`client/capacitor/android`](../capacitor/android): the Gradle project. Its `app` module is the app (`org.outline.client.MainActivity`, the manifest, resources and the release signing configuration).
+- This directory is the Gradle project. Capacitor's `android.path` (in `client/capacitor/capacitor.config.json`) points at it. Its `app` module is the app (`org.outline.client.MainActivity`, the manifest, resources and the release signing configuration).
 - [`outline`](./outline): the `:outline-lib` module of that project. It implements most of the native functionality and does not depend on Capacitor: the VPN service (`org.outline.vpn.VpnTunnelService`), the app's handle on it (`org.outline.vpn.OutlineVpn`), the tunnel store, the boot receiver and the Quick Settings tile. It is consumed by the plugin.
 - The plugin (`org.outline.CapacitorPluginOutline`) adapts the library to Capacitor: it translates plugin calls, and owns what needs the activity (the VPN permission dialog). It is in [`client/capacitor/plugins/capacitor-plugin-outline/android`](../capacitor/plugins/capacitor-plugin-outline/android).
 - The tun2socks library is consumed as a Maven artifact from `output/client/android/`, which `npm run action client/go/build android` produces (`cap sync android` runs it for you).
@@ -44,7 +44,7 @@ Install these pre-requisites:
       sdkmanager "platforms;android-37.0" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
       ```
 
-      The NDK version must match the `ndkVersion` pin in [app/build.gradle](../capacitor/android/app/build.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
+      The NDK version must match the `ndkVersion` pin in [app/build.gradle](./app/build.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
 
   1. Install optional components that help development (source code, emulator and image):
 
@@ -58,11 +58,11 @@ Install these pre-requisites:
 
 | Component  | version  | constrained by | set in  |
 |---|---|---|---|
-| Android API Level | compile 37, target 36 | [Play Store](https://developer.android.com/google/play/requirements/target-sdk), androidx | [variables.gradle](../capacitor/android/variables.gradle), [outline/build.gradle](./outline/build.gradle) |
-| JDK | 21 | [app/build.gradle](../capacitor/android/app/build.gradle) | install instructions |
-| Gradle | see [gradle-wrapper.properties](../capacitor/android/gradle/wrapper/gradle-wrapper.properties) | Android Gradle Plugin | wrapper |
-| Android Gradle Plugin (AGP) | see [build.gradle](../capacitor/android/build.gradle) | Capacitor | [build.gradle](../capacitor/android/build.gradle) |
-| Android NDK | 28.2.13676358 | [native-lib stripping](../capacitor/android/app/build.gradle) | [app/build.gradle](../capacitor/android/app/build.gradle), install instructions |
+| Android API Level | compile 37, target 36 | [Play Store](https://developer.android.com/google/play/requirements/target-sdk), androidx | [variables.gradle](./variables.gradle), [outline/build.gradle](./outline/build.gradle) |
+| JDK | 21 | [app/build.gradle](./app/build.gradle) | install instructions |
+| Gradle | see [gradle-wrapper.properties](./gradle/wrapper/gradle-wrapper.properties) | Android Gradle Plugin | wrapper |
+| Android Gradle Plugin (AGP) | see [build.gradle](./build.gradle) | Capacitor | [build.gradle](./build.gradle) |
+| Android NDK | 28.2.13676358 | [native-lib stripping](./app/build.gradle) | [app/build.gradle](./app/build.gradle), install instructions |
 
 ## Build the app
 
@@ -72,7 +72,7 @@ From the repository root:
 npm run action client/capacitor/build android
 ```
 
-The built APK will be at `client/capacitor/android/app/build/outputs/apk/debug/app-debug.apk`. Pass `-- --verbose` for Gradle's `--info` output.
+The built APK will be at `client/android/app/build/outputs/apk/debug/app-debug.apk`. Pass `-- --verbose` for Gradle's `--info` output.
 
 ## Run the app
 
@@ -80,14 +80,14 @@ The built APK will be at `client/capacitor/android/app/build/outputs/apk/debug/a
 1. From the project root, run:
 
    ```shell
-   adb install -r -d client/capacitor/android/app/build/outputs/apk/debug/app-debug.apk
+   adb install -r -d client/android/app/build/outputs/apk/debug/app-debug.apk
    ```
 
 Alternatively, from `client/capacitor`, run `npx cap run android`.
 
 ## Develop code
 
-Open `client/capacitor/android` in Android Studio (`npx cap open android` from `client/capacitor`). The `:outline-lib` module is part of that project, so IDE features (auto-complete, warnings, etc) and its instrumented tests (`./gradlew :outline-lib:connectedAndroidTest`) are available there.
+Open `client/android` in Android Studio (`npx cap open android` from `client/capacitor`). The `:outline-lib` module is part of that project, so IDE features (auto-complete, warnings, etc) and its instrumented tests (`./gradlew :outline-lib:connectedAndroidTest`) are available there.
 
 ### To debug the web app
 

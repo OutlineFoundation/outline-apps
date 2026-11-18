@@ -12,37 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-buildscript {
+pluginManagement {
     repositories {
         google()
         mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:9.4.1'
+        gradlePluginPortal()
     }
 }
 
-plugins {
-    id 'com.android.library' version '9.4.1' apply false
-}
+include ':app'
 
-ext {
-    compileSdkVersion = 37
-    minSdkVersion = 29
-    targetSdkVersion = 36
-    androidxAppCompatVersion = '1.8.0'
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url = uri("${rootProject.projectDir}/../../../output/client/android")
-        }
-    }
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
+apply from: 'capacitor.settings.gradle'
+include ':outline-lib'
+project(':outline-lib').projectDir = new File(settingsDir, 'outline')

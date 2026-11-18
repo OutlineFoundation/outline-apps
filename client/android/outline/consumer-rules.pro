@@ -2,7 +2,7 @@
 #
 # These rules are packaged into the library's AAR and applied to the R8 run of
 # any module that consumes it -- most importantly the Capacitor app module
-# (client/capacitor/android/app), which shrinks with R8. They keep every type
+# (client/android/app), which shrinks with R8. They keep every type
 # that R8 cannot see is reachable because it is instantiated reflectively,
 # bound over JNI, referenced from the manifest, or crosses the AIDL boundary.
 # (The Capacitor plugin classes are kept by capacitor-android's own consumer

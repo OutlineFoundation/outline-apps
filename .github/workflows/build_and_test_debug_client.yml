@@ -293,7 +293,7 @@ jobs:
 
       - name: Setup Java
         # Capacitor 8's Android project targets Java 21 (see
-        # client/capacitor/android/app/build.gradle), so build with JDK 21.
+        # client/android/app/build.gradle), so build with JDK 21.
         run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
 
       - name: Install NPM Dependencies

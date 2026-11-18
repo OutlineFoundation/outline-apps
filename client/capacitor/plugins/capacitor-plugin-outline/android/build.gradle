@@ -43,7 +43,7 @@ android {
 
 repositories {
     maven {
-        url = uri("${rootProject.projectDir}/../../../output/client/android")
+        url = uri("${rootProject.projectDir}/../../output/client/android")
     }
     google()
     mavenCentral()
