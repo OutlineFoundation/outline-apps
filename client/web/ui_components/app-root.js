@@ -579,13 +579,8 @@ export class AppRoot extends mixinBehaviors(
         type: Boolean,
         value: true,
       },
-      platform: {
-        type: String,
-        readonly: true,
-      },
       shouldShowQuitButton: {
         type: Boolean,
-        computed: '_computeShouldShowQuitButton(platform)',
         value: false,
       },
       shouldShowAppLogo: {
@@ -657,14 +652,10 @@ export class AppRoot extends mixinBehaviors(
       };
     }
 
-    // Electron is the only shell without the Capacitor runtime global. Under
-    // Capacitor `platform` stays unset, as it always has there: the Cordova
-    // builds took it from `cordova.platformId`, which Capacitor never provided.
-    // TODO: the 'ios' and 'osx' checks below therefore never match; decide
-    // which of them the Capacitor apps should honour.
-    if (globalThis.Capacitor === undefined) {
-      this.platform = 'Electron';
-    }
+    // Only the Electron client has a Quit item in the drawer; the Capacitor
+    // apps are quit through the OS. Electron is the only shell without the
+    // Capacitor runtime global.
+    this.shouldShowQuitButton = globalThis.Capacitor === undefined;
   }
 
   setLanguage(languageCode) {
@@ -837,24 +828,9 @@ export class AppRoot extends mixinBehaviors(
   }
 
   _openHelpPage() {
-    // Anchor tags compete with the app-drawer for click events on iOS. This results in links
-    // not opening most of the time. We resort to opening the link programmatically for all
-    // platforms.
-    if (this.platform === 'ios') {
-      globalThis.open(this.$.helpAnchor.href);
-    } else {
-      // macOS does not respond to window.open and Windows opens a new browser window.
-      // Simulate a click on the help anchor.
-      this.$.helpAnchor.click();
-    }
-  }
-
-  _computeShouldShowQuitButton(platform) {
-    return platform === 'osx' || platform === 'Electron';
-  }
-
-  _computeIsLastVisibleMenuItem(shouldShowQuitButton) {
-    return shouldShowQuitButton ? '' : 'last-menu-item';
+    // Simulate a click on the help anchor: window.open does nothing on macOS
+    // and opens a new browser window on Windows.
+    this.$.helpAnchor.click();
   }
 
   _computeShouldShowAppLogo(page) {
@@ -869,7 +845,7 @@ export class AppRoot extends mixinBehaviors(
 
   _computeUseAltAccessMessage(language) {
     // Hack to show an alternative message
-    return language === 'fa' && this.platform !== 'ios';
+    return language === 'fa';
   }
 }
 globalThis.customElements.define(AppRoot.is, AppRoot);
