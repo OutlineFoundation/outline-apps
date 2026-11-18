@@ -46,6 +46,7 @@ import java.util.logging.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.outline.IVpnTunnelService;
+import org.outline.R;
 import org.outline.TunnelConfig;
 import org.outline.DetailedJsonError;
 import org.outline.log.SentryErrorReporter;
@@ -560,7 +561,7 @@ public class VpnTunnelService extends VpnService {
         // new notification has the side effect of resetting the tunnel timer.
         notificationBuilder = getNotificationBuilder(serverName);
       }
-      notificationBuilder.setContentText(getStringResource("connected_server_state"));
+      notificationBuilder.setContentText(getString(R.string.connected_server_state));
 
       // We must specify the service type for security reasons: https://developer.android.com/about/versions/14/changes/fgs-types-required
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -577,10 +578,9 @@ public class VpnTunnelService extends VpnService {
       if (notificationBuilder == null) {
         return; // No notification to update.
       }
-      final String statusStringResourceId = status == TunnelStatus.CONNECTED
-          ? "connected_server_state"
-          : "reconnecting_server_state";
-      notificationBuilder.setContentText(getStringResource(statusStringResourceId));
+      notificationBuilder.setContentText(getString(status == TunnelStatus.CONNECTED
+          ? R.string.connected_server_state
+          : R.string.reconnecting_server_state));
       NotificationManager notificationManager =
           (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
       notificationManager.notify(NOTIFICATION_SERVICE_ID, notificationBuilder.build());
@@ -592,15 +592,11 @@ public class VpnTunnelService extends VpnService {
   /** Returns a notification builder with the provided server name. */
   @NonNull
   private Notification.Builder getNotificationBuilder(final String serverName) throws Exception {
-    // HACK: tapping the notification opens whatever the host app's launcher activity is, because
-    // this library has no way to know the app's activity class. The (since deleted) Cordova app
-    // and the Capacitor app name it differently (org.outline.android.client.MainActivity vs.
-    // org.outline.client.MainActivity), and the app cannot hand it to the service either: the
+    // Tapping the notification opens the host app's launcher activity. This library cannot
+    // reference the app's activity class, and the app cannot hand it to the service either: the
     // service also runs without the app, when started at boot, by always-on VPN, or from the
-    // Quick Settings tile. Resolving the launcher activity through the PackageManager only holds
-    // as long as the activity the notification should open is the app's launcher activity.
-    // TODO: now that only the Capacitor app remains, drop this and open
-    // org.outline.client.MainActivity directly.
+    // Quick Settings tile. So the activity is resolved through the PackageManager, which holds as
+    // long as the activity the notification should open is the app's launcher activity.
     Intent launchIntent = Objects.requireNonNull(
         getPackageManager().getLaunchIntentForPackage(getPackageName()),
         "no launcher activity");
@@ -617,13 +613,8 @@ public class VpnTunnelService extends VpnService {
     } else {
       builder = new Notification.Builder(this);
     }
-    try {
-      // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to this library.
-      builder.setSmallIcon(getResourceId("small_icon", "drawable"));
-    } catch (Exception e) {
-      LOG.warning("Failed to retrieve the resource ID for the notification icon.");
-    }
-    return builder.setContentTitle(serverName)
+    return builder.setSmallIcon(R.drawable.small_icon)
+        .setContentTitle(serverName)
         .setColor(NOTIFICATION_COLOR)
         .setVisibility(Notification.VISIBILITY_SECRET) // Don't display in lock screen
         .setContentIntent(mainActivityIntent)
@@ -637,15 +628,6 @@ public class VpnTunnelService extends VpnService {
     notificationBuilder = null;
   }
 
-  /**
-   * Retrieves the ID for a resource. This is equivalent to using the generated R class, except
-   * that the resource shrinker cannot see the reference: every resource looked up through here must
-   * be listed in the app's res/raw/keep.xml (see client/capacitor/plugins/capacitor-plugin-outline).
-   */
-  public int getResourceId(final String name, final String type) {
-    return getResources().getIdentifier(name, type, getPackageName());
-  }
-
   /** Returns the application name. */
   @NonNull
   public final String getApplicationName() throws PackageManager.NameNotFoundException {
@@ -654,22 +636,11 @@ public class VpnTunnelService extends VpnService {
     return (String) packageManager.getApplicationLabel(appInfo);
   }
 
-  /** Retrieves a localized string by id from the application's resources. */
-  private String getStringResource(final String name) {
-    String resource = "";
-    try {
-      resource = getString(getResourceId(name, "string"));
-    } catch (Exception e) {
-      LOG.warning(String.format(Locale.ROOT, "Failed to retrieve string resource: %s", name));
-    }
-    return resource;
-  }
-
   /** Returns a subnet list that excludes reserved subnets. */
   @NonNull
   private ArrayList<Subnet> getReservedBypassSubnets() {
-    final String[] subnetStrings = this.getResources().getStringArray(
-            this.getResourceId("reserved_bypass_subnets", "array"));
+    final String[] subnetStrings =
+        getResources().getStringArray(R.array.reserved_bypass_subnets);
     ArrayList<Subnet> subnets = new ArrayList<>(subnetStrings.length);
     for (final String subnetString : subnetStrings) {
       try {
