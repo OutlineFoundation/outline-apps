@@ -72,7 +72,7 @@ android {
                 signingConfig signingConfigs.release
             }
             // The keep rules for our reflectively-instantiated, JNI and AIDL
-            // classes come from the consumer rules of OutlineAndroidLib and of
+            // classes come from the consumer rules of :outline-lib and of
             // capacitor-android.
             minifyEnabled true
             shrinkResources true

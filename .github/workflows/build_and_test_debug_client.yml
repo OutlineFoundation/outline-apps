@@ -198,9 +198,9 @@ jobs:
           go-version-file: '${{ github.workspace }}/go.mod'
 
       # Builds the tun2socks xcframework, then runs the VpnExtension unit tests
-      # of client/src/cordova/apple/OutlineLib.
+      # of client/apple/OutlineLib.
       - name: Test VpnExtension
-        run: npm run action client/src/cordova/test ${{ matrix.platform }}
+        run: npm run action client/apple/test ${{ matrix.platform }}
 
       # - uses: codecov/codecov-action@v4
       #   with:

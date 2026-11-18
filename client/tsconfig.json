@@ -24,9 +24,10 @@
     "*.mjs"
   ],
   "include": [
+    "apple/test.action.mjs",
+    "build/upload_debug_symbols.action.mjs",
     "electron",
     "go",
-    "src",
     "web"
   ]
 }

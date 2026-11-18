@@ -618,7 +618,7 @@ public class VpnTunnelService extends VpnService {
       builder = new Notification.Builder(this);
     }
     try {
-      // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to OutlineAndroidLib.
+      // TODO(fortuna): use R.drawable.small_icon instead. Needs moving resource from plugin to this library.
       builder.setSmallIcon(getResourceId("small_icon", "drawable"));
     } catch (Exception e) {
       LOG.warning("Failed to retrieve the resource ID for the notification icon.");
