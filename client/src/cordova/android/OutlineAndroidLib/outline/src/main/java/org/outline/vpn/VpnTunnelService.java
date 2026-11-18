@@ -593,15 +593,14 @@ public class VpnTunnelService extends VpnService {
   @NonNull
   private Notification.Builder getNotificationBuilder(final String serverName) throws Exception {
     // HACK: tapping the notification opens whatever the host app's launcher activity is, because
-    // this library has no way to know the app's activity class. The Cordova and Capacitor apps
-    // name it differently (org.outline.android.client.MainActivity vs.
+    // this library has no way to know the app's activity class. The (since deleted) Cordova app
+    // and the Capacitor app name it differently (org.outline.android.client.MainActivity vs.
     // org.outline.client.MainActivity), and the app cannot hand it to the service either: the
     // service also runs without the app, when started at boot, by always-on VPN, or from the
-    // Quick Settings tile. Resolving the launcher activity through the PackageManager works for
-    // both apps, but it only holds as long as the activity the notification should open is the
-    // app's launcher activity.
-    // TODO: once the Cordova app is deleted, drop this and open org.outline.client.MainActivity
-    // directly.
+    // Quick Settings tile. Resolving the launcher activity through the PackageManager only holds
+    // as long as the activity the notification should open is the app's launcher activity.
+    // TODO: now that only the Capacitor app remains, drop this and open
+    // org.outline.client.MainActivity directly.
     Intent launchIntent = Objects.requireNonNull(
         getPackageManager().getLaunchIntentForPackage(getPackageName()),
         "no launcher activity");

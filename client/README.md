@@ -4,7 +4,7 @@
 
 The Outline Client is a cross-platform VPN or proxy client for Windows, macOS, iOS, Android, and Debian-based Linux. The Outline Client is designed for use with the [Outline Server](https://github.com/OutlineFoundation/outline-server) software, but it is fully compatible with any [Shadowsocks](https://shadowsocks.org/) server.
 
-The client's user interface is implemented in [Polymer](https://www.polymer-project.org/) 2.0. Platform support is provided by [Cordova](https://cordova.apache.org/) and [Electron](https://electronjs.org/), with additional native components in this repository.
+The client's user interface is implemented in [Polymer](https://www.polymer-project.org/) 2.0. Platform support is provided by [Capacitor](https://capacitorjs.com/) (Android, iOS and macOS) and [Electron](https://electronjs.org/) (Windows and Linux), with additional native components in this repository.
 
 
 ## Requirements for all builds
@@ -24,7 +24,7 @@ npm install
 Outline clients share the same web app across all platforms. This code is located in the web directory. If you are making changes to the shared web app and do not need to test platform-specific functionality, you can test in a desktop browser by running:
 
 ```sh
-npm run action client/web/start
+npm run action client/capacitor/start
 ```
 
 The latter command will open a browser instance running the app. Browser platform development will use fake servers to test successful and unsuccessful connections.
@@ -45,14 +45,14 @@ npm run action storybook
 >
 > _(you can call it whatever you like)_
 >
-> to your shell, then try `outline www/start`!
+> to your shell, then try `outline client/capacitor/start`!
 
 ## Passing configuration flags to actions
 
-Certain actions take configuration flags - but since we're running them through `npm`, you'll have to use the `--` seperator to funnel them through to the underlying process. For example, to set up a MacOS project in release mode, you'd run:
+Certain actions take configuration flags - but since we're running them through `npm`, you'll have to use the `--` seperator to funnel them through to the underlying process. For example, to build the macOS client in release mode, you'd run:
 
 ```sh
-SENTRY_DSN=<your sentry dsn> npm run action client/src/cordova/setup macos -- --buildMode=release --versionName=<your version name>
+SENTRY_DSN=<your sentry dsn> DEVELOPMENT_TEAM=<your team id> npm run action client/capacitor/build macos -- --buildMode=release --versionName=<your version name>
 ```
 
 ## Life of a Packet
@@ -67,9 +67,10 @@ SENTRY_DSN=<your sentry dsn> npm run action client/src/cordova/setup macos -- --
 
 Each platform is handled differently:
 
-1. [Developing for Apple **(MacOS and iOS)**](src/cordova/apple)
-2. [Developing for **Android**](src/cordova/android)
-3. [Developing for Electron **(Windows and Linux)**](electron)
+1. [Building the Capacitor clients **(Android, iOS and MacOS)**](capacitor)
+2. [Developing for Apple **(MacOS and iOS)**](src/cordova/apple)
+3. [Developing for **Android**](src/cordova/android)
+4. [Developing for Electron **(Windows and Linux)**](electron)
 
 ## Error reporting
 
