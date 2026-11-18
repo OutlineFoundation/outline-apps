@@ -88,7 +88,7 @@ class CapacitorErrorReporter extends SentryErrorReporter {
 
 // The native plugin rejects with the PlatformError serialized as JSON in the
 // error message. Convert it back so callers can match on the error type (e.g.
-// SessionProviderError), as pluginExec does for Cordova.
+// SessionProviderError).
 async function pluginCall<T>(call: Promise<T>): Promise<T> {
   try {
     return await call;
@@ -249,7 +249,7 @@ function wireExternalLinkHandling() {
 }
 
 // Bootstrap: install the method channel, wire external links, then hand off
-// to the shared main() — mirroring the Cordova and Electron entry points.
+// to the shared main() — mirroring the Electron entry point.
 installDefaultMethodChannel(
   hasDeviceSupport
     ? new CapacitorMethodChannel()

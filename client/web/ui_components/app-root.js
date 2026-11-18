@@ -657,12 +657,13 @@ export class AppRoot extends mixinBehaviors(
       };
     }
 
-    if (typeof cordova === 'undefined') {
-      // If cordova is not defined, we're running in Electron.
+    // Electron is the only shell without the Capacitor runtime global. Under
+    // Capacitor `platform` stays unset, as it always has there: the Cordova
+    // builds took it from `cordova.platformId`, which Capacitor never provided.
+    // TODO: the 'ios' and 'osx' checks below therefore never match; decide
+    // which of them the Capacitor apps should honour.
+    if (globalThis.Capacitor === undefined) {
       this.platform = 'Electron';
-    } else {
-      // Don't use cordova?.platformId, ReferenceError will be thrown
-      this.platform = globalThis.cordova.platformId;
     }
   }
 

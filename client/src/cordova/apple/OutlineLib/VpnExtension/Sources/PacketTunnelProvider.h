@@ -23,8 +23,7 @@ extern const DDLogLevel ddLogLevel;
 @interface PacketTunnelProvider : NEPacketTunnelProvider
 
 // This must be kept in sync with:
-//  - cordova-plugin-outline/apple/src/OutlineVpn.swift#ErrorCode
-//  - www/model/errors.ts
+//  - client/web/model/errors.ts
 typedef NS_ENUM(NSInteger, ErrorCode) {
   noError = 0,
   undefinedError = 1,

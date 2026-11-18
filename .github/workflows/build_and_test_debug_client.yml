@@ -49,7 +49,7 @@ jobs:
         run: npm set cache .npm && npm ci
 
       - name: Build Web App
-        run: npm run action client/web/build
+        run: npm run action client/capacitor/web_build browser
 
       - name: Test Web App
         run: npm run action client/web/test
@@ -162,11 +162,19 @@ jobs:
       - name: Build Client
         run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
 
-  macos_debug_build:
-    name: MacOS Debug Build
+  apple_vpn_extension_test:
+    name: ${{ matrix.name }} VpnExtension Test
     runs-on: macos-15
     timeout-minutes: 20
     needs: [web_test, backend_test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: iOS
+            platform: ios
+          - name: MacOS
+            platform: macos
     steps:
       - name: Display XCode
         run: xcode-select --print-path
@@ -189,60 +197,15 @@ jobs:
         with:
           go-version-file: '${{ github.workspace }}/go.mod'
 
-      - name: Build Tun2Socks (required for Test OutlineAppleLib)
-        run: npm run action client/src/tun2socks/build macos
-
-      - name: Test OutlineAppleLib
-        run: npm run action client/src/cordova/test macos
-
-      - name: Build MacOS Client
-        run: npm run action client/src/cordova/build macos
+      # Builds the tun2socks xcframework, then runs the VpnExtension unit tests
+      # of client/src/cordova/apple/OutlineLib.
+      - name: Test VpnExtension
+        run: npm run action client/src/cordova/test ${{ matrix.platform }}
 
       # - uses: codecov/codecov-action@v4
       #   with:
-      #     file: ./client/src/output/coverage/apple/macos/TestResult.xcresult
-      #     flags: unittests, apple, macos
-
-  ios_debug_build:
-    name: iOS Debug Build
-    runs-on: macos-15
-    timeout-minutes: 20
-    needs: [web_test, backend_test]
-    steps:
-      - name: Display XCode
-        run: xcode-select --print-path
-
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Install Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: ./package-lock.json
-
-      - name: Install NPM Dependencies
-        run: npm ci
-
-      - name: Install Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: '${{ github.workspace }}/go.mod'
-
-      - name: Build Tun2Socks (required for Test OutlineAppleLib)
-        run: npm run action client/src/tun2socks/build ios
-
-      - name: Test OutlineAppleLib
-        run: npm run action client/src/cordova/test ios
-
-      - name: Build iOS Client
-        run: npm run action client/src/cordova/build ios
-
-      # - uses: codecov/codecov-action@v4
-      #   with:
-      #     file: ./client/src/output/coverage/apple/ios/TestResult.xcresult
-      #     flags: unittests, apple, ios
+      #     file: ./output/coverage/apple/${{ matrix.platform }}/TestResult.xcresult
+      #     flags: unittests, apple, ${{ matrix.platform }}
 
   capacitor_ios_debug_build:
     name: iOS Capacitor Debug Build
@@ -311,31 +274,6 @@ jobs:
       # Mac Catalyst xcodebuild of apple/App/App.xcodeproj.
       - name: Build MacOS Capacitor Client
         run: npm run action client/capacitor/build macos
-
-  android_debug_build:
-    name: Android Debug Build
-    runs-on: ubuntu-22.04
-    timeout-minutes: 20
-    needs: [web_test, backend_test]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Install Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: ./package-lock.json
-
-      - name: Setup Java
-        run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
-
-      - name: Install NPM Dependencies
-        run: npm ci
-
-      - name: Build Android Client
-        run: npm run action client/src/cordova/build android -- --verbose
 
   capacitor_android_debug_build:
     name: Android Capacitor Debug Build
