@@ -53,7 +53,8 @@ export async function main(...parameters) {
   // Check the release signing inputs before the (slow) web and Go builds.
   if (APPLE_PLATFORMS.includes(platform) && buildMode === 'release') {
     // The app target has no development team of its own (see
-    // apple/App/App.xcodeproj), so a signed build needs one from the caller.
+    // client/apple/App/App.xcodeproj), so a signed build needs one from the
+    // caller.
     if (!process.env.DEVELOPMENT_TEAM) {
       throw new ReferenceError(
         `DEVELOPMENT_TEAM must be defined in the environment to build a ${platform} Release!`
@@ -87,7 +88,7 @@ export async function main(...parameters) {
   // `cap sync` first runs the capacitor:sync:before hook (see package.json in
   // this directory), which builds the tun2socks native library for the
   // platform: the gomobile AAR (plus client:android:configure) on Android, and
-  // the Tun2socks.xcframework that apple/App/App.xcodeproj links from
+  // the Tun2socks.xcframework that client/apple/App/App.xcodeproj links from
   // output/client/apple/ on iOS. It then copies the web assets into the native
   // project and refreshes the Capacitor plugins. The Capacitor CLI locates the
   // project from the working directory.
@@ -126,7 +127,7 @@ export async function main(...parameters) {
   }
 }
 
-const androidDir = path.resolve(capacitorDir, 'android');
+const androidDir = path.resolve(capacitorDir, '..', 'android');
 
 async function androidDebug(verbose) {
   // `cap build` only produces signed release builds, so invoke Gradle
@@ -143,7 +144,7 @@ async function androidDebug(verbose) {
 /**
  * Builds the signed release AAB (for the Play Store) and, from it, the signed
  * universal APK (for direct download). Both land in
- * android/app/build/outputs/bundle/release/.
+ * client/android/app/build/outputs/bundle/release/.
  */
 async function androidRelease(
   ksPassword,
@@ -210,7 +211,7 @@ const XCODE_DESTINATIONS = {
 function xcodeBuildArgs(platform, verbose) {
   return [
     '-project',
-    path.resolve(capacitorDir, 'apple', 'App', 'App.xcodeproj'),
+    path.resolve(capacitorDir, '..', 'apple', 'App', 'App.xcodeproj'),
     '-scheme',
     'Outline',
     '-destination',

@@ -11,11 +11,11 @@ let package = Package(
             targets: ["CapApp-SPM"])
     ],
     dependencies: [
-        .package(name: "capacitor", path: "../../../../../node_modules/@capacitor/ios"),
-        .package(name: "CapacitorApp", path: "../../../../../node_modules/@capacitor/app"),
-        .package(name: "CapacitorBrowser", path: "../../../../../node_modules/@capacitor/browser"),
-        .package(name: "CapacitorSplashScreen", path: "../../../../../node_modules/@capacitor/splash-screen"),
-        .package(name: "CapacitorPluginOutline", path: "../../../plugins/capacitor-plugin-outline")
+        .package(name: "capacitor", path: "../../../../node_modules/@capacitor/ios"),
+        .package(name: "CapacitorApp", path: "../../../../node_modules/@capacitor/app"),
+        .package(name: "CapacitorBrowser", path: "../../../../node_modules/@capacitor/browser"),
+        .package(name: "CapacitorSplashScreen", path: "../../../../node_modules/@capacitor/splash-screen"),
+        .package(name: "CapacitorPluginOutline", path: "../../../capacitor/plugins/capacitor-plugin-outline")
     ],
     targets: [
         .target(
