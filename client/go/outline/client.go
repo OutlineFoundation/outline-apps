@@ -23,13 +23,12 @@ import (
 	"path"
 	"runtime"
 
-	"localhost/client/go/configyaml"
+	"golang.getoutline.org/sdk/network/packetrelay"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
-	"golang.getoutline.org/sdk/network/packetrelay"
-	"golang.getoutline.org/sdk/transport"
-	"github.com/goccy/go-yaml"
 )
 
 // Client provides a transparent container for [transport.StreamDialer] and [transport.PacketListener]
@@ -82,8 +81,8 @@ func (c *Client) EndSession() error {
 
 // ProviderClientConfig is the session config from the service provider.
 type ProviderClientConfig struct {
-	Transport configyaml.ConfigNode
-	Reporter  configyaml.ConfigNode
+	Transport composer.Node
+	Reporter  composer.Node
 }
 
 // NewClientResult represents the result of [NewClientAndReturnError].
@@ -97,7 +96,7 @@ type NewClientResult struct {
 // ClientConfig is used to create a session Client.
 type ClientConfig struct {
 	DataDir         string
-	TransportParser *configyaml.TypeParser[*configregistry.TransportPair]
+	TransportParser *composer.TypeParser[*configregistry.TransportPair]
 }
 
 // New creates a new session client. It's used by the native code, so it returns a NewClientResult.
@@ -129,14 +128,21 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 		}
 	}
 
-	var providerClientConfig ProviderClientConfig
-	if err := yaml.Unmarshal([]byte(providerClientConfigText), &providerClientConfig); err != nil {
+	configNode, err := composer.ParseYAML([]byte(providerClientConfigText))
+	var fields map[string]composer.Node
+	if err == nil && !configNode.IsAbsent() {
+		err = configNode.Decode(&fields)
+	}
+	if err != nil {
 		return nil, &platerrors.PlatformError{
 			Code:    platerrors.InvalidConfig,
 			Message: "config is not valid YAML",
 			Cause:   platerrors.ToPlatformError(err),
 		}
 	}
+	// Decode only the envelope so delegated parsers keep the original source
+	// locations and anchors. Unknown envelope fields remain allowed.
+	providerClientConfig := ProviderClientConfig{Transport: fields["transport"], Reporter: fields["reporter"]}
 
 	transportPair, err := clientConfig.TransportParser.Parse(context.Background(), providerClientConfig.Transport)
 	if err != nil {
@@ -158,7 +164,7 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 	client := &Client{sd: transportPair.StreamDialer, pr: transportPair.PacketRelay}
 
 	// TODO: figure out a better way to handle parse calls.
-	if providerClientConfig.Reporter != nil {
+	if !providerClientConfig.Reporter.IsAbsent() {
 		// TODO(fortuna): encapsulate service storage.
 		cookieFilename := ""
 		if c.DataDir != "" {
@@ -179,8 +185,8 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 	return client, nil
 }
 
-func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *configyaml.TypeParser[reporting.Reporter] {
-	parser := configyaml.NewTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (reporting.Reporter, error) {
+func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *composer.TypeParser[reporting.Reporter] {
+	parser := composer.NewTypeParser(func(ctx context.Context, input composer.Node) (reporting.Reporter, error) {
 		return nil, errors.New("parser not specified")
 	})
 	parser.RegisterSubParser("first-supported", configregistry.NewFirstSupportedSubParser(parser.Parse))

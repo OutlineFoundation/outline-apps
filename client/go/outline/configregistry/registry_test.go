@@ -20,12 +20,12 @@ import (
 	"net"
 	"testing"
 
-	"localhost/client/go/configyaml"
-	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
+	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
 )
 
-func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
+func newTestTransportProvider() *composer.TypeParser[*TransportPair] {
 	tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 	udpDialer := &transport.UDPDialer{}
 	return NewDefaultTransportProvider(tcpDialer, udpDialer)
@@ -34,14 +34,15 @@ func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
 func TestRegisterDefaultProviders(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`
+	node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp: &shared
   $type: shadowsocks
   endpoint: example.com:1234
   cipher: chacha20-ietf-poly1305
   secret: SECRET
-udp: *shared`)
+udp: *shared`))
+
 	require.NoError(t, err)
 
 	d, err := provider.Parse(context.Background(), node)
@@ -58,7 +59,7 @@ udp: *shared`)
 func TestRegisterParseURL(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server`)
+	node, err := composer.ParseYAML([]byte(`ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server`))
 	require.NoError(t, err)
 
 	d, err := provider.Parse(context.Background(), node)
@@ -75,7 +76,7 @@ func TestRegisterParseURL(t *testing.T) {
 func TestRegisterParseURLInQuotes(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server"`)
+	node, err := composer.ParseYAML([]byte(`"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server"`))
 	require.NoError(t, err)
 
 	d, err := provider.Parse(context.Background(), node)
@@ -119,7 +120,7 @@ tcp:
       dialer: *shared
 udp: null`
 
-	node, err := configyaml.ParseConfigYAML(yamlConfig)
+	node, err := composer.ParseYAML([]byte(yamlConfig))
 	require.NoError(t, err)
 
 	transportPair, err := tp.Parse(context.Background(), node)
@@ -144,11 +145,12 @@ func TestParseDefaultAndBlockTCP(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("direct", func(t *testing.T) {
-		node, err := configyaml.ParseConfigYAML(`
+		node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp:
   $type: direct
-udp: null`)
+udp: null`))
+
 		require.NoError(t, err)
 
 		transportPair, err := provider.Parse(ctx, node)
@@ -159,11 +161,12 @@ udp: null`)
 	})
 
 	t.Run("block", func(t *testing.T) {
-		node, err := configyaml.ParseConfigYAML(`
+		node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp:
   $type: block
-udp: null`)
+udp: null`))
+
 		require.NoError(t, err)
 
 		transportPair, err := provider.Parse(ctx, node)
@@ -176,4 +179,67 @@ udp: null`)
 		require.Error(t, err)
 		require.Equal(t, "blocked by config", err.Error())
 	})
+}
+
+func testNode(t *testing.T, text string) composer.Node {
+	t.Helper()
+	node, err := composer.ParseYAML([]byte(text))
+	require.NoError(t, err)
+	return node
+}
+
+// Exercise the registered parsers together, through an actual dial attempt.
+// The fake base dialer keeps the test independent of external networking.
+func TestRegisteredNodeComposition(t *testing.T) {
+	provider := NewDefaultTransportProvider(&errorStreamDialer{name: "base"}, &transport.UDPDialer{})
+	node := testNode(t, `$defs:
+  cipher: &cipher
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET
+  endpoint: &endpoint
+    $type: dial
+    address: entry.example.com:443
+$type: tcpudp
+tcp:
+  $type: first-supported
+  options:
+    - $type: future-protocol
+    - $type: shadowsocks
+      <<: *cipher
+      endpoint:
+        $type: websocket
+        url: wss://cdn.example.com/tunnel
+        endpoint: *endpoint
+udp:
+  $type: direct`)
+
+	pair, err := provider.Parse(context.Background(), node)
+	require.NoError(t, err)
+	require.Equal(t, "entry.example.com:443", pair.StreamDialer.FirstHop)
+	require.Equal(t, ConnTypeTunneled, pair.StreamDialer.ConnType)
+	require.Equal(t, ConnTypeDirect, pair.PacketRelay.ConnType)
+	_, err = pair.DialStream(context.Background(), "target.example.com:80")
+	require.ErrorContains(t, err, "dialer 'base' called for address 'entry.example.com:443'")
+}
+
+func TestRegisteredNodeAliasErrorLocation(t *testing.T) {
+	provider := newTestTransportProvider()
+	node := testNode(t, `$defs:
+  endpoint: &endpoint
+    address: example.com:invalid
+$type: tcpudp
+tcp: {$type: direct}
+udp:
+  $type: shadowsocks
+  endpoint: *endpoint
+  cipher: chacha20-ietf-poly1305
+  secret: SECRET`)
+
+	_, err := provider.Parse(context.Background(), node)
+	var located *composer.Error
+	require.ErrorAs(t, err, &located)
+	// The path describes the use; the coordinates point to the definition.
+	require.Equal(t, "udp.endpoint.address", located.Path)
+	require.Equal(t, 3, located.Line)
+	require.Equal(t, 14, located.Column)
 }

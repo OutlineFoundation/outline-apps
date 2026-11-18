@@ -19,14 +19,16 @@ import (
 	"net"
 	"testing"
 
-	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
+
 	"github.com/stretchr/testify/require"
+	"golang.getoutline.org/sdk/transport"
 )
 
 func TestNewBlockStreamDialerSubParser(t *testing.T) {
 	subParser := NewBlockDialerSubParser[transport.StreamConn]()
 
-	dialer, err := subParser(context.Background(), nil)
+	dialer, err := subParser(context.Background(), composer.Node{})
 	require.NoError(t, err)
 	require.NotNil(t, dialer)
 
@@ -40,7 +42,7 @@ func TestNewBlockStreamDialerSubParser(t *testing.T) {
 func TestNewBlockPacketDialerSubParser(t *testing.T) {
 	subParser := NewBlockDialerSubParser[net.Conn]()
 
-	dialer, err := subParser(context.Background(), nil)
+	dialer, err := subParser(context.Background(), composer.Node{})
 	require.NoError(t, err)
 	require.NotNil(t, dialer)
 

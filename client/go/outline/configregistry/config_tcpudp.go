@@ -18,28 +18,28 @@ import (
 	"context"
 	"fmt"
 
-	"localhost/client/go/configyaml"
 	"golang.getoutline.org/sdk/transport"
+	"localhost/client/go/composer"
 )
 
 // TCPUDPConfig is the format for the TCPUDP config. It specifies separate TCP and UDP configs
 // to create a [TransportPair].
 type TCPUDPConfig struct {
-	TCP configyaml.ConfigNode
-	UDP configyaml.ConfigNode
+	TCP composer.Node
+	UDP composer.Node
 }
 
 func NewTCPUDPTransportPairSubParser(
-	parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]],
-	parsePL configyaml.ParseFunc[*PacketListener]) func(ctx context.Context, input map[string]any) (*TransportPair, error) {
-	return func(ctx context.Context, input map[string]any) (*TransportPair, error) {
+	parseSD composer.ParseFunc[*Dialer[transport.StreamConn]],
+	parsePL composer.ParseFunc[*PacketListener]) composer.ParseFunc[*TransportPair] {
+	return func(ctx context.Context, input composer.Node) (*TransportPair, error) {
 		return parseTCPUDPTransportPair(ctx, input, parseSD, parsePL)
 	}
 }
 
-func parseTCPUDPTransportPair(ctx context.Context, configMap map[string]any, parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]], parsePL configyaml.ParseFunc[*PacketListener]) (*TransportPair, error) {
+func parseTCPUDPTransportPair(ctx context.Context, configMap composer.Node, parseSD composer.ParseFunc[*Dialer[transport.StreamConn]], parsePL composer.ParseFunc[*PacketListener]) (*TransportPair, error) {
 	var config TCPUDPConfig
-	if err := configyaml.MapToAny(configMap, &config); err != nil {
+	if err := (composer.Decoder{CoerceScalars: true}).Decode(configMap, &config); err != nil {
 		return nil, fmt.Errorf("invalid config format: %w", err)
 	}
 

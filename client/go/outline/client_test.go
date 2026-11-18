@@ -22,10 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"localhost/client/go/configyaml"
+	"github.com/stretchr/testify/require"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/reporting"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_NewTransport_SS_URL(t *testing.T) {
@@ -205,6 +205,47 @@ transport:
 	require.Equal(t, "example.com:53", result.Client.pr.FirstHop)
 }
 
+func Test_NewClient_EnvelopeAliases(t *testing.T) {
+	config := `definitions:
+  transport: &transport
+    endpoint: example.com:4321
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET
+  request: &request
+    url: https://collector.example.com/report
+    headers:
+      X-Client: [outline]
+transport: *transport
+reporter:
+  $type: http
+  request: *request`
+
+	result := (&ClientConfig{}).New("", config)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	require.Equal(t, "example.com:4321", result.Client.sd.FirstHop)
+	require.Equal(t, "example.com:4321", result.Client.pr.FirstHop)
+	request, err := result.Client.reporter.(*reporting.HTTPReporter).NewRequest()
+	require.NoError(t, err)
+	require.Equal(t, "https://collector.example.com/report", request.URL.String())
+	require.Equal(t, []string{"outline"}, request.Header.Values("X-Client"))
+}
+
+func Test_NewClient_ReporterSourceLocation(t *testing.T) {
+	config := `transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/
+reporter:
+  $type: http
+  request:
+    url: https://collector.example.com/report
+    headers:
+      X-Test: [ok, {}]`
+
+	result := (&ClientConfig{}).New("", config)
+	require.Nil(t, result.Client)
+	require.NotNil(t, result.Error)
+	require.Equal(t, "invalid reporter config", result.Error.Message)
+	require.ErrorContains(t, result.Error, `reporter.request.headers["X-Test"][1] (line 7, column 20)`)
+}
+
 func Test_NewTransport_Unsupported(t *testing.T) {
 	config := `transport: {$type: unsupported}`
 	result := (&ClientConfig{}).New("", config)
@@ -355,7 +396,7 @@ request:
     Authorization: [Bearer SECRET]
   body: '{"foo": "bar"}'
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
 	require.NoError(t, err)
@@ -378,7 +419,7 @@ func Test_ParseReporter_NoInterval(t *testing.T) {
 $type: http
 request:
   url: https://your-callback-server.com/outline_callback`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
 	require.NoError(t, err)
@@ -397,7 +438,7 @@ request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	tempDir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
@@ -418,7 +459,7 @@ request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
+	yamlNode, err := composer.ParseYAML([]byte(config))
 	require.NoError(t, err)
 	_, err = NewReporterParser("", nil).Parse(context.Background(), yamlNode)
 	require.Error(t, err)

@@ -17,18 +17,16 @@ package outline
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
-
-	"github.com/goccy/go-yaml"
 )
 
-// providerConfig is the config fetched from the provider. It may be either an error, or a tunnel configregistry.
+// providerConfig decodes provider errors. Client configuration is parsed separately
+// through Node so nested parsers retain their configuration subtrees.
 type providerConfig struct {
-	ProviderErrorConfig  `yaml:",inline"`
-	ProviderTunnelConfig `yaml:",inline"`
+	ProviderErrorConfig `yaml:",inline"`
 }
 
 // ProviderErrorConfig is config returned by the provider with a custom error to
@@ -47,8 +45,8 @@ type ProviderTunnelConfig struct {
 
 // firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in configregistry.ts.
 type firstHopAndTunnelConfigJSON struct {
-	Client         string          `json:"client"`
-	FirstHop       string          `json:"firstHop"`
+	Client         string                  `json:"client"`
+	FirstHop       string                  `json:"firstHop"`
 	ConnectionType configregistry.ConnType `json:"connectionType"`
 }
 
@@ -76,65 +74,50 @@ func combinedConnectionType(streamConnType, packetConnType configregistry.ConnTy
 }
 
 func doParseTunnelConfig(input string) *InvokeMethodResult {
-	input = strings.TrimSpace(input)
-	// Input may be one of:
-	// - ss:// link
-	// - Legacy Shadowsocks JSON (parsed as YAML)
-	// - Advanced YAML format
-	var stringValue string
-	var clientConfigMap map[string]any
-	if err := yaml.Unmarshal([]byte(input), &stringValue); err == nil {
-		// Legacy URL format. Input is the transport configregistry.
-		clientConfigMap = map[string]any{"transport": stringValue}
-	} else {
-		var yamlValue map[string]any
-		if err := yaml.Unmarshal([]byte(input), &yamlValue); err != nil {
-			return &InvokeMethodResult{
-				Error: &platerrors.PlatformError{
-					Code:    platerrors.InvalidConfig,
-					Message: fmt.Sprintf("failed to parse: %s", err),
-				},
-			}
+	// Traverse Node for normalization too, so saved configs and validation use
+	// the same merge semantics. Retain the original YAML for source diagnostics.
+	node, err := composer.ParseYAML([]byte(input))
+	if err != nil {
+		return &InvokeMethodResult{Error: &platerrors.PlatformError{
+			Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
+		}}
+	}
+	// Input may be an ss:// link, a transport mapping (including legacy
+	// Shadowsocks JSON), or a full client/provider-error mapping.
+	var clientConfig any
+	var isClientConfig bool
+	switch node.Kind() {
+	case composer.KindScalar:
+		var url string
+		if err := node.Decode(&url); err != nil {
+			return &InvokeMethodResult{Error: &platerrors.PlatformError{
+				Code: platerrors.InvalidConfig, Message: "config must be a URL or mapping",
+			}}
 		}
-
-		if hasKey(yamlValue, "transport") || hasKey(yamlValue, "error") {
-			// New format. Parse as tunnel config
-			providerConfig := providerConfig{}
-			if err := yaml.Unmarshal([]byte(input), &providerConfig); err != nil {
-				return &InvokeMethodResult{
-					Error: &platerrors.PlatformError{
-						Code:    platerrors.InvalidConfig,
-						Message: fmt.Sprintf("failed to parse: %s", err),
-					},
-				}
-			}
-
-			// Process provider error, if present.
-			if providerConfig.Error != nil {
-				platErr := &platerrors.PlatformError{
-					Code:    platerrors.ProviderError,
-					Message: providerConfig.Error.Message,
-				}
-				if providerConfig.Error.Details != "" {
-					platErr.Details = map[string]any{
-						"details": providerConfig.Error.Details,
-					}
-				}
-				return &InvokeMethodResult{Error: platErr}
-			}
-
-			// Extract client configregistry.
-			clientConfigMap = yamlValue
+		clientConfig = map[string]composer.Node{"transport": node}
+	case composer.KindMapping:
+		var fields map[string]composer.Node
+		if err := node.Decode(&fields); err != nil {
+			return &InvokeMethodResult{Error: &platerrors.PlatformError{
+				Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
+			}}
+		}
+		isClientConfig = hasKey(fields, "transport") || hasKey(fields, "error")
+		if isClientConfig {
+			clientConfig = node
 		} else {
-			// Legacy JSON format. Input is the transport configregistry.
-			clientConfigMap = map[string]any{"transport": yamlValue}
+			clientConfig = map[string]composer.Node{"transport": node}
 		}
+	default:
+		return &InvokeMethodResult{Error: &platerrors.PlatformError{
+			Code: platerrors.InvalidConfig, Message: "config must be a URL or mapping",
+		}}
 	}
 
 	// Use JSON marshaling from the standard library because the YAML library is buggy.
 	// See https://github.com/OutlineFoundation/outline-apps/issues/2576.
 	// JSON is a subset of YAML, so that's valid YAML.
-	clientConfigBytes, err := json.Marshal(clientConfigMap)
+	clientConfigBytes, err := json.Marshal(clientConfig)
 	if err != nil {
 		return &InvokeMethodResult{
 			Error: &platerrors.PlatformError{
@@ -144,9 +127,36 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 	}
 
+	if isClientConfig {
+		// Provider errors allow extra fields and scalar coercion, preserving the
+		// existing envelope behavior while using the shared Composer decoder.
+		var providerConfig providerConfig
+		decoder := composer.Decoder{CoerceScalars: true, AllowUnknownFields: true}
+		if err := decoder.Decode(node, &providerConfig); err != nil {
+			return &InvokeMethodResult{Error: &platerrors.PlatformError{
+				Code: platerrors.InvalidConfig, Message: fmt.Sprintf("failed to parse: %s", err),
+			}}
+		}
+		if providerConfig.Error != nil {
+			platErr := &platerrors.PlatformError{
+				Code: platerrors.ProviderError, Message: providerConfig.Error.Message,
+			}
+			if providerConfig.Error.Details != "" {
+				platErr.Details = map[string]any{"details": providerConfig.Error.Details}
+			}
+			return &InvokeMethodResult{Error: platErr}
+		}
+	}
+
+	// Validate advanced configs from their original YAML so delegated parsers
+	// report source locations. Keep the normalized JSON in the native response.
+	clientConfigText := string(clientConfigBytes)
+	if isClientConfig {
+		clientConfigText = input
+	}
 	result := (&ClientConfig{
 		DataDir: GetBackendConfig().DataDir,
-	}).New("", string(clientConfigBytes))
+	}).New("", clientConfigText)
 	if result.Error != nil {
 		return &InvokeMethodResult{
 			Error: result.Error,
