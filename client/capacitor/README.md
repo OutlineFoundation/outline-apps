@@ -179,7 +179,7 @@ It reads `SENTRY_DSN` and `DEVELOPMENT_TEAM` from the environment, and needs tha
 
 The macOS client is the iOS app built for Mac Catalyst, so it shares the `apple/` native project, the Capacitor plugins and `cap sync ios`. Capacitor's iOS platform is a source Swift package, so it compiles for Catalyst like every other package in the graph. What differs from iOS:
 
-- **`apple/App/AppKitIntegration/`** is a macOS framework target (the menu bar status item and Dock icon policy). It is only built and embedded for Catalyst; `AppDelegate` loads it at launch through `OutlineCatalystApp` from `OutlineAppleLib`.
+- **`apple/App/AppKitIntegration/`** is a macOS framework target (the menu bar status item and Dock icon policy). It is only built and embedded for Catalyst; `AppDelegate` loads it at launch through `CatalystAppIntegration` from `OutlineAppleLib`.
 - `Info.plist` carries `LSUIElement` so the app starts as a menu bar app; iOS ignores the key.
 
 ### Build the debug app (one command)

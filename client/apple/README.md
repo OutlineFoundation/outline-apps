@@ -6,7 +6,7 @@ This document describes how to develop and debug the native side of the Outline 
 
 - [`client/capacitor/apple/App`](../capacitor/apple/App): the Xcode project of the app (`App.xcodeproj`, scheme `Outline`), built for iOS and, through Mac Catalyst, for macOS. It embeds the `VpnExtension` target from `OutlineLib` and links the Outline plugin through the Swift package `App/CapApp-SPM`, which `cap sync ios` regenerates.
 - [`OutlineLib`](./OutlineLib): the `VpnExtension` network extension (`PacketTunnelProvider`) and its unit tests (`VpnExtensionTest`).
-- [`OutlineAppleLib`](./OutlineAppleLib): the Swift package shared by the app, the plugin and the extension: tunnel management (`OutlineTunnel`), error codes (`OutlineError`), Sentry logging and error reporting (`OutlineSentryLogger`), the VPN status notifications (`OutlineNotification`) and the Mac Catalyst bootstrap (`OutlineCatalystApp`).
+- [`OutlineAppleLib`](./OutlineAppleLib): the Swift package shared by the app, the plugin and the extension: tunnel management (`OutlineTunnel`), error codes (`OutlineError`), Sentry logging and error reporting (`OutlineSentryLogger`), the VPN status notifications (`OutlineNotification`) and the Mac Catalyst bootstrap (`CatalystAppIntegration`).
 - The plugin, which adapts `OutlineAppleLib` to Capacitor, is in [`client/capacitor/plugins/capacitor-plugin-outline/ios`](../capacitor/plugins/capacitor-plugin-outline/ios).
 - The app and the extension link `Tun2socks.xcframework` from `output/client/apple/`, which `npm run action client/go/build ios` produces (`cap sync ios` runs it for you).
 

@@ -18,23 +18,29 @@
     import CocoaLumberjackSwift
     import Foundation
     import OutlineNotification
-    import ServiceManagement
+    import UIKit
 
-    @objcMembers
-    public class OutlineCatalystApp: NSObject {
-        public static func initApp() {
+    /// What the app does on macOS only, where it runs as a Mac Catalyst app:
+    /// the menu bar item and Dock icon policy, which need AppKit and so live in
+    /// the AppKitIntegration framework, and the look of the window.
+    public enum CatalystAppIntegration {
+        /// Call once, when the app has finished launching.
+        public static func start() {
             DDLog.add(DDOSLogger.sharedInstance)
 
             let appKitController = loadAppKitIntegrationFramework()
 
-            // Configure the window.
-            let scenes = UIApplication.shared.connectedScenes
-            for scene in scenes {
-                let windowScene = (scene as! UIWindowScene)
+            // The window's title bar and fixed size are UIWindowScene properties
+            // SwiftUI has no modifier for. No scene exists yet when the app has
+            // just launched, so configure each scene as UIKit announces it.
+            NotificationCenter.default.addObserver(
+                forName: UIScene.willConnectNotification, object: nil, queue: .main
+            ) { notification in
+                guard let windowScene = notification.object as? UIWindowScene else { return }
                 windowScene.titlebar?.titleVisibility = .hidden
                 windowScene.titlebar?.toolbar = nil
-                windowScene.sizeRestrictions?.minimumSize = CGSizeMake(400, 680)
-                windowScene.sizeRestrictions?.maximumSize = CGSizeMake(400, 680)
+                windowScene.sizeRestrictions?.minimumSize = CGSize(width: 400, height: 680)
+                windowScene.sizeRestrictions?.maximumSize = CGSize(width: 400, height: 680)
             }
 
             // Initiate the connection status menu in unknown state by default.
@@ -56,23 +62,27 @@
         }
     }
 
-    public func loadAppKitIntegrationFramework() -> NSObject {
+    /// Loads the AppKitIntegration framework embedded in the app and returns
+    /// its controller. AppKit classes cannot be referenced from Catalyst code,
+    /// so the controller is driven through the selectors declared in
+    /// NSObject+Outline.swift.
+    private func loadAppKitIntegrationFramework() -> NSObject {
         if let frameworksPath = Bundle.main.privateFrameworksPath {
             let bundlePath = "\(frameworksPath)/AppKitIntegration.framework"
             do {
                 try Bundle(path: bundlePath)?.loadAndReturnError()
 
                 let bundle = Bundle(path: bundlePath)!
-                DDLogInfo("[CatalystApp] AppKit bundle loaded successfully")
+                DDLogInfo("[CatalystAppIntegration] AppKit bundle loaded successfully")
 
                 if let appKitControllerClass = bundle.classNamed("AppKitIntegration.AppKitController") as? NSObject.Type {
                     return appKitControllerClass.init()
                 }
             } catch {
-                DDLogInfo("[CatalystApp] Error loading: \(error)")
+                DDLogInfo("[CatalystAppIntegration] Error loading: \(error)")
             }
         }
-        preconditionFailure("[CatalystApp] Unable to load")
+        preconditionFailure("[CatalystAppIntegration] Unable to load")
     }
 
 #endif

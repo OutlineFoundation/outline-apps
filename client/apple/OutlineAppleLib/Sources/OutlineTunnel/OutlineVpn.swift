@@ -248,7 +248,7 @@ public class OutlineVpn: NSObject {
   }
 
   // On macOS, tells the menu bar item (AppKitIntegration, through
-  // OutlineCatalystApp) that the VPN connected or disconnected.
+  // CatalystAppIntegration) that the VPN connected or disconnected.
   private func postToMenuBar(_ name: Notification.Name) {
     #if os(macOS) || targetEnvironment(macCatalyst)
     NotificationCenter.default.post(name: name, object: nil)
