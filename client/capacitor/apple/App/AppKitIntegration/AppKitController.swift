@@ -45,8 +45,7 @@ class AppKitController: NSObject {
         ) { [weak self] notification in
             guard let window = notification.object as? NSWindow else { return }
             
-            // Check if this is the main UI window
-            if self?.isMainUiWindow(window) == true {
+            if window.isAppWindow {
                 self?.hideDockIcon()
             }
         }
@@ -67,11 +66,11 @@ class AppKitController: NSObject {
     }
 
     private func hideDockIcon() {
-        // Hide the Dock icon when the main window is closed.
+        // Hide the Dock icon when the app window is closed.
         //
         // This is only triggered by NSWindow.willCloseNotification, never by
         // didResignActive: switching to .accessory deactivates the app and sends
-        // its window behind other apps. During launch the main UINSWindow isn't
+        // its window behind other apps. During launch the app window isn't
         // reliably visible yet, so hiding on an early resign-active made the
         // window "disappear" behind other windows.
         NSApp.setActivationPolicy(.accessory)
@@ -82,19 +81,6 @@ class AppKitController: NSObject {
         NSApp.setActivationPolicy(.regular)
     }
     
-    /// Determines if the given window is the main UI window.
-    ///
-    /// Match the Catalyst content window class exactly ("UINSWindow"). A substring
-    /// match is wrong here: during launch Catalyst also creates and destroys a
-    /// transient, non-visible "TUINSWindow", whose name *contains* "UINSWindow".
-    /// Treating that transient window's close as the main window closing flipped
-    /// the app to .accessory and sent the real (still-visible) window behind other
-    /// apps on launch.
-    /// TODO: Decouple from the internal class name "UINSWindow" in the future
-    private func isMainUiWindow(_ window: NSWindow) -> Bool {
-        return window.className == "UINSWindow"
-    }
-
     /// Set the connection status in the app's menu in the system-wide menu bar.
     @objc public func _AppKitBridge_setConnectionStatus(_ status: ConnectionStatus) {
         if statusItemController == nil {
@@ -102,5 +88,25 @@ class AppKitController: NSObject {
             statusItemController = StatusItemController()
         }
         statusItemController!.setStatus(status: status)
+    }
+}
+
+extension NSWindow {
+    /// Whether this is the app's window, the one that shows the web UI.
+    ///
+    /// The app has a single UIKit scene, which Catalyst hosts in the app's only
+    /// standard window: it has a title bar and is not a panel. Every other
+    /// window in the process is borderless or a panel: the status item's, alerts,
+    /// and the helper windows Catalyst creates, including one that it opens and
+    /// closes during launch. Treating that one as the app window would hide the
+    /// Dock icon at launch, which sends the real window behind other apps.
+    ///
+    /// The window is recognized by these properties because nothing public maps
+    /// a UIKit scene to its NSWindow, and the UIKit side cannot do this work
+    /// itself: with a single scene, closing the window sends no scene
+    /// notification (the scene stays connected and active), and
+    /// UIApplication.requestSceneSessionActivation cannot bring it back.
+    var isAppWindow: Bool {
+        return styleMask.contains(.titled) && !(self is NSPanel)
     }
 }

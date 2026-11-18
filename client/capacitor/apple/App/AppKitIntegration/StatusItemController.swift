@@ -93,11 +93,11 @@ class StatusItemController: NSObject {
     @objc func openApplication(_: AnyObject?) {
         NSLog("[StatusItemController] Opening application")
         NSApp.activate(ignoringOtherApps: true)
-        guard let uiWindow = getUiWindow() else {
+        guard let appWindow = NSApp.windows.first(where: { $0.isAppWindow }) else {
             return
         }
         NSApp.setActivationPolicy(.regular)
-        uiWindow.makeKeyAndOrderFront(self)
+        appWindow.makeKeyAndOrderFront(self)
         NSRunningApplication.current.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     }
 
@@ -160,15 +160,6 @@ class StatusItemController: NSObject {
             }
         }
     }
-}
-
-private func getUiWindow() -> NSWindow? {
-    for window in NSApp.windows {
-        if String(describing: window).contains("UINSWindow") {
-            return window
-        }
-    }
-    return nil
 }
 
 private func getImage(name: String) -> NSImage {
