@@ -2,7 +2,7 @@
 
 This package is the Outline Client's vocabulary for configs read with [Composer](../../composer/): the `$type` names, the legacy access-key forms, the app-only configs (`tcpudp`, `basic-access`, `iptable`), and the connection metadata the client shows and routes with.
 
-The client does not use it yet. It is built beside [`configregistry`](../configregistry/), and [`differential_test.go`](differential_test.go) checks that both read every config in its corpus the same way. The client switches over in a later change.
+It is built beside [`configregistry`](../configregistry/), and [`differential_test.go`](differential_test.go) checks that both read every config in its corpus the same way.
 
 ## Using it
 
@@ -28,8 +28,10 @@ Everything that reaches the network builds on the dialers in `Options`, so the c
 3. **Describe it.** Add a case to `Describe` in [`metadata.go`](metadata.go) with its connection type and first hop. Until you do, configs that use it are rejected with `ErrNoConnInfo`: the client never treats a config it cannot classify as direct.
 4. **Test it.** Add configs to the corpus in `differential_test.go`. `TestFirstHopIsWhatGetsDialed` builds each one over recording dialers and checks that the reported first hop is what actually gets dialed, and that parsing and building dial nothing. A config that `master`'s parser cannot read needs an entry in `legacyUnreadable` with its expected metadata.
 
+## Session
+
+A component that holds a resource shared by its connections, such as a tunnel, gets the client session with `netconfig.Session(ctx)` in its build method and releases the resource when the session ends. See [`netconfig/session.go`](../../composer/netconfig/session.go).
+
 ## Known gaps
 
-- `master` resolves a direct endpoint's hostname while parsing on Linux and Windows. This package does not do that yet. It needs to happen at build, before the client switches over.
 - `basic-access` dials with a new `TCPDialer` instead of the injected one, as `master` does. See the TODO in `transport.go`.
-- Built configs have no way to release resources, which components with long-lived sessions will need.

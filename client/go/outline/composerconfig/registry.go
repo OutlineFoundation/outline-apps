@@ -32,6 +32,9 @@ type Options struct {
 	DirectPacketDialer transport.PacketDialer
 	// WebsocketHeaders are sent with every WebSocket handshake.
 	WebsocketHeaders http.Header
+	// ResolveDirect, if set, resolves the address of an endpoint dialed
+	// directly when the endpoint is built.
+	ResolveDirect AddressResolver
 }
 
 // NewRegistry returns a registry holding Outline's vocabulary. Callers may
@@ -54,8 +57,13 @@ func NewRegistry(opts Options) composer.MutableRegistry {
 	composer.Register(r, "block", composer.As[streamDialer](netconfig.ParseBlock))
 	composer.Register(r, "block", composer.As[packetDialer](netconfig.ParseBlock))
 
-	composer.Register(r, "dial", composer.As[streamEndpoint](netconfig.ParseStreamDialEndpoint))
-	composer.Register(r, "dial", composer.As[packetEndpoint](netconfig.ParsePacketDialEndpoint))
+	if opts.ResolveDirect == nil {
+		composer.Register(r, "dial", composer.As[streamEndpoint](netconfig.ParseStreamDialEndpoint))
+		composer.Register(r, "dial", composer.As[packetEndpoint](netconfig.ParsePacketDialEndpoint))
+	} else {
+		composer.Register(r, "dial", newResolvingStreamDialEndpointParser(opts.ResolveDirect))
+		composer.Register(r, "dial", newResolvingPacketDialEndpointParser(opts.ResolveDirect))
+	}
 
 	composer.Register(r, "direct", composer.As[streamDialer](netconfig.NewDirectStreamDialerParser(opts.DirectStreamDialer)))
 	composer.Register(r, "direct", composer.As[packetDialer](netconfig.NewDirectPacketDialerParser(opts.DirectPacketDialer)))

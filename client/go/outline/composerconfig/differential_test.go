@@ -392,3 +392,72 @@ type bareConfig struct{}
 func (*bareConfig) NewStreamDialer(context.Context) (transport.StreamDialer, error) {
 	return &transport.TCPDialer{}, nil
 }
+
+// TestResolveDirectAtBuildTime checks Outline's policy for direct endpoints:
+// the address is resolved when the endpoint is built, not when it is parsed;
+// the reported first hop and the parsed config keep the address as written;
+// and endpoints reached through a proxy are left alone.
+func TestResolveDirectAtBuildTime(t *testing.T) {
+	probe := &probeDialer{}
+	var resolved []string
+	registry := NewRegistry(Options{
+		DirectStreamDialer: probe,
+		DirectPacketDialer: probe,
+		ResolveDirect: func(_ context.Context, address string) string {
+			resolved = append(resolved, address)
+			return "203.0.113.9:4321"
+		},
+	})
+	node, err := composer.ParseYAML([]byte(`
+$type: tcpudp
+tcp:
+  $type: shadowsocks
+  endpoint:
+    $type: dial
+    address: exit.example.com:4321
+    dialer: {$type: shadowsocks, endpoint: 'entry.example.com:4321', cipher: chacha20-ietf-poly1305, secret: SECRET}
+  cipher: chacha20-ietf-poly1305
+  secret: SECRET
+udp: {$type: shadowsocks, endpoint: 'entry.example.com:53', cipher: chacha20-ietf-poly1305, secret: SECRET}
+`))
+	require.NoError(t, err)
+	cfg, info, err := ParseTransport(context.Background(), registry, node)
+	require.NoError(t, err)
+	require.Empty(t, resolved, "parsing must not resolve")
+	require.Equal(t, "entry.example.com:4321", info.Stream.FirstHop)
+	require.Equal(t, "entry.example.com:53", info.Packet.FirstHop)
+
+	pair, err := cfg.NewTransportPair(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, []string{"entry.example.com:4321", "entry.example.com:53"}, resolved,
+		"only the direct endpoints are resolved")
+
+	_, err = pair.StreamDialer.DialStream(context.Background(), "192.0.2.1:443")
+	require.ErrorIs(t, err, errProbe)
+	require.Equal(t, []string{"203.0.113.9:4321"}, probe.dialed)
+
+	_, info, err = ParseTransport(context.Background(), registry, node)
+	require.NoError(t, err)
+	require.Equal(t, "entry.example.com:4321", info.Stream.FirstHop, "a build does not modify the parsed config")
+}
+
+// TestResolveDirectMatchesLegacyMetadata checks that resolving direct
+// endpoints changes no reported metadata.
+func TestResolveDirectMatchesLegacyMetadata(t *testing.T) {
+	plain := NewRegistry(Options{DirectStreamDialer: &transport.TCPDialer{}, DirectPacketDialer: &transport.UDPDialer{}})
+	resolving := NewRegistry(Options{
+		DirectStreamDialer: &transport.TCPDialer{},
+		DirectPacketDialer: &transport.UDPDialer{},
+		ResolveDirect:      func(context.Context, string) string { return "203.0.113.9:1" },
+	})
+	for _, tc := range corpus {
+		t.Run(tc.name, func(t *testing.T) {
+			node, err := composer.ParseYAML([]byte(tc.yaml))
+			require.NoError(t, err)
+			_, want, wantErr := ParseTransport(context.Background(), plain, node)
+			_, got, gotErr := ParseTransport(context.Background(), resolving, node)
+			require.Equal(t, wantErr == nil, gotErr == nil, "plain: %v\nresolving: %v", wantErr, gotErr)
+			require.Equal(t, want, got)
+		})
+	}
+}
