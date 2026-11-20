@@ -53,9 +53,27 @@ udp:
 Mapping keys starting with `$` are reserved for the format and are never
 treated as fields:
 
+- `$type` (string): names the kind of thing a mapping describes, and so
+  selects its parser. See "Config types" below.
 - `$defs`: the conventional place to define anchors for reuse elsewhere in
   the document. Its content is otherwise ignored.
 - All other `$` keys are reserved for future use and ignored.
+
+## Config types
+
+A config value is always read as something: the place where a value
+appears determines the **category** it must belong to, such as a stream
+dialer or a packet listener. Within a category, a mapping's `$type` names
+the config type, and with it the fields the mapping may have.
+
+`$type` names are scoped to the category. `shadowsocks` may be a stream
+dialer and also a packet listener, and need not be valid anywhere else. A
+`$type` that is not known for the expected category is *unsupported* at
+that location.
+
+A value without a `$type` is read by the category's default rules. These
+give meaning to an absent value, to scalar shorthand, and to mappings in
+older formats. A category without default rules requires a `$type`.
 
 ## Field naming
 
@@ -88,6 +106,27 @@ is **safe to ignore if unknown**:
 The `?` applies to recognizing the key only. If the field is known, an error
 inside its value is still an error.
 
+## Negotiation and `first-supported`
+
+Some errors mean "this client cannot do what the config asks", and are
+reported as *unsupported*: a `$type` unknown for its category, a field the
+parser does not declare, a feature the platform lacks. Every other error
+means the config is wrong.
+
+The `first-supported` type is available in every category:
+
+```yaml
+$type: first-supported
+options:
+  - {$type: fancy-new-thing, ...}
+  - {$type: old-reliable, ...}
+```
+
+It reads its options in order and becomes the first one that this client
+supports. An option is skipped only if it is unsupported, at any depth. Any
+other error ends the parse. If no option is supported, the result is
+unsupported, and the error reports why each option was skipped.
+
 ## Scalar conversions
 
 | Config value       | Accepted for                               | Notes                                |
@@ -114,3 +153,6 @@ To protect against adversarial configs:
 - Nesting: at most 100 levels per decoded value.
 - Work: at most 100,000 values visited per decoded value. This defeats
   alias amplification ("billion laughs").
+- Config types: at most 100 levels of typed values, and at most 10,000
+  typed values read while parsing one config. Options that
+  `first-supported` skips count toward the total.

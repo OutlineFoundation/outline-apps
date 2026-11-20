@@ -107,6 +107,66 @@ network strategies. `config` was rejected as too generic, and it collides
 with the `config` variable at most call sites. `configyaml` was rejected
 because it names one serialization.
 
+## D12. Parsers are keyed by Go result type and `$type` name
+
+`Parse[T]` finds the parser registered for the Go type `T` and the node's
+`$type`. The Go type is the category: the same name can be registered for a
+stream dialer and for a packet listener, and any Go type can be a category,
+including types defined by an application. There are no category objects to
+declare or share. A parser that returns a concrete type is registered under
+an interface with `As`.
+
+This is the registry of the Outline SDK's `configurl` package, with a Node
+in place of a URL.
+
+## D13. The registry is an argument of every parser
+
+A parser receives the registry and parses nested values with it. An earlier
+design had each parser capture the parsers of its dependencies when it was
+registered. That fixes the meaning of the whole vocabulary at registration:
+nothing outside a parser can change what it does with its children.
+
+Passing the registry makes it the environment of one parse. `Overlay`
+replaces entries for one parse and leaves the shared registry alone, for
+example to supply the dialer that a platform uses to reach the network.
+`Intercept` wraps every parser of a type, and sees values at every depth.
+Both work on parsers that were registered before they existed.
+
+The registry interface is read-only. Registration is a separate interface,
+used during setup.
+
+## D14. `first-supported` is a registry entry for every type
+
+`first-supported` must work in every category, including categories that an
+application or a component defines later. Registering it once per category
+leaves that to every application, and a category that is forgotten simply
+does not negotiate.
+
+A registry cannot answer for a type it only knows at run time: `Lookup`
+would have to return a `Parser[T]` from a `reflect.Type`, which takes
+reflection to build and a second, untyped way into dispatch.
+
+A `Combinator` avoids the problem by never touching the value. It reads its
+own fields, chooses nodes, and asks its caller to parse them. `Parse[T]`
+supplies that callback, so the chosen node is parsed as `T`, with the
+caller's registry and against the same budget. A combinator is registered
+once, under a name, for every result type.
+
+This keeps `first-supported` an ordinary entry. `NewRegistry` registers it,
+because negotiation is part of the format and a config should fall back
+the same way in every application. An application can still disable it in
+an overlay, replace it for one result type, or register combinators of its
+own.
+
+## D15. One parse has one budget
+
+`Decode` bounds the work of decoding one value. It cannot bound parsing as
+a whole: a parser decodes its own fields and hands child nodes to other
+parsers, and aliases let a short document nest `first-supported` so that
+each level multiplies the options below it. `Parse` therefore counts every
+nested call against one limit, carried in the context of the parse.
+Running out of budget is an error, not an unsupported option.
+
 ## Findings about goccy/go-yaml v1.18.0
 
 `goccy_test.go` pins the library behaviors that the package relies on:

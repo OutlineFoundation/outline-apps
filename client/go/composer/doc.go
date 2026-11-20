@@ -25,6 +25,18 @@
 //     name with no struct tags, and are required unless typed [Optional].
 //   - A struct field of type [Node] receives its value undecoded, for the
 //     parser of that value to decode later.
+//   - [Parse] turns a node into a Go value of the type the caller asks for.
+//     A mapping names its parser with a $type key. Parsers are held in a
+//     [Registry], keyed by Go result type and $type name.
+//   - A [Combinator] is a config type for every result type. [FirstSupported]
+//     is the one the format defines: it lets a config offer alternatives and
+//     selects the first that this client supports.
+//
+// Every [Parser] receives the registry and uses it for the values nested in
+// its own. An application can therefore change what a whole config means for
+// one parse without touching the registered parsers: [Overlay] replaces
+// entries, such as the dialer that reaches the network, and [Intercept]
+// observes or rewrites every value of a type.
 //
 // The format is specified in SPEC.md, and the reasons for its design are in
 // DESIGN.md. The package has no dependency on the Outline Client, so that it
