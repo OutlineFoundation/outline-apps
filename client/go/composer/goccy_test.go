@@ -115,6 +115,14 @@ func TestGoccy_AnchorAliasShapes(t *testing.T) {
 	require.Equal(t, "x", alias.Value.GetToken().Value)
 }
 
+// Q6: merge keys parse with a "<<" key token.
+func TestGoccy_MergeKeyShape(t *testing.T) {
+	body := parseBody(t, "base: &b\n  x: 1\nother:\n  <<: *b\n  y: 2")
+	m := body.(*ast.MappingNode)
+	inner := m.Values[1].Value.(*ast.MappingNode)
+	require.Equal(t, "<<", inner.Values[0].Key.GetToken().Value)
+}
+
 // Q7: an explicit empty value parses as *ast.NullNode (not Go nil).
 func TestGoccy_EmptyValue(t *testing.T) {
 	require.IsType(t, &ast.NullNode{}, firstValue(t, "key:"))

@@ -20,6 +20,7 @@ func FuzzParseAndDecode(f *testing.F) {
 	f.Add("a: 1")
 	f.Add("$type: x\nlist: [1, {b: c}]\nk?: v")
 	f.Add("x: &a [*b]\nb: &b 1")
+	f.Add("a: &m\n  <<: *m")
 	f.Fuzz(func(t *testing.T, text string) {
 		node, err := ParseYAML([]byte(text))
 		if err != nil {

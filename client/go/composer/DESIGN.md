@@ -76,13 +76,31 @@ when they are read. Nothing is expanded up front, so an alias cannot
 multiply memory. `Decode` limits depth and the number of values it visits,
 so a config cannot multiply work either.
 
-## D9. Shorthand belongs to each parser
+## D9. Merge keys follow the YAML convention
+
+The access-key documentation uses merge keys (`<<`) to share a cipher and
+secret between the TCP and UDP halves of a transport, so the format
+supports them: https://developer.getoutline.org/vpn/reference/access-key-config/
+
+A key in the mapping wins over a merged key, and earlier merge sources win
+over later ones, as the YAML merge key specification says. Merges are
+expanded when a mapping's entries are read, before fields are matched, so
+they behave the same for every way a mapping is used. Expansion is limited
+in depth and in total work, so a mapping that merges itself is an error
+and repeated aliases cannot multiply the work of a short merge list.
+
+The YAML library's own decoder cannot read the documented example in which
+an anchor is defined inside a merge value and used again later in the
+document (`<<: &shared {...}` followed by `udp: *shared`). Resolving
+aliases in this package makes that example work.
+
+## D10. Shorthand belongs to each parser
 
 Decoding a scalar into a struct is an error. A shorthand such as
 `host:443` for a whole endpoint is the meaning of one config type, and is
 handled by the parser of that type.
 
-## D10. Package name: `composer`
+## D11. Package name: `composer`
 
 The system is Outline Composer: the notation and toolkit for composing
 network strategies. `config` was rejected as too generic, and it collides
