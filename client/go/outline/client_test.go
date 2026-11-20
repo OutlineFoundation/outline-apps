@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/reporting"
 	"github.com/stretchr/testify/require"
@@ -355,9 +355,7 @@ request:
     Authorization: [Bearer SECRET]
   body: '{"foo": "bar"}'
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
-	require.NoError(t, err)
-	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
+	reporter, err := parseReporter("", config)
 	require.NoError(t, err)
 	require.NotNil(t, reporter)
 	request, err := reporter.(*reporting.HTTPReporter).NewRequest()
@@ -378,9 +376,7 @@ func Test_ParseReporter_NoInterval(t *testing.T) {
 $type: http
 request:
   url: https://your-callback-server.com/outline_callback`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
-	require.NoError(t, err)
-	reporter, err := NewReporterParser("", nil).Parse(context.Background(), yamlNode)
+	reporter, err := parseReporter("", config)
 	require.NoError(t, err)
 	require.NotNil(t, reporter)
 	request, err := reporter.(*reporting.HTTPReporter).NewRequest()
@@ -397,12 +393,10 @@ request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
-	require.NoError(t, err)
 	tempDir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	defer os.RemoveAll(tempDir)
-	reporter, err := NewReporterParser(path.Join(tempDir, "cookies.txt"), nil).Parse(context.Background(), yamlNode)
+	reporter, err := parseReporter(path.Join(tempDir, "cookies.txt"), config)
 	require.NoError(t, err)
 	require.NotNil(t, reporter)
 	request, err := reporter.(*reporting.HTTPReporter).NewRequest()
@@ -418,8 +412,50 @@ request:
   url: https://your-callback-server.com/outline_callback
 enable_cookies: true
 interval: 24h`
-	yamlNode, err := configyaml.ParseConfigYAML(config)
-	require.NoError(t, err)
-	_, err = NewReporterParser("", nil).Parse(context.Background(), yamlNode)
+	_, err := parseReporter("", config)
 	require.Error(t, err)
+}
+
+// parseReporter parses and builds a reporter config the way New does.
+func parseReporter(cookiesFilename string, text string) (reporting.Reporter, error) {
+	node, err := composer.ParseYAML([]byte(text))
+	if err != nil {
+		return nil, err
+	}
+	registry := (&ClientConfig{}).newRegistry(cookiesFilename)
+	cfg, err := composer.Parse[reporting.Config](context.Background(), registry, node)
+	if err != nil {
+		return nil, err
+	}
+	return cfg.NewReporter(context.Background(), nil)
+}
+
+func Test_EndSessionEndsTheBuildSession(t *testing.T) {
+	result := (&ClientConfig{}).New("", "transport: ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpTRUNSRVQ@example.com:4321/")
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	client := result.Client
+	require.NoError(t, client.StartSession())
+	require.NoError(t, client.sessionCtx.Err())
+	require.NoError(t, client.EndSession())
+	require.ErrorIs(t, client.sessionCtx.Err(), context.Canceled)
+}
+
+func Test_NewTransport_AnchorInMergeKey(t *testing.T) {
+	// The documented "YAML Anchors with Merge Key" example: an anchor defined inside a merge
+	// value and reused outside it. The legacy YAML decoding could not read it.
+	config := `
+transport:
+  $type: tcpudp
+  tcp:
+    <<: &shared
+      $type: shadowsocks
+      endpoint: example.com:4321
+      cipher: chacha20-ietf-poly1305
+      secret: SECRET
+    prefix: "POST "
+  udp: *shared`
+	result := (&ClientConfig{}).New("", config)
+	require.Nil(t, result.Error, "Got %v", result.Error)
+	require.Equal(t, "example.com:4321", result.Client.sd.FirstHop)
+	require.Equal(t, "example.com:4321", result.Client.pr.FirstHop)
 }

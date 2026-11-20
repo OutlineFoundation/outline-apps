@@ -619,3 +619,38 @@ func Test_Demonstrate_ValueToNode_IsBroken(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, "SECRET/!@#", string(stringNode.Value))
 }
+
+func Test_doParseTunnelConfig_AnchorInMergeKey(t *testing.T) {
+	// The documented "YAML Anchors with Merge Key" example, which the legacy YAML decoding could
+	// not read. The stored client config has the merge applied and the alias expanded.
+	clientConfig := `
+transport:
+  $type: tcpudp
+  tcp:
+    <<: &shared
+      $type: shadowsocks
+      endpoint: example.com:4321
+      cipher: chacha20-ietf-poly1305
+      secret: SECRET
+    prefix: "POST "
+  udp: *shared`
+
+	result := doParseTunnelConfig(clientConfig)
+
+	require.Nil(t, result.Error)
+	require.Equal(t,
+		`{"client":"{\"transport\":{\"$type\":\"tcpudp\",\"tcp\":{\"$type\":\"shadowsocks\",\"cipher\":\"chacha20-ietf-poly1305\",\"endpoint\":\"example.com:4321\",\"prefix\":\"POST \",\"secret\":\"SECRET\"},\"udp\":{\"$type\":\"shadowsocks\",\"cipher\":\"chacha20-ietf-poly1305\",\"endpoint\":\"example.com:4321\",\"secret\":\"SECRET\"}}}","firstHop":"example.com:4321","connectionType":"tunneled"}`,
+		result.Value)
+}
+
+func Test_doParseTunnelConfig_ScalarTypes(t *testing.T) {
+	// Numbers, booleans, and nulls keep their JSON types in the stored client config.
+	result := doParseTunnelConfig(`{"server": "example.com", "server_port": 4321, "method": "chacha20-ietf-poly1305", "password": "SECRET"}`)
+	require.Nil(t, result.Error)
+	require.Contains(t, result.Value, `\"server_port\":4321`)
+
+	result = doParseTunnelConfig("transport: {$type: tcpudp, tcp: null, udp: ~}\nextra: [true, 1.5, -2]\n")
+	require.Nil(t, result.Error)
+	require.Contains(t, result.Value, `\"extra\":[true,1.5,-2]`)
+	require.Contains(t, result.Value, `\"tcp\":null`)
+}

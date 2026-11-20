@@ -16,9 +16,8 @@
 // compatibility forms, app-only configs, and connection metadata that the
 // Outline Client layers over the reusable composer and netconfig packages.
 //
-// The client does not use this package yet. It is built beside
-// configregistry, and a differential test checks that both read every config
-// in its corpus the same way.
+// It is built beside configregistry, and a differential test checks that
+// both read every config in its corpus the same way.
 package composerconfig
 
 import (

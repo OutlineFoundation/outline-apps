@@ -15,46 +15,22 @@
 package outline
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
-
-	"github.com/goccy/go-yaml"
 )
-
-// providerConfig is the config fetched from the provider. It may be either an error, or a tunnel configregistry.
-type providerConfig struct {
-	ProviderErrorConfig  `yaml:",inline"`
-	ProviderTunnelConfig `yaml:",inline"`
-}
-
-// ProviderErrorConfig is config returned by the provider with a custom error to
-// show to the user.
-type ProviderErrorConfig struct {
-	Error *struct {
-		Message string
-		Details string
-	}
-}
-
-// ProviderTunnelConfig is the config to fully configure the VPN.
-type ProviderTunnelConfig struct {
-	ProviderClientConfig `yaml:",inline"`
-}
 
 // firstHopAndTunnelConfigJSON must match FirstHopAndTunnelConfigJson in configregistry.ts.
 type firstHopAndTunnelConfigJSON struct {
 	Client         string          `json:"client"`
 	FirstHop       string          `json:"firstHop"`
 	ConnectionType configregistry.ConnType `json:"connectionType"`
-}
-
-func hasKey[K comparable, V any](m map[K]V, key K) bool {
-	_, ok := m[key]
-	return ok
 }
 
 func combinedConnectionType(streamConnType, packetConnType configregistry.ConnType) configregistry.ConnType {
@@ -81,60 +57,55 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	// - ss:// link
 	// - Legacy Shadowsocks JSON (parsed as YAML)
 	// - Advanced YAML format
-	var stringValue string
-	var clientConfigMap map[string]any
-	if err := yaml.Unmarshal([]byte(input), &stringValue); err == nil {
-		// Legacy URL format. Input is the transport configregistry.
-		clientConfigMap = map[string]any{"transport": stringValue}
-	} else {
-		var yamlValue map[string]any
-		if err := yaml.Unmarshal([]byte(input), &yamlValue); err != nil {
-			return &InvokeMethodResult{
-				Error: &platerrors.PlatformError{
-					Code:    platerrors.InvalidConfig,
-					Message: fmt.Sprintf("failed to parse: %s", err),
-				},
+	root, err := composer.ParseYAML([]byte(input))
+	if err != nil {
+		return parseFailure(err)
+	}
+	var clientConfigValue any
+	switch root.Kind() {
+	case composer.KindMapping:
+		var keys map[string]composer.Node
+		if err := root.Decode(&keys); err != nil {
+			return parseFailure(err)
+		}
+		_, hasTransport := keys["transport"]
+		errorNode, hasError := keys["error"]
+		if !hasTransport && !hasError {
+			// Legacy JSON format. Input is the transport config.
+			transportValue, err := plainValue(root)
+			if err != nil {
+				return parseFailure(err)
+			}
+			clientConfigValue = map[string]any{"transport": transportValue}
+			break
+		}
+		// New format. Process provider error, if present.
+		if !errorNode.IsAbsent() {
+			platErr, err := providerError(errorNode)
+			if err != nil {
+				return parseFailure(err)
+			}
+			return &InvokeMethodResult{Error: platErr}
+		}
+		if clientConfigValue, err = plainValue(root); err != nil {
+			return parseFailure(err)
+		}
+	case composer.KindScalar, composer.KindAbsent:
+		// Legacy URL format. Input is the transport config.
+		text := ""
+		if !root.IsAbsent() {
+			if text, err = root.Text(); err != nil {
+				return parseFailure(err)
 			}
 		}
-
-		if hasKey(yamlValue, "transport") || hasKey(yamlValue, "error") {
-			// New format. Parse as tunnel config
-			providerConfig := providerConfig{}
-			if err := yaml.Unmarshal([]byte(input), &providerConfig); err != nil {
-				return &InvokeMethodResult{
-					Error: &platerrors.PlatformError{
-						Code:    platerrors.InvalidConfig,
-						Message: fmt.Sprintf("failed to parse: %s", err),
-					},
-				}
-			}
-
-			// Process provider error, if present.
-			if providerConfig.Error != nil {
-				platErr := &platerrors.PlatformError{
-					Code:    platerrors.ProviderError,
-					Message: providerConfig.Error.Message,
-				}
-				if providerConfig.Error.Details != "" {
-					platErr.Details = map[string]any{
-						"details": providerConfig.Error.Details,
-					}
-				}
-				return &InvokeMethodResult{Error: platErr}
-			}
-
-			// Extract client configregistry.
-			clientConfigMap = yamlValue
-		} else {
-			// Legacy JSON format. Input is the transport configregistry.
-			clientConfigMap = map[string]any{"transport": yamlValue}
-		}
+		clientConfigValue = map[string]any{"transport": text}
+	default:
+		return parseFailure(fmt.Errorf("expected a string or a map, found %v", root.Kind()))
 	}
 
-	// Use JSON marshaling from the standard library because the YAML library is buggy.
-	// See https://github.com/OutlineFoundation/outline-apps/issues/2576.
-	// JSON is a subset of YAML, so that's valid YAML.
-	clientConfigBytes, err := json.Marshal(clientConfigMap)
+	// The client config is stored and handed back to ClientConfig.New when connecting. It is
+	// normalized to JSON, with aliases and merge keys expanded, which is valid YAML.
+	clientConfigBytes, err := json.Marshal(clientConfigValue)
 	if err != nil {
 		return &InvokeMethodResult{
 			Error: &platerrors.PlatformError{
@@ -144,27 +115,22 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 		}
 	}
 
-	result := (&ClientConfig{
-		DataDir: GetBackendConfig().DataDir,
-	}).New("", string(clientConfigBytes))
-	if result.Error != nil {
-		return &InvokeMethodResult{
-			Error: result.Error,
-		}
+	// Validate and describe the stored config, without building it.
+	clientConfig := &ClientConfig{DataDir: GetBackendConfig().DataDir}
+	registry := clientConfig.newRegistry(cookiesFilename(clientConfig.DataDir, ""))
+	parsed, err := parseClientConfig(context.Background(), registry, string(clientConfigBytes))
+	if err != nil {
+		return &InvokeMethodResult{Error: platerrors.ToPlatformError(err)}
 	}
 	response := firstHopAndTunnelConfigJSON{
 		Client: string(clientConfigBytes),
 	}
 
-	streamFirstHop := result.Client.sd.ConnectionProviderInfo.FirstHop
-	packetFirstHop := result.Client.pr.ConnectionProviderInfo.FirstHop
-	if streamFirstHop == packetFirstHop {
-		response.FirstHop = streamFirstHop
+	streamInfo, packetInfo := parsed.transportInfo.Stream, parsed.transportInfo.Packet
+	if streamInfo.FirstHop == packetInfo.FirstHop {
+		response.FirstHop = streamInfo.FirstHop
 	}
-
-	streamConnType := result.Client.sd.ConnectionProviderInfo.ConnType
-	packetConnType := result.Client.pr.ConnectionProviderInfo.ConnType
-	response.ConnectionType = combinedConnectionType(streamConnType, packetConnType)
+	response.ConnectionType = combinedConnectionType(streamInfo.ConnType, packetInfo.ConnType)
 
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -179,4 +145,125 @@ func doParseTunnelConfig(input string) *InvokeMethodResult {
 	return &InvokeMethodResult{
 		Value: string(responseBytes),
 	}
+}
+
+func parseFailure(err error) *InvokeMethodResult {
+	return &InvokeMethodResult{
+		Error: &platerrors.PlatformError{
+			Code:    platerrors.InvalidConfig,
+			Message: fmt.Sprintf("failed to parse: %s", err),
+		},
+	}
+}
+
+// providerError reads the error a provider returns in place of a config, to show to the user.
+// Fields other than message and details are ignored.
+func providerError(node composer.Node) (*platerrors.PlatformError, error) {
+	var fields map[string]composer.Node
+	if err := node.Decode(&fields); err != nil {
+		return nil, err
+	}
+	platErr := &platerrors.PlatformError{Code: platerrors.ProviderError}
+	if message := fields["message"]; !message.IsAbsent() {
+		text, err := message.Text()
+		if err != nil {
+			return nil, err
+		}
+		platErr.Message = text
+	}
+	if details := fields["details"]; !details.IsAbsent() {
+		text, err := details.Text()
+		if err != nil {
+			return nil, err
+		}
+		if text != "" {
+			platErr.Details = map[string]any{"details": text}
+		}
+	}
+	return platErr, nil
+}
+
+// Limits for plainValue, matching those of [composer.Node.Decode].
+const (
+	maxPlainValueDepth = 100
+	maxPlainValues     = 100_000
+)
+
+var errTooManyValues = errors.New("config has too many values")
+
+// plainValue returns the value of node as the maps, slices, strings, numbers, booleans, and nils
+// that encoding/json marshals, with aliases and merge keys expanded.
+func plainValue(node composer.Node) (any, error) {
+	count := 0
+	return plainValueDepth(node, 0, &count)
+}
+
+func plainValueDepth(node composer.Node, depth int, count *int) (any, error) {
+	*count++
+	if *count > maxPlainValues {
+		return nil, errTooManyValues
+	}
+	if depth > maxPlainValueDepth {
+		return nil, fmt.Errorf("config nesting exceeds %d levels", maxPlainValueDepth)
+	}
+	switch node.Kind() {
+	case composer.KindAbsent:
+		return nil, nil
+	case composer.KindMapping:
+		var entries map[string]composer.Node
+		if err := node.Decode(&entries); err != nil {
+			return nil, err
+		}
+		out := make(map[string]any, len(entries))
+		for key, entry := range entries {
+			value, err := plainValueDepth(entry, depth+1, count)
+			if err != nil {
+				return nil, err
+			}
+			out[key] = value
+		}
+		return out, nil
+	case composer.KindSequence:
+		var items []composer.Node
+		if err := node.Decode(&items); err != nil {
+			return nil, err
+		}
+		out := make([]any, len(items))
+		for i, item := range items {
+			value, err := plainValueDepth(item, depth+1, count)
+			if err != nil {
+				return nil, err
+			}
+			out[i] = value
+		}
+		return out, nil
+	default:
+		return scalarValue(node)
+	}
+}
+
+// scalarValue returns the typed value of a scalar node. Decode accepts each target type only for
+// the matching kind of scalar, so the first that succeeds is the scalar's type.
+func scalarValue(node composer.Node) (any, error) {
+	var b bool
+	if node.Decode(&b) == nil {
+		return b, nil
+	}
+	var i int64
+	if node.Decode(&i) == nil {
+		return i, nil
+	}
+	var u uint64
+	if node.Decode(&u) == nil {
+		return u, nil
+	}
+	var f float64
+	if node.Decode(&f) == nil {
+		return f, nil
+	}
+	var s string
+	if err := node.Decode(&s); err != nil {
+		return nil, err
+	}
+	return s, nil
 }

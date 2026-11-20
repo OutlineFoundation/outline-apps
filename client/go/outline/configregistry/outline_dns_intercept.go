@@ -49,6 +49,12 @@ var linkLocalDNS = netip.MustParseAddrPort("169.254.113.53:53")
 //   - If UDP is available, it forwards DNS queries to the specified resolverAddr.
 //   - If UDP is blocked, it sends back a truncated DNS response.
 //     This forces the OS to retry the DNS query over TCP.
+// WrapTransportPairWithOutlineDNS applies [wrapTransportPairWithOutlineDNS] to a transport built
+// outside this package.
+func WrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *PacketListener) (*TransportPair, error) {
+	return wrapTransportPairWithOutlineDNS(sd, pl)
+}
+
 func wrapTransportPairWithOutlineDNS(sd *Dialer[transport.StreamConn], pl *PacketListener) (*TransportPair, error) {
 	// Randomly selects a DNS resolver for the VPN session
 	remoteDNS := outlineDNSResolvers[rand.IntN(len(outlineDNSResolvers))]

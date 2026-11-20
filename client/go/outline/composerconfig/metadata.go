@@ -60,6 +60,10 @@ func Describe(cfg any) (ConnInfo, error) {
 		return describeDialed(c.Dialer, c.Address)
 	case *netconfig.PacketDialEndpointConfig:
 		return describeDialed(c.Dialer, c.Address)
+	case *resolvingStreamDialEndpoint:
+		return Describe(c.StreamDialEndpointConfig)
+	case *resolvingPacketDialEndpoint:
+		return Describe(c.PacketDialEndpointConfig)
 	case *netconfig.WebsocketEndpointConfig:
 		return Describe(c.Endpoint)
 	case *netconfig.ShadowsocksStreamDialerConfig:
