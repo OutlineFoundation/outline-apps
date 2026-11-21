@@ -20,32 +20,29 @@ import (
 	"fmt"
 	"net/netip"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/iptable"
 	"golang.getoutline.org/sdk/transport"
 )
 
 type ipTableRootConfig struct {
-	Table    []ipTableEntryConfig  `yaml:"table"`
-	Fallback configyaml.ConfigNode `yaml:"fallback,omitempty"`
+	Table    composer.Optional[[]ipTableEntryConfig]
+	Fallback composer.Optional[composer.Node]
 }
 
 type ipTableEntryConfig struct {
-	IPs    []string              `yaml:"ips"`
-	Dialer configyaml.ConfigNode `yaml:"dialer"`
+	IPs    composer.Optional[[]string]
+	Dialer composer.Optional[composer.Node]
 }
 
-func parseIPTableStreamDialer(
-	ctx context.Context,
-	configMap map[string]any,
-	parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]],
-) (*Dialer[transport.StreamConn], error) {
+func parseIPTableStreamDialer(ctx context.Context, r composer.Registry, node composer.Node) (*Dialer[transport.StreamConn], error) {
 	var rootCfg ipTableRootConfig
-	if err := configyaml.MapToAny(configMap, &rootCfg); err != nil {
+	if err := node.Decode(&rootCfg); err != nil {
 		return nil, fmt.Errorf("failed to map iptable stream config: %w", err)
 	}
+	table := rootCfg.Table.Or(nil)
 
-	if len(rootCfg.Table) == 0 {
+	if len(table) == 0 {
 		return nil, errors.New("iptable config 'table' must not be empty for stream dialer")
 	}
 
@@ -54,12 +51,13 @@ func parseIPTableStreamDialer(
 	allConnBlocked := true
 
 	dialerTable := iptable.NewIPTable[transport.StreamDialer]()
-	for i, entryCfg := range rootCfg.Table {
-		if entryCfg.Dialer == nil {
+	for i, entryCfg := range table {
+		dialerNode := entryCfg.Dialer.Or(composer.Node{})
+		if dialerNode.IsAbsent() {
 			return nil, fmt.Errorf("iptable entry %d has no dialer specified", i)
 		}
 
-		parsedSubDialer, err := parseSD(ctx, entryCfg.Dialer)
+		parsedSubDialer, err := composer.Parse[*Dialer[transport.StreamConn]](ctx, r, dialerNode)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse nested stream dialer for table entry %d: %w", i, err)
@@ -77,7 +75,7 @@ func parseIPTableStreamDialer(
 
 		ipsDialer := transport.FuncStreamDialer(parsedSubDialer.Dial)
 
-		for _, ip := range entryCfg.IPs {
+		for _, ip := range entryCfg.IPs.Or(nil) {
 			var currentPrefix netip.Prefix
 			parsedPrefix, errPrefix := netip.ParsePrefix(ip)
 			if errPrefix == nil {
@@ -96,8 +94,8 @@ func parseIPTableStreamDialer(
 
 	var fallbackDialer transport.StreamDialer
 
-	if rootCfg.Fallback != nil {
-		parsedFallbackDialer, err := parseSD(ctx, rootCfg.Fallback)
+	if fallbackNode := rootCfg.Fallback.Or(composer.Node{}); !fallbackNode.IsAbsent() {
+		parsedFallbackDialer, err := composer.Parse[*Dialer[transport.StreamConn]](ctx, r, fallbackNode)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse nested stream dialer fallback: %w", err)
@@ -142,10 +140,4 @@ func parseIPTableStreamDialer(
 			ConnType: connType,
 		},
 	}, nil
-}
-
-func NewIPTableStreamDialerSubParser(parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-	return func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-		return parseIPTableStreamDialer(ctx, input, parseSD)
-	}
 }

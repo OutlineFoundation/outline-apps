@@ -22,13 +22,13 @@ import (
 	"net/url"
 	"testing"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
 )
 
-func parseFromYAMLText(configText string) (*ShadowsocksConfig, error) {
-	node, err := configyaml.ParseConfigYAML(configText)
+func parseFromYAMLText(configText string) (*shadowsocksFields, error) {
+	node, err := composer.ParseYAML([]byte(configText))
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +96,17 @@ func TestParseShadowsocksConfig_URL(t *testing.T) {
 
 	t.Run("Invalid Cipher Fails", func(t *testing.T) {
 		configString := "ss://chacha20-ietf-poly13051234567@example.com:1234"
-		_, err := parseShadowsocksParams(configString)
+		node, err := stringNode(configString)
+		require.NoError(t, err)
+		_, err = parseShadowsocksParams(node)
 		require.Error(t, err)
 	})
 
 	t.Run("Unsupported Cipher Fails", func(t *testing.T) {
 		configString := "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwnTpLeTUyN2duU3FEVFB3R0JpQ1RxUnlT@example.com:1234"
-		_, err := parseShadowsocksParams(configString)
+		node, err := stringNode(configString)
+		require.NoError(t, err)
+		_, err = parseShadowsocksParams(node)
 		require.Error(t, err)
 	})
 }
@@ -114,6 +118,13 @@ func TestParseShadowsocksConfig_LegacyJSON(t *testing.T) {
 		require.Equal(t, "example.com:1234", config.Endpoint)
 		require.Equal(t, "chacha20-ietf-poly1305", config.Cipher)
 		require.Equal(t, "SECRET/!@#", config.Secret)
+	})
+
+	t.Run("Port as string and password as number", func(t *testing.T) {
+		config, err := parseFromYAMLText(`{"server":"example.com","server_port":"1234","method":"chacha20-ietf-poly1305","password":0123456}`)
+		require.NoError(t, err)
+		require.Equal(t, "example.com:1234", config.Endpoint)
+		require.Equal(t, "0123456", config.Secret)
 	})
 
 	t.Run("With Prefix", func(t *testing.T) {
@@ -144,59 +155,52 @@ func TestParseShadowsocksConfig_LegacyJSON(t *testing.T) {
 }
 
 func TestParseShadowsocksConfig_YAML(t *testing.T) {
-	streamEndpoints := configyaml.NewTypeParser(func(ctx context.Context, config configyaml.ConfigNode) (*Endpoint[transport.StreamConn], error) {
-		require.Equal(t, "example.com:1234", config)
+	// The endpoints are parsed with the registry given in the call.
+	endpoints := composer.NewRegistry()
+	composer.Register(endpoints, composer.DefaultName, func(ctx context.Context, _ composer.Registry, config composer.Node) (*Endpoint[transport.StreamConn], error) {
+		address, err := config.Text()
+		require.NoError(t, err)
+		require.Equal(t, "example.com:1234", address)
 		return &Endpoint[transport.StreamConn]{}, nil
 	})
-	packetEndpoints := configyaml.NewTypeParser(func(ctx context.Context, config configyaml.ConfigNode) (*Endpoint[net.Conn], error) {
-		require.Equal(t, "example.com:1234", config)
+	composer.Register(endpoints, composer.DefaultName, func(ctx context.Context, _ composer.Registry, config composer.Node) (*Endpoint[net.Conn], error) {
+		address, err := config.Text()
+		require.NoError(t, err)
+		require.Equal(t, "example.com:1234", address)
 		return &Endpoint[net.Conn]{}, nil
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		config := map[string]any{
-			"endpoint": "example.com:1234",
-			"cipher":   "chacha20-ietf-poly1305",
-			"secret":   "SECRET/!@#",
-			"prefix":   "outline-123",
-		}
-		transport, err := parseShadowsocksTransport(context.Background(), config, streamEndpoints.Parse, packetEndpoints.Parse)
+		config, err := composer.ParseYAML([]byte(`{endpoint: "example.com:1234", cipher: "chacha20-ietf-poly1305", secret: "SECRET/!@#", prefix: "outline-123"}`))
+		require.NoError(t, err)
+		transport, err := parseShadowsocksTransport(context.Background(), endpoints, config)
 		require.NoError(t, err)
 		require.NotNil(t, transport)
 	})
 
 	t.Run("Fail on unsupported cipher", func(t *testing.T) {
-		config := map[string]any{
-			"endpoint": "example.com:1234",
-			"cipher":   "NOT SUPPORTED",
-			"secret":   "SECRET/!@#",
-			"prefix":   "outline-123",
-		}
-		_, err := parseShadowsocksTransport(context.Background(), config, streamEndpoints.Parse, packetEndpoints.Parse)
+		config, err := composer.ParseYAML([]byte(`{endpoint: "example.com:1234", cipher: "NOT SUPPORTED", secret: "SECRET/!@#", prefix: "outline-123"}`))
+		require.NoError(t, err)
+		_, err = parseShadowsocksTransport(context.Background(), endpoints, config)
 		require.Error(t, err)
 	})
 
 	t.Run("Fail on extraneous field", func(t *testing.T) {
-		config := map[string]any{
-			"endpoint": "example.com:1234",
-			"cipher":   "chacha20-ietf-poly1305",
-			"secret":   "SECRET/!@#",
-			"prefix":   "outline-123",
-			"extra":    "NOT SUPPORTED",
-		}
-		_, err := parseShadowsocksTransport(context.Background(), config, streamEndpoints.Parse, packetEndpoints.Parse)
+		config, err := composer.ParseYAML([]byte(`{endpoint: "example.com:1234", cipher: "chacha20-ietf-poly1305", secret: "SECRET/!@#", prefix: "outline-123", extra: "NOT SUPPORTED"}`))
+		require.NoError(t, err)
+		_, err = parseShadowsocksTransport(context.Background(), endpoints, config)
 		require.Error(t, err)
 	})
 
 	t.Run("Prefix", func(t *testing.T) {
-		yamlNode, err := configyaml.ParseConfigYAML(`{
+		yamlNode, err := composer.ParseYAML([]byte(`{
   "server": "123.x.x.x",
   "server_port": 443,
   "password": "xxxxx",
   "method": "chacha20-ietf-poly1305",
   "prefix": "SSH-2.0\r\n"
 }
-`)
+`))
 		require.NoError(t, err)
 		require.NotNil(t, yamlNode)
 		config, err := parseShadowsocksConfig(yamlNode)

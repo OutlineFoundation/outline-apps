@@ -21,7 +21,7 @@ import (
 
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/tlsfrag"
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 )
 
 const (
@@ -40,17 +40,11 @@ func randomSplitLength() int {
 	return splitLength
 }
 
-func NewProxylessTransportPairSubParser(parseSD configyaml.ParseFunc[*Dialer[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*TransportPair, error) {
-	return func(ctx context.Context, input map[string]any) (*TransportPair, error) {
-		return parseProxylessTransportPair(ctx, input, parseSD)
-	}
-}
-
-func parseProxylessTransportPair(ctx context.Context, configMap map[string]any, _ configyaml.ParseFunc[*Dialer[transport.StreamConn]]) (*TransportPair, error) {
-	// TODO: use the streamDialers.Parse parser for the DNS config
+func parseProxylessTransportPair(_ context.Context, _ composer.Registry, node composer.Node) (*TransportPair, error) {
+	// TODO: use the registry to parse the DNS config
 
 	var config BasicAccessConfig
-	if err := configyaml.MapToAny(configMap, &config); err != nil {
+	if err := node.Decode(&config); err != nil {
 		return nil, fmt.Errorf("invalid config format: %w", err)
 	}
 

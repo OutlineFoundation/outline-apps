@@ -20,31 +20,31 @@ import (
 	"net"
 	"testing"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"golang.getoutline.org/sdk/transport"
 	"github.com/stretchr/testify/require"
 )
 
-func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
+func newTestTransportProvider() composer.Registry {
 	tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 	udpDialer := &transport.UDPDialer{}
-	return NewDefaultTransportProvider(tcpDialer, udpDialer)
+	return NewRegistry(tcpDialer, udpDialer)
 }
 
 func TestRegisterDefaultProviders(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`
+	node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp: &shared
   $type: shadowsocks
   endpoint: example.com:1234
   cipher: chacha20-ietf-poly1305
   secret: SECRET
-udp: *shared`)
+udp: *shared`))
 	require.NoError(t, err)
 
-	d, err := provider.Parse(context.Background(), node)
+	d, err := composer.Parse[*TransportPair](context.Background(), provider, node)
 	require.NoError(t, err)
 
 	require.NotNil(t, d.StreamDialer)
@@ -58,10 +58,10 @@ udp: *shared`)
 func TestRegisterParseURL(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server`)
+	node, err := composer.ParseYAML([]byte(`ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server`))
 	require.NoError(t, err)
 
-	d, err := provider.Parse(context.Background(), node)
+	d, err := composer.Parse[*TransportPair](context.Background(), provider, node)
 	require.NoError(t, err)
 
 	require.NotNil(t, d.StreamDialer)
@@ -75,10 +75,10 @@ func TestRegisterParseURL(t *testing.T) {
 func TestRegisterParseURLInQuotes(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server"`)
+	node, err := composer.ParseYAML([]byte(`"ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpaTXJSMW92ZmRBaEQ@example.com:4321/#My%20Server"`))
 	require.NoError(t, err)
 
-	d, err := provider.Parse(context.Background(), node)
+	d, err := composer.Parse[*TransportPair](context.Background(), provider, node)
 	require.NoError(t, err)
 
 	require.NotNil(t, d.StreamDialer)
@@ -98,7 +98,7 @@ func (d *errorStreamDialer) DialStream(ctx context.Context, addr string) (transp
 }
 
 func TestParseIPTableTCP(t *testing.T) {
-	tp := NewDefaultTransportProvider(
+	tp := NewRegistry(
 		&errorStreamDialer{name: "default-tcp"},
 		nil, // UDP transport not under test.
 	)
@@ -119,10 +119,10 @@ tcp:
       dialer: *shared
 udp: null`
 
-	node, err := configyaml.ParseConfigYAML(yamlConfig)
+	node, err := composer.ParseYAML([]byte(yamlConfig))
 	require.NoError(t, err)
 
-	transportPair, err := tp.Parse(context.Background(), node)
+	transportPair, err := composer.Parse[*TransportPair](context.Background(), tp, node)
 	require.NoError(t, err)
 	require.NotNil(t, transportPair.StreamDialer, "StreamDialer should be configured")
 
@@ -144,14 +144,14 @@ func TestParseDefaultAndBlockTCP(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("direct", func(t *testing.T) {
-		node, err := configyaml.ParseConfigYAML(`
+		node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp:
   $type: direct
-udp: null`)
+udp: null`))
 		require.NoError(t, err)
 
-		transportPair, err := provider.Parse(ctx, node)
+		transportPair, err := composer.Parse[*TransportPair](ctx, provider, node)
 		require.NoError(t, err)
 		require.NotNil(t, transportPair)
 		require.NotNil(t, transportPair.StreamDialer)
@@ -159,14 +159,14 @@ udp: null`)
 	})
 
 	t.Run("block", func(t *testing.T) {
-		node, err := configyaml.ParseConfigYAML(`
+		node, err := composer.ParseYAML([]byte(`
 $type: tcpudp
 tcp:
   $type: block
-udp: null`)
+udp: null`))
 		require.NoError(t, err)
 
-		transportPair, err := provider.Parse(ctx, node)
+		transportPair, err := composer.Parse[*TransportPair](ctx, provider, node)
 		require.NoError(t, err)
 		require.NotNil(t, transportPair)
 		require.NotNil(t, transportPair.StreamDialer)
@@ -176,4 +176,49 @@ udp: null`)
 		require.Error(t, err)
 		require.Equal(t, "blocked by config", err.Error())
 	})
+}
+
+// customResolver is a type this package knows nothing about.
+type customResolver struct{ Address string }
+
+func TestRegisterCustomType(t *testing.T) {
+	// A caller adds a config type of its own, and a strategy that uses both it and a client type.
+	r := NewRegistry(&transport.TCPDialer{}, &transport.UDPDialer{})
+	composer.Register(r, "udp", func(_ context.Context, _ composer.Registry, node composer.Node) (*customResolver, error) {
+		var resolver customResolver
+		return &resolver, node.Decode(&resolver)
+	})
+	var parsed *customResolver
+	composer.Register(r, "custom", func(ctx context.Context, r composer.Registry, node composer.Node) (*Dialer[transport.StreamConn], error) {
+		var config struct {
+			Resolver composer.Node
+			Dialer   composer.Node
+		}
+		if err := node.Decode(&config); err != nil {
+			return nil, err
+		}
+		var err error
+		if parsed, err = composer.Parse[*customResolver](ctx, r, config.Resolver); err != nil {
+			return nil, err
+		}
+		return composer.Parse[*Dialer[transport.StreamConn]](ctx, r, config.Dialer)
+	})
+
+	node, err := composer.ParseYAML([]byte(`
+$type: tcpudp
+tcp:
+  $type: custom
+  resolver: {$type: udp, address: "8.8.8.8:53"}
+  dialer:
+    $type: shadowsocks
+    endpoint: example.com:1234
+    cipher: chacha20-ietf-poly1305
+    secret: SECRET`))
+	require.NoError(t, err)
+
+	transportPair, err := composer.Parse[*TransportPair](context.Background(), r, node)
+	require.NoError(t, err)
+	require.Equal(t, &customResolver{Address: "8.8.8.8:53"}, parsed)
+	require.Equal(t, ConnTypeTunneled, transportPair.StreamDialer.ConnType)
+	require.Equal(t, "example.com:1234", transportPair.StreamDialer.FirstHop)
 }
