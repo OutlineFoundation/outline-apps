@@ -120,6 +120,13 @@ func TestParseShadowsocksConfig_LegacyJSON(t *testing.T) {
 		require.Equal(t, "SECRET/!@#", config.Secret)
 	})
 
+	t.Run("Port as string and password as number", func(t *testing.T) {
+		config, err := parseFromYAMLText(`{"server":"example.com","server_port":"1234","method":"chacha20-ietf-poly1305","password":0123456}`)
+		require.NoError(t, err)
+		require.Equal(t, "example.com:1234", config.Endpoint)
+		require.Equal(t, "0123456", config.Secret)
+	})
+
 	t.Run("With Prefix", func(t *testing.T) {
 		config, err := parseFromYAMLText(`{"server":"example.com","server_port":1234,"method":"chacha20-ietf-poly1305","password":"SECRET/!@#","prefix": "HTTP/1.1"}`)
 		require.NoError(t, err)

@@ -41,12 +41,29 @@ func TestDecode_Scalars(t *testing.T) {
 	require.Equal(t, true, decodeAll[bool](t, "true"))
 }
 
+// Deployed configs write passwords made of digits without quotes, and ports
+// with them, so string and integer fields convert.
+func TestDecode_ScalarConversions(t *testing.T) {
+	// A string field takes any scalar, as written.
+	require.Equal(t, "443", decodeAll[string](t, "443"))
+	require.Equal(t, "0123", decodeAll[string](t, "0123"))
+	require.Equal(t, "1.50", decodeAll[string](t, "1.50"))
+	require.Equal(t, "true", decodeAll[string](t, "true"))
+
+	// An integer field takes a string of decimal digits, or a float with no fractional part.
+	require.Equal(t, uint16(443), decodeAll[uint16](t, `"443"`))
+	require.Equal(t, -7, decodeAll[int](t, `"-7"`))
+	require.Equal(t, uint16(443), decodeAll[uint16](t, "443.0"))
+}
+
 func TestDecode_ScalarErrors(t *testing.T) {
 	var s string
-	require.Error(t, mustParse(t, "443").Decode(&s), "no int->string coercion")
+	require.Error(t, mustParse(t, "[443]").Decode(&s), "no list->string coercion")
 
 	var i int
-	require.Error(t, mustParse(t, `"443"`).Decode(&i), "no string->int coercion")
+	for _, text := range []string{`"0x1bb"`, `" 443"`, `""`, `"4 43"`, "443.5", "true"} {
+		require.Error(t, mustParse(t, text).Decode(&i), "%s is not an integer", text)
+	}
 
 	var i8 int8
 	require.Error(t, mustParse(t, "1000").Decode(&i8), "int8 range check")
@@ -54,6 +71,8 @@ func TestDecode_ScalarErrors(t *testing.T) {
 	var u uint16
 	require.Error(t, mustParse(t, "70000").Decode(&u), "uint16 range check")
 	require.Error(t, mustParse(t, "-1").Decode(&u), "negative into uint")
+	require.Error(t, mustParse(t, `"-1"`).Decode(&u), "negative string into uint")
+	require.Error(t, mustParse(t, `"70000"`).Decode(&u), "uint16 range check of a string")
 
 	var b bool
 	require.Error(t, mustParse(t, "yes").Decode(&b), "only true/false are bool")

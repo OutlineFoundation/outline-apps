@@ -292,3 +292,19 @@ func TestNode_Text(t *testing.T) {
 		}
 	}
 }
+
+func TestNode_Scalar(t *testing.T) {
+	n := mustParse(t, "plain: 8080\nquoted: \"8080\"\nneg: -1\nbig: 18446744073709551615\nfloat: 1.50\nflag: true\nblock: |\n  two\n  lines\nlist: [1]")
+	entries, err := n.mappingEntries()
+	require.NoError(t, err)
+	want := map[string]any{"plain": int64(8080), "quoted": "8080", "neg": int64(-1), "big": uint64(18446744073709551615), "float": 1.5, "flag": true, "block": "two\nlines\n"}
+	for _, e := range entries {
+		value, err := e.value.Scalar()
+		if e.key == "list" {
+			require.Error(t, err)
+			continue
+		}
+		require.NoError(t, err, e.key)
+		require.Equal(t, want[e.key], value, e.key)
+	}
+}

@@ -242,32 +242,6 @@ func plainValueDepth(node composer.Node, depth int, count *int) (any, error) {
 		}
 		return out, nil
 	default:
-		return scalarValue(node)
+		return node.Scalar()
 	}
-}
-
-// scalarValue returns the typed value of a scalar node. Decode accepts each target type only for
-// the matching kind of scalar, so the first that succeeds is the scalar's type.
-func scalarValue(node composer.Node) (any, error) {
-	var b bool
-	if node.Decode(&b) == nil {
-		return b, nil
-	}
-	var i int64
-	if node.Decode(&i) == nil {
-		return i, nil
-	}
-	var u uint64
-	if node.Decode(&u) == nil {
-		return u, nil
-	}
-	var f float64
-	if node.Decode(&f) == nil {
-		return f, nil
-	}
-	var s string
-	if err := node.Decode(&s); err != nil {
-		return nil, err
-	}
-	return s, nil
 }

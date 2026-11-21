@@ -649,6 +649,13 @@ func Test_doParseTunnelConfig_ScalarTypes(t *testing.T) {
 	require.Nil(t, result.Error)
 	require.Contains(t, result.Value, `\"server_port\":4321`)
 
+	// A quoted number stays a string, and is still accepted as the port.
+	result = doParseTunnelConfig(`{"server": "example.com", "server_port": "4321", "method": "chacha20-ietf-poly1305", "password": 12345}`)
+	require.Nil(t, result.Error)
+	require.Contains(t, result.Value, `\"server_port\":\"4321\"`)
+	require.Contains(t, result.Value, `\"password\":12345`)
+	require.Contains(t, result.Value, `"firstHop":"example.com:4321"`)
+
 	result = doParseTunnelConfig("transport: {$type: tcpudp, tcp: null, udp: ~}\nextra: [true, 1.5, -2]\n")
 	require.Nil(t, result.Error)
 	require.Contains(t, result.Value, `\"extra\":[true,1.5,-2]`)

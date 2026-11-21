@@ -129,16 +129,17 @@ unsupported, and the error reports why each option was skipped.
 
 ## Scalar conversions
 
-| Config value       | Accepted for                               | Notes                                |
-|--------------------|--------------------------------------------|--------------------------------------|
-| string, block text | string fields                              | no conversion from numbers or booleans |
-| integer            | integer fields (range-checked), float fields | no conversion from strings           |
-| float              | float fields                               |                                      |
-| boolean            | boolean fields                             | only `true` and `false`              |
+| Config value       | Accepted for                                   | Notes                                             |
+|--------------------|------------------------------------------------|---------------------------------------------------|
+| string, block text | string fields; integer fields                  | for an integer field, decimal digits only         |
+| integer            | integer fields (range-checked), float, string  | a string field gets the text as written           |
+| float              | float fields; integer fields; string fields    | for an integer field, no fractional part          |
+| boolean            | boolean fields; string fields                  | a boolean field takes only `true` and `false`     |
 
-A parser may declare that a particular field accepts any scalar and reads it
-as text. This exists for fields that deployed configs write both ways, such
-as a password made of digits.
+A string field takes any scalar, with the text as written in the config:
+`secret: 0123` is the string `0123`. Deployed configs write passwords made of
+digits without quotes, and ports with them (`"server_port": "443"`), so both
+are accepted.
 
 A mapping decodes into declared fields, or into an open map of string keys,
 whose keys are taken verbatim with no `$` or `?` meaning. A sequence decodes

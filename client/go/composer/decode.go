@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/goccy/go-yaml/ast"
@@ -120,14 +121,12 @@ func (n Node) describe() string {
 func (n Node) decodeScalar(dst reflect.Value) error {
 	switch dst.Kind() {
 	case reflect.String:
-		switch t := n.ast.(type) {
-		case *ast.StringNode:
-			dst.SetString(t.Value)
-		case *ast.LiteralNode:
-			dst.SetString(t.Value.Value)
-		default:
+		// Any scalar, as written: a password made of digits need not be quoted.
+		text, err := n.Text()
+		if err != nil {
 			return n.errorf("expected a string, found %s", n.describe())
 		}
+		dst.SetString(text)
 	case reflect.Bool:
 		t, ok := n.ast.(*ast.BoolNode)
 		if !ok {
@@ -169,41 +168,67 @@ func (n Node) decodeScalar(dst reflect.Value) error {
 	return nil
 }
 
-// intValue extracts an integer scalar. goccy stores non-negative
-// integers as uint64 and negative ones as int64 (see goccy_test.go).
+// intValue extracts an integer. It accepts an integer scalar, a float with
+// no fractional part, and a string holding a decimal integer, as deployed
+// configs write ports all three ways. goccy stores non-negative integers as
+// uint64 and negative ones as int64 (see goccy_test.go).
 func (n Node) intValue() (int64, error) {
-	iv, ok := n.ast.(*ast.IntegerNode)
-	if !ok {
-		return 0, n.errorf("expected an integer, found %s", n.describe())
-	}
-	switch v := iv.Value.(type) {
-	case int64:
-		return v, nil
-	case uint64:
-		if v > math.MaxInt64 {
-			return 0, n.errorf("value %d out of range", v)
+	switch t := n.ast.(type) {
+	case *ast.IntegerNode:
+		switch v := t.Value.(type) {
+		case int64:
+			return v, nil
+		case uint64:
+			if v > math.MaxInt64 {
+				return 0, n.errorf("value %d out of range", v)
+			}
+			return int64(v), nil
+		default:
+			return 0, n.errorf("unexpected integer representation %T", t.Value)
 		}
-		return int64(v), nil
+	case *ast.FloatNode:
+		if t.Value != math.Trunc(t.Value) || t.Value < math.MinInt64 || t.Value >= math.MaxInt64 {
+			return 0, n.errorf("expected an integer, found %s", t.GetToken().Value)
+		}
+		return int64(t.Value), nil
+	case *ast.StringNode:
+		v, err := strconv.ParseInt(t.Value, 10, 64)
+		if err != nil {
+			return 0, n.errorf("expected an integer, found %q", t.Value)
+		}
+		return v, nil
 	default:
-		return 0, n.errorf("unexpected integer representation %T", iv.Value)
+		return 0, n.errorf("expected an integer, found %s", n.describe())
 	}
 }
 
 func (n Node) uintValue() (uint64, error) {
-	iv, ok := n.ast.(*ast.IntegerNode)
-	if !ok {
-		return 0, n.errorf("expected an integer, found %s", n.describe())
-	}
-	switch v := iv.Value.(type) {
-	case int64:
-		if v < 0 {
-			return 0, n.errorf("value %d must not be negative", v)
+	switch t := n.ast.(type) {
+	case *ast.IntegerNode:
+		switch v := t.Value.(type) {
+		case int64:
+			if v < 0 {
+				return 0, n.errorf("value %d must not be negative", v)
+			}
+			return uint64(v), nil
+		case uint64:
+			return v, nil
+		default:
+			return 0, n.errorf("unexpected integer representation %T", t.Value)
 		}
-		return uint64(v), nil
-	case uint64:
+	case *ast.FloatNode:
+		if t.Value != math.Trunc(t.Value) || t.Value < 0 || t.Value >= math.MaxUint64 {
+			return 0, n.errorf("expected a non-negative integer, found %s", t.GetToken().Value)
+		}
+		return uint64(t.Value), nil
+	case *ast.StringNode:
+		v, err := strconv.ParseUint(t.Value, 10, 64)
+		if err != nil {
+			return 0, n.errorf("expected a non-negative integer, found %q", t.Value)
+		}
 		return v, nil
 	default:
-		return 0, n.errorf("unexpected integer representation %T", iv.Value)
+		return 0, n.errorf("expected an integer, found %s", n.describe())
 	}
 }
 

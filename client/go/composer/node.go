@@ -17,6 +17,7 @@ package composer
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
@@ -164,6 +165,37 @@ func (n Node) Text() (string, error) {
 		return n.ast.GetToken().Value, nil
 	default:
 		return "", n.errorf("expected a single value, found %s", n.describe())
+	}
+}
+
+// Scalar returns a scalar's value with the type it has in the config: a
+// string, bool, int64, uint64 (for integers above the int64 range), or
+// float64. It is for copying a config into another format; use [Node.Decode]
+// to read a field.
+func (n Node) Scalar() (any, error) {
+	switch t := n.ast.(type) {
+	case *ast.StringNode:
+		return t.Value, nil
+	case *ast.LiteralNode:
+		return t.Value.Value, nil
+	case *ast.BoolNode:
+		return t.Value, nil
+	case *ast.FloatNode:
+		return t.Value, nil
+	case *ast.IntegerNode:
+		switch v := t.Value.(type) {
+		case int64:
+			return v, nil
+		case uint64:
+			if v <= math.MaxInt64 {
+				return int64(v), nil
+			}
+			return v, nil
+		default:
+			return nil, n.errorf("unexpected integer representation %T", t.Value)
+		}
+	default:
+		return nil, n.errorf("expected a single value, found %s", n.describe())
 	}
 }
 
