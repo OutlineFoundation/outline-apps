@@ -130,7 +130,7 @@ func main() {
 		if err != nil {
 			printErrorAndExit(err, exitCodeFailure)
 		}
-		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcp, udp)
+		clientConfig.Registry = configregistry.NewRegistry(tcp, udp)
 	}
 	result := clientConfig.New(*args.keyID, *args.clientConfig)
 	if result.Error != nil {

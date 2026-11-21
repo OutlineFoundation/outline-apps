@@ -21,38 +21,34 @@ import (
 	"net/http"
 	"net/url"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/useragent"
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/x/websocket"
 )
 
 type WebsocketEndpointConfig struct {
-	URL      string
-	Endpoint any
+	URL      composer.Optional[string]
+	Endpoint composer.Optional[composer.Node]
 }
 
-func NewWebsocketStreamEndpointSubParser(parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*Endpoint[transport.StreamConn], error) {
-	return func(ctx context.Context, input map[string]any) (*Endpoint[transport.StreamConn], error) {
-		return parseWebsocketEndpoint(ctx, input, parseSE, websocket.NewStreamEndpoint)
-	}
+func parseWebsocketStreamEndpoint(ctx context.Context, r composer.Registry, node composer.Node) (*Endpoint[transport.StreamConn], error) {
+	return parseWebsocketEndpoint(ctx, r, node, websocket.NewStreamEndpoint)
 }
 
-func NewWebsocketPacketEndpointSubParser(parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*Endpoint[net.Conn], error) {
-	return func(ctx context.Context, input map[string]any) (*Endpoint[net.Conn], error) {
-		return parseWebsocketEndpoint(ctx, input, parseSE, websocket.NewPacketEndpoint)
-	}
+func parseWebsocketPacketEndpoint(ctx context.Context, r composer.Registry, node composer.Node) (*Endpoint[net.Conn], error) {
+	return parseWebsocketEndpoint(ctx, r, node, websocket.NewPacketEndpoint)
 }
 
 type newWebsocketEndpoint[ConnType any] func(urlStr string, se transport.StreamEndpoint, opts ...websocket.Option) (func(context.Context) (ConnType, error), error)
 
-func parseWebsocketEndpoint[ConnType any](ctx context.Context, configMap map[string]any, parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]], newWE newWebsocketEndpoint[ConnType]) (*Endpoint[ConnType], error) {
+func parseWebsocketEndpoint[ConnType any](ctx context.Context, r composer.Registry, node composer.Node, newWE newWebsocketEndpoint[ConnType]) (*Endpoint[ConnType], error) {
 	var config WebsocketEndpointConfig
-	if err := configyaml.MapToAny(configMap, &config); err != nil {
+	if err := node.Decode(&config); err != nil {
 		return nil, fmt.Errorf("invalid config format: %w", err)
 	}
 
-	url, err := url.Parse(config.URL)
+	url, err := url.Parse(config.URL.Or(""))
 	if err != nil {
 		return nil, fmt.Errorf("url is invalid: %w", err)
 	}
@@ -68,10 +64,14 @@ func parseWebsocketEndpoint[ConnType any](ctx context.Context, configMap map[str
 		}
 	}
 
-	if config.Endpoint == nil {
-		config.Endpoint = net.JoinHostPort(url.Hostname(), port)
+	endpointNode, ok := config.Endpoint.Get()
+	if !ok || endpointNode.IsAbsent() {
+		endpointNode, err = stringNode(net.JoinHostPort(url.Hostname(), port))
+		if err != nil {
+			return nil, err
+		}
 	}
-	se, err := parseSE(ctx, config.Endpoint)
+	se, err := composer.Parse[*Endpoint[transport.StreamConn]](ctx, r, endpointNode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse websocket endpoint: %w", err)
 	}

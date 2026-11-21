@@ -24,53 +24,35 @@ import (
 	"strconv"
 	"strings"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"golang.getoutline.org/sdk/transport"
 	"golang.getoutline.org/sdk/transport/shadowsocks"
 )
 
 // ShadowsocksConfig is the format for the Shadowsocks config. It can specify Dialers or PacketListener.
 type ShadowsocksConfig struct {
-	Endpoint configyaml.ConfigNode
-	Cipher   string
-	Secret   string
-	Prefix   string
+	Endpoint composer.Node
+	Cipher   composer.Optional[string]
+	Secret   composer.Optional[string]
+	Prefix   composer.Optional[string]
 }
 
 // LegacyShadowsocksConfig is the legacy format for the Shadowsocks config.
 type LegacyShadowsocksConfig struct {
 	Server      string
-	Server_Port uint16
-	Method      string
-	Password    string
-	Prefix      string
+	Server_Port composer.Optional[uint16]
+	Method      composer.Optional[string]
+	Password    composer.Optional[string]
+	Prefix      composer.Optional[string]
 }
 
-func NewShadowsocksStreamDialerSubParser(parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-	return func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-		return parseShadowsocksStreamDialer(ctx, input, parseSE)
-	}
-}
-
-func NewShadowsocksPacketDialerSubParser(parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) func(ctx context.Context, input map[string]any) (*Dialer[net.Conn], error) {
-	return func(ctx context.Context, input map[string]any) (*Dialer[net.Conn], error) {
-		return parseShadowsocksPacketDialer(ctx, input, parsePE)
-	}
-}
-
-func NewShadowsocksPacketListenerSubParser(parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) func(ctx context.Context, input map[string]any) (*PacketListener, error) {
-	return func(ctx context.Context, input map[string]any) (*PacketListener, error) {
-		return parseShadowsocksPacketListener(ctx, input, parsePE)
-	}
-}
-
-func parseShadowsocksTransport(ctx context.Context, config configyaml.ConfigNode, parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]], parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) (*TransportPair, error) {
+func parseShadowsocksTransport(ctx context.Context, r composer.Registry, config composer.Node) (*TransportPair, error) {
 	params, err := parseShadowsocksParams(config)
 	if err != nil {
 		return nil, err
 	}
 
-	se, err := parseSE(ctx, params.Endpoint)
+	se, err := composer.Parse[*Endpoint[transport.StreamConn]](ctx, r, params.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create StreamEndpoint: %w", err)
 	}
@@ -82,7 +64,7 @@ func parseShadowsocksTransport(ctx context.Context, config configyaml.ConfigNode
 		sd.SaltGenerator = params.SaltGenerator
 	}
 
-	pe, err := parsePE(ctx, params.Endpoint)
+	pe, err := composer.Parse[*Endpoint[net.Conn]](ctx, r, params.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PacketEndpoint: %w", err)
 	}
@@ -99,13 +81,13 @@ func parseShadowsocksTransport(ctx context.Context, config configyaml.ConfigNode
 	)
 }
 
-func parseShadowsocksStreamDialer(ctx context.Context, config configyaml.ConfigNode, parseSE configyaml.ParseFunc[*Endpoint[transport.StreamConn]]) (*Dialer[transport.StreamConn], error) {
+func parseShadowsocksStreamDialer(ctx context.Context, r composer.Registry, config composer.Node) (*Dialer[transport.StreamConn], error) {
 	params, err := parseShadowsocksParams(config)
 	if err != nil {
 		return nil, err
 	}
 
-	se, err := parseSE(ctx, params.Endpoint)
+	se, err := composer.Parse[*Endpoint[transport.StreamConn]](ctx, r, params.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create StreamEndpoint: %w", err)
 	}
@@ -120,8 +102,8 @@ func parseShadowsocksStreamDialer(ctx context.Context, config configyaml.ConfigN
 	return &Dialer[transport.StreamConn]{ConnectionProviderInfo{ConnTypeTunneled, se.FirstHop}, sd.DialStream}, nil
 }
 
-func parseShadowsocksPacketDialer(ctx context.Context, config configyaml.ConfigNode, parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) (*Dialer[net.Conn], error) {
-	pl, err := parseShadowsocksPacketListener(ctx, config, parsePE)
+func parseShadowsocksPacketDialer(ctx context.Context, r composer.Registry, config composer.Node) (*Dialer[net.Conn], error) {
+	pl, err := parseShadowsocksPacketListener(ctx, r, config)
 	if err != nil {
 		return nil, err
 	}
@@ -129,12 +111,12 @@ func parseShadowsocksPacketDialer(ctx context.Context, config configyaml.ConfigN
 	return &Dialer[net.Conn]{ConnectionProviderInfo{ConnTypeTunneled, pl.FirstHop}, pd.DialPacket}, nil
 }
 
-func parseShadowsocksPacketListener(ctx context.Context, config configyaml.ConfigNode, parsePE configyaml.ParseFunc[*Endpoint[net.Conn]]) (*PacketListener, error) {
+func parseShadowsocksPacketListener(ctx context.Context, r composer.Registry, config composer.Node) (*PacketListener, error) {
 	params, err := parseShadowsocksParams(config)
 	if err != nil {
 		return nil, err
 	}
-	pe, err := parsePE(ctx, params.Endpoint)
+	pe, err := composer.Parse[*Endpoint[net.Conn]](ctx, r, params.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PacketEndpoint: %w", err)
 	}
@@ -149,48 +131,72 @@ func parseShadowsocksPacketListener(ctx context.Context, config configyaml.Confi
 }
 
 type shadowsocksParams struct {
-	Endpoint      configyaml.ConfigNode
+	Endpoint      composer.Node
 	Key           *shadowsocks.EncryptionKey
 	SaltGenerator shadowsocks.SaltGenerator
 }
 
-func parseShadowsocksConfig(node configyaml.ConfigNode) (*ShadowsocksConfig, error) {
-	switch typed := node.(type) {
-	case string:
-		urlConfig, err := url.Parse(typed)
+// shadowsocksFields are the fields common to all the Shadowsocks formats.
+type shadowsocksFields struct {
+	// Endpoint is the server address, in the formats that don't take an endpoint config.
+	Endpoint string
+	// EndpointConfig is the endpoint config. If absent, the endpoint dials Endpoint.
+	EndpointConfig composer.Node
+	Cipher         string
+	Secret         string
+	Prefix         string
+}
+
+func parseShadowsocksConfig(node composer.Node) (*shadowsocksFields, error) {
+	switch node.Kind() {
+	case composer.KindScalar:
+		var text string
+		if err := node.Decode(&text); err != nil {
+			return nil, err
+		}
+		urlConfig, err := url.Parse(text)
 		if err != nil {
 			return nil, fmt.Errorf("string config is not a valid URL: %w", err)
 		}
 		return parseShadowsocksURL(*urlConfig)
-	case map[string]any:
+	case composer.KindMapping:
+		var keys map[string]composer.Node
+		if err := node.Decode(&keys); err != nil {
+			return nil, err
+		}
 		// If the map has an "endpoint" field, we assume the new format.
-		if _, ok := typed["endpoint"]; ok {
+		if _, ok := keys["endpoint"]; ok {
 			config := ShadowsocksConfig{}
-			if err := configyaml.MapToAny(typed, &config); err != nil {
+			if err := node.Decode(&config); err != nil {
 				return nil, err
 			}
-			return &config, nil
-		} else if _, ok := typed["server"]; ok {
+			return &shadowsocksFields{
+				EndpointConfig: config.Endpoint,
+				Cipher:         config.Cipher.Or(""),
+				Secret:         config.Secret.Or(""),
+				Prefix:         config.Prefix.Or(""),
+			}, nil
+		} else if _, ok := keys["server"]; ok {
 			// Else, we assume the legacy format if "server" is present.
 			config := LegacyShadowsocksConfig{}
-			if err := configyaml.MapToAny(typed, &config); err != nil {
+			if err := node.Decode(&config); err != nil {
 				return nil, err
 			}
-			return &ShadowsocksConfig{
-				Endpoint: net.JoinHostPort(config.Server, strconv.FormatUint(uint64(config.Server_Port), 10)),
-				Cipher:   config.Method,
-				Secret:   config.Password,
-				Prefix:   config.Prefix,
+			return &shadowsocksFields{
+				Endpoint: net.JoinHostPort(config.Server, strconv.FormatUint(uint64(config.Server_Port.Or(0)), 10)),
+				Cipher:   config.Method.Or(""),
+				Secret:   config.Password.Or(""),
+				Prefix:   config.Prefix.Or(""),
 			}, nil
 		} else {
 			return nil, fmt.Errorf("shadowsocks config missing endpoint")
 		}
 	default:
-		return nil, fmt.Errorf("invalid shadowsocks config type %T", typed)
+		return nil, fmt.Errorf("invalid shadowsocks config type %v", node.Kind())
 	}
 }
 
-func parseShadowsocksParams(node configyaml.ConfigNode) (*shadowsocksParams, error) {
+func parseShadowsocksParams(node composer.Node) (*shadowsocksParams, error) {
 	config, err := parseShadowsocksConfig(node)
 	if err != nil {
 		return nil, err
@@ -204,7 +210,13 @@ func parseShadowsocksParams(node configyaml.ConfigNode) (*shadowsocksParams, err
 	}
 
 	params := &shadowsocksParams{
-		Endpoint: config.Endpoint,
+		Endpoint: config.EndpointConfig,
+	}
+	if params.Endpoint.IsAbsent() {
+		params.Endpoint, err = stringNode(config.Endpoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 	params.Key, err = shadowsocks.NewEncryptionKey(config.Cipher, config.Secret)
 	if err != nil {
@@ -232,7 +244,7 @@ func parseStringPrefix(utf8Str string) ([]byte, error) {
 	return rawBytes, nil
 }
 
-func parseShadowsocksURL(url url.URL) (*ShadowsocksConfig, error) {
+func parseShadowsocksURL(url url.URL) (*shadowsocksFields, error) {
 	// attempt to decode as SIP002 URI format and
 	// fall back to legacy base64 format if decoding fails
 	config, err := parseShadowsocksSIP002URL(url)
@@ -255,7 +267,7 @@ func cutLast(s, sep string) (before, after string, found bool) {
 
 // parseShadowsocksLegacyBase64URL parses URL based on legacy base64 format:
 // https://shadowsocks.org/doc/configs.html#uri-and-qr-code
-func parseShadowsocksLegacyBase64URL(url url.URL) (*ShadowsocksConfig, error) {
+func parseShadowsocksLegacyBase64URL(url url.URL) (*shadowsocksFields, error) {
 	if url.Host == "" {
 		return nil, errors.New("host not specified")
 	}
@@ -287,7 +299,7 @@ func parseShadowsocksLegacyBase64URL(url url.URL) (*ShadowsocksConfig, error) {
 		return nil, fmt.Errorf("failed to parse config part: %w", err)
 	}
 
-	return &ShadowsocksConfig{
+	return &shadowsocksFields{
 		Endpoint: newURL.Host,
 		Cipher:   cipherName,
 		Secret:   secret,
@@ -297,7 +309,7 @@ func parseShadowsocksLegacyBase64URL(url url.URL) (*ShadowsocksConfig, error) {
 
 // parseShadowsocksSIP002URL parses URL based on SIP002 format:
 // https://shadowsocks.org/doc/sip002.html
-func parseShadowsocksSIP002URL(url url.URL) (*ShadowsocksConfig, error) {
+func parseShadowsocksSIP002URL(url url.URL) (*shadowsocksFields, error) {
 	if url.Host == "" {
 		return nil, errors.New("host not specified")
 	}
@@ -327,7 +339,7 @@ func parseShadowsocksSIP002URL(url url.URL) (*ShadowsocksConfig, error) {
 			return nil, errors.New("invalid cipher info: no secret")
 		}
 	}
-	return &ShadowsocksConfig{
+	return &shadowsocksFields{
 		Endpoint: url.Host,
 		Cipher:   cipherName,
 		Secret:   secret,

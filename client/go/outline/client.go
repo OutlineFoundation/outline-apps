@@ -23,14 +23,12 @@ import (
 	"path"
 	"runtime"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 	"localhost/client/go/outline/configregistry"
 	"localhost/client/go/outline/platerrors"
 	"localhost/client/go/outline/reporting"
 	"golang.getoutline.org/sdk/network/packetrelay"
-	"golang.getoutline.org/sdk/transport"
-	"github.com/goccy/go-yaml"
-)
+	"golang.getoutline.org/sdk/transport")
 
 // Client provides a transparent container for [transport.StreamDialer] and [transport.PacketListener]
 // that is exportable (as an opaque object) via gobind.
@@ -80,12 +78,6 @@ func (c *Client) EndSession() error {
 	return nil
 }
 
-// ProviderClientConfig is the session config from the service provider.
-type ProviderClientConfig struct {
-	Transport configyaml.ConfigNode
-	Reporter  configyaml.ConfigNode
-}
-
 // NewClientResult represents the result of [NewClientAndReturnError].
 //
 // We use a struct instead of a tuple to preserve a strongly typed error that gobind recognizes.
@@ -96,8 +88,11 @@ type NewClientResult struct {
 
 // ClientConfig is used to create a session Client.
 type ClientConfig struct {
-	DataDir         string
-	TransportParser *configyaml.TypeParser[*configregistry.TransportPair]
+	DataDir string
+	// Registry holds the parsers of the config types. If nil, New uses [configregistry.NewRegistry]
+	// with a [transport.TCPDialer] with keep-alive disabled and a [transport.UDPDialer]. To support
+	// more config types, register them on a registry from [configregistry.NewRegistry].
+	Registry composer.Registry
 }
 
 // New creates a new session client. It's used by the native code, so it returns a NewClientResult.
@@ -113,10 +108,10 @@ func (c *ClientConfig) New(keyID string, providerClientConfigText string) *NewCl
 func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Client, error) {
 	// Make a copy of the config so we can change it.
 	clientConfig := *c
-	if clientConfig.TransportParser == nil {
+	if clientConfig.Registry == nil {
 		tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 		udpDialer := &transport.UDPDialer{}
-		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcpDialer, udpDialer)
+		clientConfig.Registry = configregistry.NewRegistry(tcpDialer, udpDialer)
 	}
 	if clientConfig.DataDir == "" {
 		if runtime.GOOS != "android" && runtime.GOOS != "ios" {
@@ -129,8 +124,13 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 		}
 	}
 
-	var providerClientConfig ProviderClientConfig
-	if err := yaml.Unmarshal([]byte(providerClientConfigText), &providerClientConfig); err != nil {
+	// The session config from the service provider. Keys other than transport and reporter are ignored.
+	var providerClientConfig map[string]composer.Node
+	root, err := composer.ParseYAML([]byte(providerClientConfigText))
+	if err == nil && !root.IsAbsent() {
+		err = root.Decode(&providerClientConfig)
+	}
+	if err != nil {
 		return nil, &platerrors.PlatformError{
 			Code:    platerrors.InvalidConfig,
 			Message: "config is not valid YAML",
@@ -138,7 +138,7 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 		}
 	}
 
-	transportPair, err := clientConfig.TransportParser.Parse(context.Background(), providerClientConfig.Transport)
+	transportPair, err := composer.Parse[*configregistry.TransportPair](context.Background(), clientConfig.Registry, providerClientConfig["transport"])
 	if err != nil {
 		if errors.Is(err, errors.ErrUnsupported) {
 			return nil, &platerrors.PlatformError{
@@ -158,14 +158,14 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 	client := &Client{sd: transportPair.StreamDialer, pr: transportPair.PacketRelay}
 
 	// TODO: figure out a better way to handle parse calls.
-	if providerClientConfig.Reporter != nil {
+	if reporterNode := providerClientConfig["reporter"]; !reporterNode.IsAbsent() {
 		// TODO(fortuna): encapsulate service storage.
 		cookieFilename := ""
 		if c.DataDir != "" {
 			serviceDir := path.Join(c.DataDir, "services", keyID)
 			cookieFilename = path.Join(serviceDir, "cookies.json")
 		}
-		reporter, err := NewReporterParser(cookieFilename, client).Parse(context.Background(), providerClientConfig.Reporter)
+		reporter, err := composer.Parse[reporting.Reporter](context.Background(), NewReporterRegistry(cookieFilename, client), reporterNode)
 		if err != nil {
 			return nil, &platerrors.PlatformError{
 				Code:    platerrors.InvalidConfig,
@@ -179,11 +179,11 @@ func (c *ClientConfig) new(keyID string, providerClientConfigText string) (*Clie
 	return client, nil
 }
 
-func NewReporterParser(cookiesFilename string, streamDialer transport.StreamDialer) *configyaml.TypeParser[reporting.Reporter] {
-	parser := configyaml.NewTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (reporting.Reporter, error) {
-		return nil, errors.New("parser not specified")
-	})
-	parser.RegisterSubParser("first-supported", configregistry.NewFirstSupportedSubParser(parser.Parse))
-	parser.RegisterSubParser("http", reporting.NewHTTPReporterConfigParser(cookiesFilename, streamDialer))
-	return parser
+// NewReporterRegistry returns the registry with the reporter config types. The reporters send their
+// reports with streamDialer, and keep their cookies in cookiesFilename.
+func NewReporterRegistry(cookiesFilename string, streamDialer transport.StreamDialer) composer.MutableRegistry {
+	// The registry comes with first-supported for every type.
+	r := composer.NewRegistry()
+	composer.Register(r, "http", reporting.NewHTTPReporterConfigParser(cookiesFilename, streamDialer))
+	return r
 }

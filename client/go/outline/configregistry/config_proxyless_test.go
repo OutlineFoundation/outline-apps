@@ -19,16 +19,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 )
 
 func TestParseProxyless(t *testing.T) {
 	provider := newTestTransportProvider()
 
-	node, err := configyaml.ParseConfigYAML(`$type: basic-access`)
+	node, err := composer.ParseYAML([]byte(`$type: basic-access`))
 	require.NoError(t, err)
 
-	transportPair, err := provider.Parse(context.Background(), node)
+	transportPair, err := composer.Parse[*TransportPair](context.Background(), provider, node)
 	require.NoError(t, err)
 	require.NotNil(t, transportPair)
 	require.NotNil(t, transportPair.StreamDialer)

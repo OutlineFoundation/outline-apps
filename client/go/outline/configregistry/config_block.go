@@ -1,4 +1,4 @@
-// Copyright 2025 The Outline Authors
+// Copyright 2024 The Outline Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,16 +17,16 @@ package configregistry
 import (
 	"context"
 	"errors"
+
+	"localhost/client/go/composer"
 )
 
-func NewBlockDialerSubParser[ConnType any]() func(ctx context.Context, input map[string]any) (*Dialer[ConnType], error) {
-	return func(ctx context.Context, input map[string]any) (*Dialer[ConnType], error) {
-		return &Dialer[ConnType]{
-			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeBlocked},
-			Dial: func(ctx context.Context, address string) (ConnType, error) {
-				var zero ConnType
-				return zero, errors.New("blocked by config")
-			},
-		}, nil
-	}
+func parseBlockDialer[ConnType any](context.Context, composer.Registry, composer.Node) (*Dialer[ConnType], error) {
+	return &Dialer[ConnType]{
+		ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeBlocked},
+		Dial: func(ctx context.Context, address string) (ConnType, error) {
+			var zero ConnType
+			return zero, errors.New("blocked by config")
+		},
+	}, nil
 }

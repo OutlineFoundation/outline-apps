@@ -23,32 +23,28 @@ import (
 	"strconv"
 	"testing"
 
-	"localhost/client/go/configyaml"
+	"localhost/client/go/composer"
 )
 
 // DialEndpointConfig is the format for the Dial Endpoint config.
 type DialEndpointConfig struct {
-	Address string
-	Dialer  any
+	Address composer.Optional[string]
+	Dialer  composer.Optional[composer.Node]
 }
 
-func NewDialEndpointSubParser[ConnType any](parse configyaml.ParseFunc[*Dialer[ConnType]]) func(ctx context.Context, input map[string]any) (*Endpoint[ConnType], error) {
-	return func(ctx context.Context, input map[string]any) (*Endpoint[ConnType], error) {
-		return parseDirectDialerEndpoint(ctx, input, parse)
-	}
-}
-
-func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config any, newDialer configyaml.ParseFunc[*Dialer[ConnType]]) (*Endpoint[ConnType], error) {
-	if config == nil {
+// parseDialEndpoint parses an endpoint that dials a fixed address. The config is the address, or
+// a [DialEndpointConfig].
+func parseDialEndpoint[ConnType any](ctx context.Context, r composer.Registry, node composer.Node) (*Endpoint[ConnType], error) {
+	if node.IsAbsent() {
 		return nil, errors.New("endpoint config cannot be nil")
 	}
 
-	dialParams, err := parseEndpointConfig(config)
+	address, dialerNode, err := parseEndpointConfig(node)
 	if err != nil {
 		return nil, err
 	}
 
-	dialer, err := newDialer(ctx, dialParams.Dialer)
+	dialer, err := composer.Parse[*Dialer[ConnType]](ctx, r, dialerNode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sub-dialer: %w", err)
 	}
@@ -56,7 +52,7 @@ func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config any, ne
 	// We need to resolve to the proxy server address before attempting a connection.
 	// This is because we cannot protect the system DNS resolution connection
 	// with our FW_MARK (Linux) or by binding to an interface (Windows). Therefore, as a workaround on Linux and Windows, we resolve the address first.
-	ipPortStr := dialParams.Address
+	ipPortStr := address
 	if dialer.ConnType == ConnTypeDirect && (runtime.GOOS == "linux" || runtime.GOOS == "windows") && !testing.Testing() {
 		ipPort, err := net.ResolveTCPAddr("tcp", ipPortStr)
 		// We ignore the resolved name in case of failures and use the original hostname instead
@@ -73,50 +69,46 @@ func parseDirectDialerEndpoint[ConnType any](ctx context.Context, config any, ne
 		ConnectionProviderInfo: dialer.ConnectionProviderInfo,
 	}
 	if dialer.ConnType == ConnTypeDirect {
-		endpoint.ConnectionProviderInfo.FirstHop = dialParams.Address
+		endpoint.ConnectionProviderInfo.FirstHop = address
 	}
 	return endpoint, nil
 }
 
-func parseEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, error) {
-	config, err := toDialEndpointConfig(node)
-	if err != nil {
-		return nil, err
+func parseEndpointConfig(node composer.Node) (address string, dialer composer.Node, err error) {
+	switch node.Kind() {
+	case composer.KindScalar:
+		if err := node.Decode(&address); err != nil {
+			return "", composer.Node{}, err
+		}
+
+	case composer.KindMapping:
+		// TODO: Make it type-based
+		var config DialEndpointConfig
+		if err := node.Decode(&config); err != nil {
+			return "", composer.Node{}, err
+		}
+		address, dialer = config.Address.Or(""), config.Dialer.Or(composer.Node{})
+
+	default:
+		return "", composer.Node{}, fmt.Errorf("endpoint config of type %v is not supported", node.Kind())
 	}
-	host, portText, err := net.SplitHostPort(config.Address)
+
+	host, portText, err := net.SplitHostPort(address)
 	if err != nil {
-		return nil, fmt.Errorf("invalid address format: %w", err)
+		return "", composer.Node{}, fmt.Errorf("invalid address format: %w", err)
 	}
 	if host == "" {
-		return nil, errors.New("host must not be empty")
+		return "", composer.Node{}, errors.New("host must not be empty")
 	}
 	if portText == "" {
-		return nil, errors.New("port must not be empty")
+		return "", composer.Node{}, errors.New("port must not be empty")
 	}
 	port, err := strconv.ParseUint(portText, 10, 16)
 	if err != nil {
-		return nil, fmt.Errorf("invalid port number: %w", err)
+		return "", composer.Node{}, fmt.Errorf("invalid port number: %w", err)
 	}
 	if port == 0 {
-		return nil, errors.New("port must not be zero")
+		return "", composer.Node{}, errors.New("port must not be zero")
 	}
-	return config, err
-}
-
-func toDialEndpointConfig(node configyaml.ConfigNode) (*DialEndpointConfig, error) {
-	switch typed := node.(type) {
-	case string:
-		return &DialEndpointConfig{Address: typed}, nil
-
-	case map[string]any:
-		// TODO: Make it type-based
-		var config DialEndpointConfig
-		if err := configyaml.MapToAny(typed, &config); err != nil {
-			return nil, err
-		}
-		return &config, nil
-
-	default:
-		return nil, fmt.Errorf("endpoint config of type %T is not supported", typed)
-	}
+	return address, dialer, nil
 }
