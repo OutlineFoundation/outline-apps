@@ -41,11 +41,25 @@ func newFWMarkProtectedTCPDialer(fwmark uint32) transport.StreamDialer {
 func newFWMarkProtectedUDPDialer(fwmark uint32) transport.PacketDialer {
 	return &transport.UDPDialer{
 		Dialer: net.Dialer{
-			Control: func(network, address string, c syscall.RawConn) error {
-				return c.Control(func(fd uintptr) {
-					syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, int(fwmark))
-				})
-			},
+			Control: fwMarkControl(fwmark),
 		},
+	}
+}
+
+// newFWMarkProtectedUDPListener creates a new UDP listener for [Client]
+// protected by the specified firewall mark.
+func newFWMarkProtectedUDPListener(fwmark uint32) transport.PacketListener {
+	return &transport.UDPListener{
+		ListenConfig: net.ListenConfig{
+			Control: fwMarkControl(fwmark),
+		},
+	}
+}
+
+func fwMarkControl(fwmark uint32) func(network, address string, c syscall.RawConn) error {
+	return func(network, address string, c syscall.RawConn) error {
+		return c.Control(func(fd uintptr) {
+			syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_MARK, int(fwmark))
+		})
 	}
 }

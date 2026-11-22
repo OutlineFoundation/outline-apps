@@ -16,8 +16,10 @@ package configregistry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"testing"
 
 	"localhost/client/go/configyaml"
@@ -28,7 +30,7 @@ import (
 func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
 	tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 	udpDialer := &transport.UDPDialer{}
-	return NewDefaultTransportProvider(tcpDialer, udpDialer)
+	return NewDefaultTransportProvider(tcpDialer, udpDialer, &transport.UDPListener{})
 }
 
 func TestRegisterDefaultProviders(t *testing.T) {
@@ -101,6 +103,7 @@ func TestParseIPTableTCP(t *testing.T) {
 	tp := NewDefaultTransportProvider(
 		&errorStreamDialer{name: "default-tcp"},
 		nil, // UDP transport not under test.
+		nil,
 	)
 
 	yamlConfig := `$type: tcpudp
@@ -176,4 +179,34 @@ udp: null`)
 		require.Error(t, err)
 		require.Equal(t, "blocked by config", err.Error())
 	})
+}
+
+func TestParseDirectUDPUsesProvidedListener(t *testing.T) {
+	direct := &recordingPacketListener{}
+	tp := NewDefaultTransportProvider(&errorStreamDialer{name: "default-tcp"}, nil, direct)
+	node, err := configyaml.ParseConfigYAML(`
+$type: tcpudp
+tcp: {$type: block}
+udp: {$type: direct}`)
+	require.NoError(t, err)
+
+	transportPair, err := tp.Parse(context.Background(), node)
+	require.NoError(t, err)
+	require.Equal(t, ConnTypeDirect, transportPair.PacketRelay.ConnType)
+
+	sender, _, err := transportPair.PacketRelay.NewAssociation()
+	require.NoError(t, err)
+	defer sender.Close()
+	err = sender.SendPacket([]byte("hello"), netip.MustParseAddrPort("192.0.2.1:443"))
+	require.ErrorContains(t, err, "recording listener")
+	require.Equal(t, 1, direct.calls)
+}
+
+type recordingPacketListener struct {
+	calls int
+}
+
+func (l *recordingPacketListener) ListenPacket(ctx context.Context) (net.PacketConn, error) {
+	l.calls++
+	return nil, errors.New("recording listener")
 }

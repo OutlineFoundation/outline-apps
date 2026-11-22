@@ -35,7 +35,11 @@ func newTypeParser[T any](fallbackHandler func(context.Context, configyaml.Confi
 }
 
 // NewDefaultTransportProvider provider a [TransportPair].
-func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD transport.PacketDialer) *configyaml.TypeParser[*TransportPair] {
+//
+// directSD, directPD and directPL are used for direct connections. On platforms where the
+// app's own sockets would otherwise go through the VPN, they must be protected from it.
+// If directPL is nil, an unprotected [transport.UDPListener] is used.
+func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD transport.PacketDialer, directPL transport.PacketListener) *configyaml.TypeParser[*TransportPair] {
 	var streamEndpoints *configyaml.TypeParser[*Endpoint[transport.StreamConn]]
 	var packetEndpoints *configyaml.TypeParser[*Endpoint[net.Conn]]
 
@@ -73,7 +77,10 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 		}
 	})
 
-	directWrappedPL := &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, &transport.UDPListener{}}
+	if directPL == nil {
+		directPL = &transport.UDPListener{}
+	}
+	directWrappedPL := &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, directPL}
 	packetListeners := newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*PacketListener, error) {
 		switch input.(type) {
 		case nil:
