@@ -16,8 +16,10 @@ package configregistry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"testing"
 
 	"localhost/client/go/configyaml"
@@ -28,7 +30,7 @@ import (
 func newTestTransportProvider() *configyaml.TypeParser[*TransportPair] {
 	tcpDialer := &transport.TCPDialer{Dialer: net.Dialer{KeepAlive: -1}}
 	udpDialer := &transport.UDPDialer{}
-	return NewDefaultTransportProvider(tcpDialer, udpDialer)
+	return NewDefaultTransportProvider(tcpDialer, udpDialer, &transport.UDPListener{})
 }
 
 func TestRegisterDefaultProviders(t *testing.T) {
@@ -101,6 +103,7 @@ func TestParseIPTableTCP(t *testing.T) {
 	tp := NewDefaultTransportProvider(
 		&errorStreamDialer{name: "default-tcp"},
 		nil, // UDP transport not under test.
+		&transport.UDPListener{},
 	)
 
 	yamlConfig := `$type: tcpudp
@@ -176,4 +179,57 @@ udp: null`)
 		require.Error(t, err)
 		require.Equal(t, "blocked by config", err.Error())
 	})
+}
+
+func TestParseDirectUDPUsesProvidedListener(t *testing.T) {
+	direct := &recordingPacketListener{}
+	tp := NewDefaultTransportProvider(&errorStreamDialer{name: "default-tcp"}, nil, direct)
+	node, err := configyaml.ParseConfigYAML(`
+$type: tcpudp
+tcp: {$type: block}
+udp: {$type: direct}`)
+	require.NoError(t, err)
+
+	transportPair, err := tp.Parse(context.Background(), node)
+	require.NoError(t, err)
+	require.Equal(t, ConnTypeDirect, transportPair.PacketRelay.ConnType)
+
+	sender, _, err := transportPair.PacketRelay.NewAssociation()
+	require.NoError(t, err)
+	defer sender.Close()
+	err = sender.SendPacket([]byte("hello"), netip.MustParseAddrPort("192.0.2.1:443"))
+	require.ErrorContains(t, err, "recording listener")
+	require.Equal(t, 1, direct.calls)
+}
+
+func TestParseDirectUnsupportedWhenNotProvided(t *testing.T) {
+	tp := NewDefaultTransportProvider(nil, nil, nil)
+	tests := []struct {
+		name   string
+		config string
+	}{
+		{"explicit stream dialer", `{$type: tcpudp, tcp: {$type: direct}, udp: null}`},
+		{"implicit stream dialer", `{$type: tcpudp, tcp: null, udp: null}`},
+		{"explicit packet listener", `{$type: tcpudp, tcp: {$type: block}, udp: {$type: direct}}`},
+		{"implicit packet listener", `{$type: tcpudp, tcp: {$type: block}, udp: null}`},
+		{"explicit packet dialer", `{$type: tcpudp, tcp: {$type: block}, udp: {$type: shadowsocks, endpoint: {$type: dial, address: "example.com:1234", dialer: {$type: direct}}, cipher: chacha20-ietf-poly1305, secret: SECRET}}`},
+		{"first-supported exhausted", `{$type: tcpudp, tcp: {$type: first-supported, options: [{$type: direct}]}, udp: null}`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			node, err := configyaml.ParseConfigYAML(tc.config)
+			require.NoError(t, err)
+			_, err = tp.Parse(context.Background(), node)
+			require.ErrorIs(t, err, errors.ErrUnsupported)
+		})
+	}
+}
+
+type recordingPacketListener struct {
+	calls int
+}
+
+func (l *recordingPacketListener) ListenPacket(ctx context.Context) (net.PacketConn, error) {
+	l.calls++
+	return nil, errors.New("recording listener")
 }

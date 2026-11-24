@@ -126,11 +126,11 @@ func main() {
 
 	clientConfig := outline.ClientConfig{}
 	if *args.adapterIndex >= 0 {
-		tcp, udp, err := newBaseDialersWithAdapter(*args.adapterIndex)
+		tcp, udp, udpListener, err := newBaseDialersWithAdapter(*args.adapterIndex)
 		if err != nil {
 			printErrorAndExit(err, exitCodeFailure)
 		}
-		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcp, udp)
+		clientConfig.TransportParser = configregistry.NewDefaultTransportProvider(tcp, udp, udpListener)
 	}
 	result := clientConfig.New(*args.keyID, *args.clientConfig)
 	if result.Error != nil {

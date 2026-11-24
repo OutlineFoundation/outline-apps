@@ -22,6 +22,6 @@ import (
 	"golang.getoutline.org/sdk/transport"
 )
 
-func newBaseDialersWithAdapter(nicIdx int) (transport.StreamDialer, transport.PacketDialer, error) {
-	return nil, nil, errors.ErrUnsupported
+func newBaseDialersWithAdapter(nicIdx int) (transport.StreamDialer, transport.PacketDialer, transport.PacketListener, error) {
+	return nil, nil, nil, errors.ErrUnsupported
 }

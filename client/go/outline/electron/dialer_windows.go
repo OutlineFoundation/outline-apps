@@ -32,10 +32,11 @@ const (
 	IP_UNICAST_IF = 31 // value: 32bit DWORD (IF_INDEX in network byte order)
 )
 
-func newBaseDialersWithAdapter(nicIdx int) (transport.StreamDialer, transport.PacketDialer, error) {
+func newBaseDialersWithAdapter(nicIdx int) (transport.StreamDialer, transport.PacketDialer, transport.PacketListener, error) {
 	tcp := newTCPDialerWithAdapter(nicIdx)
 	udp := newUDPDialerWithAdapter(nicIdx)
-	return tcp, udp, nil
+	udpListener := newUDPListenerWithAdapter(nicIdx)
+	return tcp, udp, udpListener, nil
 }
 
 func newTCPDialerWithAdapter(nicIdx int) transport.StreamDialer {
@@ -54,19 +55,25 @@ func newTCPDialerWithAdapter(nicIdx int) transport.StreamDialer {
 }
 
 func newUDPDialerWithAdapter(nicIdx int) transport.PacketDialer {
+	return &transport.UDPDialer{Dialer: net.Dialer{Control: udpAdapterControl(nicIdx)}}
+}
+
+func newUDPListenerWithAdapter(nicIdx int) transport.PacketListener {
+	return &transport.UDPListener{ListenConfig: net.ListenConfig{Control: udpAdapterControl(nicIdx)}}
+}
+
+func udpAdapterControl(nicIdx int) func(network, address string, conn syscall.RawConn) error {
 	nicIdxBigEnd := toBigEndianInt(nicIdx)
-	return &transport.UDPDialer{Dialer: net.Dialer{
-		Control: func(network, address string, conn syscall.RawConn) error {
-			var operr1, operr2, operr3 error
-			err := conn.Control(func(fd uintptr) {
-				// TODO(ipv6): set IPPROTO_IPV6 when IPv6 is enabled
-				operr1 = windows.SetsockoptInt(windows.Handle(fd), syscall.IPPROTO_IP, IP_IFLIST, 1)
-				operr2 = windows.SetsockoptInt(windows.Handle(fd), syscall.IPPROTO_IP, IP_ADD_IFLIST, nicIdx)
-				operr3 = windows.SetsockoptInt(windows.Handle(fd), syscall.IPPROTO_IP, IP_UNICAST_IF, nicIdxBigEnd)
-			})
-			return errors.Join(err, operr1, operr2, operr3)
-		},
-	}}
+	return func(network, address string, conn syscall.RawConn) error {
+		var operr1, operr2, operr3 error
+		err := conn.Control(func(fd uintptr) {
+			// TODO(ipv6): set IPPROTO_IPV6 when IPv6 is enabled
+			operr1 = windows.SetsockoptInt(windows.Handle(fd), syscall.IPPROTO_IP, IP_IFLIST, 1)
+			operr2 = windows.SetsockoptInt(windows.Handle(fd), syscall.IPPROTO_IP, IP_ADD_IFLIST, nicIdx)
+			operr3 = windows.SetsockoptInt(windows.Handle(fd), syscall.IPPROTO_IP, IP_UNICAST_IF, nicIdxBigEnd)
+		})
+		return errors.Join(err, operr1, operr2, operr3)
+	}
 }
 
 func toBigEndianInt(v int) int {
