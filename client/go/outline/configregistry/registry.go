@@ -17,6 +17,7 @@ package configregistry
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 
 	"localhost/client/go/configyaml"
@@ -38,7 +39,7 @@ func newTypeParser[T any](fallbackHandler func(context.Context, configyaml.Confi
 //
 // directSD, directPD and directPL are used for direct connections. On platforms where the
 // app's own sockets would otherwise go through the VPN, they must be protected from it.
-// If directPL is nil, an unprotected [transport.UDPListener] is used.
+// If any of them is nil, configs that need that direct component fail with [errors.ErrUnsupported].
 func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD transport.PacketDialer, directPL transport.PacketListener) *configyaml.TypeParser[*TransportPair] {
 	var streamEndpoints *configyaml.TypeParser[*Endpoint[transport.StreamConn]]
 	var packetEndpoints *configyaml.TypeParser[*Endpoint[net.Conn]]
@@ -51,7 +52,7 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 		switch input.(type) {
 		case nil:
 			// An absent config implicitly means direct access.
-			return directWrappedSD, nil
+			return getDirectComponent(directWrappedSD, "stream dialer")
 		case string:
 			// Parse URL-style config.
 			return parseShadowsocksStreamDialer(ctx, input, streamEndpoints.Parse)
@@ -68,7 +69,7 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 		switch input.(type) {
 		case nil:
 			// An absent config implicitly means direct access.
-			return directWrappedPD, nil
+			return getDirectComponent(directWrappedPD, "packet dialer")
 		case string:
 			// Parse URL-style config.
 			return parseShadowsocksPacketDialer(ctx, input, packetEndpoints.Parse)
@@ -77,15 +78,15 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 		}
 	})
 
-	if directPL == nil {
-		directPL = &transport.UDPListener{}
+	var directWrappedPL *PacketListener
+	if directPL != nil {
+		directWrappedPL = &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, directPL}
 	}
-	directWrappedPL := &PacketListener{ConnectionProviderInfo{ConnTypeDirect, ""}, directPL}
 	packetListeners := newTypeParser(func(ctx context.Context, input configyaml.ConfigNode) (*PacketListener, error) {
 		switch input.(type) {
 		case nil:
 			// An absent config implicitly means UDP.
-			return directWrappedPL, nil
+			return getDirectComponent(directWrappedPL, "packet listener")
 		default:
 			return nil, errors.New("parser not specified")
 		}
@@ -116,7 +117,7 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	// Stream dialers.
 	streamDialers.RegisterSubParser("block", NewBlockDialerSubParser[transport.StreamConn]())
 	streamDialers.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*Dialer[transport.StreamConn], error) {
-		return directWrappedSD, nil
+		return getDirectComponent(directWrappedSD, "stream dialer")
 	})
 	streamDialers.RegisterSubParser("iptable", NewIPTableStreamDialerSubParser(streamDialers.Parse))
 	streamDialers.RegisterSubParser("shadowsocks", NewShadowsocksStreamDialerSubParser(streamEndpoints.Parse))
@@ -124,13 +125,13 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	// Packet dialers.
 	packetDialers.RegisterSubParser("block", NewBlockDialerSubParser[net.Conn]())
 	packetDialers.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*Dialer[net.Conn], error) {
-		return directWrappedPD, nil
+		return getDirectComponent(directWrappedPD, "packet dialer")
 	})
 	packetDialers.RegisterSubParser("shadowsocks", NewShadowsocksPacketDialerSubParser(packetEndpoints.Parse))
 
 	// Packet listeners.
 	packetListeners.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*PacketListener, error) {
-		return directWrappedPL, nil
+		return getDirectComponent(directWrappedPL, "packet listener")
 	})
 	packetListeners.RegisterSubParser("shadowsocks", NewShadowsocksPacketListenerSubParser(packetEndpoints.Parse))
 
@@ -139,4 +140,12 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	transports.RegisterSubParser("basic-access", NewProxylessTransportPairSubParser(streamDialers.Parse))
 
 	return transports
+}
+
+// getDirectComponent returns the direct component, or an [errors.ErrUnsupported] error if it was not provided.
+func getDirectComponent[T any](component *T, name string) (*T, error) {
+	if component == nil {
+		return nil, fmt.Errorf("direct %s not available: %w", name, errors.ErrUnsupported)
+	}
+	return component, nil
 }

@@ -103,7 +103,7 @@ func TestParseIPTableTCP(t *testing.T) {
 	tp := NewDefaultTransportProvider(
 		&errorStreamDialer{name: "default-tcp"},
 		nil, // UDP transport not under test.
-		nil,
+		&transport.UDPListener{},
 	)
 
 	yamlConfig := `$type: tcpudp
@@ -200,6 +200,29 @@ udp: {$type: direct}`)
 	err = sender.SendPacket([]byte("hello"), netip.MustParseAddrPort("192.0.2.1:443"))
 	require.ErrorContains(t, err, "recording listener")
 	require.Equal(t, 1, direct.calls)
+}
+
+func TestParseDirectUnsupportedWhenNotProvided(t *testing.T) {
+	tp := NewDefaultTransportProvider(nil, nil, nil)
+	tests := []struct {
+		name   string
+		config string
+	}{
+		{"explicit stream dialer", `{$type: tcpudp, tcp: {$type: direct}, udp: null}`},
+		{"implicit stream dialer", `{$type: tcpudp, tcp: null, udp: null}`},
+		{"explicit packet listener", `{$type: tcpudp, tcp: {$type: block}, udp: {$type: direct}}`},
+		{"implicit packet listener", `{$type: tcpudp, tcp: {$type: block}, udp: null}`},
+		{"explicit packet dialer", `{$type: tcpudp, tcp: {$type: block}, udp: {$type: shadowsocks, endpoint: {$type: dial, address: "example.com:1234", dialer: {$type: direct}}, cipher: chacha20-ietf-poly1305, secret: SECRET}}`},
+		{"first-supported exhausted", `{$type: tcpudp, tcp: {$type: first-supported, options: [{$type: direct}]}, udp: null}`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			node, err := configyaml.ParseConfigYAML(tc.config)
+			require.NoError(t, err)
+			_, err = tp.Parse(context.Background(), node)
+			require.ErrorIs(t, err, errors.ErrUnsupported)
+		})
+	}
 }
 
 type recordingPacketListener struct {
