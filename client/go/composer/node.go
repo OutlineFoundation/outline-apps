@@ -22,6 +22,9 @@ import (
 	"github.com/goccy/go-yaml/parser"
 )
 
+// TypeKey is the reserved mapping key that selects a registered sub-parser.
+const TypeKey = "$type"
+
 const (
 	maxAliasDepth = 20
 	maxMergeDepth = 20
@@ -329,6 +332,28 @@ func (n Node) sequenceItems() ([]Node, error) {
 		items = append(items, child)
 	}
 	return items, nil
+}
+
+// typeName returns the value of the $type key of a mapping node.
+func (n Node) typeName() (string, bool, error) {
+	if n.Kind() != KindMapping {
+		return "", false, nil
+	}
+	entries, err := n.mappingEntries()
+	if err != nil {
+		return "", false, err
+	}
+	for _, e := range entries {
+		if e.key != TypeKey {
+			continue
+		}
+		var name string
+		if err := e.value.Decode(&name); err != nil {
+			return "", false, fmt.Errorf("%s must be a string: %w", TypeKey, err)
+		}
+		return name, true, nil
+	}
+	return "", false, nil
 }
 
 func (n Node) errorf(format string, args ...any) error {
