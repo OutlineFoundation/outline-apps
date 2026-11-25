@@ -19,7 +19,6 @@ import * as path from 'path';
 import * as process from 'process';
 import * as url from 'url';
 
-import * as net from '@outline/infrastructure/net';
 import * as Sentry from '@sentry/electron/main';
 import {
   app,
@@ -33,7 +32,6 @@ import {
 } from 'electron';
 import {autoUpdater} from 'electron-updater';
 
-import {lookupIp} from './connectivity';
 import {invokeGoMethod} from './go_plugin';
 import {GoVpnTunnel} from './go_vpn_tunnel';
 import {installRoutingServices, RoutingDaemon} from './routing_service';
@@ -356,16 +354,7 @@ async function createVpnTunnel(
   request: StartRequestJson,
   isAutoConnect: boolean
 ): Promise<VpnTunnel> {
-  // We must convert the host from a potential "hostname" to an "IP" address
-  // because startVpn will add a routing table entry that prefixed with this
-  // host (e.g. "<host>/32"), therefore <host> must be an IP address.
-  // TODO: make sure we resolve it in the native code
-  const {host} = net.splitHostPort(request.firstHop);
-  if (!host) {
-    throw new errors.IllegalServerConfiguration('host is missing');
-  }
-  const hostIp = await lookupIp(host);
-  const routing = new RoutingDaemon(hostIp || '', isAutoConnect);
+  const routing = new RoutingDaemon(isAutoConnect);
   const tunnel = new GoVpnTunnel(routing, request.id, request.client);
   routing.onNetworkChange = tunnel.networkChanged.bind(tunnel);
   return tunnel;
