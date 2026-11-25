@@ -134,6 +134,7 @@ func NewDefaultTransportProvider(directSD transport.StreamDialer, directPD trans
 	packetListeners.RegisterSubParser("direct", func(ctx context.Context, input map[string]any) (*PacketListener, error) {
 		return getDirectComponent(directWrappedPL, "packet listener")
 	})
+	packetListeners.RegisterSubParser("iptable", NewIPTablePacketListenerSubParser(packetListeners.Parse))
 	packetListeners.RegisterSubParser("shadowsocks", NewShadowsocksPacketListenerSubParser(packetEndpoints.Parse))
 
 	// Transport pairs.

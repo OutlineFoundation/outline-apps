@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/netip"
 	"testing"
+	"time"
 
 	"localhost/client/go/configyaml"
 	"golang.getoutline.org/sdk/transport"
@@ -234,6 +235,108 @@ func (l *recordingPacketListener) ListenPacket(ctx context.Context) (net.PacketC
 	return nil, errors.New("recording listener")
 }
 
+func TestParseIPTableUDP(t *testing.T) {
+	provider := newTestTransportProvider()
+
+	t.Run("direct routes with tunneled fallback are partial", func(t *testing.T) {
+		node, err := configyaml.ParseConfigYAML(`
+$type: tcpudp
+tcp: &vpn
+  $type: shadowsocks
+  endpoint: example.com:1234
+  cipher: chacha20-ietf-poly1305
+  secret: SECRET
+udp:
+  $type: iptable
+  table:
+    - ips: [157.240.0.0/16, 31.13.64.0/18]
+      listener: {$type: direct}
+  fallback: *vpn`)
+		require.NoError(t, err)
+
+		transportPair, err := provider.Parse(context.Background(), node)
+		require.NoError(t, err)
+		require.Equal(t, ConnTypeTunneled, transportPair.StreamDialer.ConnType)
+		require.Equal(t, ConnTypePartial, transportPair.PacketRelay.ConnType)
+	})
+
+	t.Run("uses the provided direct listener", func(t *testing.T) {
+		direct := &recordingPacketListener{}
+		tp := NewDefaultTransportProvider(&errorStreamDialer{name: "default-tcp"}, nil, direct)
+		node, err := configyaml.ParseConfigYAML(`
+$type: tcpudp
+tcp: {$type: block}
+udp:
+  $type: iptable
+  table:
+    - ips: [192.0.2.0/24]
+      listener: {$type: direct}`)
+		require.NoError(t, err)
+		transportPair, err := tp.Parse(context.Background(), node)
+		require.NoError(t, err)
+
+		sender, _, err := transportPair.PacketRelay.NewAssociation()
+		require.NoError(t, err)
+		defer sender.Close()
+		err = sender.SendPacket([]byte("hello"), netip.MustParseAddrPort("192.0.2.1:443"))
+		require.ErrorContains(t, err, "recording listener")
+		require.Equal(t, 1, direct.calls)
+	})
+
+	t.Run("routes packets", func(t *testing.T) {
+		echo, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
+		require.NoError(t, err)
+		defer echo.Close()
+		go func() {
+			buf := make([]byte, 100)
+			for {
+				n, addr, err := echo.ReadFrom(buf)
+				if err != nil {
+					return
+				}
+				echo.WriteTo(buf[:n], addr)
+			}
+		}()
+
+		node, err := configyaml.ParseConfigYAML(`
+$type: tcpudp
+tcp: {$type: direct}
+udp:
+  $type: iptable
+  table:
+    - ips: [127.0.0.0/8]
+      listener: {$type: direct}
+  fallback: {$type: block}`)
+		require.NoError(t, err)
+		transportPair, err := provider.Parse(context.Background(), node)
+		require.NoError(t, err)
+		require.Equal(t, ConnTypeDirect, transportPair.PacketRelay.ConnType)
+
+		sender, receiver, err := transportPair.PacketRelay.NewAssociation()
+		require.NoError(t, err)
+		defer sender.Close()
+
+		received := make(chan string, 1)
+		go receiver.ReceivePackets(packetHandlerFunc(func(p []byte, source netip.AddrPort) error {
+			// The direct listener uses a dual-stack socket, so IPv4 sources may be IPv4-mapped.
+			received <- netip.AddrPortFrom(source.Addr().Unmap(), source.Port()).String() + " " + string(p)
+			return nil
+		}))
+
+		err = sender.SendPacket([]byte("blocked"), netip.MustParseAddrPort("192.0.2.1:443"))
+		require.ErrorContains(t, err, "blocked by config")
+
+		echoAddr := echo.LocalAddr().(*net.UDPAddr).AddrPort()
+		require.NoError(t, sender.SendPacket([]byte("ping"), echoAddr))
+		select {
+		case got := <-received:
+			require.Equal(t, echoAddr.String()+" ping", got)
+		case <-time.After(5 * time.Second):
+			t.Fatal("no reply from the direct route")
+		}
+	})
+}
+
 func TestParseBlockUDP(t *testing.T) {
 	node, err := configyaml.ParseConfigYAML(`
 $type: tcpudp
@@ -250,4 +353,10 @@ udp: {$type: block}`)
 	defer sender.Close()
 	err = sender.SendPacket([]byte("blocked"), netip.MustParseAddrPort("192.0.2.1:443"))
 	require.ErrorContains(t, err, "blocked by config")
+}
+
+type packetHandlerFunc func(p []byte, source netip.AddrPort) error
+
+func (f packetHandlerFunc) HandlePacket(p []byte, source netip.AddrPort) error {
+	return f(p, source)
 }
