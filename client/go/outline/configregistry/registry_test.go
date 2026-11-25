@@ -233,3 +233,21 @@ func (l *recordingPacketListener) ListenPacket(ctx context.Context) (net.PacketC
 	l.calls++
 	return nil, errors.New("recording listener")
 }
+
+func TestParseBlockUDP(t *testing.T) {
+	node, err := configyaml.ParseConfigYAML(`
+$type: tcpudp
+tcp: {$type: direct}
+udp: {$type: block}`)
+	require.NoError(t, err)
+
+	transportPair, err := newTestTransportProvider().Parse(context.Background(), node)
+	require.NoError(t, err)
+	require.Equal(t, ConnTypeBlocked, transportPair.PacketRelay.ConnType)
+
+	sender, _, err := transportPair.PacketRelay.NewAssociation()
+	require.NoError(t, err, "sockets are opened lazily")
+	defer sender.Close()
+	err = sender.SendPacket([]byte("blocked"), netip.MustParseAddrPort("192.0.2.1:443"))
+	require.ErrorContains(t, err, "blocked by config")
+}
