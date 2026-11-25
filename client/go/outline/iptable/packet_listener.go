@@ -70,6 +70,7 @@ func (l *PacketListener) ListenPacket(ctx context.Context) (net.PacketConn, erro
 		openCtx:             openCtx,
 		cancelOpens:         cancelOpens,
 		routes:              make(map[transport.PacketListener]net.PacketConn),
+		pendingOpens:        make(map[*pendingOpen]struct{}),
 		packets:             make(chan receivedPacket),
 		done:                make(chan struct{}),
 		readDeadlineEarlier: make(chan struct{}),
@@ -132,6 +133,8 @@ type routingPacketConn struct {
 	mu     sync.Mutex
 	closed bool
 	routes map[transport.PacketListener]net.PacketConn
+	// pendingOpens are the route sockets being opened, so SetWriteDeadline can update their deadlines.
+	pendingOpens map[*pendingOpen]struct{}
 	// Read deadlines are enforced by ReadFrom. Write deadlines are applied to every route socket.
 	readDeadline  time.Time
 	writeDeadline time.Time
@@ -141,6 +144,24 @@ type routingPacketConn struct {
 }
 
 var _ net.PacketConn = (*routingPacketConn)(nil)
+
+// pendingOpen is a route socket being opened. It's canceled with [os.ErrDeadlineExceeded] when
+// the write deadline passes, following any deadline changes made while it's pending.
+type pendingOpen struct {
+	cancel context.CancelCauseFunc
+	timer  *time.Timer
+}
+
+// setDeadline must be called with routingPacketConn.mu held.
+func (o *pendingOpen) setDeadline(t time.Time) {
+	if o.timer != nil {
+		o.timer.Stop()
+		o.timer = nil
+	}
+	if !t.IsZero() {
+		o.timer = time.AfterFunc(time.Until(t), func() { o.cancel(os.ErrDeadlineExceeded) })
+	}
+}
 
 // WriteTo implements [net.PacketConn]. It sends the packet through the socket of the route
 // selected for addr, opening that socket first if needed.
@@ -166,20 +187,26 @@ func (c *routingPacketConn) routeConn(listener transport.PacketListener) (net.Pa
 		c.mu.Unlock()
 		return conn, nil
 	}
-	ctx, cancel := c.openCtx, context.CancelFunc(func() {})
-	if !c.writeDeadline.IsZero() {
-		ctx, cancel = context.WithDeadline(ctx, c.writeDeadline)
-	}
+	ctx, cancel := context.WithCancelCause(c.openCtx)
+	defer cancel(nil)
+	open := &pendingOpen{cancel: cancel}
+	open.setDeadline(c.writeDeadline)
+	c.pendingOpens[open] = struct{}{}
 	c.mu.Unlock()
-	defer cancel()
 
 	// Don't hold the lock while opening the socket, since it may involve network operations.
 	conn, err := listener.ListenPacket(ctx)
+
+	c.mu.Lock()
+	delete(c.pendingOpens, open)
+	open.setDeadline(time.Time{})
+	c.mu.Unlock()
+
 	if err != nil {
 		if c.isClosed() {
 			return nil, net.ErrClosed
 		}
-		if errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(context.Cause(ctx), os.ErrDeadlineExceeded) {
 			return nil, fmt.Errorf("failed to open route socket: %w: %w", os.ErrDeadlineExceeded, err)
 		}
 		return nil, err
@@ -355,7 +382,7 @@ func (c *routingPacketConn) SetReadDeadline(t time.Time) error {
 }
 
 // SetWriteDeadline implements [net.PacketConn]. The deadline also applies to route sockets
-// opened later.
+// being opened or opened later.
 func (c *routingPacketConn) SetWriteDeadline(t time.Time) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -363,6 +390,9 @@ func (c *routingPacketConn) SetWriteDeadline(t time.Time) error {
 		return net.ErrClosed
 	}
 	c.writeDeadline = t
+	for open := range c.pendingOpens {
+		open.setDeadline(t)
+	}
 	var errs []error
 	for _, conn := range c.routes {
 		if err := conn.SetWriteDeadline(t); err != nil {

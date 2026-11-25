@@ -423,6 +423,73 @@ func TestPacketListener_RouteOpenIsBounded(t *testing.T) {
 	})
 }
 
+// gatedPacketListener blocks route opens until release is closed.
+type gatedPacketListener struct {
+	fakePacketListener
+	started chan struct{}
+	release chan struct{}
+}
+
+func (l *gatedPacketListener) ListenPacket(ctx context.Context) (net.PacketConn, error) {
+	close(l.started)
+	select {
+	case <-l.release:
+		return l.fakePacketListener.ListenPacket(ctx)
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+func TestPacketListener_PendingRouteOpenFollowsWriteDeadline(t *testing.T) {
+	setUp := func(t *testing.T) (net.PacketConn, *gatedPacketListener, chan error) {
+		gated := &gatedPacketListener{started: make(chan struct{}), release: make(chan struct{})}
+		table := NewIPTable[transport.PacketListener]()
+		require.NoError(t, table.AddPrefix(netip.MustParsePrefix("10.0.0.0/8"), gated))
+		pl, err := NewPacketListener(table, nil)
+		require.NoError(t, err)
+		conn, err := pl.ListenPacket(context.Background())
+		require.NoError(t, err)
+		t.Cleanup(func() { conn.Close() })
+		return conn, gated, make(chan error, 1)
+	}
+	write := func(conn net.PacketConn, writeErr chan<- error) {
+		_, err := conn.WriteTo([]byte("a"), udpAddr("10.0.0.1:443"))
+		writeErr <- err
+	}
+
+	t.Run("extension", func(t *testing.T) {
+		conn, gated, writeErr := setUp(t)
+		require.NoError(t, conn.SetWriteDeadline(time.Now().Add(20*time.Millisecond)))
+		go write(conn, writeErr)
+		<-gated.started
+		require.NoError(t, conn.SetWriteDeadline(time.Now().Add(time.Hour)))
+		time.Sleep(50 * time.Millisecond)
+		close(gated.release)
+		select {
+		case err := <-writeErr:
+			require.NoError(t, err)
+		case <-time.After(time.Second):
+			t.Fatal("write did not complete")
+		}
+		routeConns := gated.openedConns()
+		require.Len(t, routeConns, 1)
+		require.Equal(t, sentPacket{"a", "10.0.0.1:443"}, <-routeConns[0].sent)
+	})
+
+	t.Run("earlier deadline", func(t *testing.T) {
+		conn, gated, writeErr := setUp(t)
+		go write(conn, writeErr)
+		<-gated.started
+		require.NoError(t, conn.SetWriteDeadline(time.Now().Add(20*time.Millisecond)))
+		select {
+		case err := <-writeErr:
+			require.ErrorIs(t, err, os.ErrDeadlineExceeded)
+		case <-time.After(time.Second):
+			t.Fatal("the new deadline did not cancel the pending route open")
+		}
+	})
+}
+
 func TestPacketListener_RealUDP(t *testing.T) {
 	echo, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	require.NoError(t, err)
