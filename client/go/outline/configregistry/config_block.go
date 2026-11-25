@@ -17,7 +17,12 @@ package configregistry
 import (
 	"context"
 	"errors"
+	"net"
+
+	"golang.getoutline.org/sdk/transport"
 )
+
+var errBlockedByConfig = errors.New("blocked by config")
 
 func NewBlockDialerSubParser[ConnType any]() func(ctx context.Context, input map[string]any) (*Dialer[ConnType], error) {
 	return func(ctx context.Context, input map[string]any) (*Dialer[ConnType], error) {
@@ -25,8 +30,25 @@ func NewBlockDialerSubParser[ConnType any]() func(ctx context.Context, input map
 			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeBlocked},
 			Dial: func(ctx context.Context, address string) (ConnType, error) {
 				var zero ConnType
-				return zero, errors.New("blocked by config")
+				return zero, errBlockedByConfig
 			},
 		}, nil
 	}
+}
+
+func NewBlockPacketListenerSubParser() func(ctx context.Context, input map[string]any) (*PacketListener, error) {
+	return func(ctx context.Context, input map[string]any) (*PacketListener, error) {
+		return &PacketListener{
+			ConnectionProviderInfo: ConnectionProviderInfo{ConnType: ConnTypeBlocked},
+			PacketListener:         &blockPacketListener{},
+		}, nil
+	}
+}
+
+type blockPacketListener struct{}
+
+var _ transport.PacketListener = (*blockPacketListener)(nil)
+
+func (*blockPacketListener) ListenPacket(ctx context.Context) (net.PacketConn, error) {
+	return nil, errBlockedByConfig
 }
