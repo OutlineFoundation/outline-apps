@@ -1,6 +1,9 @@
 {
   "asarUnpack": ["server_manager/www/images"],
   "artifactName": "Outline-Manager.${ext}",
+  "extraMetadata": {
+    "name": "outline-manager"
+  },
   "linux": {
     "icon": "icons/png",
     "category": "Network",
