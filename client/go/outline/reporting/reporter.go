@@ -16,6 +16,7 @@ package reporting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -37,7 +38,7 @@ type HTTPReporter struct {
 }
 
 func (r *HTTPReporter) Run(sessionCtx context.Context) {
-	r.reportAndLogError()
+	r.reportAndLogError(sessionCtx)
 	if r.Interval == 0 {
 		return
 	}
@@ -48,27 +49,42 @@ func (r *HTTPReporter) Run(sessionCtx context.Context) {
 		select {
 		case <-sessionCtx.Done():
 			return
-		case _, ok := <-ticker.C:
-			if !ok {
-				return
-			}
-			r.reportAndLogError()
+		case <-ticker.C:
+			r.reportAndLogError(sessionCtx)
 		}
 	}
 }
 
-func (r *HTTPReporter) reportAndLogError() {
-	err := r.Report()
-	if err != nil {
+func (r *HTTPReporter) reportAndLogError(ctx context.Context) {
+	err := r.report(ctx)
+	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, ctx.Err()) {
 		slog.Warn("Failed to report", "err", err)
 	}
 }
 
 func (r *HTTPReporter) Report() error {
+	return r.report(context.Background())
+}
+
+func (r *HTTPReporter) report(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	req, err := r.NewRequest()
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
+	// Preserve any request-specific deadline while also honoring session shutdown.
+	requestCtx, cancel := context.WithCancel(req.Context())
+	defer cancel()
+	stopCancel := context.AfterFunc(ctx, cancel)
+	defer stopCancel()
+	// AfterFunc runs asynchronously, even when cancellation happened while the
+	// request factory was running. Cancel synchronously before handing it to HTTP.
+	if ctx.Err() != nil {
+		cancel()
+	}
+	req = req.WithContext(requestCtx)
 	req.Close = true
 	req.Header.Add("User-Agent", useragent.GetOutlineUserAgent())
 
