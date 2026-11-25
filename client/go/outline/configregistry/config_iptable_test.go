@@ -331,3 +331,138 @@ table:
 		require.Contains(t, err.Error(), "fallback sub-parser failed")
 	})
 }
+
+func TestParseIPTablePacketListener(t *testing.T) {
+	ctx := context.Background()
+
+	parsePL := func(ctx context.Context, config configyaml.ConfigNode) (*PacketListener, error) {
+		configMap, ok := config.(map[string]any)
+		if !ok {
+			return nil, errors.New("config is not a map[string]any")
+		}
+		name, _ := configMap["name"].(string)
+		connType, ok := map[string]ConnType{
+			"tunnel": ConnTypeTunneled,
+			"direct": ConnTypeDirect,
+			"block":  ConnTypeBlocked,
+		}[name]
+		if !ok {
+			return nil, fmt.Errorf("no mock listener found with name: %s", name)
+		}
+		return &PacketListener{ConnectionProviderInfo{ConnType: connType}, &transport.UDPListener{}}, nil
+	}
+
+	testCases := []struct {
+		name             string
+		configYAML       string
+		expectErr        string
+		expectedConnType ConnType
+	}{
+		{
+			name: "direct routes with tunneled fallback",
+			configYAML: `
+table:
+  - ips: [157.240.0.0/16, 2a03:2880::/32, 31.13.24.1]
+    listener: {name: direct}
+fallback: {name: tunnel}`,
+			expectedConnType: ConnTypePartial,
+		},
+		{
+			name: "all tunneled",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    listener: {name: tunnel}`,
+			expectedConnType: ConnTypeTunneled,
+		},
+		{
+			name: "all direct",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    listener: {name: direct}
+fallback: {name: direct}`,
+			expectedConnType: ConnTypeDirect,
+		},
+		{
+			name: "blocked routes are ignored",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    listener: {name: block}
+fallback: {name: tunnel}`,
+			expectedConnType: ConnTypeTunneled,
+		},
+		{
+			name: "all blocked",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    listener: {name: block}
+fallback: {name: block}`,
+			expectedConnType: ConnTypeBlocked,
+		},
+		{
+			name:       "empty table",
+			configYAML: `fallback: {name: tunnel}`,
+			expectErr:  "iptable config 'table' must not be empty for packet listener",
+		},
+		{
+			name: "missing listener",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]`,
+			expectErr: "iptable entry 0 has no listener specified",
+		},
+		{
+			name: "dialer field is not accepted",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    dialer: {name: direct}`,
+			expectErr: "failed to map iptable packet listener config",
+		},
+		{
+			name: "invalid IP",
+			configYAML: `
+table:
+  - ips: [not-an-ip]
+    listener: {name: direct}`,
+			expectErr: "iptable entry 0 IP 'not-an-ip' is not a valid IP address or CIDR prefix",
+		},
+		{
+			name: "sub-listener fails",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    listener: {name: unknown}`,
+			expectErr: "failed to parse nested packet listener for table entry 0",
+		},
+		{
+			name: "fallback fails",
+			configYAML: `
+table:
+  - ips: [10.0.0.0/8]
+    listener: {name: direct}
+fallback: {name: unknown}`,
+			expectErr: "failed to parse nested packet listener fallback",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			node, err := configyaml.ParseConfigYAML(tc.configYAML)
+			require.NoError(t, err)
+			configMap, ok := node.(map[string]any)
+			require.True(t, ok, "parsed yaml is not a map")
+
+			listener, err := parseIPTablePacketListener(ctx, configMap, parsePL)
+			if tc.expectErr != "" {
+				require.ErrorContains(t, err, tc.expectErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedConnType, listener.ConnType)
+		})
+	}
+}

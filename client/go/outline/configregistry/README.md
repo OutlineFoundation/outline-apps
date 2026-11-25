@@ -75,6 +75,33 @@ packetEndpoints.RegisterSubParser("websocket", NewWebsocketPacketEndpointSubPars
 Notice how the dependencies between the subparsers and the parsers they depend on are explicit
 and will cause compile-time errors if not provided.
 
+### IP-based routing (`iptable`)
+
+The `iptable` type routes traffic by destination IP, using the longest matching prefix.
+Traffic that matches no entry uses `fallback`, and fails if there's no fallback.
+It's available as a stream dialer (each entry has a `dialer`) and as a packet listener (each entry has a `listener`):
+
+```yaml
+$type: tcpudp
+tcp: &vpn
+  $type: shadowsocks
+  endpoint: vpn.example.com:443
+  cipher: chacha20-ietf-poly1305
+  secret: SECRET
+udp:
+  $type: iptable
+  table:
+    - ips: [157.240.0.0/16, 31.13.64.0/18]
+      listener: {$type: direct}
+    - ips: [192.0.2.0/24]
+      listener: {$type: block}
+  fallback: *vpn
+```
+
+The packet listener opens a socket for a route only when a packet is first sent through it, and
+merges the packets received on all routes. If some routes are direct and others are tunneled,
+the connection type is partial.
+
 ## Adding a New Strategy or Dialer
 
 To introduce a new network capability (e.g., custom proxy protocol, dialing strategy), follow these steps:
