@@ -1,0 +1,18 @@
+.vs/
+packages/
+
+**/*.assets.cache
+
+**/Generated Files/
+**/*.vcxproj.user
+**/*.wapproj.user
+
+**/x64/Debug/
+**/x64/Release/
+**/x86/Debug/
+**/x86/Release/
+**/ARM/Debug/
+**/ARM/Release/
+
+**/obj/
+**/bin/
