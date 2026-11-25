@@ -37,6 +37,14 @@ NSString *const kDefaultPathKey = @"defaultPath";
 @property (nonatomic, nullable) NSString *tunnelId;
 @property (nonatomic, nullable) NSString *transportConfig;
 @property (nonatomic) dispatch_queue_t packetQueue;
+// Device replacement, packet writes and prepared-switch state belong to packetQueue.
+@property (nonatomic) BOOL stopping;
+@property (nonatomic) NSUInteger sessionGeneration;
+@property (nonatomic, nullable) NSString *preparedToken;
+@property (nonatomic, nullable) NSString *preparedId;
+@property (nonatomic, nullable) NSString *preparedTransport;
+@property (nonatomic, nullable) OutlineClient *preparedClient;
+@property (nonatomic, nullable) NSString *committedToken;
 @end
 
 @implementation PacketTunnelProvider
@@ -60,6 +68,16 @@ NSString *const kDefaultPathKey = @"defaultPath";
 
 - (void)startTunnelWithOptions:(NSDictionary *)options
              completionHandler:(void (^)(NSError *))completion {
+  dispatch_async(self.packetQueue, ^{
+    self.stopping = NO;
+    self.sessionGeneration++;
+    self.committedToken = nil;
+    [self startTunnelOnPacketQueueWithOptions:options completionHandler:completion];
+  });
+}
+
+- (void)startTunnelOnPacketQueueWithOptions:(NSDictionary *)options
+                        completionHandler:(void (^)(NSError *))completion {
   DDLogInfo(@"Starting tunnel");
   DDLogDebug(@"Options are %@", options);
 
@@ -75,13 +93,21 @@ NSString *const kDefaultPathKey = @"defaultPath";
     return startDone([SwiftBridge newInvalidConfigOutlineErrorWithMessage:@"no config specified"]);
   }
   NETunnelProviderProtocol *protocol = (NETunnelProviderProtocol *)self.protocolConfiguration;
-  NSString *tunnelId = protocol.providerConfiguration[@"id"];
+  NSDictionary *configuration = protocol.providerConfiguration;
+  NSDictionary *pending = configuration[@"pendingSwitch"];
+  if ([pending isKindOfClass:[NSDictionary class]] &&
+      [pending[@"token"] isKindOfClass:[NSString class]] &&
+      [pending[@"token"] isEqual:[SwiftBridge lastCommittedSwitchToken]]) {
+    configuration = pending;
+    self.committedToken = pending[@"token"];
+  }
+  NSString *tunnelId = configuration[@"id"];
   if (![tunnelId isKindOfClass:[NSString class]]) {
     DDLogError(@"Failed to retrieve the tunnel id.");
     return startDone([SwiftBridge newInternalOutlineErrorWithMessage:@"no tunnal ID specified"]);
   }
 
-  NSString *transportConfig = protocol.providerConfiguration[@"transport"];
+  NSString *transportConfig = configuration[@"transport"];
   if (![transportConfig isKindOfClass:[NSString class]]) {
     DDLogError(@"Failed to retrieve the transport configuration.");
     return startDone([SwiftBridge newInvalidConfigOutlineErrorWithMessage:@"config is not a String"]);
@@ -97,23 +123,26 @@ NSString *const kDefaultPathKey = @"defaultPath";
   bool isOnDemand = isOnDemandNumber != nil && [isOnDemandNumber intValue] == 1;
   DDLogDebug(@"isOnDemand is %d", isOnDemand);
 
-  BOOL isRestart = self.remoteDevice != nil;
-  if (isRestart) {
-    [self.remoteDevice close];
-  }
-  DDLogDebug(@"isRestart is %d", isRestart);
+  [self.remoteDevice close];
+  self.remoteDevice = nil;
 
   PlaterrorsPlatformError *deviceErr = [self connectRemoteDevice:isOnDemand];
   if (deviceErr != nil) {
     return startDone([SwiftBridge newOutlineErrorFromPlatformError:deviceErr]);
   }
 
+  NSUInteger generation = self.sessionGeneration;
   [self startRouting:[SwiftBridge getTunnelNetworkSettings]
           completion:^(NSError *_Nullable error) {
+            if (self.stopping || self.sessionGeneration != generation) {
+              return startDone([SwiftBridge newInternalOutlineErrorWithMessage:@"VPN start cancelled"]);
+            }
             if (error != nil) {
+              [self.remoteDevice close];
+              self.remoteDevice = nil;
               return startDone([SwiftBridge newOutlineErrorFromNsError:error]);
             }
-            PlaterrorsPlatformError *relayErr = [self relayTraffic:isRestart];
+            PlaterrorsPlatformError *relayErr = [self relayTraffic:NO];
             if (relayErr != nil) {
               return startDone([SwiftBridge newOutlineErrorFromPlatformError:relayErr]);
             }
@@ -124,30 +153,40 @@ NSString *const kDefaultPathKey = @"defaultPath";
 
 - (void)stopTunnelWithReason:(NEProviderStopReason)reason
            completionHandler:(void (^)(void))completionHandler {
-  DDLogInfo(@"Stopping tunnel, reason: %ld", (long)reason);
-  [self stopListeningForNetworkChanges];
-  PlaterrorsPlatformError *err = [self.remoteDevice close];
-  if (err != nil) {
-    DDLogWarn(@"Failed to close remote device: %@", err.error);
-  }
-  completionHandler();
+  dispatch_async(self.packetQueue, ^{
+    DDLogInfo(@"Stopping tunnel, reason: %ld", (long)reason);
+    self.stopping = YES;
+    self.sessionGeneration++;
+    [self discardPreparedSwitch];
+    [self stopListeningForNetworkChanges];
+    PlaterrorsPlatformError *err = [self.remoteDevice close];
+    self.remoteDevice = nil;
+    if (err != nil) {
+      DDLogWarn(@"Failed to close remote device: %@", err.error);
+    }
+    completionHandler();
+  });
 }
 
 # pragma mark - Network
 
 - (void)startRouting:(NEPacketTunnelNetworkSettings *)settings
            completion:(void (^)(NSError *))completionHandler {
-  __weak PacketTunnelProvider *weakSelf = self;
+  NSUInteger generation = self.sessionGeneration;
+  __weak typeof(self) weakSelf = self;
   [self setTunnelNetworkSettings:settings completionHandler:^(NSError * _Nullable error) {
-    if (error != nil) {
-      DDLogError(@"Failed to start routing: %@", error.localizedDescription);
-    } else {
-      DDLogInfo(@"Routing started");
-      // Passing nil settings clears the tunnel network configuration. Indicate to the system that
-      // the tunnel is being re-established if this is the case.
-      weakSelf.reasserting = settings == nil;
+    typeof(self) strongSelf = weakSelf;
+    if (strongSelf == nil) {
+      return completionHandler(error);
     }
-    completionHandler(error);
+    dispatch_async(strongSelf.packetQueue, ^{
+      if (!strongSelf.stopping && strongSelf.sessionGeneration == generation && error == nil) {
+        DDLogInfo(@"Routing started");
+        strongSelf.reasserting = strongSelf.remoteDevice == nil ||
+            (strongSelf.defaultPath != nil && strongSelf.defaultPath.status != NWPathStatusSatisfied);
+      }
+      completionHandler(error);
+    });
   }];
 }
 
@@ -186,26 +225,23 @@ NSString *const kDefaultPathKey = @"defaultPath";
     return;
   }
 
-  dispatch_async(dispatch_get_main_queue(), ^{
+  dispatch_async(self.packetQueue, ^{
     [self handleNetworkChange:self.defaultPath];
   });
 }
 
 - (void)handleNetworkChange:(NWPath *)newDefaultPath {
+  if (self.stopping) {
+    return;
+  }
   DDLogInfo(@"Network connectivity changed");
   if (newDefaultPath.status == NWPathStatusSatisfied) {
-    DDLogInfo(@"Reconnecting tunnel.");
     [self.remoteDevice notifyNetworkChanged];
     [self reconnectTunnel];
   } else {
-    DDLogInfo(@"Clearing tunnel settings.");
-    [self startRouting:nil completion:^(NSError * _Nullable error) {
-      if (error != nil) {
-        DDLogError(@"Failed to clear tunnel network settings: %@", error.localizedDescription);
-      } else {
-        DDLogInfo(@"Tunnel settings cleared");
-      }
-    }];
+    // Keep routes and DNS installed while offline. Clearing them opens a direct
+    // network window when the underlying network returns.
+    self.reasserting = YES;
   }
 }
 
@@ -241,10 +277,16 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
     return;
   }
   // Nothing changed. Connect the tunnel with the current settings.
+  NSUInteger generation = self.sessionGeneration;
   [self startRouting:[SwiftBridge getTunnelNetworkSettings]
          completion:^(NSError *_Nullable error) {
+           if (self.stopping || self.sessionGeneration != generation) {
+             return;
+           }
            if (error != nil) {
-             [self cancelTunnelWithError:error];
+             // A routing refresh failure must not tear down the protected session.
+             self.reasserting = YES;
+             DDLogError(@"Failed to refresh tunnel settings: %@", error.localizedDescription);
            }
          }];
 }
@@ -261,15 +303,27 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
 
 // Writes packets from the VPN to the tunnel.
 - (void)processPackets {
+  if (self.stopping) {
+    return;
+  }
+  NSUInteger generation = self.sessionGeneration;
   __weak typeof(self) weakSelf = self;
-  __block long bytesWritten = 0;
-  [weakSelf.packetFlow readPacketsWithCompletionHandler:^(NSArray<NSData *> *_Nonnull packets,
-                                                          NSArray<NSNumber *> *_Nonnull protocols) {
-    for (NSData *packet in packets) {
-      [weakSelf.remoteDevice write:packet ret0_:&bytesWritten error:nil];
+  [self.packetFlow readPacketsWithCompletionHandler:^(NSArray<NSData *> *packets,
+                                                      NSArray<NSNumber *> *protocols) {
+    typeof(self) strongSelf = weakSelf;
+    if (strongSelf == nil) {
+      return;
     }
-    dispatch_async(weakSelf.packetQueue, ^{
-      [weakSelf processPackets];
+    dispatch_async(strongSelf.packetQueue, ^{
+      if (strongSelf.stopping || strongSelf.sessionGeneration != generation) {
+        return;
+      }
+      long bytesWritten = 0;
+      for (NSData *packet in packets) {
+        // A missing device intentionally drops packets; routes still point to TUN.
+        [strongSelf.remoteDevice write:packet ret0_:&bytesWritten error:nil];
+      }
+      [strongSelf processPackets];
     });
   }];
 }
@@ -291,6 +345,7 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
     if (healthErr != nil) {
       DDLogError(@"Remote device is not healthy: %@", healthErr.error);
       [self.remoteDevice close];
+      self.remoteDevice = nil;
       return healthErr;
     }
     DDLogInfo(@"Remote device is healthy.");
@@ -329,14 +384,131 @@ bool getIpAddressString(const struct sockaddr *sa, char *s, socklen_t maxbytes) 
 
 NSString *const kFetchLastErrorIPCName = @"fetchLastDisconnectDetailedJsonError";
 
+// Versioned handover IPC. Never log the request: it contains access credentials.
 - (void)handleAppMessage:(NSData *)messageData completionHandler:(void (^)(NSData * _Nullable))completion {
-  // mimics fetchLastDisconnectErrorWithCompletionHandler on older systems
+  if (completion == nil) {
+    return;
+  }
   NSString *ipcName = [[NSString alloc] initWithData:messageData encoding:NSUTF8StringEncoding];
-  if (![ipcName isEqualToString:kFetchLastErrorIPCName]) {
-    DDLogWarn(@"Invalid Extension IPC call: %@", ipcName);
+  if ([ipcName isEqualToString:kFetchLastErrorIPCName]) {
+    return completion([SwiftBridge loadLastErrorToIPCResponse]);
+  }
+  id request = [NSJSONSerialization JSONObjectWithData:messageData options:0 error:nil];
+  if (![request isKindOfClass:[NSDictionary class]]) {
     return completion(nil);
   }
-  completion([SwiftBridge loadLastErrorToIPCResponse]);
+  dispatch_async(self.packetQueue, ^{
+    NSString *action = request[@"action"];
+    if ([action isEqual:@"getTunnelId.v1"]) {
+      return completion([SwiftBridge switchResponseWithId:self.tunnelId token:self.committedToken error:nil]);
+    }
+    if ([action isEqual:@"abortSwitch.v1"]) {
+      if ([self.preparedToken isEqual:request[@"token"]]) {
+        [self discardPreparedSwitch];
+      }
+      return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil error:nil]);
+    }
+    if ([action isEqual:@"prepareSwitch.v1"]) {
+      return [self prepareSwitch:request completion:completion];
+    }
+    if ([action isEqual:@"commitSwitch.v1"]) {
+      return [self commitSwitch:request completion:completion];
+    }
+    completion(nil);
+  });
+}
+
+- (void)discardPreparedSwitch {
+  self.preparedToken = nil;
+  self.preparedId = nil;
+  self.preparedTransport = nil;
+  self.preparedClient = nil;
+}
+
+- (void)prepareSwitch:(NSDictionary *)request completion:(void (^)(NSData *))completion {
+  NSString *token = request[@"token"];
+  NSString *tunnelId = request[@"id"];
+  NSString *transport = request[@"transport"];
+  if (self.stopping || self.tunnelId == nil || self.preparedToken != nil ||
+      ![token isKindOfClass:[NSString class]] || token.length == 0 ||
+      ![tunnelId isKindOfClass:[NSString class]] || tunnelId.length == 0 ||
+      ![transport isKindOfClass:[NSString class]] ||
+      ![self.tunnelId isEqual:request[@"expectedId"]]) {
+    return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil
+        error:[SwiftBridge newInternalOutlineErrorWithMessage:@"VPN switch is unavailable or stale"]]);
+  }
+  self.preparedToken = token;
+  NSUInteger generation = self.sessionGeneration;
+  // Expire abandoned preparations even if the app exits or loses its IPC reply.
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 60 * NSEC_PER_SEC), self.packetQueue, ^{
+    if ([self.preparedToken isEqual:token]) {
+      [self discardPreparedSwitch];
+    }
+  });
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    OutlineNewClientResult *candidate = [SwiftBridge newClientWithId:tunnelId transportConfig:transport];
+    PlaterrorsPlatformError *error = candidate.error;
+    if (error == nil) {
+      error = Tun2socksCheckClientConnectivity(candidate.client);
+    }
+    dispatch_async(self.packetQueue, ^{
+      if (self.stopping || self.sessionGeneration != generation || ![self.preparedToken isEqual:token]) {
+        return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil
+            error:[SwiftBridge newInternalOutlineErrorWithMessage:@"VPN switch cancelled"]]);
+      }
+      if (error != nil) {
+        [self discardPreparedSwitch];
+        return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil
+            error:[SwiftBridge newOutlineErrorFromPlatformError:error]]);
+      }
+      self.preparedClient = candidate.client;
+      self.preparedId = tunnelId;
+      self.preparedTransport = transport;
+      completion([SwiftBridge switchResponseWithId:self.tunnelId token:token error:nil]);
+    });
+  });
+}
+
+- (void)commitSwitch:(NSDictionary *)request completion:(void (^)(NSData *))completion {
+  if (self.stopping || self.preparedClient == nil || ![self.preparedToken isEqual:request[@"token"]]) {
+    return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil
+        error:[SwiftBridge newInternalOutlineErrorWithMessage:@"VPN switch preparation expired"]]);
+  }
+  OutlineClient *client = self.preparedClient;
+  NSString *tunnelId = self.preparedId;
+  NSString *transport = self.preparedTransport;
+  [self discardPreparedSwitch];
+
+  // lwIP is a singleton. Replace it only after preflight, on the same queue as
+  // packet writes. The system VPN, routes, DNS and packetFlow reader stay alive.
+  [self.remoteDevice close];
+  self.remoteDevice = nil;
+  Tun2socksConnectRemoteDeviceResult *result = Tun2socksConnectRemoteDevice(client);
+  PlaterrorsPlatformError *error = result.error;
+  if (error == nil) {
+    self.remoteDevice = result.device;
+    error = [self relayTraffic:YES];
+  }
+  if (error != nil) {
+    [self.remoteDevice close];
+    self.remoteDevice = nil;
+    self.reasserting = YES;
+    // Preserve the previous logical ID so the app can still Disconnect or retry.
+    return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil
+        error:[SwiftBridge newOutlineErrorFromPlatformError:error]]);
+  }
+  NSError *persistenceError = [SwiftBridge recordCommittedSwitchWithToken:request[@"token"]];
+  if (persistenceError != nil) {
+    [self.remoteDevice close];
+    self.remoteDevice = nil;
+    self.reasserting = YES;
+    return completion([SwiftBridge switchResponseWithId:self.tunnelId token:nil error:persistenceError]);
+  }
+  self.tunnelId = tunnelId;
+  self.transportConfig = transport;
+  self.committedToken = request[@"token"];
+  self.reasserting = self.defaultPath.status != NWPathStatusSatisfied;
+  completion([SwiftBridge switchResponseWithId:self.tunnelId token:self.committedToken error:nil]);
 }
 
 - (void)cancelTunnelWithError:(nullable NSError *)error {
