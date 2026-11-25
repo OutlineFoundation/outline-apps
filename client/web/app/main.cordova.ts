@@ -24,6 +24,7 @@ setRootPath(
 );
 
 import {AbstractClipboard} from './clipboard';
+import {ControlRequest, VpnSnapshot} from './connection_control';
 import {EnvironmentVariables} from './environment';
 import {main} from './main';
 import {installDefaultMethodChannel, MethodChannel} from './method_channel';
@@ -156,7 +157,24 @@ window.handleOpenURL = (url: string) => {
 document.addEventListener('deviceready', async () => {
   installDefaultMethodChannel(new CordovaMethodChannel());
   try {
-    await main(new CordovaPlatform());
+    const app = await main(new CordovaPlatform());
+    if (app && cordova.platformId === 'ios') {
+      cordova.exec(
+        async (request: ControlRequest & {id: string}) => {
+          const response = await app.connectionControl.request(
+            request,
+            () => pluginExec<VpnSnapshot>('controlSnapshot'),
+            () => pluginExec<void>('controlDisconnect')
+          );
+          await pluginExec<void>('controlReply', request.id, response);
+        },
+        () =>
+          console.info('Local command bridge is unavailable on this platform'),
+        OUTLINE_PLUGIN_NAME,
+        'onControlCommand',
+        []
+      );
+    }
   } catch (e) {
     console.error('main() failed: ', e);
   }
