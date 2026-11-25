@@ -18,7 +18,9 @@ import {LitElement, html, css, nothing} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {classMap} from 'lit/directives/class-map.js';
 
-import {formatBytes} from '../../../../data_formatting';
+import {formatBinaryBytes, formatBytes} from '../../../../data_formatting';
+
+import '../../icon_tooltip';
 
 @customElement('access-key-usage-meter')
 export class AccessKeyUsageMeter extends LitElement {
@@ -95,17 +97,29 @@ export class AccessKeyUsageMeter extends LitElement {
         max=${this.dataLimitBytes}
         value=${this.dataUsageBytes}
       ></progress>
-      <label
-        class=${classMap({
-          'data-limit-warning': this.dataLimitWarning,
-        })}
-        for="progress"
-      >
-        ${formatBytes(this.dataUsageBytes, this.language)} /
-        ${formatBytes(this.dataLimitBytes, this.language)}
-        ${this.dataLimitWarning
-          ? `(${this.localize('server-view-access-keys-usage-limit')})`
-          : nothing}
-      </label>`;
+      <icon-tooltip text="${this.formatDataUsageFractionBinaryTooltip()}">
+        <label
+          class=${classMap({
+            'data-limit-warning': this.dataLimitWarning,
+          })}
+          for="progress"
+        >
+          ${formatBytes(this.dataUsageBytes, this.language)} /
+          ${formatBytes(this.dataLimitBytes, this.language)}
+          ${this.dataLimitWarning
+            ? `(${this.localize('server-view-access-keys-usage-limit')})`
+            : nothing}
+        </label>
+      </icon-tooltip>`;
+  }
+
+  /**
+   * Formats the usage and limit values with binary units for tooltip display.
+   *
+   * @returns Formatted string showing "usage / limit" in binary units (KiB, MiB, GiB)
+   */
+  private formatDataUsageFractionBinaryTooltip(): string {
+    return `${formatBinaryBytes(this.dataUsageBytes, this.language)} /
+      ${formatBinaryBytes(this.dataLimitBytes, this.language)}`;
   }
 }
