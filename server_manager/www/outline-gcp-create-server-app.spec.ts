@@ -17,8 +17,12 @@ import './outline-gcp-create-server-app';
 import {GcpCreateServerApp} from './outline-gcp-create-server-app';
 
 // Exposes the component's private state so the tests can drive it to a page
-// without a real GCP account.
-type TestableGcpCreateServerApp = GcpCreateServerApp & {
+// without a real GCP account. The private fields have to be omitted before
+// re-adding them as public ones, or the intersection collapses to `never`.
+type TestableGcpCreateServerApp = Omit<
+  GcpCreateServerApp,
+  'currentPage' | 'isProjectBeingCreated'
+> & {
   currentPage: string;
   isProjectBeingCreated: boolean;
 };
@@ -33,7 +37,7 @@ describe('GcpCreateServerApp', () => {
   beforeEach(async () => {
     el = document.createElement(
       'outline-gcp-create-server-app'
-    ) as TestableGcpCreateServerApp;
+    ) as unknown as TestableGcpCreateServerApp;
     el.localize = localize;
     el.language = 'en';
     document.body.appendChild(el);
