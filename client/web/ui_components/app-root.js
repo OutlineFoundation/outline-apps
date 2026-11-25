@@ -63,6 +63,8 @@ import '../views/root_view/root_navigation';
 // eslint-disable-next-line n/no-missing-import
 import '../views/appearance_view';
 // eslint-disable-next-line n/no-missing-import
+import '../views/domain_exclusions_view';
+// eslint-disable-next-line n/no-missing-import
 import * as i18n from '@outline/infrastructure/i18n';
 import {AppLocalizeBehavior} from '@polymer/app-localize-behavior/app-localize-behavior.js';
 import {PaperMenuButton} from '@polymer/paper-menu-button/paper-menu-button.js';
@@ -372,6 +374,12 @@ export class AppRoot extends mixinBehaviors(
             selected-appearance="[[selectedAppearance]]"
             localize="[[localize]]"
           ></appearance-view>
+          <domain-exclusions-view
+            name="domain-exclusions"
+            id="domainExclusionsView"
+            page="[[page]]"
+            localize="[[localize]]"
+          ></domain-exclusions-view>
         </iron-pages>
       </div>
 
@@ -381,6 +389,7 @@ export class AppRoot extends mixinBehaviors(
         show-quit="[[shouldShowQuitButton]]"
         data-collection-page-url="https://getoutline.org/policies/data-collection"
         show-appearance-view="[[showAppearanceView]]"
+        show-domain-exclusions="[[showDomainExclusions]]"
       ></root-navigation>
 
       <add-access-key-dialog
@@ -599,6 +608,7 @@ export class AppRoot extends mixinBehaviors(
         type: Boolean,
         computed: '_computeUseAltAccessMessage(language)',
       },
+      showDomainExclusions: {type: Boolean, value: false},
       showAppearanceView: {
         type: Boolean,
         value: false,
