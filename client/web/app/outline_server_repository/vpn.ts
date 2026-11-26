@@ -25,7 +25,8 @@ export interface StartRequestJson {
   name: string;
   // Client config, ultimately passed to NewClient in Go.
   client: string;
-  // First hop used by the legacy Electron code.
+  // First hop used by the legacy Electron code. Empty when the configuration
+  // does not have a single first hop.
   firstHop: string;
 }
 
