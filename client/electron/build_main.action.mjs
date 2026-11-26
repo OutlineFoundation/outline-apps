@@ -24,7 +24,6 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {getWebpackBuildMode} from '../build/get_webpack_build_mode.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
 
-const ELECTRON_BUILD_DIR = 'output';
 const ELECTRON_PLATFORMS = ['linux', 'windows'];
 
 export async function main(...parameters) {
@@ -53,7 +52,7 @@ export async function main(...parameters) {
   );
 
   if (platform === 'windows') {
-    let windowsEnvironment = `!define RELEASE "${versionName}"\n!define WINDOWS_HELPERS_DIR "${windowsBuildDir}/helpers"`;
+    let windowsEnvironment = `!define RELEASE "${versionName}"`;
 
     if (sentryDsn) {
       const {username: apiKey, pathname: projectID} = new URL(sentryDsn);
@@ -63,14 +62,10 @@ export async function main(...parameters) {
       windowsEnvironment += '\n!define SENTRY_URL "<debug>"';
     }
 
+    const buildResources = path.resolve(getRootDir(), windowsBuildDir);
+    await fs.mkdir(buildResources, {recursive: true});
     await fs.writeFile(
-      path.resolve(
-        getRootDir(),
-        ELECTRON_BUILD_DIR,
-        'client',
-        'electron',
-        'env.nsh'
-      ),
+      path.join(buildResources, 'env.nsh'),
       windowsEnvironment
     );
   }

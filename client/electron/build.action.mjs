@@ -108,6 +108,7 @@ export async function main(...parameters) {
   );
 
   if (windowsBuildDir) {
+    electronConfig.directories.buildResources = windowsBuildDir;
     electronConfig.directories.output = `${windowsBuildDir}/installer`;
   }
   const binaryDir = `output/client/${platform}-${goArch}`;
