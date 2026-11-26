@@ -206,11 +206,16 @@ jobs:
           version: ${{ env.ZIG_VERSION }}
           use-cache: false
       - run: go tool task client:windows:build-helpers
+        env:
+          ZIG_GLOBAL_CACHE_DIR: ${{ runner.temp }}/zig-cache
+          ZIG_LOCAL_CACHE_DIR: ${{ runner.temp }}/zig-cache
       - name: Verify the build outputs and clean checkout
         run: |
           test -s output/client/windows-service/OutlineService.exe
           test -s output/client/windows-service/smartdnsblock.exe
-          test -z "$(git status --porcelain)"
+          changes=$(git status --porcelain)
+          echo "$changes"
+          test -z "$changes"
 
   macos_debug_build:
     name: MacOS Debug Build
