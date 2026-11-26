@@ -23,7 +23,7 @@ import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import minimist from 'minimist';
 import rmfr from 'rmfr';
 
-const APPLE_ROOT = path.join(getRootDir(), 'client', 'src', 'cordova', 'apple');
+const APPLE_ROOT = path.join(getRootDir(), 'client', 'apple');
 
 const SUPPORTED_PLATFORMS = new Set(['ios', 'macos']);
 

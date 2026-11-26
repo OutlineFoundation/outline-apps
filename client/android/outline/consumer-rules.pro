@@ -1,4 +1,4 @@
-# Consumer ProGuard/R8 rules for OutlineAndroidLib.
+# Consumer ProGuard/R8 rules for the outline library module (:outline-lib).
 #
 # These rules are packaged into the library's AAR and applied to the R8 run of
 # any module that consumes it -- most importantly the Capacitor app module

@@ -30,7 +30,7 @@ vars:
   #   - `-g` in CGO_CFLAGS: emits DWARF for the cgo/C frames too (e.g. lwIP's
   #     udp_input), not just the Go frames.
   # The debug files are uploaded to Sentry by the
-  # client/src/cordova/upload_debug_symbols action (Android: the unstripped .so
+  # client/build/upload_debug_symbols action (Android: the unstripped .so
   # from the .aar; Apple: the archive's dSYMs). Shipped app size is unaffected:
   # the Android Gradle Plugin strips the copy packaged into the APK, and Apple
   # dSYMs live outside the app bundle.
@@ -61,7 +61,7 @@ tasks:
       # `-w` strips DWARF. Keeping both leaves the debug info that sentry-cli
       # needs to symbolicate native crashes in the desktop tun2socks binary and
       # backend library; these files are uploaded to Sentry by the
-      # client/src/cordova/upload_debug_symbols action. The desktop package ships
+      # client/build/upload_debug_symbols action. The desktop package ships
       # the unstripped binaries (the size delta is negligible next to Electron).
       - |
         GOOS={{.TARGET_OS}} GOARCH={{.TARGET_ARCH}} CGO_ENABLED=1 \

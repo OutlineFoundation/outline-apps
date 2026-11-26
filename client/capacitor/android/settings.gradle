@@ -24,4 +24,4 @@ include ':app'
 
 apply from: 'capacitor.settings.gradle'
 include ':outline-lib'
-project(':outline-lib').projectDir = new File(settingsDir, '../../src/cordova/android/OutlineAndroidLib/outline')
+project(':outline-lib').projectDir = new File(settingsDir, '../../android/outline')

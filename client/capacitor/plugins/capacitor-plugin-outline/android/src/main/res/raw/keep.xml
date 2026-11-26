@@ -27,7 +27,7 @@
   @string/reconnecting_server_state  VpnTunnelService: notification text
   @drawable/splash                   SplashScreen plugin: androidSplashResourceName
                                      in capacitor.config.json
-  (VpnTunnelService is in OutlineAndroidLib; see getResourceId() there.)
+  (VpnTunnelService is in client/android/outline; see getResourceId() there.)
 -->
 <resources xmlns:tools="http://schemas.android.com/tools"
     tools:keep="
