@@ -140,8 +140,9 @@ export class RoutingDaemon {
           JSON.stringify({
             action: RoutingServiceAction.CONFIGURE_ROUTING,
             parameters: {
-              // The service no longer routes by the proxy address, since the client binds its
-              // sockets to the gateway adapter, but it still requires this parameter.
+              // The service doesn't route by the proxy address, since the client binds its sockets to
+              // the gateway adapter. It still requires this parameter, and treats null as "not
+              // connected" when handling network changes, so it must be a non-null string.
               proxyIp: '',
               isAutoConnect: this.isAutoConnect,
             },
