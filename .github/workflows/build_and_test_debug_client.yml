@@ -186,6 +186,83 @@ jobs:
             if ($built.Hash -ne $packaged.Hash) { throw "Packaged $name differs from build output" }
           }
 
+  build_windows_installers:
+    name: Build Windows ${{ matrix.arch }} installer on Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    needs: [web_test, backend_test]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ia32, arm64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: '10.0.x'
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+      - name: Install Wine for NSIS packaging
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends wine wine64 wine32:i386
+      - run: npm ci
+      - name: Build Windows installer
+        run: npm run action client/electron/build windows -- --arch ${{ matrix.arch }}
+      - name: Record SHA-256 of the source-built helpers
+        working-directory: output/client/windows-service
+        run: sha256sum OutlineService.exe smartdnsblock.exe > ../electron/build/helpers.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-installer-${{ matrix.arch }}
+          path: |
+            output/client/electron/build/Outline-Client-${{ matrix.arch }}.exe
+            output/client/electron/build/helpers.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+  smoke_windows_installers:
+    name: Smoke-test Windows ${{ matrix.arch }} installer
+    needs: build_windows_installers
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The ia32 client runs under WOW64 on x64 Windows.
+          - arch: ia32
+            runner: windows-2022
+          - arch: arm64
+            runner: windows-11-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-installer-${{ matrix.arch }}
+          path: ${{ runner.temp }}/installer
+      - name: Install Outline and open the service pipe
+        timeout-minutes: 7
+        shell: pwsh
+        run: |
+          ./client/electron/windows/smoke_test_installer.ps1 -Architecture '${{ matrix.arch }}' -ArtifactDirectory "$env:RUNNER_TEMP/installer"
+
+      - name: Show driver installation log on failure
+        if: failure()
+        shell: pwsh
+        run: Get-Content "$env:SystemRoot/INF/setupapi.dev.log" -Tail 100
+
   cross_build_windows_service:
     name: Windows service on ${{ matrix.host }}
     runs-on: ${{ matrix.host }}
