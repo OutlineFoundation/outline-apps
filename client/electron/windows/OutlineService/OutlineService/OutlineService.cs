@@ -40,8 +40,9 @@ using Newtonsoft.Json;
  * Requests
  *
  * configureRouting: Modifies the system's routing table to route all traffic through the TAP device.
- * Disables IPv6 traffic. proxyIp is used to find the best gateway adapter.
- *    { action: "configureRouting", parameters: {"proxyIp": <IPv4 address>, "isAutoConnect": "false" }}
+ * Disables IPv6 traffic. Responds with the index of the best default gateway adapter, which the
+ * client binds its sockets to.
+ *    { action: "configureRouting", parameters: {"isAutoConnect": "false" }}
  *
  *  resetRouting: Restores the system's default routing.
  *    { action: "resetRouting"}
@@ -72,7 +73,6 @@ namespace OutlineService
         private const string ACTION_CONFIGURE_ROUTING = "configureRouting";
         private const string ACTION_RESET_ROUTING = "resetRouting";
         private const string ACTION_STATUS_CHANGED = "statusChanged";
-        private const string PARAM_PROXY_IP = "proxyIp";
         private const string PARAM_AUTO_CONNECT = "isAutoConnect";
 
         // Explicitly route "fake" DNS traffic to 169.254.113.53/32 through the TUN device.
@@ -104,7 +104,7 @@ namespace OutlineService
 
         private EventLog eventLog;
         private NamedPipeServerStream pipe;
-        private string proxyIp;
+        private bool isConnected;
         private string gatewayIp;
         private int gatewayInterfaceIndex;
 
@@ -334,11 +334,11 @@ namespace OutlineService
             switch (request.action)
             {
                 case ACTION_CONFIGURE_ROUTING:
-                    ConfigureRouting(request.parameters[PARAM_PROXY_IP], Boolean.Parse(request.parameters[PARAM_AUTO_CONNECT]));
+                    ConfigureRouting(Boolean.Parse(request.parameters[PARAM_AUTO_CONNECT]));
                     response.gatewayAdapterIndex = gatewayInterfaceIndex.ToString();
                     break;
                 case ACTION_RESET_ROUTING:
-                    ResetRouting(proxyIp, gatewayInterfaceIndex);
+                    ResetRouting(gatewayInterfaceIndex);
                     break;
                 default:
                     eventLog.WriteEntry($"Received invalid request: {request.action}", EventLogEntryType.Error);
@@ -346,13 +346,15 @@ namespace OutlineService
             }
         }
 
-        // Routes all traffic *except that destined for the proxy server*
-        // through the TAP device, creating the illusion of a system-wide VPN.
+        // Routes all traffic through the TAP device, creating the illusion of a
+        // system-wide VPN.
         //
         // The two key steps are:
         //  - Route all IPv4 traffic through the TAP device.
-        //  - Find a gateway and route traffic *to the proxy server only* (a /32
-        //    mask) through it.
+        //  - Find a gateway, whose interface index is returned to the client.
+        //    The client binds its sockets to that interface so that its own
+        //    traffic (to the proxy or any direct destination) bypasses the TAP
+        //    device.
         //
         // Finding a gateway, in particular, is complex: for more on how it
         // works, see #GetSystemIpv4Gateway.
@@ -393,7 +395,7 @@ namespace OutlineService
         // TODO: The client needs to handle certain autoconnect failures better,
         //       e.g. if IPv4 redirect fails then the client is not really in
         //       the reconnecting state; the system is leaking traffic.
-        public void ConfigureRouting(string proxyIp, bool isAutoConnect)
+        public void ConfigureRouting(bool isAutoConnect)
         {
             try
             {
@@ -407,10 +409,10 @@ namespace OutlineService
 
             try
             {
-                GetSystemIpv4Gateway(proxyIp);
+                GetSystemIpv4Gateway();
 
                 eventLog.WriteEntry($"connecting via gateway at {gatewayIp} on interface {gatewayInterfaceIndex}");
-                this.proxyIp = proxyIp;
+                this.isConnected = true;
 
                 try
                 {
@@ -459,13 +461,7 @@ namespace OutlineService
         //  - *This function does not set any error code when any step fails*.
         //    It probably should, as the system may in some rare cases still be
         //    connected (or, worse but less likely, bricked).
-        //  - If the service does not know the IP address of the proxy server
-        //    then it *cannot remove that route*. This can happen if the service
-        //    is restarted while Outline is connected *or* (more likely) if this
-        //    function is called while Outline is not connected. This route is
-        //    mostly harmless because it only affects traffic to the proxy and
-        //    if/when the user reconnects to it the route will be updated.
-        public void ResetRouting(string proxyIp, int gatewayInterfaceIndex)
+        public void ResetRouting(int gatewayInterfaceIndex)
         {
             try
             {
@@ -494,7 +490,7 @@ namespace OutlineService
                 eventLog.WriteEntry($"failed to unblock IPv6: {e.Message}", EventLogEntryType.Error);
             }
 
-            this.proxyIp = null;
+            this.isConnected = false;
 
             try
             {
@@ -766,20 +762,22 @@ namespace OutlineService
             }
         }
 
-        // Searches the system's routing table for the best route to the
-        // specified IP address *that does not route through the TAP device*.
+        // Searches the system's routing table for the best default route *that
+        // does not route through the TAP device*. The client binds its sockets
+        // to the resulting interface, so it is used for every destination the
+        // client dials directly, not just the proxy.
         //
         // That last requirement - ignoring the TAP device - is what prevents us
         // from simply calling GetBestRoute: other than that, it does all the
-        // work of finding the lowest-weighted gateway to the destination IP.
+        // work of finding the lowest-weighted default gateway.
         //
-        // NOTE: This function does not *always* find the best gateway: it
-        // currently only considers "default" gateways (0.0.0.0) which may not
-        // work in some rare cases. Several re-implementations of the Windows
+        // NOTE: This function does not *always* find the best gateway: it only
+        // considers "default" gateways (0.0.0.0) which may not work in some
+        // rare cases. Several re-implementations of the Windows
         // API illustrate how we could more closely match GetBestRoute:
         // - https://github.com/wine-mirror/wine/blob/master/dlls/iphlpapi/iphlpapi_main.c
         // - https://github.com/reactos/reactos/blob/master/dll/win32/iphlpapi/iphlpapi_main.c
-        private void GetSystemIpv4Gateway(string proxyIp)
+        private void GetSystemIpv4Gateway()
         {
             gatewayIp = null;
             gatewayInterfaceIndex = -1;
@@ -861,9 +859,9 @@ namespace OutlineService
         // Updates, if Outline is connected, the routing table to reflect a new
         // gateway.
         //
-        // There's really just one thing to do when the gateway changes: update
-        // the (direct) route to the proxy server to route through the new
-        // gateway. If there is no gateway, e.g. because the system has lost
+        // There's really just one thing to do when the gateway changes: send
+        // the new gateway interface to the client, which rebinds its sockets to
+        // it. If there is no gateway, e.g. because the system has lost
         // network connectivity, notify the client and keep the IPv4 redirect
         // and IPv6 block in place: this helps prevent leaking traffic.
         //
@@ -883,7 +881,7 @@ namespace OutlineService
         //    think Outline is connected.
         private void NetworkAddressChanged(object sender, EventArgs evt)
         {
-            if (proxyIp == null)
+            if (!isConnected)
             {
                 eventLog.WriteEntry("network changed but Outline is not connected - doing nothing");
                 return;
@@ -894,7 +892,7 @@ namespace OutlineService
 
             try
             {
-                GetSystemIpv4Gateway(proxyIp);
+                GetSystemIpv4Gateway();
             }
             catch (Exception e)
             {
@@ -954,8 +952,8 @@ namespace OutlineService
             }
             catch (Exception e)
             {
-                // TODO: This isn't quite right: because we successfully updated
-                //       the route to the proxy, the client *is* connected; it's
+                // TODO: This isn't quite right: because we successfully refreshed
+                //       the IPv4 redirect, the client *is* connected; it's
                 //       just not "fully" connected, in the way we like. We
                 //       should distinguish between "cannot reconnect right now,
                 //       because no internet" and "cannot reconnect because

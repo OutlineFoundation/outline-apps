@@ -24,11 +24,10 @@ import {getBuildParameters} from '../build/get_build_parameters.mjs';
 import {getWebpackBuildMode} from '../build/get_webpack_build_mode.mjs';
 import {runWebpack} from '../build/run_webpack.mjs';
 
-const ELECTRON_BUILD_DIR = 'output';
 const ELECTRON_PLATFORMS = ['linux', 'windows'];
 
 export async function main(...parameters) {
-  const {platform, buildMode, sentryDsn, versionName} =
+  const {platform, buildMode, sentryDsn, versionName, windowsBuildDir} =
     getBuildParameters(parameters);
 
   if (!ELECTRON_PLATFORMS.includes(platform)) {
@@ -63,14 +62,10 @@ export async function main(...parameters) {
       windowsEnvironment += '\n!define SENTRY_URL "<debug>"';
     }
 
+    const buildResources = path.resolve(getRootDir(), windowsBuildDir);
+    await fs.mkdir(buildResources, {recursive: true});
     await fs.writeFile(
-      path.resolve(
-        getRootDir(),
-        ELECTRON_BUILD_DIR,
-        'client',
-        'electron',
-        'env.nsh'
-      ),
+      path.join(buildResources, 'env.nsh'),
       windowsEnvironment
     );
   }

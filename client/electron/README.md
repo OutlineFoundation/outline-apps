@@ -2,7 +2,7 @@
 
 Unlike the Android and Apple clients, the Windows and Linux clients use the Electron framework, rather than Cordova.
 
-To build the Electron clients, run (it will also package an installer executable into `output/client/electron/build`):
+To build and package an Electron client, run
 
 ```sh
 npm run action client/electron/build [windows|linux] -- --arch=[x64|ia32|arm64]
@@ -16,21 +16,38 @@ npm run action client/electron/start [windows|linux] -- --arch=[x64|ia32|arm64]
 
 ## Cross-Compiling
 
-To build the app for a platform target on a different host target, you will need a cross-compiler. We use [zig to cross-compile with cgo](https://dev.to/kristoff/zig-makes-go-cross-compilation-just-work-29ho).
-
-[Install zig](https://ziglang.org/learn/getting-started/#installing-zig) and make sure it's in the PATH.
-
-You can download the binary tarball, or [use a package manager](https://github.com/ziglang/zig/wiki/Install-Zig-from-a-Package-Manager), like Homebrew:
-
-```sh
-brew install zig 
-```
+Install [Zig 0.17.1](https://ziglang.org/download/#release-0.17.1) for your host and put `zig` on your PATH. CI uses this version for the Go backend and the Windows DNS helper.
 
 On an M-series ARM Macs it is necessary to install Rosetta to allow the chip to run x86_64 commands. (A code-signing step in our windows build uses an intel version of wine.)
 
 ```sh
 softwareupdate --install-rosetta --agree-to-license
 ```
+
+## Building the Windows service and DNS helper
+
+Install Go, the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and Zig on Linux, macOS or Windows. From the repository root, build the release helpers for **both** Windows targets with
+
+```sh
+go tool task client:windows:build-helpers
+```
+
+For one architecture or a debug build, select the target and mode explicitly.
+
+```sh
+go tool task client:windows:build-helpers:arm64 BUILD_MODE=debug
+```
+
+The Windows build puts the service and DNS helper in `helpers/` and the NSIS package in `installer/` under the same target directory.
+
+| Installer | Release directory under `output/client/electron/build/` | Debug directory |
+| --- | --- | --- |
+| ia32 | `windows-386/` | `windows-386-debug/` |
+| arm64 | `windows-arm64/` | `windows-arm64-debug/` |
+
+NSIS uses an x86 launcher for both packages. Inside the arm64 installer, the Electron app, both Go binaries, the routing service and the DNS helper are ARM64. The native ARM64 service requires Windows 11 on Arm with .NET Framework 4.8.1. Use the ia32 installer on older Windows on Arm. [Microsoft’s Arm64 runtime requirements](https://devblogs.microsoft.com/dotnet/announcing-dotnet-framework-481/)
+
+The installer build signs both helpers when Windows signing credentials are configured. On x64 Linux, install Wine with 32-bit support to package either Windows target. CI installs each Linux-built package on Windows, checks the installed helper hashes and executable architectures, and opens `OutlineServicePipe` read-only. The smoke test leaves the VPN disconnected.
 
 ## Requirements
 
@@ -74,5 +91,5 @@ npx asar list 'output/client/electron/build/linux-unpacked/resources/app.asar'
 For the Windows client:
 
 ```sh
-npx asar list 'output/client/electron/build/win-ia32-unpacked/resources/app.asar'
+npx asar list 'output/client/electron/build/windows-386-debug/installer/win-ia32-unpacked/resources/app.asar'
 ```

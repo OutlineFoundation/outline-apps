@@ -23,9 +23,13 @@
 #include <fwpmu.h>
 #include <rpcdce.h>
 
+#if defined(__MINGW32__)
+#include "mingw_wfp.h"
+#elif defined(_MSC_VER)
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "fwpuclnt.lib")
 #pragma comment(lib, "rpcrt4.lib")
+#endif
 
 using namespace ::std;
 

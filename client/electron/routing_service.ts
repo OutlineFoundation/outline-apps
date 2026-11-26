@@ -79,10 +79,7 @@ export class RoutingDaemon {
     gatewayIndex?: string
   ) => void;
 
-  constructor(
-    private proxyAddress: string,
-    private isAutoConnect: boolean
-  ) {}
+  constructor(private isAutoConnect: boolean) {}
 
   // Fulfills once a connection is established with the routing daemon *and* it has successfully
   // configured the system's routing table.
@@ -143,7 +140,6 @@ export class RoutingDaemon {
           JSON.stringify({
             action: RoutingServiceAction.CONFIGURE_ROUTING,
             parameters: {
-              proxyIp: this.proxyAddress,
               isAutoConnect: this.isAutoConnect,
             },
           } as RoutingServiceRequest)
