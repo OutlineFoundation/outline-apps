@@ -16,7 +16,7 @@ npm run action client/electron/start [windows|linux] -- --arch=[x64|ia32|arm64]
 
 ## Cross-Compiling
 
-Install [Zig 0.13.0](https://ziglang.org/download/#release-0.13.0) for your host and put `zig` on your PATH. CI uses this version for the Go backend and the Windows DNS helper.
+Install [Zig 0.17.1](https://ziglang.org/download/#release-0.17.1) for your host and put `zig` on your PATH. CI uses this version for the Go backend and the Windows DNS helper.
 
 On an M-series ARM Macs it is necessary to install Rosetta to allow the chip to run x86_64 commands. (A code-signing step in our windows build uses an intel version of wine.)
 
