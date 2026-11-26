@@ -175,13 +175,15 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          $installer = "output/client/electron/build/Outline-Client-${{ matrix.arch }}.exe"
+          $goArch = if ('${{ matrix.arch }}' -eq 'ia32') { '386' } else { 'arm64' }
+          $buildDir = "output/client/electron/build/windows-$goArch-debug"
+          $installer = "$buildDir/installer/Outline-Client-${{ matrix.arch }}.exe"
           $extracted = Join-Path $env:RUNNER_TEMP "outline-service"
           $helpers = "OutlineService.exe", "smartdnsblock.exe"
           7z x -tNSIS "-o$extracted" $installer @helpers
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           foreach ($name in $helpers) {
-            $built = Get-FileHash "output/client/windows-service/$name"
+            $built = Get-FileHash "$buildDir/helpers/$name"
             $packaged = Get-FileHash "$extracted/$name"
             if ($built.Hash -ne $packaged.Hash) { throw "Packaged $name differs from build output" }
           }
@@ -194,7 +196,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ia32, arm64]
+        include:
+          - arch: ia32
+            goArch: '386'
+          - arch: arm64
+            goArch: arm64
+    env:
+      WINDOWS_BUILD_DIR: output/client/electron/build/windows-${{ matrix.goArch }}-debug
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -220,14 +228,14 @@ jobs:
       - name: Build Windows installer
         run: npm run action client/electron/build windows -- --arch ${{ matrix.arch }}
       - name: Record SHA-256 of the source-built helpers
-        working-directory: output/client/windows-service
-        run: sha256sum OutlineService.exe smartdnsblock.exe > ../electron/build/helpers.sha256
+        working-directory: ${{ env.WINDOWS_BUILD_DIR }}/helpers
+        run: sha256sum OutlineService.exe smartdnsblock.exe > ../installer/helpers.sha256
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: windows-installer-${{ matrix.arch }}
           path: |
-            output/client/electron/build/Outline-Client-${{ matrix.arch }}.exe
-            output/client/electron/build/helpers.sha256
+            ${{ env.WINDOWS_BUILD_DIR }}/installer/Outline-Client-${{ matrix.arch }}.exe
+            ${{ env.WINDOWS_BUILD_DIR }}/installer/helpers.sha256
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
@@ -288,8 +296,11 @@ jobs:
           ZIG_LOCAL_CACHE_DIR: ${{ runner.temp }}/zig-cache
       - name: Verify the build outputs and clean checkout
         run: |
-          test -s output/client/windows-service/OutlineService.exe
-          test -s output/client/windows-service/smartdnsblock.exe
+          for arch in 386 arm64; do
+            helpers="output/client/electron/build/windows-$arch/helpers"
+            test -s "$helpers/OutlineService.exe"
+            test -s "$helpers/smartdnsblock.exe"
+          done
           changes=$(git status --porcelain)
           echo "$changes"
           test -z "$changes"

@@ -29,14 +29,32 @@ tasks:
       - '{{joinPath .TASKFILE_DIR "build" "configure_android.sh"}} > "{{.DOTENV}}"'
 
   windows:build-helpers:
-    desc: Build the x86 routing service and DNS helper for the Windows installers
+    desc: Build the service and DNS helper for both Windows installers
+    cmds:
+      - task: windows:build-helpers:386
+      - task: windows:build-helpers:arm64
+
+  windows:build-helpers:*:
+    desc: Build the Windows helpers for one architecture (386 or arm64)
     dir: '{{.TASKFILE_DIR}}/electron/windows'
     vars:
-      HELPER_DIR: '{{joinPath .OUTPUT_DIR "windows-service"}}'
+      TARGET_ARCH: '{{index .MATCH 0}}'
+      MODE: '{{.BUILD_MODE | default "release"}}'
+      HELPER_DIR: '{{.OUTPUT_DIR}}/electron/build/windows-{{.TARGET_ARCH}}{{if eq .MODE "debug"}}-debug{{end}}/helpers'
+      DOTNET_PLATFORM: '{{if eq .TARGET_ARCH "386"}}x86{{else}}ARM64{{end}}'
+      ZIG_ARCH: '{{if eq .TARGET_ARCH "386"}}x86{{else}}aarch64{{end}}'
+      ZIG_FLAGS: '{{if eq .MODE "debug"}}-O0 -g{{else}}-Os -s{{end}}'
+    requires:
+      vars:
+        - name: TARGET_ARCH
+          enum: ['386', arm64]
+        - name: MODE
+          enum: [debug, release]
     cmds:
       - >-
         dotnet build OutlineService/OutlineService/OutlineService.csproj
-        --configuration Release -p:Platform=x86 --no-incremental --output '{{.HELPER_DIR}}'
+        --configuration {{title .MODE}} -p:Platform={{.DOTNET_PLATFORM}} --no-incremental
+        --output '{{.HELPER_DIR}}' '-p:BaseIntermediateOutputPath={{.HELPER_DIR}}/obj/'
       - >-
-        zig c++ -target x86-windows-gnu -Os -s smartdnsblock/smartdnsblock/smartdnsblock.cpp
+        zig c++ -target {{.ZIG_ARCH}}-windows-gnu {{.ZIG_FLAGS}} smartdnsblock/smartdnsblock/smartdnsblock.cpp
         -liphlpapi -lfwpuclnt -lrpcrt4 -o '{{.HELPER_DIR}}/smartdnsblock.exe'

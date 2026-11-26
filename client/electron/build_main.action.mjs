@@ -28,7 +28,7 @@ const ELECTRON_BUILD_DIR = 'output';
 const ELECTRON_PLATFORMS = ['linux', 'windows'];
 
 export async function main(...parameters) {
-  const {platform, buildMode, sentryDsn, versionName} =
+  const {platform, buildMode, sentryDsn, versionName, windowsBuildDir} =
     getBuildParameters(parameters);
 
   if (!ELECTRON_PLATFORMS.includes(platform)) {
@@ -53,7 +53,7 @@ export async function main(...parameters) {
   );
 
   if (platform === 'windows') {
-    let windowsEnvironment = `!define RELEASE "${versionName}"`;
+    let windowsEnvironment = `!define RELEASE "${versionName}"\n!define WINDOWS_HELPERS_DIR "${windowsBuildDir}/helpers"`;
 
     if (sentryDsn) {
       const {username: apiKey, pathname: projectID} = new URL(sentryDsn);

@@ -111,6 +111,10 @@ export function getBuildParameters(cliArguments) {
     buildNumber,
     arch,
     goArch: build?.goArch,
+    windowsBuildDir:
+      platform === 'windows'
+        ? `output/client/electron/build/windows-${build.goArch}${buildMode === 'debug' ? '-debug' : ''}`
+        : undefined,
     // The Taskfile parameterizes linux/windows tasks by arch
     // (`linux:amd64`, `windows:386`, ...); android/apple/browser are single
     // tasks. Resolve the shape here so callers don't conditional on it.

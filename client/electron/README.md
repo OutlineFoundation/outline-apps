@@ -2,7 +2,7 @@
 
 Unlike the Android and Apple clients, the Windows and Linux clients use the Electron framework, rather than Cordova.
 
-To build the Electron clients, run (it will also package an installer executable into `output/client/electron/build`):
+To build and package an Electron client, run
 
 ```sh
 npm run action client/electron/build [windows|linux] -- --arch=[x64|ia32|arm64]
@@ -26,15 +26,28 @@ softwareupdate --install-rosetta --agree-to-license
 
 ## Building the Windows service and DNS helper
 
-Windows debug and release installers build `OutlineService.exe` and `smartdnsblock.exe` from source. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) alongside Zig on your Windows, Linux, or macOS build host. The SDK restores the .NET Framework 4.8 reference assemblies from NuGet to compile the C# service. Zig supplies the Windows headers and import libraries for the C++ DNS helper.
-
-From the repository root, use the version of Task pinned in `go.mod` to build both executables. The standalone build requires Go, .NET and Zig.
+Install Go, the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and Zig on Linux, macOS or Windows. From the repository root, build the release helpers for **both** Windows targets with
 
 ```sh
 go tool task client:windows:build-helpers
 ```
 
-The task writes `OutlineService.exe` and `smartdnsblock.exe` to `output/client/windows-service/`. The ia32 and arm64 installer builds run the same task, sign both x86 executables when Windows signing credentials are configured, and package them with NSIS. Packaging a full ia32 installer on Linux also requires Wine with 32-bit support.
+For one architecture or a debug build, select the target and mode explicitly.
+
+```sh
+go tool task client:windows:build-helpers:arm64 BUILD_MODE=debug
+```
+
+The Windows build puts the service and DNS helper in `helpers/` and the NSIS package in `installer/` under the same target directory.
+
+| Installer | Release directory under `output/client/electron/build/` | Debug directory |
+| --- | --- | --- |
+| ia32 | `windows-386/` | `windows-386-debug/` |
+| arm64 | `windows-arm64/` | `windows-arm64-debug/` |
+
+Both the routing service and the DNS helper are built for the installer’s architecture. The native ARM64 service requires Windows 11 on Arm with .NET Framework 4.8.1. Use the ia32 installer on older Windows on Arm. [Microsoft’s Arm64 runtime requirements](https://devblogs.microsoft.com/dotnet/announcing-dotnet-framework-481/)
+
+The installer build signs both helpers when Windows signing credentials are configured. On x64 Linux, install Wine with 32-bit support to package either Windows target. CI installs each Linux-built package on Windows, checks the installed helper hashes and executable architectures, and opens `OutlineServicePipe` read-only. The smoke test leaves the VPN disconnected.
 
 ## Requirements
 
@@ -78,5 +91,5 @@ npx asar list 'output/client/electron/build/linux-unpacked/resources/app.asar'
 For the Windows client:
 
 ```sh
-npx asar list 'output/client/electron/build/win-ia32-unpacked/resources/app.asar'
+npx asar list 'output/client/electron/build/windows-386-debug/installer/win-ia32-unpacked/resources/app.asar'
 ```

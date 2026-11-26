@@ -32,8 +32,8 @@ $service = Get-Service -Name OutlineService
 $service.WaitForStatus('Running', [TimeSpan]::FromSeconds(30))
 Write-Host 'The installer started OutlineService.'
 
-$servicePath = (Get-CimInstance Win32_Service -Filter "Name='OutlineService'").PathName
-$installDir = Split-Path -Parent ($servicePath.Trim('"'))
+$installedService = Get-CimInstance Win32_Service -Filter "Name='OutlineService'"
+$installDir = Split-Path -Parent ($installedService.PathName.Trim('"'))
 $expectedHashes = Get-Content -LiteralPath (Join-Path $ArtifactDirectory 'helpers.sha256')
 foreach ($name in 'OutlineService.exe', 'smartdnsblock.exe') {
     $hash = (Get-FileHash -LiteralPath (Join-Path $installDir $name) -Algorithm SHA256).Hash
@@ -42,7 +42,7 @@ foreach ($name in 'OutlineService.exe', 'smartdnsblock.exe') {
     }
 }
 
-# Both installers contain x86 helpers. Check the architecture-specific payload as well.
+# An arm64 runner can also install and run the ia32 package. Check the installed PE headers.
 if ($Architecture -eq 'arm64') {
     $machine = 'Arm64'
     $goArch = 'arm64'
@@ -51,7 +51,7 @@ if ($Architecture -eq 'arm64') {
     $goArch = '386'
 }
 $backendDir = "resources/app.asar.unpacked/output/client/windows-$goArch"
-foreach ($name in 'Outline.exe', "$backendDir/backend.dll", "$backendDir/tun2socks.exe") {
+foreach ($name in 'Outline.exe', 'OutlineService.exe', 'smartdnsblock.exe', "$backendDir/backend.dll", "$backendDir/tun2socks.exe") {
     $path = Join-Path $installDir $name
     $reader = [System.Reflection.PortableExecutable.PEReader]::new([IO.File]::OpenRead($path))
     try {

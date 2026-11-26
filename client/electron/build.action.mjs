@@ -51,7 +51,7 @@ const ELECTRON_PLATFORM_PACKAGING = {
 };
 
 export async function main(...parameters) {
-  const {platform, buildMode, versionName, arch, goArch} =
+  const {platform, buildMode, versionName, arch, goArch, windowsBuildDir} =
     getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
@@ -78,10 +78,16 @@ export async function main(...parameters) {
   }
 
   if (platform === 'windows') {
-    await spawnStream('go', 'tool', 'task', 'client:windows:build-helpers');
+    await spawnStream(
+      'go',
+      'tool',
+      'task',
+      `client:windows:build-helpers:${goArch}`,
+      `BUILD_MODE=${buildMode}`
+    );
     for (const helper of ['OutlineService.exe', 'smartdnsblock.exe']) {
       await signWindowsExecutable(
-        path.join(getRootDir(), 'output/client/windows-service', helper),
+        path.join(getRootDir(), windowsBuildDir, 'helpers', helper),
         'sha256'
       );
     }
@@ -101,6 +107,9 @@ export async function main(...parameters) {
     )
   );
 
+  if (windowsBuildDir) {
+    electronConfig.directories.output = `${windowsBuildDir}/installer`;
+  }
   const binaryDir = `output/client/${platform}-${goArch}`;
 
   // Keep the Go-built binaries outside the asar archive so they're loadable
