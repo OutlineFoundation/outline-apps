@@ -1,22 +1,7 @@
 # `smartdnsblock`
 
-`smartdnsblock.exe` is a Windows only utility application.
+The Windows routing service starts `smartdnsblock.exe` to block IPv4 UDP DNS traffic outside `outline-tap0`. Windows removes the filters when the helper exits.
 
-## How to Build
+The Windows installer builds the helper with Zig. To build it alongside the routing service on Windows, macOS, or Linux, follow the [Electron build instructions](../../README.md#building-the-windows-service-and-dns-helper).
 
-We recommend to use [Visual Studio 2019+](https://visualstudio.microsoft.com/downloads/) for building. But if it is not applicable to do so (for example, when in a CI server), feel free to download the [standalone build tools](https://visualstudio.microsoft.com/downloads/?q=build+tools#build-tools-for-visual-studio-2022) without Visual Studio.
-
-The simplest way to build this application is by double clicking `tools/smartdnsblock/smartdnsblock.sln` which will open the Visual Studio GUI, and then:
-
-* Note that there are two dropdown buttons in the toolbar area:
-   - For "Solution Configurations" dropdown, choose "Release"
-   - For "Solution Platforms" dropdown , choose "x86"
-* Use menu item "Build → Build Solution" to build the project
-* `smartdnsblock.exe` will be generated in `tools/smartdnsblock/bin` folder
-
-You can also build it through command line tools without launching Visual Studio:
-
-* Launch "Developer PowerShell for VS 2019" from Start Menu
-* `cd <working-dir>/tools/smartdnsblock`
-* `msbuild smartdnsblock.sln /p:Configuration=Release /p:Platform=x86`
-* `smartdnsblock.exe` will be generated in `tools/smartdnsblock/bin` folder
+To debug with Visual Studio, open [smartdnsblock.sln](smartdnsblock.sln) and build the x86 configuration. The solution writes `bin/smartdnsblock.exe` in this directory.

@@ -23,9 +23,28 @@
 #include <fwpmu.h>
 #include <rpcdce.h>
 
+#if defined(__MINGW32__)
+// The MinGW headers shipped with Zig 0.13 omit these Windows SDK constants.
+// fwpmu.h defines LOCAL_INTERFACE_INDEX as an alias of INTERFACE_INDEX.
+// https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/fwpmu.h
+#ifndef FWPM_CONDITION_LOCAL_INTERFACE_INDEX
+constexpr GUID FWPM_CONDITION_LOCAL_INTERFACE_INDEX =
+    {0x667fd755, 0xd695, 0x434a, {0x8a, 0xf5, 0xd3, 0x83, 0x5a, 0x12, 0x59, 0xbc}};
+constexpr GUID FWPM_CONDITION_IP_PROTOCOL =
+    {0x3971ef2b, 0x623e, 0x4f9a, {0x8c, 0xb1, 0x6e, 0x79, 0xb8, 0x06, 0xb9, 0xa7}};
+constexpr GUID FWPM_CONDITION_IP_REMOTE_PORT =
+    {0xc35a604d, 0xd22b, 0x4e1a, {0x91, 0xb4, 0x68, 0xf6, 0x74, 0xee, 0x67, 0x4b}};
+constexpr GUID FWPM_LAYER_ALE_AUTH_CONNECT_V4 =
+    {0xc38d57d1, 0x05a7, 0x4c33, {0x90, 0x4f, 0x7f, 0xbc, 0xee, 0xe6, 0x0e, 0x82}};
+#endif
+#ifndef FWPM_SESSION_FLAG_DYNAMIC
+#define FWPM_SESSION_FLAG_DYNAMIC 0x00000001
+#endif
+#elif defined(_MSC_VER)
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "fwpuclnt.lib")
 #pragma comment(lib, "rpcrt4.lib")
+#endif
 
 using namespace ::std;
 

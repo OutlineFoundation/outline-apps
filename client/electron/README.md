@@ -16,21 +16,25 @@ npm run action client/electron/start [windows|linux] -- --arch=[x64|ia32|arm64]
 
 ## Cross-Compiling
 
-To build the app for a platform target on a different host target, you will need a cross-compiler. We use [zig to cross-compile with cgo](https://dev.to/kristoff/zig-makes-go-cross-compilation-just-work-29ho).
-
-[Install zig](https://ziglang.org/learn/getting-started/#installing-zig) and make sure it's in the PATH.
-
-You can download the binary tarball, or [use a package manager](https://github.com/ziglang/zig/wiki/Install-Zig-from-a-Package-Manager), like Homebrew:
-
-```sh
-brew install zig 
-```
+Install [Zig 0.13.0](https://ziglang.org/download/#release-0.13.0) for your host and put `zig` on your PATH. CI uses this version for the Go backend and the Windows DNS helper.
 
 On an M-series ARM Macs it is necessary to install Rosetta to allow the chip to run x86_64 commands. (A code-signing step in our windows build uses an intel version of wine.)
 
 ```sh
 softwareupdate --install-rosetta --agree-to-license
 ```
+
+## Building the Windows service and DNS helper
+
+Windows debug and release installers build `OutlineService.exe` and `smartdnsblock.exe` from source. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) alongside Zig on your Windows, Linux, or macOS build host. The SDK restores the .NET Framework 4.8 reference assemblies from NuGet to compile the C# service. Zig supplies the Windows headers and import libraries for the C++ DNS helper.
+
+After `npm ci`, you can build the two executables directly from the repository root.
+
+```sh
+npm run action client/electron/windows/build_service
+```
+
+Both the ia32 and arm64 installers ship the x86 executables from `output/client/windows-service/bin/`. The build signs both with the configured Windows signing credentials before NSIS packages them. Packaging a full ia32 installer on Linux also requires Wine with 32-bit support.
 
 ## Requirements
 

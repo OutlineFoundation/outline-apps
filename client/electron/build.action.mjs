@@ -75,6 +75,9 @@ export async function main(...parameters) {
     );
   }
 
+  if (platform === 'windows') {
+    await runAction('client/electron/windows/build_service');
+  }
   await runAction('client/web/build', ...parameters);
   await runAction('client/go/build', ...parameters);
   await runAction('client/electron/build_main', ...parameters);
