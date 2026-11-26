@@ -18,6 +18,8 @@ import url from 'url';
 
 import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
 import {runAction} from '@outline/infrastructure/build/run_action.mjs';
+import {signWindowsExecutable} from '@outline/infrastructure/build/sign_windows_executable.mjs';
+import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import electron, {Platform} from 'electron-builder';
 import minimist from 'minimist';
 
@@ -49,7 +51,7 @@ const ELECTRON_PLATFORM_PACKAGING = {
 };
 
 export async function main(...parameters) {
-  const {platform, buildMode, versionName, arch, goArch} =
+  const {platform, buildMode, versionName, arch, goArch, windowsBuildDir} =
     getBuildParameters(parameters);
   const {autoUpdateProvider = 'generic', autoUpdateUrl} = minimist(parameters);
 
@@ -75,6 +77,21 @@ export async function main(...parameters) {
     );
   }
 
+  if (platform === 'windows') {
+    await spawnStream(
+      'go',
+      'tool',
+      'task',
+      `client:windows:build-helpers:${goArch}`,
+      `BUILD_MODE=${buildMode}`
+    );
+    for (const helper of ['OutlineService.exe', 'smartdnsblock.exe']) {
+      await signWindowsExecutable(
+        path.join(getRootDir(), windowsBuildDir, 'helpers', helper),
+        'sha256'
+      );
+    }
+  }
   await runAction('client/web/build', ...parameters);
   await runAction('client/go/build', ...parameters);
   await runAction('client/electron/build_main', ...parameters);
@@ -90,6 +107,10 @@ export async function main(...parameters) {
     )
   );
 
+  if (windowsBuildDir) {
+    electronConfig.directories.buildResources = windowsBuildDir;
+    electronConfig.directories.output = `${windowsBuildDir}/installer`;
+  }
   const binaryDir = `output/client/${platform}-${goArch}`;
 
   // Keep the Go-built binaries outside the asar archive so they're loadable

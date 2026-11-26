@@ -29,6 +29,9 @@ on:
   schedule:
     - cron: "0 13 * * *"  # Run daily at 1PM UTC.
 
+env:
+  ZIG_VERSION: '0.17.1'
+
 jobs:
   web_test:
     name: Web Test
@@ -78,22 +81,18 @@ jobs:
   electron_debug_build:
     name: ${{ matrix.name }} Debug Build
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.timeout }}
+    timeout-minutes: 20
     needs: [web_test, backend_test]
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: Linux x64
-            platform: linux
             arch: x64
             runner: ubuntu-22.04
-            timeout: 20
           - name: Linux arm64
-            platform: linux
             arch: arm64
             runner: ubuntu-24.04-arm
-            timeout: 20
             # puppeteer 13 has no arm64 chromium; install system chromium so
             # its postinstall finds one.
             installChromium: true
@@ -103,24 +102,7 @@ jobs:
             # via gem and tell electron-builder to use it. Workaround from:
             # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
             useSystemFpm: true
-            # We use windows-2022 instead of windows-2025 because windows-2025
-            # includes Visual Studio 2026, which causes a buffer overflow crash
-            # in the node-gyp version (v10.1.0) bundled with Node 22.
-          - name: Windows ia32
-            platform: windows
-            arch: ia32
-            runner: windows-2022
-            timeout: 40
-          - name: Windows arm64
-            platform: windows
-            arch: arm64
-            runner: windows-2022
-            timeout: 40
     steps:
-      - name: Support longpaths
-        if: runner.os == 'Windows'
-        run: git config --system core.longpaths true
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -146,7 +128,7 @@ jobs:
       - name: Install zig
         uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.13.0
+          version: ${{ env.ZIG_VERSION }}
           use-cache: false
 
       - name: Install system fpm
@@ -160,7 +142,121 @@ jobs:
           echo "USE_SYSTEM_FPM=true" >> $GITHUB_ENV
 
       - name: Build Client
-        run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
+        run: npm run action client/electron/build linux -- --arch ${{ matrix.arch }}
+
+  build_windows_installers:
+    name: Build Windows ${{ matrix.arch }} installer on Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    needs: [web_test, backend_test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: ia32
+            goArch: '386'
+          - arch: arm64
+            goArch: arm64
+    env:
+      WINDOWS_BUILD_DIR: output/client/electron/build/windows-${{ matrix.goArch }}-debug
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: '10.0.x'
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+      - name: Install Wine for NSIS packaging
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends wine wine64 wine32:i386
+      - run: npm ci
+      - name: Build Windows installer
+        run: npm run action client/electron/build windows -- --arch ${{ matrix.arch }}
+      - name: Record SHA-256 of the source-built helpers
+        working-directory: ${{ env.WINDOWS_BUILD_DIR }}/helpers
+        run: sha256sum OutlineService.exe smartdnsblock.exe > ../installer/helpers.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-installer-${{ matrix.arch }}
+          path: |
+            ${{ env.WINDOWS_BUILD_DIR }}/installer/Outline-Client-${{ matrix.arch }}.exe
+            ${{ env.WINDOWS_BUILD_DIR }}/installer/helpers.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+  smoke_windows_installers:
+    name: Smoke-test Windows ${{ matrix.arch }} installer
+    needs: build_windows_installers
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The ia32 client runs under WOW64 on x64 Windows.
+          - arch: ia32
+            runner: windows-2022
+          - arch: arm64
+            runner: windows-11-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-installer-${{ matrix.arch }}
+          path: ${{ runner.temp }}/installer
+      - name: Install Outline and open the service pipe
+        timeout-minutes: 7
+        shell: pwsh
+        run: |
+          ./client/electron/windows/smoke_test_installer.ps1 -Architecture '${{ matrix.arch }}' -ArtifactDirectory "$env:RUNNER_TEMP/installer"
+
+      - name: Show driver installation log on failure
+        if: failure()
+        shell: pwsh
+        run: Get-Content "$env:SystemRoot/INF/setupapi.dev.log" -Tail 100
+
+  macos_windows_helpers:
+    name: Build Windows helpers on macOS
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: '10.0.x'
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+      - run: go tool task client:windows:build-helpers
+        env:
+          ZIG_GLOBAL_CACHE_DIR: ${{ runner.temp }}/zig-cache
+          ZIG_LOCAL_CACHE_DIR: ${{ runner.temp }}/zig-cache
+      - name: Verify the build outputs and clean checkout
+        run: |
+          for arch in 386 arm64; do
+            helpers="output/client/electron/build/windows-$arch/helpers"
+            test -s "$helpers/OutlineService.exe"
+            test -s "$helpers/smartdnsblock.exe"
+          done
+          changes=$(git status --porcelain)
+          echo "$changes"
+          test -z "$changes"
 
   macos_debug_build:
     name: MacOS Debug Build

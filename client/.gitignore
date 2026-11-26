@@ -12,7 +12,5 @@ Outline.apk
 Outline.apks
 packages/
 toc.pb
-tools/smartdnsblock/bin/*
-!tools/smartdnsblock/bin/*.exe
 universal.apk
 xcuserdata/
