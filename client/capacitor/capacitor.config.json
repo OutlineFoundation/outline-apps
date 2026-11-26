@@ -6,8 +6,11 @@
     "server": {
       "iosScheme": "app"
     },
+    "android": {
+        "path": "../android"
+    },
     "ios": {
-        "path": "apple",
+        "path": "../apple",
         "contentInset": "never",
         "limitsNavigationsToAppBoundDomains": false,
         "scrollEnabled": true
