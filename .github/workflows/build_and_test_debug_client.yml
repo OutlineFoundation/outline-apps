@@ -29,6 +29,9 @@ on:
   schedule:
     - cron: "0 13 * * *"  # Run daily at 1PM UTC.
 
+env:
+  ZIG_VERSION: '0.17.1'
+
 jobs:
   web_test:
     name: Web Test
@@ -146,7 +149,7 @@ jobs:
       - name: Install zig
         uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.13.0
+          version: ${{ env.ZIG_VERSION }}
           use-cache: false
 
       - name: Install system fpm
@@ -201,7 +204,7 @@ jobs:
           dotnet-version: '10.0.x'
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
         with:
-          version: 0.13.0
+          version: ${{ env.ZIG_VERSION }}
           use-cache: false
       - run: npm ci --workspace @outline/infrastructure --omit=dev --ignore-scripts
       - run: npm run action client/electron/windows/build_service
