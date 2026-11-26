@@ -45,7 +45,7 @@ The Windows build puts the service and DNS helper in `helpers/` and the NSIS pac
 | ia32 | `windows-386/` | `windows-386-debug/` |
 | arm64 | `windows-arm64/` | `windows-arm64-debug/` |
 
-Both the routing service and the DNS helper are built for the installer’s architecture. The native ARM64 service requires Windows 11 on Arm with .NET Framework 4.8.1. Use the ia32 installer on older Windows on Arm. [Microsoft’s Arm64 runtime requirements](https://devblogs.microsoft.com/dotnet/announcing-dotnet-framework-481/)
+NSIS uses an x86 launcher for both packages. Inside the arm64 installer, the Electron app, both Go binaries, the routing service and the DNS helper are ARM64. The native ARM64 service requires Windows 11 on Arm with .NET Framework 4.8.1. Use the ia32 installer on older Windows on Arm. [Microsoft’s Arm64 runtime requirements](https://devblogs.microsoft.com/dotnet/announcing-dotnet-framework-481/)
 
 The installer build signs both helpers when Windows signing credentials are configured. On x64 Linux, install Wine with 32-bit support to package either Windows target. CI installs each Linux-built package on Windows, checks the installed helper hashes and executable architectures, and opens `OutlineServicePipe` read-only. The smoke test leaves the VPN disconnected.
 

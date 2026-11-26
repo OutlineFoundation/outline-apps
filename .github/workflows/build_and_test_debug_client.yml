@@ -81,22 +81,18 @@ jobs:
   electron_debug_build:
     name: ${{ matrix.name }} Debug Build
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.timeout }}
+    timeout-minutes: 20
     needs: [web_test, backend_test]
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: Linux x64
-            platform: linux
             arch: x64
             runner: ubuntu-22.04
-            timeout: 20
           - name: Linux arm64
-            platform: linux
             arch: arm64
             runner: ubuntu-24.04-arm
-            timeout: 20
             # puppeteer 13 has no arm64 chromium; install system chromium so
             # its postinstall finds one.
             installChromium: true
@@ -106,24 +102,7 @@ jobs:
             # via gem and tell electron-builder to use it. Workaround from:
             # https://github.com/jordansissel/fpm/issues/1801#issuecomment-919877499
             useSystemFpm: true
-            # We use windows-2022 instead of windows-2025 because windows-2025
-            # includes Visual Studio 2026, which causes a buffer overflow crash
-            # in the node-gyp version (v10.1.0) bundled with Node 22.
-          - name: Windows ia32
-            platform: windows
-            arch: ia32
-            runner: windows-2022
-            timeout: 40
-          - name: Windows arm64
-            platform: windows
-            arch: arm64
-            runner: windows-2022
-            timeout: 40
     steps:
-      - name: Support longpaths
-        if: runner.os == 'Windows'
-        run: git config --system core.longpaths true
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -162,31 +141,8 @@ jobs:
           sudo gem install fpm
           echo "USE_SYSTEM_FPM=true" >> $GITHUB_ENV
 
-      - name: Install .NET SDK for the routing service
-        if: runner.os == 'Windows'
-        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
-        with:
-          dotnet-version: '10.0.x'
-
       - name: Build Client
-        run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
-
-      - name: Verify the service and DNS helper in the Windows installer
-        if: matrix.platform == 'windows'
-        shell: pwsh
-        run: |
-          $goArch = if ('${{ matrix.arch }}' -eq 'ia32') { '386' } else { 'arm64' }
-          $buildDir = "output/client/electron/build/windows-$goArch-debug"
-          $installer = "$buildDir/installer/Outline-Client-${{ matrix.arch }}.exe"
-          $extracted = Join-Path $env:RUNNER_TEMP "outline-service"
-          $helpers = "OutlineService.exe", "smartdnsblock.exe"
-          7z x -tNSIS "-o$extracted" $installer @helpers
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          foreach ($name in $helpers) {
-            $built = Get-FileHash "$buildDir/helpers/$name"
-            $packaged = Get-FileHash "$extracted/$name"
-            if ($built.Hash -ne $packaged.Hash) { throw "Packaged $name differs from build output" }
-          }
+        run: npm run action client/electron/build linux -- --arch ${{ matrix.arch }}
 
   build_windows_installers:
     name: Build Windows ${{ matrix.arch }} installer on Linux
@@ -271,13 +227,10 @@ jobs:
         shell: pwsh
         run: Get-Content "$env:SystemRoot/INF/setupapi.dev.log" -Tail 100
 
-  cross_build_windows_service:
-    name: Windows service on ${{ matrix.host }}
-    runs-on: ${{ matrix.host }}
+  macos_windows_helpers:
+    name: Build Windows helpers on macOS
+    runs-on: macos-15
     timeout-minutes: 15
-    strategy:
-      matrix:
-        host: [ubuntu-24.04, macos-15]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
