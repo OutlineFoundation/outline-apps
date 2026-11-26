@@ -15,15 +15,9 @@
 package org.outline
 
 import android.app.Activity
-import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.content.ServiceConnection
 import android.net.VpnService
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -42,8 +36,7 @@ import org.json.JSONException
 import org.outline.log.OutlineLogger
 import org.outline.log.SentryErrorReporter
 import org.outline.vpn.Errors
-import org.outline.vpn.VpnServiceStarter
-import org.outline.vpn.VpnTunnelService
+import org.outline.vpn.OutlineVpn
 import outline.Outline
 import platerrors.Platerrors
 import platerrors.PlatformError
@@ -52,71 +45,16 @@ import platerrors.PlatformError
 class CapacitorPluginOutline : Plugin() {
 
   private data class StartVpnRequest(
-      val args: StartArgs,
+      val config: TunnelConfig,
       val call: PluginCall,
   )
 
-  private data class StartArgs(
-      val tunnelId: String,
-      val serverName: String,
-      val transportConfig: String,
-  )
-
-  // All fields below are read from both the main thread (ServiceConnection /
-  // activity-result callbacks) and the executor pool (@PluginMethod handlers),
-  // so every access must go through `stateLock` to guarantee both visibility
-  // and atomicity of check-then-act sequences.
+  // Set by `start` on the plugin thread and taken by the activity-result
+  // callback on the main thread.
   private val stateLock = Any()
-  private var vpnTunnelService: IVpnTunnelService? = null
-  private var errorReportingApiKey: String? = null
   private var pendingVpnPermissionRequest: StartVpnRequest? = null
-  private var pendingServiceBindRequest: StartVpnRequest? = null
   private val executor = Executors.newCachedThreadPool()
-
-  private val vpnServiceConnection = object : ServiceConnection {
-    override fun onServiceConnected(name: ComponentName, service: IBinder) {
-      val pending: StartVpnRequest?
-      synchronized(stateLock) {
-        vpnTunnelService = IVpnTunnelService.Stub.asInterface(service)
-        pending = pendingServiceBindRequest
-        pendingServiceBindRequest = null
-      }
-      if (pending != null) {
-        executeStartTunnel(pending.call, pending.args)
-      }
-    }
-
-    override fun onServiceDisconnected(name: ComponentName) {
-      val apiKey = synchronized(stateLock) {
-        vpnTunnelService = null
-        errorReportingApiKey
-      }
-      val context = baseContext()
-      val rebind = Intent(context, VpnTunnelService::class.java).apply {
-        putExtra(VpnServiceStarter.AUTOSTART_EXTRA, true)
-        putExtra(
-            VpnTunnelService.MessageData.ERROR_REPORTING_API_KEY.value,
-            apiKey,
-        )
-      }
-      context.bindService(rebind, this, Context.BIND_AUTO_CREATE)
-    }
-  }
-
-  private val vpnTunnelBroadcastReceiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-      val tunnelId = intent.getStringExtra(VpnTunnelService.MessageData.TUNNEL_ID.value) ?: return
-      val status = intent.getIntExtra(
-          VpnTunnelService.MessageData.PAYLOAD.value,
-          VpnTunnelService.TunnelStatus.INVALID.value,
-      )
-      val payload = JSObject().apply {
-        put("id", tunnelId)
-        put("status", status)
-      }
-      notifyListeners(STATUS_CHANGE_EVENT, payload)
-    }
-  }
+  private lateinit var vpn: OutlineVpn
 
   override fun load() {
     super.load()
@@ -127,29 +65,18 @@ class CapacitorPluginOutline : Plugin() {
     val goConfig = Outline.getBackendConfig()
     goConfig.dataDir = context.filesDir.absolutePath
 
-    val broadcastFilter = IntentFilter().apply {
-      addAction(VpnTunnelService.STATUS_BROADCAST_KEY)
-      addCategory(context.packageName)
+    vpn = OutlineVpn(context) { tunnelId, status ->
+      val payload = JSObject().apply {
+        put("id", tunnelId)
+        put("status", status)
+      }
+      notifyListeners(STATUS_CHANGE_EVENT, payload)
     }
-    context.registerReceiver(
-        vpnTunnelBroadcastReceiver,
-        broadcastFilter,
-        Context.RECEIVER_NOT_EXPORTED,
-    )
-
-    context.bindService(
-        Intent(context, VpnTunnelService::class.java),
-        vpnServiceConnection,
-        Context.BIND_AUTO_CREATE,
-    )
+    vpn.open()
   }
 
   override fun handleOnDestroy() {
-    val context = baseContext()
-    try {
-      context.unregisterReceiver(vpnTunnelBroadcastReceiver)
-    } catch (ignored: IllegalArgumentException) { }
-    kotlin.runCatching { context.unbindService(vpnServiceConnection) }
+    vpn.close()
     executor.shutdown()
     super.handleOnDestroy()
   }
@@ -187,13 +114,17 @@ class CapacitorPluginOutline : Plugin() {
       return
     }
 
-    val startArgs = StartArgs(tunnelId, serverName, transportConfig)
+    val config = TunnelConfig().apply {
+      id = tunnelId
+      name = serverName
+      this.transportConfig = transportConfig
+    }
 
-    if (!prepareVpnService(call, startArgs)) {
+    if (!prepareVpnService(call, config)) {
       return
     }
 
-    executeStartTunnel(call, startArgs)
+    startTunnel(call, config)
   }
 
   @PluginMethod
@@ -205,12 +136,7 @@ class CapacitorPluginOutline : Plugin() {
           call.reject("Missing tunnelId.")
           return@execute
         }
-        val service = synchronized(stateLock) { vpnTunnelService }
-        if (service == null) {
-          sendErrorResult(call, vpnServiceUnavailableError())
-          return@execute
-        }
-        val result = service.stopTunnel(tunnelId)
+        val result = vpn.stopTunnel(tunnelId)
         if (result == null) call.resolve() else call.reject(result.errorJson)
       } catch (e: Exception) {
         sendErrorResult(call, platformErrorFromException(e))
@@ -227,13 +153,7 @@ class CapacitorPluginOutline : Plugin() {
           call.reject("Missing tunnelId.")
           return@execute
         }
-        val service = synchronized(stateLock) { vpnTunnelService }
-        val isActive = try {
-          service?.isTunnelActive(tunnelId) ?: false
-        } catch (e: Exception) {
-          false
-        }
-        call.resolve(JSObject().apply { put("isRunning", isActive) })
+        call.resolve(JSObject().apply { put("isRunning", vpn.isTunnelActive(tunnelId)) })
       } catch (e: Exception) {
         sendErrorResult(call, platformErrorFromException(e))
       }
@@ -249,12 +169,7 @@ class CapacitorPluginOutline : Plugin() {
           call.reject("Missing error reporting API key.")
           return@execute
         }
-        val service = synchronized(stateLock) {
-          errorReportingApiKey = apiKey
-          vpnTunnelService
-        }
-        SentryErrorReporter.init(baseContext(), apiKey)
-        service?.initErrorReporting(apiKey)
+        vpn.initErrorReporting(apiKey)
         call.resolve()
       } catch (e: Exception) {
         sendErrorResult(call, platformErrorFromException(e))
@@ -428,62 +343,28 @@ class CapacitorPluginOutline : Plugin() {
       return
     }
 
-    executeStartTunnel(call, startRequest.args)
+    startTunnel(call, startRequest.config)
   }
 
-  private sealed class StartDecision {
-    data class Dispatch(val service: IVpnTunnelService) : StartDecision()
-    object Queued : StartDecision()
-    object AlreadyPending : StartDecision()
+  private fun startTunnel(call: PluginCall, config: TunnelConfig) {
+    vpn.startTunnel(config, executor, object : OutlineVpn.StartCallback {
+      override fun onResult(error: DetailedJsonError?) {
+        if (error == null) call.resolve() else call.reject(error.errorJson)
+        release()
+      }
+
+      override fun onFailure(cause: Exception) {
+        sendErrorResult(call, platformErrorFromException(cause))
+        release()
+      }
+
+      // Frees the saved-call slot taken by prepareVpnService when the call
+      // went through the VPN permission dialog. A no-op for an unsaved call.
+      private fun release() = bridge.releaseCall(call)
+    })
   }
 
-  private fun executeStartTunnel(call: PluginCall, args: StartArgs) {
-    val decision = synchronized(stateLock) {
-      val current = vpnTunnelService
-      when {
-        current != null -> StartDecision.Dispatch(current)
-        pendingServiceBindRequest != null -> StartDecision.AlreadyPending
-        else -> {
-          pendingServiceBindRequest = StartVpnRequest(args, call)
-          StartDecision.Queued
-        }
-      }
-    }
-
-    when (decision) {
-      StartDecision.AlreadyPending -> {
-        sendErrorResult(call, startAlreadyInProgressError())
-        // Release the saved-call slot if this call was saved earlier by
-        // prepareVpnService before onVpnPermissionResult re-entered here.
-        // No-op for an unsaved call.
-        bridge.releaseCall(call)
-      }
-      StartDecision.Queued -> {
-        call.setKeepAlive(true)
-        bridge.saveCall(call)
-      }
-      is StartDecision.Dispatch -> executor.execute {
-        try {
-          val config = TunnelConfig().apply {
-            id = args.tunnelId
-            name = args.serverName
-            transportConfig = args.transportConfig
-          }
-          val result = decision.service.startTunnel(config)
-          if (result == null) call.resolve() else call.reject(result.errorJson)
-        } catch (e: Exception) {
-          sendErrorResult(call, platformErrorFromException(e))
-        } finally {
-          // Release the saved-call slot held when this call was queued
-          // (via prepareVpnService or the Queued branch above). For an
-          // unsaved call, releaseCall is a no-op.
-          bridge.releaseCall(call)
-        }
-      }
-    }
-  }
-
-  private fun prepareVpnService(call: PluginCall, args: StartArgs): Boolean {
+  private fun prepareVpnService(call: PluginCall, config: TunnelConfig): Boolean {
     val prepareIntent = VpnService.prepare(baseContext())
     if (prepareIntent == null) return true
 
@@ -496,7 +377,7 @@ class CapacitorPluginOutline : Plugin() {
       if (pendingVpnPermissionRequest != null) {
         true
       } else {
-        pendingVpnPermissionRequest = StartVpnRequest(args, call)
+        pendingVpnPermissionRequest = StartVpnRequest(config, call)
         false
       }
     }
@@ -600,9 +481,6 @@ private fun platformErrorFromException(e: Exception): PlatformError =
 
 private fun vpnPermissionDeniedError(): PlatformError =
     PlatformError(Platerrors.VPNPermissionNotGranted, "VPN permission not granted")
-
-private fun vpnServiceUnavailableError(): PlatformError =
-    PlatformError(Platerrors.InternalError, "VPN tunnel service is not bound")
 
 private fun startAlreadyInProgressError(): PlatformError =
     PlatformError(Platerrors.InternalError, "A VPN start request is already in progress")
