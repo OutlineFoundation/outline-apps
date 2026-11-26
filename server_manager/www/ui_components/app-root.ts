@@ -401,7 +401,7 @@ export class AppRoot extends polymerElementWithLocalize {
             <if-messages message-ids="manager-resources" localize="[[localize]]">
               <a
                 class="manager-resources-link"
-                href="https://www.reddit.com/r/outlinevpn/wiki/index/">
+                href="https://support.getoutline.org/manager/server-setup/setup-server">
                   <span>[[localize('manager-resources')]]</span>
                   <iron-icon class="link-icon" icon="open-in-new" />
               </a>
