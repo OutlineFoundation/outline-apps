@@ -159,8 +159,52 @@ jobs:
           sudo gem install fpm
           echo "USE_SYSTEM_FPM=true" >> $GITHUB_ENV
 
+      - name: Install .NET SDK for the routing service
+        if: runner.os == 'Windows'
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: '10.0.x'
+
       - name: Build Client
         run: npm run action client/electron/build ${{ matrix.platform }} -- --arch ${{ matrix.arch }}
+
+      - name: Verify the service and DNS helper in the Windows installer
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $installer = "output/client/electron/build/Outline-Client-${{ matrix.arch }}.exe"
+          $extracted = Join-Path $env:RUNNER_TEMP "outline-service"
+          $helpers = "OutlineService.exe", "smartdnsblock.exe"
+          7z x -tNSIS "-o$extracted" $installer @helpers
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          foreach ($name in $helpers) {
+            $built = Get-FileHash "output/client/windows-service/bin/$name"
+            $packaged = Get-FileHash "$extracted/$name"
+            if ($built.Hash -ne $packaged.Hash) { throw "Packaged $name differs from build output" }
+          }
+
+  cross_build_windows_service:
+    name: Windows service on ${{ matrix.host }}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        host: [ubuntu-24.04, macos-15]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: '10.0.x'
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.13.0
+          use-cache: false
+      - run: npm ci --workspace @outline/infrastructure --omit=dev --ignore-scripts
+      - run: npm run action client/electron/windows/build_service
 
   macos_debug_build:
     name: MacOS Debug Build
