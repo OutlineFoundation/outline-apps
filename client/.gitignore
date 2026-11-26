@@ -12,7 +12,5 @@ Outline.apk
 Outline.apks
 packages/
 toc.pb
-electron/windows/OutlineService/OutlineService/bin/
-electron/windows/smartdnsblock/bin/
 universal.apk
 xcuserdata/

@@ -28,13 +28,13 @@ softwareupdate --install-rosetta --agree-to-license
 
 Windows debug and release installers build `OutlineService.exe` and `smartdnsblock.exe` from source. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) alongside Zig on your Windows, Linux, or macOS build host. The SDK restores the .NET Framework 4.8 reference assemblies from NuGet to compile the C# service. Zig supplies the Windows headers and import libraries for the C++ DNS helper.
 
-After `npm ci`, you can build the two executables directly from the repository root.
+From the repository root, use the version of Task pinned in `go.mod` to build both executables. The standalone build requires Go, .NET and Zig.
 
 ```sh
-npm run action client/electron/windows/build_service
+go tool task client:windows:build-helpers
 ```
 
-Both the ia32 and arm64 installers ship the x86 executables from `output/client/windows-service/bin/`. The build signs both with the configured Windows signing credentials before NSIS packages them. Packaging a full ia32 installer on Linux also requires Wine with 32-bit support.
+The task writes `OutlineService.exe` and `smartdnsblock.exe` to `output/client/windows-service/`. The ia32 and arm64 installer builds run the same task, sign both x86 executables when Windows signing credentials are configured, and package them with NSIS. Packaging a full ia32 installer on Linux also requires Wine with 32-bit support.
 
 ## Requirements
 

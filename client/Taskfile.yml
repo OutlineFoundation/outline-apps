@@ -27,3 +27,16 @@ tasks:
     cmds:
       - mkdir -p '{{dir .DOTENV}}'
       - '{{joinPath .TASKFILE_DIR "build" "configure_android.sh"}} > "{{.DOTENV}}"'
+
+  windows:build-helpers:
+    desc: Build the x86 routing service and DNS helper for the Windows installers
+    dir: '{{.TASKFILE_DIR}}/electron/windows'
+    vars:
+      HELPER_DIR: '{{joinPath .OUTPUT_DIR "windows-service"}}'
+    cmds:
+      - >-
+        dotnet build OutlineService/OutlineService/OutlineService.csproj
+        --configuration Release -p:Platform=x86 --no-incremental --output '{{.HELPER_DIR}}'
+      - >-
+        zig c++ -target x86-windows-gnu -Os -s smartdnsblock/smartdnsblock/smartdnsblock.cpp
+        -liphlpapi -lfwpuclnt -lrpcrt4 -o '{{.HELPER_DIR}}/smartdnsblock.exe'

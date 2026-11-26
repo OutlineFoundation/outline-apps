@@ -181,7 +181,7 @@ jobs:
           7z x -tNSIS "-o$extracted" $installer @helpers
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           foreach ($name in $helpers) {
-            $built = Get-FileHash "output/client/windows-service/bin/$name"
+            $built = Get-FileHash "output/client/windows-service/$name"
             $packaged = Get-FileHash "$extracted/$name"
             if ($built.Hash -ne $packaged.Hash) { throw "Packaged $name differs from build output" }
           }
@@ -195,10 +195,9 @@ jobs:
         host: [ubuntu-24.04, macos-15]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          node-version-file: .nvmrc
-          cache: npm
+          go-version-file: go.mod
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           dotnet-version: '10.0.x'
@@ -206,8 +205,12 @@ jobs:
         with:
           version: ${{ env.ZIG_VERSION }}
           use-cache: false
-      - run: npm ci --workspace @outline/infrastructure --omit=dev --ignore-scripts
-      - run: npm run action client/electron/windows/build_service
+      - run: go tool task client:windows:build-helpers
+      - name: Verify the build outputs and clean checkout
+        run: |
+          test -s output/client/windows-service/OutlineService.exe
+          test -s output/client/windows-service/smartdnsblock.exe
+          test -z "$(git status --porcelain)"
 
   macos_debug_build:
     name: MacOS Debug Build

@@ -18,6 +18,8 @@ import url from 'url';
 
 import {getRootDir} from '@outline/infrastructure/build/get_root_dir.mjs';
 import {runAction} from '@outline/infrastructure/build/run_action.mjs';
+import {signWindowsExecutable} from '@outline/infrastructure/build/sign_windows_executable.mjs';
+import {spawnStream} from '@outline/infrastructure/build/spawn_stream.mjs';
 import electron, {Platform} from 'electron-builder';
 import minimist from 'minimist';
 
@@ -76,7 +78,13 @@ export async function main(...parameters) {
   }
 
   if (platform === 'windows') {
-    await runAction('client/electron/windows/build_service');
+    await spawnStream('go', 'tool', 'task', 'client:windows:build-helpers');
+    for (const helper of ['OutlineService.exe', 'smartdnsblock.exe']) {
+      await signWindowsExecutable(
+        path.join(getRootDir(), 'output/client/windows-service', helper),
+        'sha256'
+      );
+    }
   }
   await runAction('client/web/build', ...parameters);
   await runAction('client/go/build', ...parameters);
