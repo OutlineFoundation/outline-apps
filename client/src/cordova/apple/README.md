@@ -1,55 +1,47 @@
 # Outline Client Apple Development Instructions
 
-This document describes how to develop and debug the Outline Client for iOS and MacOS.
+This document describes how to develop and debug the native side of the Outline Client for iOS and macOS. Both are built from the Capacitor project in [`client/capacitor`](../../../capacitor); for the requirements and the build commands, see the [Capacitor client README](../../../capacitor/README.md).
 
-## Getting Started
+## Layout
 
-You will need:
+- [`client/capacitor/apple/App`](../../../capacitor/apple/App): the Xcode project of the app (`App.xcodeproj`, scheme `Outline`), built for iOS and, through Mac Catalyst, for macOS. It embeds the `VpnExtension` target from `OutlineLib` and links the Outline plugin through the Swift package `App/CapApp-SPM`, which `cap sync ios` regenerates.
+- [`OutlineLib`](./OutlineLib): the `VpnExtension` network extension (`PacketTunnelProvider`) and its unit tests (`VpnExtensionTest`).
+- [`OutlineAppleLib`](./OutlineAppleLib): the Swift package shared by the app, the plugin and the extension: tunnel management (`OutlineTunnel`), error codes (`OutlineError`), Sentry logging (`OutlineSentryLogger`), the VPN status notifications (`OutlineNotification`) and the Mac Catalyst bootstrap (`OutlineCatalystApp`).
+- The plugin itself is in [`client/capacitor/plugins/capacitor-plugin-outline/ios`](../../../capacitor/plugins/capacitor-plugin-outline/ios).
+- The app and the extension link `Tun2socks.xcframework` from `output/client/apple/`, which `npm run action client/go/build ios` produces (`cap sync ios` runs it for you).
 
-- Node 24 (see `.nvmrc`; [download](https://nodejs.org/en/download/)),
-- An Apple Device and Developer Account.
-- XCode 15.2 ([download](https://developer.apple.com/xcode/))
-- XCode command line tools: `xcode-select --install`
+`OutlineLib` and `OutlineAppleLib` live under `client/src/cordova` for historical reasons: the Cordova client they were written for is gone, and the Capacitor project references them here.
 
-## Initalizing the XCode Project
-
-The XCode project is assembled by Cordova. To initialize and open the **iOS** project, run the following commands:
-
-```sh
-npm run action client/src/cordova/setup ios
-open ./client/src/cordova/apple/client.xcworkspace
-```
-
-For **macOS**:
+## Opening the Xcode Project
 
 ```sh
-npm run action client/src/cordova/setup macos 
-open ./client/src/cordova/apple/client.xcworkspace
+npm run action client/capacitor/web_build ios
+cd client/capacitor
+npx cap sync ios
+npx cap open ios
 ```
 
-> [!NOTE] 
-> Should you encounter issues with your build, there may be apple-specific dependencies that are out of date.
-> Run `npm run reset` and try again!
+Changes made in Xcode to the app, `OutlineLib` and `OutlineAppleLib` are made in their version-controlled location; nothing needs to be copied back.
 
 ## Configure code signing
 
 Apple is quite particular when it comes to making sure your app is properly signed, even in development.
 
-1. In XCode, make sure you are logged into your Apple Developer account and that your personal devices are registered to it. Go to **Preferences > Accounts** and make sure your account is set.
-1. Select the "Outline" target in the left navigation bar and go to the "Signing & Capabilities" tab.
+1. In Xcode, make sure you are logged into your Apple Developer account and that your personal devices are registered to it. Go to **Settings > Accounts** and make sure your account is set.
+1. Select the "App" target in the left navigation bar and go to the "Signing & Capabilities" tab.
 
 ### Internal Contributors
 
-1. Ensure that the "Jigsaw Operations LLC" option is selected for "Team".
-1. Do the same for the "VPN Extension" target.
+1. Ensure that the Outline Foundation team is selected for "Team".
+1. Do the same for the "VpnExtension" target.
 
 ### External Contributors
 
-For **release builds via the command line**, set the `DEVELOPMENT_TEAM` environment variable to override the default team ID without editing any project files:
+For **release builds via the command line**, set the `DEVELOPMENT_TEAM` environment variable (the app target has no team of its own):
 
 ```sh
-DEVELOPMENT_TEAM=<your_team_id> npm run action client/src/cordova/build ios -- --buildMode=release
-DEVELOPMENT_TEAM=<your_team_id> npm run action client/src/cordova/build macos -- --buildMode=release
+DEVELOPMENT_TEAM=<your_team_id> npm run action client/capacitor/build ios -- --buildMode=release --versionName=<version>
+DEVELOPMENT_TEAM=<your_team_id> npm run action client/capacitor/build macos -- --buildMode=release --versionName=<version>
 ```
 
 For **development in Xcode**:
@@ -57,61 +49,47 @@ For **development in Xcode**:
 1. Select the "Team" for your own account.
 1. Change the bundle identifier (e.g. `org.outline.ios.client`) to something unique.
 1. Remove the app group `group.org.getoutline.client`.
-1. Do the same for the "VPN Extension" target.
+1. Do the same for the "VpnExtension" target.
 
 ## Running the App
 
 ### Specify the Run Destination
 
-For the **iOS** client, you have a few options:
-- Run on your macOS computer: **Product >> Destination >> My Mac (Mac Catalyst)**
-- Run on a simulator
-  - This is helpful to test the UI, but the VPN doesn't work on simulators, so this option is not recommended.
-- **(Best)** Run on a physical iOS device
-  - This is the best option to evaluate how the app performs on a real device. Remember, you will need to enable development mode on the device and register it in your developer account.
+- Run on your macOS computer: **Product > Destination > My Mac (Mac Catalyst)**. This is the macOS client.
+- Run on a simulator. This is helpful to test the UI, but the VPN doesn't work on simulators.
+- **(Best for iOS)** Run on a physical iOS device. You will need to enable development mode on the device and register it in your developer account.
 
 See [Devices and Simulator](https://developer.apple.com/documentation/xcode/devices-and-simulator) for details on running on a physical iOS device or the simulator.
 
-> You may find that your iOS version is _too modern_ for XCode. You'll need to do the following:
->
-> 1. Download a folder corresponding to your iOS version from [this community-managed repository](https://github.com/iGhibli/iOS-DeviceSupport/tree/master/DeviceSupport).
-> 2. Unzip the file and add it to XCode:
->
-> ```
-> Applications >> Xcode >> Right Click >> Show Package Contents >> Contents >> Developer >> Platforms >> iPhoneOS.platform >> DeviceSupport
-> ```
-
-3. Restart XCode.
-
-For the **macOS** client, you can simply select your macOS computer: **Product > Destination > My Mac**.
-
 ### Build and Start the App
 
-1. First **clean the build** (**Product >> Clean Build Folder…** or <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>K</kbd>)
+Either run from Xcode (**Product > Run** or <kbd>⌘</kbd> <kbd>R</kbd>), or from the command line:
 
-> [!WARNING]
-> If you don't clean the build first, it will fail with `Command CodeSign failed with a nonzero exit code`.
+```sh
+cd client/capacitor
+npx cap run ios
+```
 
-1. **Run** (**Product >> Run** or <kbd>⌘</kbd> <kbd>R</kbd>), via the menu or the play button:
+## Test
 
-<img width="802" alt="image" src="https://github.com/OutlineFoundation/outline-sdk/assets/113565/f3289c08-5f33-423a-a496-d5d764f4fce0">
+The `VpnExtension` unit tests run on an iOS simulator or on the Mac (Mac Catalyst):
 
-
-## Development
-
-Most of the Apple-specific development can happen directly on XCode. However, if you edit files in the generated `platforms/ios`, you will need to copy your changes to the appropriate version-controlled location at [`src/cordova/apple/xcode`](./xcode) or [`src/cordova/plugin/apple`](../plugin/apple).
-
-Changes to the [OutlineAppleLib](./OutlineAppleLib) package don't need to be copied, since the package is linked by the XCode workspace and the changes happen in the original location.
+```sh
+npm run action client/src/cordova/test ios
+npm run action client/src/cordova/test macos
+```
 
 ## Inspect Logs
+
+The app bundle is named `App.app` (its display name is Outline), which is what the predicates below match.
 
 The easiest way to inspect logs is to use the `log` command. To see the client app logs in real time, you can use `log stream` with a `--predicate` flag to select the messages sent by the Outline code:
 
 ```sh
-log stream  --info --predicate 'senderImagePath contains "Outline.app"'
+log stream  --info --predicate 'senderImagePath contains "/App.app"'
 ```
 
-In the Console app, select the **Action > Include Info Messages** manu, and set the filter to "Library Path" "contains" "Outline.app":
+In the Console app, select the **Action > Include Info Messages** manu, and set the filter to "Library Path" "contains" "/App.app":
 
 <img width="1371" alt="image" src="https://github.com/OutlineFoundation/outline-apps/assets/113565/812c9e14-be11-4a64-b90f-58a4bac138b1">
 
@@ -119,7 +97,7 @@ In the Console app, select the **Action > Include Info Messages** manu, and set 
 
 For further debugging, you can include relevant messages from the Network Extension subsystem:
 ```sh
-log stream  --info --predicate 'senderImagePath contains "Outline.app" or (processImagePath contains "Outline.app" and subsystem contains "com.apple.networkextension")'
+log stream  --info --predicate 'senderImagePath contains "/App.app" or (processImagePath contains "/App.app" and subsystem contains "com.apple.networkextension")'
 ```
 
 To see past logs use `log show` and the `--last` flag.
@@ -165,7 +143,7 @@ To fix, run:
 
 ```sh
 pkill -9 VpnExtension
-pluginkit -Amv | cut -f 4 | grep Outline | while IFS= read -r p; do pluginkit -r "$p"; done;
+pluginkit -Amv | cut -f 4 | grep VpnExtension.appex | while IFS= read -r p; do pluginkit -r "$p"; done;
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -gc
 ```
 
@@ -185,10 +163,10 @@ If all fails, restart your device. That usually takes care of the issue.
 
 ## Debug the web UI
 
-To debug the webview:
+Debug builds make the app's WebView inspectable (see `OutlineViewController.swift`):
 
-1. You may need to enable the Develop menu first, by selecting **Settings > Advanced > Show Develop menu** in menu bar
-1. In your terminal, run `defaults write org.outline.ios.client WebKitDeveloperExtras -bool true`.  This is only needed once, to make the Outline webview debuggable.  You may need to re-run the whole Outline app (use Cmd+R).
-1. In the Outline Client app, right click → Inspect Context. This will open the Safari debugger
+1. In Safari, enable the Develop menu: **Settings > Advanced > Show features for web developers**.
+1. Run a debug build of the app on a simulator, a device connected to your Mac, or the Mac itself.
+1. In Safari, open **Develop > [device or Mac] > Outline** to attach the Web Inspector.
 
-To reload the UI without re-running the application, right-click → Reload.
+To reload the UI without re-running the application, reload from the Web Inspector.

@@ -29,7 +29,7 @@ let package = Package(
     ],
     products: [
         .library(
-            // OutlineAppleLib is used by the Cordova plugin
+            // OutlineAppleLib is used by the Capacitor app and its Outline plugin
             name: "OutlineAppleLib",
             targets: ["OutlineSentryLogger", "OutlineTunnel", "OutlineCatalystApp", "OutlineNotification", "OutlineError"]
         ),

@@ -1,133 +1,95 @@
-# Android Development Instructions
+# Outline Client Android Development Instructions
 
-This document describes how to develop and debug for Android.
+This document describes how to develop and debug the native side of the Outline Client for Android. It is built from the Capacitor project in [`client/capacitor`](../../../capacitor); for the requirements and the build commands, see the [Capacitor client README](../../../capacitor/README.md).
 
-The main entrypoint to Android's Java code is `client/src/cordova/plugin/android/java/org/outline/OutlinePlugin.java`
+## Layout
+
+- [`client/capacitor/android`](../../../capacitor/android): the Gradle project. Its `app` module is the app (`org.outline.client.MainActivity`, the manifest, resources and the release signing configuration).
+- [`OutlineAndroidLib/outline`](./OutlineAndroidLib/outline): the `:outline-lib` module of that project. It implements most of the native functionality and does not depend on Capacitor: the VPN service (`org.outline.vpn.VpnTunnelService`), the tunnel store, the boot receiver and the Quick Settings tile. It is consumed by the plugin.
+- The plugin itself (`org.outline.CapacitorPluginOutline`) is in [`client/capacitor/plugins/capacitor-plugin-outline/android`](../../../capacitor/plugins/capacitor-plugin-outline/android).
+- The tun2socks library is consumed as a Maven artifact from `output/client/android/`, which `npm run action client/go/build android` produces (`cap sync android` runs it for you).
+
+`OutlineAndroidLib` lives under `client/src/cordova` for historical reasons: the Cordova client it was written for is gone, and the Capacitor project references it here.
 
 ## Set up your environment
 
 Install these pre-requisites:
 
-- [Java Development Kit (JDK) 17+](https://jdk.java.net/archive/). On macOS:
+- [Java Development Kit (JDK) 21](https://jdk.java.net/archive/). On macOS, Android Studio's bundled JDK works too:
 
   ```shell
-  brew install openjdk@17
-
-  # Make it visible to `java_home`
-  sudo ln -sfn "$(realpath "$(brew --prefix)")/opt/openjdk@17/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-17.jdk
-
-  export JAVA_HOME=$(/usr/libexec/java_home -v 17.0)
+  export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
   ```
 
-- [Gradle 8.14.2+](https://gradle.org/install/). On macOS: `brew install gradle`.
+- [Android Studio](https://developer.android.com/studio), which also installs the Android SDK. Alternatively, on the command line:
 
-Then we need to install and configure the Android components. You can follow the [Cordova Android Platform Guide](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html), which uses Android Studio to configure the environment. You need an Android Studio compatible with the Android Gradle Plugin 8.10.1 (see [build.gradle](client/src/cordova/android/OutlineAndroidLib/build.gradle)) we use ([compatibility table](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility)).
+  1. Set environmental variables:
 
-Alternatively, you can do it on the command-line:
+      ```shell
+      export ANDROID_HOME=$HOME/Library/Android/sdk
+      export ANDROID_NDK=$ANDROID_HOME/ndk
+      ```
 
-1. Set environmental variables:
+  1. Install the [Android command-line tools](https://developer.android.com/studio#command-line-tools-only) and make them available on the command line:
 
-    ```shell
-    export ANDROID_HOME=$HOME/Library/Android/sdk
-    export ANDROID_NDK=$ANDROID_HOME/ndk
-    ```
+      ```shell
+      curl -o /tmp/commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip
+      unzip /tmp/commandlinetools.zip -d /tmp
+      mkdir -p "$ANDROID_HOME/cmdline-tools/latest"
+      mv /tmp/cmdline-tools/* "$ANDROID_HOME/cmdline-tools/latest/"
+      export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin/"
+      ```
 
-1. Install the [Android command-line tools](https://developer.android.com/studio#command-line-tools-only) and make them available on the command line:
+  1. Install platform and build tools:
 
-    ```shell
-    curl -o /tmp/commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-mac-13114758_latest.zip
-    unzip /tmp/commandlinetools.zip -d /tmp
-    mkdir -p "$ANDROID_HOME/cmdline-tools/latest"
-    mv /tmp/cmdline-tools/* "$ANDROID_HOME/cmdline-tools/latest/"
-    export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin/"
-    ```
-  
-1. Install platform and build tools:
+      ```shell
+      sdkmanager "platforms;android-37.0" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+      ```
 
-    ```shell
-    sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358" 
-    ```
+      The NDK version must match the `ndkVersion` pin in [app/build.gradle](../../../capacitor/android/app/build.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
 
-    The NDK version must match the `ndkVersion` pin in [build-extras.gradle](../plugin/android/build-extras.gradle), whose comment explains why we pin it (AGP uses it to strip the packaged native libraries).
+  1. Install optional components that help development (source code, emulator and image):
 
-1. Install optional components that help development (source code, emulator and image):
+      ```shell
+      sdkmanager "sources;android-36" "system-images;android-36;default;arm64-v8a"
+      ```
 
-    ```shell
-    sdkmanager "sources;android-36" "system-images;android-36;default;arm64-v8a"
-    ```
-
-  Note: you will need the `system-images;android-36;default;x86_64` image on an Intel computer.
-
-For development of the OutlineAndroidLib, we recommend installing Android Studio. That also make it easier to create virtual devices and run the emulator.
-
-You can check your environment with:
-
-```sh
-npm run action client/src/cordova/setup android
-cd client
-npx cordova requirements android
-```
+      Note: you will need the `system-images;android-36;default;x86_64` image on an Intel computer.
 
 ### Important Versions
 
 | Component  | version  | constrained by | set in  |
 |---|---|---|---|
-| Android API Level | 36+ | [Play Store](https://developer.android.com/google/play/requirements/target-sdk) | [config.xml](../../../config.xml), [build.gradle](./OutlineAndroidLib/outline/build.gradle) |
-| cordova-android | 15 | Android API Level | [package.json](../../../package.json) |
-| JDK | 17 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instruction |
-| Gradle | 8.14.2+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [gradle-wrapper.properties](./OutlineAndroidLib/gradle/wrapper/gradle-wrapper.properties) |
-| Android Gradle Plugin (AGP) | 8.10.1 | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | [build.gradle](../android/OutlineAndroidLib/build.gradle) |
-| Android Build Tools | 36.0.0+ | [cordova-android](https://cordova.apache.org/docs/en/latest/guide/platforms/android/index.html#android-api-level-support) | install instructions |
-| Android NDK | 28.2.13676358 | [native-lib stripping](../plugin/android/build-extras.gradle) | [build-extras.gradle](../plugin/android/build-extras.gradle), install instructions |
-| Android Studio | 2025.1.1 (Narwhal) | [AGP](https://developer.android.com/studio/releases#android_gradle_plugin_and_android_studio_compatibility) | |
+| Android API Level | compile 37, target 36 | [Play Store](https://developer.android.com/google/play/requirements/target-sdk), androidx | [variables.gradle](../../../capacitor/android/variables.gradle), [outline/build.gradle](./OutlineAndroidLib/outline/build.gradle) |
+| JDK | 21 | [app/build.gradle](../../../capacitor/android/app/build.gradle) | install instructions |
+| Gradle | see [gradle-wrapper.properties](../../../capacitor/android/gradle/wrapper/gradle-wrapper.properties) | Android Gradle Plugin | wrapper |
+| Android Gradle Plugin (AGP) | see [build.gradle](../../../capacitor/android/build.gradle) | Capacitor | [build.gradle](../../../capacitor/android/build.gradle) |
+| Android NDK | 28.2.13676358 | [native-lib stripping](../../../capacitor/android/app/build.gradle) | [app/build.gradle](../../../capacitor/android/app/build.gradle), install instructions |
 
 ## Build the app
 
-To build the app for Android, run:
+From the repository root:
 
 ```sh
-  npm run action client/src/cordova/build android
+npm run action client/capacitor/build android
 ```
 
-The built apk will be at: `client/platforms/android/app/build/outputs/apk/debug/app-debug.apk`.
-
-We also support passing a `--verbose` option on cordova android:
-
-```sh
-  npm run action client/src/cordova/build android -- --verbose
-```
-
-Make sure to rebuild after modifying platform dependent files!
-
-> 💡 NOTE: If this command ever gives you unexpected Cordova errors, try runnning `npm run reset` first.
+The built APK will be at `client/capacitor/android/app/build/outputs/apk/debug/app-debug.apk`. Pass `-- --verbose` for Gradle's `--info` output.
 
 ## Run the app
 
-1. Start the simulator or connect an Android device and enable [USB debugging](https://developer.android.com/studio/debug/dev-options.html#enable).
+1. Start the emulator or connect an Android device and enable [USB debugging](https://developer.android.com/studio/debug/dev-options.html#enable).
 1. From the project root, run:
 
    ```shell
-   adb install -r -d client/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+   adb install -r -d client/capacitor/android/app/build/outputs/apk/debug/app-debug.apk
    ```
 
-Alternatively, run with:
-
-```sh
-cd client
-npx cordova run android -- --gradleArg=--include-build=../../src/cordova/android/OutlineAndroidLib
-```
+Alternatively, from `client/capacitor`, run `npx cap run android`.
 
 ## Develop code
 
-Open `src/cordova/android/OutlineAndroidLib` on Android Studio. That will allow you to leverage the IDE features (auto-complete, warnings, etc) and run unit tests easily.
-
-This project represents a library that implements most of the Outline native functionality and does not depend on Cordova. That library is imported by the "app" module that is generated by Cordova. The only native Android code outside of this library is `OutlinePlugin.java`, which integrates with CordovaLib.
-
-To make the entire application load properly on Android Studio, you need to edit the generated `/client/platforms/android/settings.gradle` and add:
-
-```gradle
-includeBuild "../../src/cordova/android/OutlineAndroidLib"
-```
+Open `client/capacitor/android` in Android Studio (`npx cap open android` from `client/capacitor`). The `:outline-lib` module is part of that project, so IDE features (auto-complete, warnings, etc) and its instrumented tests (`./gradlew :outline-lib:connectedAndroidTest`) are available there.
 
 ### To debug the web app
 
@@ -137,11 +99,10 @@ Run Outline on your phone with [USB debugging enabled](https://developer.android
 - Find Outline
 - Click inspect
 - Open the Console
-- Note that all TypeScript code is browserified in a single main.cordova.js
 
-### To debug Java code
+### To debug Java and Kotlin code
 
-You can debug the Java code using [logcat on Android Studio](https://developer.android.com/studio/debug/logcat):
+You can debug the native code using [logcat on Android Studio](https://developer.android.com/studio/debug/logcat):
 
 1. Start the app
 1. Select the "Logcat" tab at the bottom
