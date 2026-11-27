@@ -59,6 +59,23 @@ const debugMode = process.env.OUTLINE_DEBUG === 'true';
 const IS_LINUX = os.platform() === 'linux';
 const IS_WINDOWS = os.platform() === 'win32';
 
+// When the app is started from a terminal (or with stdout/stderr piped) and
+// the reader goes away (e.g. the terminal is closed), any further console
+// output fails with EPIPE. Without a listener, Node turns that into an uncaught
+// exception that crashes the main process. EPIPE only means nobody is reading
+// our console output anymore, which is harmless (Sentry still records console
+// breadcrumbs), so we ignore it. Any other stream error is rethrown.
+function ignoreBrokenPipe(stream: NodeJS.WriteStream): void {
+  stream.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EPIPE') {
+      return;
+    }
+    throw err;
+  });
+}
+ignoreBrokenPipe(process.stdout);
+ignoreBrokenPipe(process.stderr);
+
 if (IS_LINUX) {
   // GPU rendering freezes the UI on some Linux systems (buttons never paint on
   // the first-run screen): https://github.com/OutlineFoundation/outline-apps/issues/2794
